@@ -38,4 +38,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/PlanetOrderGame/PlanetOrderGame.unity
     guid: 74890cef51fdf4e55a50a84053c830bd
+  - enabled: 1
+    path: Assets/Game/Scenes/PlanetAlphabetGame/PlanetAlphabetGame.unity
+    guid: 6912dbda851621442b454f48eec09c3e
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0

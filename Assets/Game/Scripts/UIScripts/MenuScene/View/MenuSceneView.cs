@@ -67,7 +67,7 @@ public class MenuSceneView : MonoBehaviour
     {
         { "AddUp", "NumberAddUp" },
         { "TrainPath", "PathFinder" },
-        { "PlanetOrder", "???" },
+        { "PlanetOrder", "PlanetAlphabet" },
         { "???", "???" },
         { "???", "???" }
     };
@@ -79,7 +79,7 @@ public class MenuSceneView : MonoBehaviour
     {
         { "AddUpGame", "NumberAddUpGame" },
         { "TrainPathGame", "PathFinderGame" },
-        { "PlanetOrderGame", null },
+        { "PlanetOrderGame", "PlanetAlphabetGame" },
         { null, null },
         { null, null }
     };
