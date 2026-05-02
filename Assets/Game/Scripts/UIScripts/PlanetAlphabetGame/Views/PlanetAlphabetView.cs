@@ -84,6 +84,21 @@ public class PlanetAlphabetView : MonoBehaviour
         HideFeedback();
         HideGameOver();
     }
+    // NamNN add function Hideboxes
+    public void HideBoxes(int playerIndex)
+    {
+        // Lấy danh sách các nút của người chơi 0 hoặc 1
+        Button[] btns = GetButtons(playerIndex);
+        if (btns != null)
+        {
+            foreach (var b in btns)
+            {
+                // Tắt từng nút đi
+                if (b != null) b.gameObject.SetActive(false);
+            }
+        }
+    }
+
 
     private void HideAllBoxes()
     {
@@ -124,15 +139,15 @@ public class PlanetAlphabetView : MonoBehaviour
 
         for (int i = 0; i < btns.Length; i++)
             if (btns[i] != null) btns[i].gameObject.SetActive(i < count);
-
-        float halfLeft = (playerIndex == 0) ? 0.02f : 0.54f;
-        float halfRight = (playerIndex == 0) ? 0.46f : 0.98f;
+        //NamNN change box size
+        float halfLeft = (playerIndex == 0) ? 0.04f : 0.54f;
+        float halfRight = (playerIndex == 0) ? 0.46f : 0.96f;
         float yMin = 0.05f;
-        float yMax = 0.8f;
+        float yMax = 0.75f;
 
         float sizeScale = (count <= 3) ? 1f : (count == 4) ? 0.9f : 0.85f;
-        float baseBoxW = 0.18f * sizeScale;
-        float baseBoxH = 0.30f * sizeScale;
+        float baseBoxW = 0.16f * sizeScale;
+        float baseBoxH = 0.28f * sizeScale;
 
         float[] boxWs = new float[count];
         float[] boxHs = new float[count];
@@ -297,7 +312,12 @@ public class PlanetAlphabetView : MonoBehaviour
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
-        if (txt != null) { txt.text = seconds.ToString(); txt.gameObject.SetActive(true); }
+        if (txt != null) {
+        //NamNN add text
+        txt.resizeTextForBestFit = true;
+        txt.text = "Next question in " + seconds + "s";
+        txt.gameObject.SetActive(true);
+        }
     }
 
     public void HideCountdown(int playerIndex)

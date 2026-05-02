@@ -229,6 +229,8 @@ public class PlanetAlphabetController : MonoBehaviour
         if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
         {
             gameView.HideFeedback(playerIndex);
+            //NamNN
+            gameView.HideBoxes(playerIndex);
             for (int i = 3; i >= 1; i--)
             {
                 gameView.ShowCountdown(playerIndex, i);
@@ -249,6 +251,8 @@ public class PlanetAlphabetController : MonoBehaviour
         if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
         {
             gameView.HideFeedback(playerIndex);
+            //NamNN
+            gameView.HideBoxes(playerIndex);
             for (int i = 3; i >= 1; i--)
             {
                 gameView.ShowCountdown(playerIndex, i);
