@@ -89,6 +89,13 @@ public class PlanetOrderView : MonoBehaviour
         HideGameOver();
     }
 
+    //NamNN change with Android Studio Agent
+    public void HideBoxes(int playerIndex)
+    {
+        Button[] btns = GetButtons(playerIndex);
+        if (btns != null) foreach (var b in btns) if (b != null) b.gameObject.SetActive(false);
+    }
+
     private void HideAllBoxes()
     {
         if (p1Boxes != null) foreach (var b in p1Boxes) if (b != null) b.gameObject.SetActive(false);
@@ -325,10 +332,16 @@ public class PlanetOrderView : MonoBehaviour
 
     public void HideGameOver() { if (gameOverPanel != null) gameOverPanel.SetActive(false); }
 
+    //NamNN change with Android Studio Agent
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
-        if (txt != null) { txt.text = seconds.ToString(); txt.gameObject.SetActive(true); }
+        if (txt != null)
+        {
+            txt.resizeTextForBestFit = true;
+            txt.text = "Next question in " + seconds + "s";
+            txt.gameObject.SetActive(true);
+        }
     }
 
     public void HideCountdown(int playerIndex)

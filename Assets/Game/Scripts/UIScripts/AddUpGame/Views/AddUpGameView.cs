@@ -185,6 +185,16 @@ public class AddUpGameView : MonoBehaviour
         Transform boxA = playerIndex == 0 ? p1BoxAImageContainer : p2BoxAImageContainer;
         Transform boxB = playerIndex == 0 ? p1BoxBImageContainer : p2BoxBImageContainer;
         Transform boxC = playerIndex == 0 ? p1BoxCImageContainer : p2BoxCImageContainer;
+
+        // NamNN change with Android Studio Agent: Show boxes and labels
+        if (boxA != null) boxA.parent.gameObject.SetActive(true);
+        if (boxB != null) boxB.parent.gameObject.SetActive(true);
+        if (boxC != null) boxC.parent.gameObject.SetActive(true);
+        Text plus = playerIndex == 0 ? p1PlusLabel : p2PlusLabel;
+        Text equals = playerIndex == 0 ? p1EqualsLabel : p2EqualsLabel;
+        if (plus != null) plus.gameObject.SetActive(true);
+        if (equals != null) equals.gameObject.SetActive(true);
+
         GameObject overlay = playerIndex == 0 ? p1HiddenOverlay : p2HiddenOverlay;
         GameObject overlayB = playerIndex == 0 ? p1HiddenOverlayB : p2HiddenOverlayB;
 
@@ -216,6 +226,16 @@ public class AddUpGameView : MonoBehaviour
         Transform boxA = playerIndex == 0 ? p1BoxAImageContainer : p2BoxAImageContainer;
         Transform boxB = playerIndex == 0 ? p1BoxBImageContainer : p2BoxBImageContainer;
         Transform boxC = playerIndex == 0 ? p1BoxCImageContainer : p2BoxCImageContainer;
+
+        // NamNN change with Android Studio Agent: Show boxes and labels
+        if (boxA != null) boxA.parent.gameObject.SetActive(true);
+        if (boxB != null) boxB.parent.gameObject.SetActive(true);
+        if (boxC != null) boxC.parent.gameObject.SetActive(true);
+        Text plus = playerIndex == 0 ? p1PlusLabel : p2PlusLabel;
+        Text equals = playerIndex == 0 ? p1EqualsLabel : p2EqualsLabel;
+        if (plus != null) plus.gameObject.SetActive(true);
+        if (equals != null) equals.gameObject.SetActive(true);
+
         GameObject overlay = playerIndex == 0 ? p1HiddenOverlay : p2HiddenOverlay;
         GameObject overlayB = playerIndex == 0 ? p1HiddenOverlayB : p2HiddenOverlayB;
 
@@ -263,6 +283,11 @@ public class AddUpGameView : MonoBehaviour
     public void DisplayAnswers(int playerIndex, int answer1, int answer2, int answer3, string imageType)
     {
         Transform[] containers = GetAnswerImageContainers(playerIndex);
+
+        // NamNN change with Android Studio Agent: Show answer buttons
+        Button[] buttons = GetAnswerButtons(playerIndex);
+        foreach (var btn in buttons) if (btn != null) btn.gameObject.SetActive(true);
+
         int[] answers = { answer1, answer2, answer3 };
         for (int i = 0; i < 3; i++)
         {
@@ -469,14 +494,39 @@ public class AddUpGameView : MonoBehaviour
         }
     }
 
+    //NamNN change with Android Studio Agent
+    public void HideQuestion(int playerIndex)
+    {
+        Transform boxA = playerIndex == 0 ? p1BoxAImageContainer : p2BoxAImageContainer;
+        Transform boxB = playerIndex == 0 ? p1BoxBImageContainer : p2BoxBImageContainer;
+        Transform boxC = playerIndex == 0 ? p1BoxCImageContainer : p2BoxCImageContainer;
+        GameObject overlay = playerIndex == 0 ? p1HiddenOverlay : p2HiddenOverlay;
+        GameObject overlayB = playerIndex == 0 ? p1HiddenOverlayB : p2HiddenOverlayB;
+        Text plus = playerIndex == 0 ? p1PlusLabel : p2PlusLabel;
+        Text equals = playerIndex == 0 ? p1EqualsLabel : p2EqualsLabel;
+
+        if (boxA != null) boxA.parent.gameObject.SetActive(false);
+        if (boxB != null) boxB.parent.gameObject.SetActive(false);
+        if (boxC != null) boxC.parent.gameObject.SetActive(false);
+        if (overlay != null) overlay.SetActive(false);
+        if (overlayB != null) overlayB.SetActive(false);
+        if (plus != null) plus.gameObject.SetActive(false);
+        if (equals != null) equals.gameObject.SetActive(false);
+
+        Button[] buttons = GetAnswerButtons(playerIndex);
+        foreach (var btn in buttons) if (btn != null) btn.gameObject.SetActive(false);
+    }
+
     // ===== Countdown (Team Mode) =====
 
+    //NamNN change with Android Studio Agent
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
         if (txt != null)
         {
-            txt.text = seconds.ToString();
+            txt.resizeTextForBestFit = true;
+            txt.text = "Next question in " + seconds + "s";
             txt.gameObject.SetActive(true);
         }
     }

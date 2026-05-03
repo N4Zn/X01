@@ -110,6 +110,9 @@ public class NumberAddUpGameView : MonoBehaviour
         UpdateScores(0, 0);
         HideGameOverPanel();
         HideFeedbackIcons();
+        //NamNN change with Android Studio Agent
+        HideQuestion(0);
+        HideQuestion(1);
     }
 
     public void SetQuestionText(string text)
@@ -151,6 +154,24 @@ public class NumberAddUpGameView : MonoBehaviour
     /// </summary>
     public void DisplayEquation(int playerIndex, int numberA, int numberB, string hiddenPosition)
     {
+        //NamNN change with Android Studio Agent
+        if (playerIndex == 0)
+        {
+            if (p1BoxAText != null) p1BoxAText.transform.parent.gameObject.SetActive(true);
+            if (p1BoxBText != null) p1BoxBText.transform.parent.gameObject.SetActive(true);
+            if (p1BoxCText != null) p1BoxCText.transform.parent.gameObject.SetActive(true);
+            if (p1PlusLabel != null) p1PlusLabel.gameObject.SetActive(true);
+            if (p1EqualsLabel != null) p1EqualsLabel.gameObject.SetActive(true);
+        }
+        else
+        {
+            if (p2BoxAText != null) p2BoxAText.transform.parent.gameObject.SetActive(true);
+            if (p2BoxBText != null) p2BoxBText.transform.parent.gameObject.SetActive(true);
+            if (p2BoxCText != null) p2BoxCText.transform.parent.gameObject.SetActive(true);
+            if (p2PlusLabel != null) p2PlusLabel.gameObject.SetActive(true);
+            if (p2EqualsLabel != null) p2EqualsLabel.gameObject.SetActive(true);
+        }
+
         int sum = numberA + numberB;
         Text boxA = playerIndex == 0 ? p1BoxAText : p2BoxAText;
         Text boxB = playerIndex == 0 ? p1BoxBText : p2BoxBText;
@@ -241,6 +262,9 @@ public class NumberAddUpGameView : MonoBehaviour
     /// </summary>
     public void DisplayAnswers(int playerIndex, int answer1, int answer2, int answer3)
     {
+        //NamNN change with Android Studio Agent
+        foreach (var b in GetAnswerButtons(playerIndex)) if (b != null) b.gameObject.SetActive(true);
+
         Text[] texts = GetAnswerTexts(playerIndex);
         int[] answers = { answer1, answer2, answer3 };
         for (int i = 0; i < 3; i++)
@@ -343,6 +367,34 @@ public class NumberAddUpGameView : MonoBehaviour
         if (buttons[answerIndex] != null) buttons[answerIndex].interactable = interactable;
     }
 
+    //NamNN change with Android Studio Agent
+    public void HideQuestion(int playerIndex)
+    {
+        // Hide Main equation boxes
+        if (playerIndex == 0)
+        {
+            if (p1BoxAText != null) p1BoxAText.transform.parent.gameObject.SetActive(false);
+            if (p1BoxBText != null) p1BoxBText.transform.parent.gameObject.SetActive(false);
+            if (p1BoxCText != null) p1BoxCText.transform.parent.gameObject.SetActive(false);
+            if (p1PlusLabel != null) p1PlusLabel.gameObject.SetActive(false);
+            if (p1EqualsLabel != null) p1EqualsLabel.gameObject.SetActive(false);
+            if (p1HiddenOverlay != null) p1HiddenOverlay.SetActive(false);
+            if (p1HiddenOverlayB != null) p1HiddenOverlayB.SetActive(false);
+            foreach (var b in GetAnswerButtons(0)) if (b != null) b.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (p2BoxAText != null) p2BoxAText.transform.parent.gameObject.SetActive(false);
+            if (p2BoxBText != null) p2BoxBText.transform.parent.gameObject.SetActive(false);
+            if (p2BoxCText != null) p2BoxCText.transform.parent.gameObject.SetActive(false);
+            if (p2PlusLabel != null) p2PlusLabel.gameObject.SetActive(false);
+            if (p2EqualsLabel != null) p2EqualsLabel.gameObject.SetActive(false);
+            if (p2HiddenOverlay != null) p2HiddenOverlay.SetActive(false);
+            if (p2HiddenOverlayB != null) p2HiddenOverlayB.SetActive(false);
+            foreach (var b in GetAnswerButtons(1)) if (b != null) b.gameObject.SetActive(false);
+        }
+    }
+
     private Text[] GetAnswerTexts(int playerIndex)
     {
         if (playerIndex == 0) return new Text[] { p1Answer1Text, p1Answer2Text, p1Answer3Text };
@@ -370,12 +422,14 @@ public class NumberAddUpGameView : MonoBehaviour
 
     // ===== Countdown (Team Mode) =====
 
+    //NamNN change with Android Studio Agent
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
         if (txt != null)
         {
-            txt.text = seconds.ToString();
+            txt.resizeTextForBestFit = true;
+            txt.text = "Next question in " + seconds + "s";
             txt.gameObject.SetActive(true);
         }
     }

@@ -309,14 +309,15 @@ public class PlanetAlphabetView : MonoBehaviour
 
     public void HideGameOver() { if (gameOverPanel != null) gameOverPanel.SetActive(false); }
 
+    //NamNN change with Android Studio Agent
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
-        if (txt != null) {
-        //NamNN add text
-        txt.resizeTextForBestFit = true;
-        txt.text = "Next question in " + seconds + "s";
-        txt.gameObject.SetActive(true);
+        if (txt != null)
+        {
+            txt.resizeTextForBestFit = true;
+            txt.text = "Next question in " + seconds + "s";
+            txt.gameObject.SetActive(true);
         }
     }
 

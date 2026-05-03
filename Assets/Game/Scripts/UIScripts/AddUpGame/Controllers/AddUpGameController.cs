@@ -465,7 +465,8 @@ public class AddUpGameController : MonoBehaviour
         // Team mode: 3-second countdown before next question
         if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
         {
-            // Hide this player's feedback icon before showing countdown
+            // NamNN change with Android Studio Agent: Hide question and feedback before countdown
+            gameView.HideQuestion(playerIndex);
             gameView.HideFeedbackIcon(playerIndex);
 
             for (int i = 3; i >= 1; i--)

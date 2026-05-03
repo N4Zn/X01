@@ -214,6 +214,23 @@ public class PathFinderGameView : MonoBehaviour
         ResetOptionBorders(playerIndex);
         SetOptionsInteractable(playerIndex, true);
         HideFeedback(playerIndex);
+
+        //NamNN change with Android Studio Agent
+        container.gameObject.SetActive(true);
+        if (playerIndex == 0)
+        {
+            if (p1OptionLeft != null) p1OptionLeft.gameObject.SetActive(true);
+            if (p1OptionStraight != null) p1OptionStraight.gameObject.SetActive(true);
+            if (p1OptionRight != null) p1OptionRight.gameObject.SetActive(true);
+            if (p1PromptText != null) p1PromptText.gameObject.SetActive(true);
+        }
+        else
+        {
+            if (p2OptionLeft != null) p2OptionLeft.gameObject.SetActive(true);
+            if (p2OptionStraight != null) p2OptionStraight.gameObject.SetActive(true);
+            if (p2OptionRight != null) p2OptionRight.gameObject.SetActive(true);
+            if (p2PromptText != null) p2PromptText.gameObject.SetActive(true);
+        }
     }
 
     private void AddCellLabel(GameObject cellGo, string label, float cellSize)
@@ -406,12 +423,36 @@ public class PathFinderGameView : MonoBehaviour
 
     // ===== Countdown (Team Mode) =====
 
+    //NamNN change with Android Studio Agent
+    public void HideQuestion(int playerIndex)
+    {
+        RectTransform container = playerIndex == 0 ? p1MazeContainer : p2MazeContainer;
+        if (container != null) container.gameObject.SetActive(false);
+
+        if (playerIndex == 0)
+        {
+            if (p1OptionLeft != null) p1OptionLeft.gameObject.SetActive(false);
+            if (p1OptionStraight != null) p1OptionStraight.gameObject.SetActive(false);
+            if (p1OptionRight != null) p1OptionRight.gameObject.SetActive(false);
+            if (p1PromptText != null) p1PromptText.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (p2OptionLeft != null) p2OptionLeft.gameObject.SetActive(false);
+            if (p2OptionStraight != null) p2OptionStraight.gameObject.SetActive(false);
+            if (p2OptionRight != null) p2OptionRight.gameObject.SetActive(false);
+            if (p2PromptText != null) p2PromptText.gameObject.SetActive(false);
+        }
+    }
+
+    //NamNN change with Android Studio Agent
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
         if (txt != null)
         {
-            txt.text = seconds.ToString();
+            txt.resizeTextForBestFit = true;
+            txt.text = "Next question in " + seconds + "s";
             txt.gameObject.SetActive(true);
         }
     }

@@ -246,6 +246,22 @@ public class TrainPathGameView : MonoBehaviour
         // Grid stays upright (no rotation)
         SetGridRotation(playerIndex, 0f);
 
+        //NamNN change with Android Studio Agent
+        RectTransform gridArea = playerIndex == 0 ? p1GridArea : p2GridArea;
+        if (gridArea != null) gridArea.gameObject.SetActive(true);
+        if (playerIndex == 0)
+        {
+            if (p1OptionLeftBtn != null) p1OptionLeftBtn.gameObject.SetActive(true);
+            if (p1OptionStraightBtn != null) p1OptionStraightBtn.gameObject.SetActive(true);
+            if (p1OptionRightBtn != null) p1OptionRightBtn.gameObject.SetActive(true);
+        }
+        else
+        {
+            if (p2OptionLeftBtn != null) p2OptionLeftBtn.gameObject.SetActive(true);
+            if (p2OptionStraightBtn != null) p2OptionStraightBtn.gameObject.SetActive(true);
+            if (p2OptionRightBtn != null) p2OptionRightBtn.gameObject.SetActive(true);
+        }
+
         ShowTrainAtCell(playerIndex, puzzle.StartRow, puzzle.StartCol);
         ShowEndMarker(playerIndex, puzzle.ExitSide, puzzle.ExitEdgeCell);
         ResetOptionBorders(playerIndex);
@@ -752,12 +768,36 @@ public class TrainPathGameView : MonoBehaviour
 
     // ===== Countdown (Team Mode) =====
 
+    //NamNN change with Android Studio Agent
+    public void HideQuestion(int playerIndex)
+    {
+        RectTransform gridArea = playerIndex == 0 ? p1GridArea : p2GridArea;
+        if (gridArea != null) gridArea.gameObject.SetActive(false);
+
+        if (playerIndex == 0)
+        {
+            if (p1OptionLeftBtn != null) p1OptionLeftBtn.gameObject.SetActive(false);
+            if (p1OptionStraightBtn != null) p1OptionStraightBtn.gameObject.SetActive(false);
+            if (p1OptionRightBtn != null) p1OptionRightBtn.gameObject.SetActive(false);
+            if (p1TrainIcon != null) p1TrainIcon.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (p2OptionLeftBtn != null) p2OptionLeftBtn.gameObject.SetActive(false);
+            if (p2OptionStraightBtn != null) p2OptionStraightBtn.gameObject.SetActive(false);
+            if (p2OptionRightBtn != null) p2OptionRightBtn.gameObject.SetActive(false);
+            if (p2TrainIcon != null) p2TrainIcon.gameObject.SetActive(false);
+        }
+    }
+
+    //NamNN change with Android Studio Agent
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
         if (txt != null)
         {
-            txt.text = seconds.ToString();
+            txt.resizeTextForBestFit = true;
+            txt.text = "Next question in " + seconds + "s";
             txt.gameObject.SetActive(true);
         }
     }

@@ -236,8 +236,10 @@ public class PlanetOrderController : MonoBehaviour
         // Team mode countdown
         if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
         {
+            //NamNN change with Android Studio Agent
             // Hide this player's feedback icon before showing countdown
             gameView.HideFeedback(playerIndex);
+            gameView.HideBoxes(playerIndex);
 
             for (int i = 3; i >= 1; i--)
             {
@@ -259,8 +261,10 @@ public class PlanetOrderController : MonoBehaviour
         // Team mode countdown
         if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
         {
+            //NamNN change with Android Studio Agent
             // Hide this player's feedback icon before showing countdown
             gameView.HideFeedback(playerIndex);
+            gameView.HideBoxes(playerIndex);
 
             for (int i = 3; i >= 1; i--)
             {
