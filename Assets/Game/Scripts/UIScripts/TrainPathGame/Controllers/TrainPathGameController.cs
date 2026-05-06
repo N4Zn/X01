@@ -78,6 +78,7 @@ public class TrainPathGameController : MonoBehaviour
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
 
         gameView.InitView();
+        gameView.SetMaxScore(GameSessionManager.Instance.TargetScore);
         gameView.OnOptionSelected += OnOptionSelected;
         gameView.OnBackClicked += OnBackClicked;
 

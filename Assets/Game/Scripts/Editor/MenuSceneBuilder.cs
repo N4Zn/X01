@@ -67,7 +67,7 @@ public static class MenuSceneBuilder
 
         UnityEngine.SceneManagement.Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         Camera existingMain = Camera.main;
-        Camera[] allCameras = Object.FindObjectsOfType<Camera>();
+        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
         if (existingMain == null && (allCameras == null || allCameras.Length == 0))
         {
             CreateMainCamera();

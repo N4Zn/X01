@@ -39,6 +39,13 @@ public class NumberAddUpGameController : MonoBehaviour
         if (gameView != null)
         {
             gameView.InitView();
+
+            // NamNN change with Android Studio Agent: Set dynamic max score
+            if (GameSessionManager.Instance != null)
+            {
+                gameView.SetMaxScore(GameSessionManager.Instance.TargetScore);
+            }
+
             gameView.OnBackClicked += OnBackClicked;
             gameView.OnHomeClicked += OnHomeClicked;
             gameView.OnSettingClicked += OnSettingClicked;

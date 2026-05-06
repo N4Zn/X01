@@ -104,20 +104,26 @@ public class AddUpGameView : MonoBehaviour
     public void InitView()
     {
         // Setup answer button listeners for Player 1
+        p1Answer1Button.onClick.RemoveAllListeners();
         p1Answer1Button.onClick.AddListener(() => OnAnswerSelected(0, 0));
+        p1Answer2Button.onClick.RemoveAllListeners();
         p1Answer2Button.onClick.AddListener(() => OnAnswerSelected(0, 1));
+        p1Answer3Button.onClick.RemoveAllListeners();
         p1Answer3Button.onClick.AddListener(() => OnAnswerSelected(0, 2));
 
         // Setup answer button listeners for Player 2
+        p2Answer1Button.onClick.RemoveAllListeners();
         p2Answer1Button.onClick.AddListener(() => OnAnswerSelected(1, 0));
+        p2Answer2Button.onClick.RemoveAllListeners();
         p2Answer2Button.onClick.AddListener(() => OnAnswerSelected(1, 1));
+        p2Answer3Button.onClick.RemoveAllListeners();
         p2Answer3Button.onClick.AddListener(() => OnAnswerSelected(1, 2));
 
         // Retry and Back buttons
-        if (retryButton != null) retryButton.onClick.AddListener(() => OnRetryClicked());
-        if (backButton != null) backButton.onClick.AddListener(() => OnBackClicked());
-        if (homeButton != null) homeButton.onClick.AddListener(() => OnHomeClicked());
-        if (settingButton != null) settingButton.onClick.AddListener(() => OnSettingClicked());
+        if (retryButton != null) { retryButton.onClick.RemoveAllListeners(); retryButton.onClick.AddListener(() => OnRetryClicked()); }
+        if (backButton != null) { backButton.onClick.RemoveAllListeners(); backButton.onClick.AddListener(() => OnBackClicked()); }
+        if (homeButton != null) { homeButton.onClick.RemoveAllListeners(); homeButton.onClick.AddListener(() => OnHomeClicked()); }
+        if (settingButton != null) { settingButton.onClick.RemoveAllListeners(); settingButton.onClick.AddListener(() => OnSettingClicked()); }
 
         // Set initial UI
         SetQuestionText("Fill in the missing number!");
@@ -134,6 +140,13 @@ public class AddUpGameView : MonoBehaviour
     {
         if (questionText != null)
             questionText.text = text;
+    }
+
+    // NamNN change with Android Studio Agent
+    public void SetMaxScore(int value)
+    {
+        this.maxScore = value;
+        UpdateScores(0, 0);
     }
 
     public void SetPlayerNames(string name1, string name2)

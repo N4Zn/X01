@@ -53,6 +53,11 @@ public class PathFinderGameView : MonoBehaviour
     [SerializeField] private Text p1StarText;
     [SerializeField] private Text p2StarText;
 
+    [Header("=== Score Bars ===")]
+    [SerializeField] private Image p1ScoreBarFill;
+    [SerializeField] private Image p2ScoreBarFill;
+    [SerializeField] private int maxScore = 10;
+
     // Events
     public event Action<int, int> OnAnswerSelected = delegate { }; // (playerIndex, choice: 0=Left, 1=Straight, 2=Right)
     public event Action OnBackClicked = delegate { };
@@ -84,15 +89,15 @@ public class PathFinderGameView : MonoBehaviour
         if (p1NameText != null) p1NameText.text = p1Name;
         if (p2NameText != null) p2NameText.text = p2Name;
 
-        if (backButton != null) backButton.onClick.AddListener(() => OnBackClicked());
+        if (backButton != null) { backButton.onClick.RemoveAllListeners(); backButton.onClick.AddListener(() => OnBackClicked()); }
 
-        if (p1OptionLeft != null) p1OptionLeft.onClick.AddListener(() => OnAnswerSelected(0, 0));
-        if (p1OptionStraight != null) p1OptionStraight.onClick.AddListener(() => OnAnswerSelected(0, 1));
-        if (p1OptionRight != null) p1OptionRight.onClick.AddListener(() => OnAnswerSelected(0, 2));
+        if (p1OptionLeft != null) { p1OptionLeft.onClick.RemoveAllListeners(); p1OptionLeft.onClick.AddListener(() => OnAnswerSelected(0, 0)); }
+        if (p1OptionStraight != null) { p1OptionStraight.onClick.RemoveAllListeners(); p1OptionStraight.onClick.AddListener(() => OnAnswerSelected(0, 1)); }
+        if (p1OptionRight != null) { p1OptionRight.onClick.RemoveAllListeners(); p1OptionRight.onClick.AddListener(() => OnAnswerSelected(0, 2)); }
 
-        if (p2OptionLeft != null) p2OptionLeft.onClick.AddListener(() => OnAnswerSelected(1, 0));
-        if (p2OptionStraight != null) p2OptionStraight.onClick.AddListener(() => OnAnswerSelected(1, 1));
-        if (p2OptionRight != null) p2OptionRight.onClick.AddListener(() => OnAnswerSelected(1, 2));
+        if (p2OptionLeft != null) { p2OptionLeft.onClick.RemoveAllListeners(); p2OptionLeft.onClick.AddListener(() => OnAnswerSelected(1, 0)); }
+        if (p2OptionStraight != null) { p2OptionStraight.onClick.RemoveAllListeners(); p2OptionStraight.onClick.AddListener(() => OnAnswerSelected(1, 1)); }
+        if (p2OptionRight != null) { p2OptionRight.onClick.RemoveAllListeners(); p2OptionRight.onClick.AddListener(() => OnAnswerSelected(1, 2)); }
 
         HideFeedback(0);
         HideFeedback(1);
@@ -109,12 +114,26 @@ public class PathFinderGameView : MonoBehaviour
     {
         Text t = playerIndex == 0 ? p1ScoreText : p2ScoreText;
         if (t != null) t.text = "\u2605 " + score;
+
+        Image fill = playerIndex == 0 ? p1ScoreBarFill : p2ScoreBarFill;
+        if (fill != null) fill.fillAmount = Mathf.Clamp01((float)score / maxScore);
     }
 
     public void UpdateStars(int playerIndex, int stars)
     {
         Text t = playerIndex == 0 ? p1StarText : p2StarText;
         if (t != null) t.text = "\u2605 " + stars;
+
+        Image fill = playerIndex == 0 ? p1ScoreBarFill : p2ScoreBarFill;
+        if (fill != null) fill.fillAmount = Mathf.Clamp01((float)stars / maxScore);
+    }
+
+    // NamNN change with Android Studio Agent
+    public void SetMaxScore(int value)
+    {
+        this.maxScore = value;
+        UpdateScore(0, 0);
+        UpdateScore(1, 0);
     }
 
     // ===== Render Maze =====

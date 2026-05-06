@@ -36,6 +36,13 @@ public class PlanetOrderController : MonoBehaviour
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
 
         gameView.InitView();
+
+        // NamNN change with Android Studio Agent: Set dynamic max score
+        if (GameSessionManager.Instance != null)
+        {
+            gameView.SetMaxScore(GameSessionManager.Instance.TargetScore);
+        }
+
         gameView.OnBoxTapped += OnBoxTapped;
         gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("HomeScene"); };

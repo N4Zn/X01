@@ -78,6 +78,13 @@ public class AddUpGameController : MonoBehaviour
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
 
         gameView.InitView();
+
+        // NamNN change with Android Studio Agent: Set dynamic max score
+        if (GameSessionManager.Instance != null)
+        {
+            gameView.SetMaxScore(GameSessionManager.Instance.TargetScore);
+        }
+
         gameView.OnAnswerSelected += OnAnswerSelected;
         gameView.OnRetryClicked += OnRetryClicked;
         gameView.OnBackClicked += OnBackClicked;

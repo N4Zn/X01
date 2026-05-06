@@ -69,6 +69,11 @@ public class TrainPathGameView : MonoBehaviour
     [SerializeField] private Text p1CountdownText;
     [SerializeField] private Text p2CountdownText;
 
+    [Header("=== Score Bars ===")]
+    [SerializeField] private Image p1ScoreBarFill;
+    [SerializeField] private Image p2ScoreBarFill;
+    [SerializeField] private int maxScore = 10;
+
     [Header("=== Cell Sprites ===")]
     [SerializeField] private Sprite bushSprite;        // tree icon
     [SerializeField] private Sprite hiddenSprite;      // bubble question
@@ -109,15 +114,15 @@ public class TrainPathGameView : MonoBehaviour
 
     public void InitView()
     {
-        if (p1OptionLeftBtn != null) p1OptionLeftBtn.onClick.AddListener(() => OnOptionSelected(0, 0));
-        if (p1OptionStraightBtn != null) p1OptionStraightBtn.onClick.AddListener(() => OnOptionSelected(0, 1));
-        if (p1OptionRightBtn != null) p1OptionRightBtn.onClick.AddListener(() => OnOptionSelected(0, 2));
+        if (p1OptionLeftBtn != null) { p1OptionLeftBtn.onClick.RemoveAllListeners(); p1OptionLeftBtn.onClick.AddListener(() => OnOptionSelected(0, 0)); }
+        if (p1OptionStraightBtn != null) { p1OptionStraightBtn.onClick.RemoveAllListeners(); p1OptionStraightBtn.onClick.AddListener(() => OnOptionSelected(0, 1)); }
+        if (p1OptionRightBtn != null) { p1OptionRightBtn.onClick.RemoveAllListeners(); p1OptionRightBtn.onClick.AddListener(() => OnOptionSelected(0, 2)); }
 
-        if (p2OptionLeftBtn != null) p2OptionLeftBtn.onClick.AddListener(() => OnOptionSelected(1, 0));
-        if (p2OptionStraightBtn != null) p2OptionStraightBtn.onClick.AddListener(() => OnOptionSelected(1, 1));
-        if (p2OptionRightBtn != null) p2OptionRightBtn.onClick.AddListener(() => OnOptionSelected(1, 2));
+        if (p2OptionLeftBtn != null) { p2OptionLeftBtn.onClick.RemoveAllListeners(); p2OptionLeftBtn.onClick.AddListener(() => OnOptionSelected(1, 0)); }
+        if (p2OptionStraightBtn != null) { p2OptionStraightBtn.onClick.RemoveAllListeners(); p2OptionStraightBtn.onClick.AddListener(() => OnOptionSelected(1, 1)); }
+        if (p2OptionRightBtn != null) { p2OptionRightBtn.onClick.RemoveAllListeners(); p2OptionRightBtn.onClick.AddListener(() => OnOptionSelected(1, 2)); }
 
-        if (backButton != null) backButton.onClick.AddListener(() => OnBackClicked());
+        if (backButton != null) { backButton.onClick.RemoveAllListeners(); backButton.onClick.AddListener(() => OnBackClicked()); }
 
         SetPlayerNames(
             GameSessionManager.Instance.GetDisplayName1(),
@@ -162,12 +167,25 @@ public class TrainPathGameView : MonoBehaviour
     {
         if (p1ScoreText != null) p1ScoreText.text = "\u2605 " + p1Score;
         if (p2ScoreText != null) p2ScoreText.text = "\u2605 " + p2Score;
+
+        if (p1ScoreBarFill != null) p1ScoreBarFill.fillAmount = Mathf.Clamp01((float)p1Score / maxScore);
+        if (p2ScoreBarFill != null) p2ScoreBarFill.fillAmount = Mathf.Clamp01((float)p2Score / maxScore);
     }
 
     public void UpdateStars(int playerIndex, int stars)
     {
         Text t = playerIndex == 0 ? p1ScoreText : p2ScoreText;
         if (t != null) t.text = "\u2605 " + stars;
+
+        Image fill = playerIndex == 0 ? p1ScoreBarFill : p2ScoreBarFill;
+        if (fill != null) fill.fillAmount = Mathf.Clamp01((float)stars / maxScore);
+    }
+
+    // NamNN change with Android Studio Agent
+    public void SetMaxScore(int value)
+    {
+        this.maxScore = value;
+        UpdateScores(0, 0);
     }
 
     /// <summary>

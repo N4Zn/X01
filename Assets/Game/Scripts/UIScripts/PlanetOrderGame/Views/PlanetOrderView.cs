@@ -68,20 +68,28 @@ public class PlanetOrderView : MonoBehaviour
             for (int i = 0; i < p1Boxes.Length; i++)
             {
                 int idx = i;
-                if (p1Boxes[i] != null) p1Boxes[i].onClick.AddListener(() => OnBoxTapped(0, idx));
+                if (p1Boxes[i] != null)
+                {
+                    p1Boxes[i].onClick.RemoveAllListeners();
+                    p1Boxes[i].onClick.AddListener(() => OnBoxTapped(0, idx));
+                }
             }
         // P2 boxes
         if (p2Boxes != null)
             for (int i = 0; i < p2Boxes.Length; i++)
             {
                 int idx = i;
-                if (p2Boxes[i] != null) p2Boxes[i].onClick.AddListener(() => OnBoxTapped(1, idx));
+                if (p2Boxes[i] != null)
+                {
+                    p2Boxes[i].onClick.RemoveAllListeners();
+                    p2Boxes[i].onClick.AddListener(() => OnBoxTapped(1, idx));
+                }
             }
 
-        if (backButton != null) backButton.onClick.AddListener(() => OnBackClicked());
-        if (homeButton != null) homeButton.onClick.AddListener(() => OnHomeClicked());
-        if (settingButton != null) settingButton.onClick.AddListener(() => OnSettingClicked());
-        if (retryButton != null) retryButton.onClick.AddListener(() => OnRetryClicked());
+        if (backButton != null) { backButton.onClick.RemoveAllListeners(); backButton.onClick.AddListener(() => OnBackClicked()); }
+        if (homeButton != null) { homeButton.onClick.RemoveAllListeners(); homeButton.onClick.AddListener(() => OnHomeClicked()); }
+        if (settingButton != null) { settingButton.onClick.RemoveAllListeners(); settingButton.onClick.AddListener(() => OnSettingClicked()); }
+        if (retryButton != null) { retryButton.onClick.RemoveAllListeners(); retryButton.onClick.AddListener(() => OnRetryClicked()); }
 
         // Hide all boxes initially
         HideAllBoxes();
@@ -117,13 +125,21 @@ public class PlanetOrderView : MonoBehaviour
     {
         if (p1ScoreLabel != null) p1ScoreLabel.text = p1Score.ToString();
         if (p2ScoreLabel != null) p2ScoreLabel.text = p2Score.ToString();
-        if (p1ScoreBarFill != null) p1ScoreBarFill.fillAmount = Mathf.Clamp01((float)p1Score / maxScore);
-        if (p2ScoreBarFill != null) p2ScoreBarFill.fillAmount = Mathf.Clamp01((float)p2Score / maxScore);
+        float m = maxScore > 0 ? maxScore : 10f;
+        if (p1ScoreBarFill != null) p1ScoreBarFill.fillAmount = Mathf.Clamp01((float)p1Score / m);
+        if (p2ScoreBarFill != null) p2ScoreBarFill.fillAmount = Mathf.Clamp01((float)p2Score / m);
     }
 
     public void SetQuestionText(string text)
     {
         if (questionText != null) questionText.text = text;
+    }
+
+    // NamNN change with Android Studio Agent
+    public void SetMaxScore(int value)
+    {
+        this.maxScore = value;
+        UpdateScores(0, 0);
     }
 
     /// <summary>
@@ -138,18 +154,28 @@ public class PlanetOrderView : MonoBehaviour
 
         // Hide all boxes first, then show only needed
         for (int i = 0; i < btns.Length; i++)
-            if (btns[i] != null) btns[i].gameObject.SetActive(i < count);
+        {
+            if (btns[i] != null)
+            {
+                btns[i].gameObject.SetActive(i < count);
+
+                // NamNN change: Reset UI state for reused objects
+                ShrinkAndDisappearEffect oldEff = btns[i].gameObject.GetComponent<ShrinkAndDisappearEffect>();
+                if (oldEff != null) oldEff.StopAllCoroutines();
+                btns[i].transform.localScale = Vector3.one;
+            }
+        }
 
         // Determine play area bounds for this player
         float halfLeft = (playerIndex == 0) ? 0.04f : 0.54f;
         float halfRight = (playerIndex == 0) ? 0.46f : 0.96f;
-        float yMin = 0.15f;
-        float yMax = 0.70f;
+        float yMin = 0.10f;
+        float yMax = 0.85f;
 
         // Scale box size down as count increases
-        float sizeScale = (count <= 3) ? 1f : (count == 4) ? 0.85f : 0.72f;
-        float baseBoxW = 0.16f * sizeScale;
-        float baseBoxH = 0.28f * sizeScale;
+        float sizeScale = (count <= 3) ? 1f : (count == 4) ? 0.85f : 0.75f;
+        float baseBoxW = 0.18f * sizeScale;
+        float baseBoxH = 0.31f * sizeScale;
 
         // Random size per box (0.85x ~ 1.15x of base)
         float[] boxWs = new float[count];
@@ -164,7 +190,7 @@ public class PlanetOrderView : MonoBehaviour
             if (boxHs[i] > maxH) maxH = boxHs[i];
         }
 
-        Vector2[] positions = GenerateRandomPositions(count, halfLeft, halfRight, yMin, yMax, maxW, maxH);
+        Vector2[] positions = GenerateRandomPositions(count, halfLeft, halfRight, yMin, yMax, boxWs, boxHs);
 
         for (int i = 0; i < count; i++)
         {
@@ -176,6 +202,13 @@ public class PlanetOrderView : MonoBehaviour
                 rt.anchorMax = new Vector2(positions[i].x + boxWs[i], positions[i].y + boxHs[i]);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
+
+                // NamNN change with Android Studio Agent: Add floating effect to boxes
+                FloatingEffect floatEff = btns[i].gameObject.GetComponent<FloatingEffect>();
+                if (floatEff == null) floatEff = btns[i].gameObject.AddComponent<FloatingEffect>();
+                floatEff.amplitude = UnityEngine.Random.Range(5f, 12f);
+                floatEff.speed = UnityEngine.Random.Range(1f, 2f);
+                floatEff.ResetStartPos();
             }
             if (imgs[i] != null && planetSprites != null && planetSprites.Length > 0)
             {
@@ -183,6 +216,15 @@ public class PlanetOrderView : MonoBehaviour
                 imgs[i].sprite = planetSprites[randIdx];
                 imgs[i].preserveAspect = true;
                 imgs[i].color = Color.white;
+
+                // NamNN change with Android Studio Agent: Add rotation effect to planets
+                RotateEffect rotate = imgs[i].gameObject.GetComponent<RotateEffect>();
+                if (rotate == null) rotate = imgs[i].gameObject.AddComponent<RotateEffect>();
+                rotate.rotationSpeed = UnityEngine.Random.Range(10f, 25f);
+                rotate.clockwise = (UnityEngine.Random.value > 0.5f);
+
+                // Reset raycastTarget in case it was disabled during ShrinkAndDisappear
+                imgs[i].raycastTarget = true;
             }
             if (txts[i] != null)
             {
@@ -190,6 +232,10 @@ public class PlanetOrderView : MonoBehaviour
                 txts[i].color = _normalTextColor;
                 Transform shadow = txts[i].transform.parent.Find("Shadow");
                 if (shadow != null) { Text st = shadow.GetComponent<Text>(); if (st != null) st.text = values[i].ToString(); }
+
+                // NamNN change with Android Studio Agent: Keep text upright if parent rotates
+                if (txts[i].gameObject.GetComponent<KeepUpright>() == null)
+                    txts[i].gameObject.AddComponent<KeepUpright>();
             }
         }
     }
@@ -198,7 +244,7 @@ public class PlanetOrderView : MonoBehaviour
     /// Generate N random non-overlapping positions within bounds.
     /// Divides area into zones to guarantee separation, then jitters within each zone.
     /// </summary>
-    private Vector2[] GenerateRandomPositions(int count, float xMin, float xMax, float yMin, float yMax, float boxW, float boxH)
+    private Vector2[] GenerateRandomPositions(int count, float xMin, float xMax, float yMin, float yMax, float[] boxWs, float[] boxHs)
     {
         Vector2[] result = new Vector2[count];
         float areaW = xMax - xMin;
@@ -233,26 +279,27 @@ public class PlanetOrderView : MonoBehaviour
         int layoutIdx = UnityEngine.Random.Range(0, pool.Length);
         float[,] layout = pool[layoutIdx];
 
-        // Jitter range (small random offset within zone)
-        float jitterX = areaW * 0.08f;
-        float jitterY = areaH * 0.08f;
+        // Safe jitter
+        float jitterX = areaW * 0.015f;
+        float jitterY = areaH * 0.015f;
 
         for (int i = 0; i < count; i++)
         {
             float cx = xMin + layout[i, 0] * areaW;
             float cy = yMin + layout[i, 1] * areaH;
-
-            // Add jitter
             cx += UnityEngine.Random.Range(-jitterX, jitterX);
             cy += UnityEngine.Random.Range(-jitterY, jitterY);
 
-            // Convert center to corner (anchorMin) and clamp to bounds
-            float x = Mathf.Clamp(cx - boxW * 0.5f, xMin, xMax - boxW);
-            float y = Mathf.Clamp(cy - boxH * 0.5f, yMin, yMax - boxH);
+            // Center the box on the coordinate
+            float x = cx - boxWs[i] * 0.5f;
+            float y = cy - boxHs[i] * 0.5f;
+
+            // Clamp to stay within bounds
+            x = Mathf.Clamp(x, xMin, xMax - boxWs[i]);
+            y = Mathf.Clamp(y, yMin, yMax - boxHs[i]);
 
             result[i] = new Vector2(x, y);
         }
-
         return result;
     }
 
@@ -260,8 +307,21 @@ public class PlanetOrderView : MonoBehaviour
     {
         Text[] txts = GetTexts(playerIndex);
         Button[] btns = GetButtons(playerIndex);
+        Image[] imgs = GetImages(playerIndex);
+
         if (boxIndex < txts.Length && txts[boxIndex] != null) txts[boxIndex].color = _correctTextColor;
-        if (boxIndex < btns.Length && btns[boxIndex] != null) btns[boxIndex].interactable = false;
+        if (boxIndex < btns.Length && btns[boxIndex] != null)
+        {
+            btns[boxIndex].interactable = false;
+
+            // Disable raycast so it doesn't block other planets while disappearing
+            if (boxIndex < imgs.Length && imgs[boxIndex] != null) imgs[boxIndex].raycastTarget = false;
+
+            // NamNN change with Android Studio Agent: Use ShrinkAndDisappearEffect component
+            ShrinkAndDisappearEffect effect = btns[boxIndex].gameObject.GetComponent<ShrinkAndDisappearEffect>();
+            if (effect == null) effect = btns[boxIndex].gameObject.AddComponent<ShrinkAndDisappearEffect>();
+            effect.Play(1.0f);
+        }
     }
 
     public void SetBoxWrong(int playerIndex, int boxIndex)

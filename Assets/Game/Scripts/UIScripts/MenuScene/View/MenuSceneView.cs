@@ -9,6 +9,7 @@ using UnityEngine.UI;
 /// </summary>
 public class MenuSceneView : MonoBehaviour
 {
+    //NamNN edit with AS Agent on 04/05/2026 15:20
     [Header("=== Top Bar ===")]
     [SerializeField] private Button backButton;
     [SerializeField] private Button homeButton;
@@ -29,10 +30,11 @@ public class MenuSceneView : MonoBehaviour
     [SerializeField] private Button[] categoryTabButtons;   // 5 tabs
     [SerializeField] private Image[] categoryTabImages;     // 5 tab images (for highlight swap)
 
-    [Header("=== Game Grid (2 rows x 5 cols) ===")]
-    [SerializeField] private Button[] gameButtons;          // 10 buttons (row-major: [row*5+col])
-    [SerializeField] private Image[] gameIcons;             // 10 icon images
-    [SerializeField] private Image[] gameHighlights;        // 10 selection highlights
+    [Header("=== Game Grid (3 rows x 6 cols) ===")]
+    [SerializeField] private GameObject[] gameSlots;        // Drag 18 GameSlot GameObjects here
+    private Button[] _gameButtons;                          // Found automatically
+    private Image[] _gameIcons;                             // Found automatically
+    private Image[] _gameHighlights;                        // Found automatically
 
     [Header("=== Bottom Bar ===")]
     [SerializeField] private Button randomSelectButton;
@@ -55,33 +57,35 @@ public class MenuSceneView : MonoBehaviour
     private List<GameObject> _blueAvatarSlots = new List<GameObject>();
     private List<GameObject> _redAvatarSlots = new List<GameObject>();
 
-    public const int ROWS = 2;
-    public const int COLS = 5;
+    public const int MAX_GAMES_PER_PAGE = 18;
+    public const int CATEGORY_COUNT = 6;
 
-    public static readonly string[] CategoryNames = { "Tinh toan", "Phan tich", "Hinh anh", "Tri nho", "Nhan biet" };
+    public static readonly string[] CategoryNames = { "Tinh toan", "Phan tich", "Hinh anh", "Tri nho", "Nhan biet", "Am thanh" };
 
     /// <summary>
-    /// Game names grid: [category, row] — 5 categories, 2 games each.
+    /// Game names: [categoryIndex, gridIndex] — 6 categories, 18 games each.
     /// </summary>
-    public static readonly string[,] GameNames =
+    public static readonly string[,] GameNames = new string[CATEGORY_COUNT, MAX_GAMES_PER_PAGE]
     {
-        { "AddUp", "NumberAddUp" },
-        { "TrainPath", "PathFinder" },
-        { "PlanetOrder", "PlanetAlphabet" },
-        { "???", "???" },
-        { "???", "???" }
+        { "AddUp", "NumberAddUp", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
+        { "TrainPath", "PathFinder", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
+        { "PlanetOrder", "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
+        { "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
+        { "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD"},
+        { "ListenSelect", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" }
     };
 
     /// <summary>
-    /// Scene name mapping. null = not implemented.
+    /// Scene names: [categoryIndex, gridIndex]
     /// </summary>
-    public static readonly string[,] GameSceneNames =
+    public static readonly string[,] GameSceneNames = new string[CATEGORY_COUNT, MAX_GAMES_PER_PAGE]
     {
-        { "AddUpGame", "NumberAddUpGame" },
-        { "TrainPathGame", "PathFinderGame" },
-        { "PlanetOrderGame", "PlanetAlphabetGame" },
-        { null, null },
-        { null, null }
+        { "AddUpGame", "NumberAddUpGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
+        { "TrainPathGame", "PathFinderGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
+        { "PlanetOrderGame", "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
+        { "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
+        { null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
+        { "ListenGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null }
     };
 
     public void InitView()
@@ -104,14 +108,34 @@ public class MenuSceneView : MonoBehaviour
             }
         }
 
-        // Game grid buttons
-        if (gameButtons != null)
+        // Game grid slots
+        //NamNN edit with AS Agent on 04/05/2026 15:20
+        if (gameSlots != null)
         {
-            for (int i = 0; i < gameButtons.Length; i++)
+            _gameButtons = new Button[gameSlots.Length];
+            _gameIcons = new Image[gameSlots.Length];
+            _gameHighlights = new Image[gameSlots.Length];
+
+            for (int i = 0; i < gameSlots.Length; i++)
             {
                 int idx = i;
-                if (gameButtons[i] != null)
-                    gameButtons[i].onClick.AddListener(() => onGameSelected(idx));
+                if (gameSlots[i] != null)
+                {
+                    // Find Button (either on slot or in children)
+                    _gameButtons[idx] = gameSlots[i].GetComponentInChildren<Button>();
+                    if (_gameButtons[idx] != null)
+                    {
+                        _gameButtons[idx].onClick.RemoveAllListeners();
+                        _gameButtons[idx].onClick.AddListener(() => onGameSelected(idx));
+                    }
+
+                    // Find Icon and Highlight by name in children
+                    Transform iconTrans = gameSlots[i].transform.Find("Icon");
+                    if (iconTrans != null) _gameIcons[i] = iconTrans.GetComponent<Image>();
+
+                    Transform highlightTrans = gameSlots[i].transform.Find("Highlight");
+                    if (highlightTrans != null) _gameHighlights[i] = highlightTrans.GetComponent<Image>();
+                }
             }
         }
     }
@@ -139,29 +163,45 @@ public class MenuSceneView : MonoBehaviour
 
     private void UpdateTeamAvatars(Transform container, List<PlayerInfo> members, Sprite bgSprite, ref List<GameObject> slots)
     {
-        foreach (GameObject slot in slots) Destroy(slot);
-        slots.Clear();
+        // NamNN: Dọn dẹp an toàn để tránh lỗi SerializedObject trong Editor
+        if (slots != null)
+        {
+            for (int i = slots.Count - 1; i >= 0; i--)
+            {
+                if (slots[i] != null)
+                {
+                    if (!Application.isPlaying) DestroyImmediate(slots[i]);
+                    else Destroy(slots[i]);
+                }
+            }
+            slots.Clear();
+        }
 
-        if (container == null) return;
+        if (container == null || members == null) return;
 
         for (int i = 0; i < members.Count; i++)
         {
-            // Slot with bg sprite (Blue-button / Red-button)
-            GameObject slot = new GameObject("Slot_" + i, typeof(RectTransform), typeof(Image));
+            // Tạo Slot an toàn
+            GameObject slot = new GameObject("Slot_" + i, typeof(RectTransform));
             slot.transform.SetParent(container, false);
-            Image bgImg = slot.GetComponent<Image>();
+
+            Image bgImg = slot.AddComponent<Image>();
             if (bgSprite != null) { bgImg.sprite = bgSprite; bgImg.color = Color.white; }
 
             // Character avatar inside
-            GameObject avatar = new GameObject("Avatar", typeof(RectTransform), typeof(Image));
+            GameObject avatar = new GameObject("Avatar", typeof(RectTransform));
             avatar.transform.SetParent(slot.transform, false);
-            RectTransform avRT = avatar.GetComponent<RectTransform>();
-            avRT.anchorMin = new Vector2(0.10f, 0.10f);
-            avRT.anchorMax = new Vector2(0.90f, 0.90f);
-            avRT.offsetMin = Vector2.zero;
-            avRT.offsetMax = Vector2.zero;
 
-            Image avImg = avatar.GetComponent<Image>();
+            RectTransform avRT = avatar.GetComponent<RectTransform>();
+            if (avRT != null)
+            {
+                avRT.anchorMin = new Vector2(0.10f, 0.10f);
+                avRT.anchorMax = new Vector2(0.90f, 0.90f);
+                avRT.offsetMin = Vector2.zero;
+                avRT.offsetMax = Vector2.zero;
+            }
+
+            Image avImg = avatar.AddComponent<Image>();
             avImg.preserveAspect = true;
             avImg.raycastTarget = false;
 
@@ -201,22 +241,75 @@ public class MenuSceneView : MonoBehaviour
     // ===== Game Grid =====
 
     /// <summary>
-    /// Update game grid enabled/disabled state based on which games are implemented.
+    /// Update grid display for a specific category (tab).
+    /// Hides buttons with no game name, sets interactable if scene is implemented.
     /// </summary>
-    public void UpdateGameGridInteractable()
+    public void UpdateGrid(int categoryIndex)
     {
-        if (gameButtons == null) return;
-        for (int col = 0; col < COLS; col++)
+        //NamNN edit with AS Agent on 04/05/2026 16:15
+        if (gameSlots == null || _gameButtons == null) return;
+        for (int i = 0; i < gameSlots.Length; i++)
         {
-            for (int row = 0; row < ROWS; row++)
+            if (i >= MAX_GAMES_PER_PAGE)
             {
-                int idx = row * COLS + col;
-                if (idx < gameButtons.Length && gameButtons[idx] != null)
+                gameSlots[i].SetActive(false);
+                continue;
+            }
+
+            gameSlots[i].SetActive(true);
+
+            string sceneName = GameSceneNames[categoryIndex, i];
+            string gameName = GameNames[categoryIndex, i];
+
+            bool hasGame = !string.IsNullOrEmpty(gameName) && gameName != "???";
+            bool isImplemented = !string.IsNullOrEmpty(sceneName);
+
+            // 1. Update Icon Sprite dynamically from Resources
+            if (_gameIcons[i] != null)
+            {
+                // Sửa lại đoạn nạp Icon trong MenuSceneView.cs (khoảng dòng 230)
+                if (hasGame)
                 {
-                    bool implemented = GameSceneNames[col, row] != null;
-                    gameButtons[idx].interactable = implemented;
+                    // 1. Luôn ưu tiên nạp trực tiếp bằng kiểu <Sprite>
+                    Sprite loadedSprite = Resources.Load<Sprite>("GameIcons/" + gameName);
+
+                    // 2. Nếu vẫn null, thử nạp kiểu Object để debug sâu
+                    if (loadedSprite == null)
+                    {
+                        UnityEngine.Object raw = Resources.Load("GameIcons/" + gameName);
+                        if (raw == null) {
+                            Debug.LogError($"LỖI: Không thấy file tại Resources/GameIcons/{gameName}");
+                        } else {
+                            Debug.LogError($"LỖI: Tìm thấy file {gameName} nhưng nó là {raw.GetType().Name}. " +
+                                           "HÃY ĐỔI 'Sprite Mode' THÀNH 'Single' VÀ NHẤN APPLY!");
+                        }
+                        // Fallback về icon mặc định
+                        loadedSprite = Resources.Load<Sprite>("GameIcons/icon_unknown");
+                    }
+
+                    _gameIcons[i].sprite = loadedSprite;
+                    Color c = _gameIcons[i].color;
+                    c.a = 1f;
+                    _gameIcons[i].color = c;
+                }
+                else
+                {
+                    // If "???", you can set a default "Locked" or "Question" sprite if you have one
+                    // _gameIcons[i].sprite = defaultLockedSprite;
+                    Color c = _gameIcons[i].color;
+                    c.a = 0.35f;
+                    _gameIcons[i].color = c;
                 }
             }
+
+            // 2. Set interactivity
+            if (_gameButtons[i] != null)
+            {
+                _gameButtons[i].interactable = hasGame && isImplemented;
+            }
+
+            ApplyGlow(i, false);
+            ApplyGameIconSelectionEffect(i, false);
         }
     }
 
@@ -226,9 +319,7 @@ public class MenuSceneView : MonoBehaviour
     /// </summary>
     public void SetGameHighlights(HashSet<int> selectedIndices)
     {
-        int count = 0;
-        if (gameHighlights != null) count = Mathf.Max(count, gameHighlights.Length);
-        if (gameIcons != null) count = Mathf.Max(count, gameIcons.Length);
+        int count = gameSlots != null ? gameSlots.Length : 0;
         for (int i = 0; i < count; i++)
         {
             bool selected = selectedIndices.Contains(i);
@@ -248,8 +339,8 @@ public class MenuSceneView : MonoBehaviour
 
     private void ApplyGlow(int index, bool selected)
     {
-        if (gameHighlights == null || index < 0 || index >= gameHighlights.Length) return;
-        Image border = gameHighlights[index];
+        if (_gameHighlights == null || index < 0 || index >= _gameHighlights.Length) return;
+        Image border = _gameHighlights[index];
         if (border == null) return;
 
         if (_glowRoutines.TryGetValue(index, out Coroutine running) && running != null)
@@ -270,8 +361,9 @@ public class MenuSceneView : MonoBehaviour
 
     private void ApplyGameIconSelectionEffect(int index, bool selected)
     {
-        if (gameIcons == null || index < 0 || index >= gameIcons.Length) return;
-        Image icon = gameIcons[index];
+        //NamNN edit with AS Agent on 04/05/2026 15:45
+        if (_gameIcons == null || index < 0 || index >= _gameIcons.Length) return;
+        Image icon = _gameIcons[index];
         if (icon == null) return;
 
         WinnerEffect fx = icon.GetComponent<WinnerEffect>();

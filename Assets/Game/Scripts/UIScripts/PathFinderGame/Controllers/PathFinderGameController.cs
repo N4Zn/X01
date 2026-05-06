@@ -45,6 +45,13 @@ public class PathFinderGameController : MonoBehaviour
         }
 
         gameView.InitView();
+
+        // NamNN change with Android Studio Agent: Set dynamic max score
+        if (GameSessionManager.Instance != null)
+        {
+            gameView.SetMaxScore(GameSessionManager.Instance.TargetScore);
+        }
+
         gameView.OnAnswerSelected += OnAnswerSelected;
         gameView.OnBackClicked += OnBackClicked;
 

@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class MenuSceneController : MonoBehaviour
 {
+    //NamNN edit with AS Agent on 04/05/2026 15:20
     [SerializeField] private MenuSceneView menuSceneView;
     protected CustomFSMManager _customFSMManager;
 
@@ -14,12 +15,13 @@ public class MenuSceneController : MonoBehaviour
 
     void Start()
     {
+        //NamNN edit with AS Agent on 04/05/2026 15:20
+        menuSceneView.InitView();
+
         _customFSMManager = gameObject.AddComponent<CustomFSMManager>();
         _customFSMManager.fsmName = this.GetType().Name + "FSM";
         _customFSMManager.Initialize(typeof(MenuSceneState), this.GetType(), false);
         _customFSMManager.StateMachineChange(MenuSceneState.Initialize);
-
-        menuSceneView.InitView();
 
         // Navigation
         menuSceneView.onClickBack += OnClickBack;
@@ -51,7 +53,7 @@ public class MenuSceneController : MonoBehaviour
         // Default to first category
         _currentCategory = 0;
         menuSceneView.SetActiveCategory(_currentCategory);
-        menuSceneView.UpdateGameGridInteractable();
+        menuSceneView.UpdateGrid(_currentCategory);
         menuSceneView.SetStartButtonEnabled(false);
 
         _customFSMManager.StateMachineChange(MenuSceneState.GameSelect);
@@ -95,23 +97,29 @@ public class MenuSceneController : MonoBehaviour
 
     private void OnCategorySelected(int categoryIndex)
     {
+        //NamNN edit with AS Agent on 04/05/2026 15:20
         Debug.Log("NDL: MenuScene - OnCategorySelected: " + categoryIndex);
         _currentCategory = categoryIndex;
         menuSceneView.SetActiveCategory(categoryIndex);
+        menuSceneView.UpdateGrid(categoryIndex);
+
+        // Reset selection when changing tabs
+        _selectedGames.Clear();
+        _selectedGameIndex = -1;
+        menuSceneView.SetStartButtonEnabled(false);
     }
 
     // ===== Game Selection =====
 
     private void OnGameSelected(int gridIndex)
     {
-        // Grid index: row * 5 + col
-        int col = gridIndex % MenuSceneView.COLS;
-        int row = gridIndex / MenuSceneView.COLS;
+        // gridIndex is the index in the 18-button array
+        if (gridIndex < 0 || gridIndex >= MenuSceneView.MAX_GAMES_PER_PAGE) return;
 
-        string sceneName = MenuSceneView.GameSceneNames[col, row];
-        if (sceneName == null)
+        string sceneName = MenuSceneView.GameSceneNames[_currentCategory, gridIndex];
+        if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.Log("NDL: MenuScene - Game not implemented: col=" + col + " row=" + row);
+            Debug.Log("NDL: MenuScene - Game not implemented: category=" + _currentCategory + " grid=" + gridIndex);
             return;
         }
 
@@ -132,7 +140,7 @@ public class MenuSceneController : MonoBehaviour
         _selectedGameIndex = _selectedGames.Count > 0 ? gridIndex : -1;
         menuSceneView.SetStartButtonEnabled(_selectedGames.Count > 0);
 
-        Debug.Log("NDL: MenuScene - GameSelected: " + gridIndex + " (" + MenuSceneView.GameNames[col, row] + ")");
+        Debug.Log("NDL: MenuScene - GameSelected: " + gridIndex + " (" + MenuSceneView.GameNames[_currentCategory, gridIndex] + ")");
     }
 
     // ===== Random Selection =====
@@ -144,15 +152,12 @@ public class MenuSceneController : MonoBehaviour
         _selectedGames.Clear();
         List<int> implementedGames = new List<int>();
 
-        // Find all implemented games
-        for (int col = 0; col < MenuSceneView.COLS; col++)
+        // Find all implemented games in current category
+        for (int i = 0; i < MenuSceneView.MAX_GAMES_PER_PAGE; i++)
         {
-            for (int row = 0; row < MenuSceneView.ROWS; row++)
+            if (!string.IsNullOrEmpty(MenuSceneView.GameSceneNames[_currentCategory, i]))
             {
-                if (MenuSceneView.GameSceneNames[col, row] != null)
-                {
-                    implementedGames.Add(row * MenuSceneView.COLS + col);
-                }
+                implementedGames.Add(i);
             }
         }
 
@@ -167,9 +172,7 @@ public class MenuSceneController : MonoBehaviour
         menuSceneView.SetGameHighlights(_selectedGames);
         menuSceneView.SetStartButtonEnabled(true);
 
-        int col2 = picked % MenuSceneView.COLS;
-        int row2 = picked / MenuSceneView.COLS;
-        Debug.Log("NDL: MenuScene - RandomSelected: " + MenuSceneView.GameNames[col2, row2]);
+        Debug.Log("NDL: MenuScene - RandomSelected: " + MenuSceneView.GameNames[_currentCategory, picked]);
     }
 
     // ===== Start =====
@@ -178,17 +181,14 @@ public class MenuSceneController : MonoBehaviour
     {
         if (_selectedGames.Count == 0) return;
 
-        // Load the selected game
-        int gameIdx = -1;
+        int gridIndex = -1;
         foreach (int idx in _selectedGames)
         {
-            gameIdx = idx;
+            gridIndex = idx;
             break;
         }
 
-        int col = gameIdx % MenuSceneView.COLS;
-        int row = gameIdx / MenuSceneView.COLS;
-        string sceneName = MenuSceneView.GameSceneNames[col, row];
+        string sceneName = MenuSceneView.GameSceneNames[_currentCategory, gridIndex];
 
         if (sceneName == null)
         {

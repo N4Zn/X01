@@ -49,6 +49,19 @@ public class GameSessionManager : Singleton<GameSessionManager>
     public int Player1FinalScore { get; set; }
     public int Player2FinalScore { get; set; }
 
+    /// <summary>
+    /// Calculated target score based on GameSettings (1 point per 5 seconds).
+    /// </summary>
+    public int TargetScore
+    {
+        get
+        {
+            if (GameSettings.Instance != null)
+                return GameSettings.Instance.GameTime / 5;
+            return 10; // Default fallback
+        }
+    }
+
     // New: team data from Scene #2
     public string BlueTeamName { get; set; }
     public string RedTeamName { get; set; }
