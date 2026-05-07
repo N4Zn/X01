@@ -72,7 +72,7 @@ public class MenuSceneView : MonoBehaviour
         { "PlanetOrder", "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD"},
-        { "ListenSelect", "ChuCai", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" }
+        { "ListenSelect", "ChuCai", "SoDem", "Numbers", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" }
     };
 
     /// <summary>
@@ -85,7 +85,7 @@ public class MenuSceneView : MonoBehaviour
         { "PlanetOrderGame", "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { "ListenGame", "ChuCaiGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null }
+        { "ListenGame", "ChuCaiGame", "SoDemGame", "NumbersGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null }
     };
 
     public void InitView()

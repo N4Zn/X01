@@ -17,8 +17,8 @@ public class ChuCaiController : MonoBehaviour
     private Coroutine _p2FeedbackCoroutine;
     private Coroutine _audioReminderCoroutine;
 
-    private float _feedbackDelay = 1.2f;
-    private float _audioInterval = 3f;
+    private float _feedbackDelay = 1.0f;
+    private float _audioInterval = 4f;
 
     void Start()
     {
@@ -122,22 +122,23 @@ public class ChuCaiController : MonoBehaviour
     {
         while (GetState() == ChuCaiState.Playing)
         {
-            PlayLetterAudio(letter);
-            yield return new WaitForSeconds(_audioInterval);
-        }
-    }
+            AudioClip clip = Resources.Load<AudioClip>("Audio/ChuCai/" + letter);
+            float clipLen = (clip != null) ? clip.length : 0f;
 
-    private void PlayLetterAudio(string letter)
-    {
-        AudioClip clip = Resources.Load<AudioClip>("Audio/ChuCai/" + letter);
-        if (clip != null)
-        {
-            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+            if (clip != null)
+            {
+                MusicManager.Instance.SetMusicVolumeMultiplier(0.5f);
+                yield return new WaitForSeconds(0.5f);
+                AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+                yield return new WaitForSeconds(clipLen);
+                yield return new WaitForSeconds(0.5f);
+                MusicManager.Instance.SetMusicVolumeMultiplier(1f);
+            }
+
+            float waitTime = Mathf.Max(0.1f, _audioInterval - clipLen - 1.0f); // Subtract the 1s padding (0.5 + 0.5)
+            yield return new WaitForSeconds(waitTime);
         }
-        else
-        {
-            Debug.LogWarning("Missing audio for letter: " + letter);
-        }
+        MusicManager.Instance.SetMusicVolumeMultiplier(1f);
     }
 
     private void OnBoxTapped(int playerIndex, int boxIndex)

@@ -184,7 +184,7 @@ public class ChuCaiView : MonoBehaviour
 
                 RotateEffect rotate = imgs[i].gameObject.GetComponent<RotateEffect>();
                 if (rotate == null) rotate = imgs[i].gameObject.AddComponent<RotateEffect>();
-                rotate.rotationSpeed = UnityEngine.Random.Range(10f, 25f);
+                rotate.rotationSpeed = UnityEngine.Random.Range(5f, 50f);
             }
             if (txts[i] != null)
             {

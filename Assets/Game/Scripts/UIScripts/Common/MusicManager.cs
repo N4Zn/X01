@@ -55,6 +55,16 @@ public class MusicManager : Singleton<MusicManager>
         _sfxSource.volume = gs.SfxVolume;
     }
 
+    /// <summary>
+    /// Temporarily multiply BGM volume (e.g. 0.5f for ducking)
+    /// </summary>
+    public void SetMusicVolumeMultiplier(float multiplier)
+    {
+        if (_bgmSource == null) return;
+        float baseVol = GameSettings.Instance != null ? GameSettings.Instance.MusicVolume : 1f;
+        _bgmSource.volume = baseVol * multiplier;
+    }
+
     // ===== BGM =====
 
     /// <summary>
