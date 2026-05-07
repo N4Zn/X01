@@ -41,5 +41,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/PlanetAlphabetGame/PlanetAlphabetGame.unity
     guid: 6912dbda851621442b454f48eec09c3e
+  - enabled: 1
+    path: Assets/Game/Scenes/ChuCaiGame/ChuCaiGame.unity
+    guid: 3d1c1e9fb835410bbc7da5a899413057
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
