@@ -48,7 +48,7 @@ public class FeedbackEffect : MonoBehaviour
     {
         Vector3 basePos = transform.localPosition;
 
-        // Phase 1: Scale bounce in (0.3 → 1.4 → 1.0) over 0.25s — multiplied by BaseScale
+        // Phase 1: "Explosion" Pop (0 → 2.0 → 1.5) over 0.25s
         float bounceTime = 0.25f;
         float t = 0f;
         while (t < bounceTime)
@@ -56,18 +56,20 @@ public class FeedbackEffect : MonoBehaviour
             t += Time.deltaTime;
             float p = Mathf.Clamp01(t / bounceTime);
             float scale;
-            if (p < 0.5f)
-                scale = Mathf.Lerp(0.3f, 1.4f, p * 2f);
-            else
-                scale = Mathf.Lerp(1.4f, 1f, (p - 0.5f) * 2f);
-            transform.localScale = BaseScaleVec * scale;
+            if (p < 0.6f) // Rapidly expand to 2.0 (60% of time)
+                scale = Mathf.Lerp(0f, 2.0f, p / 0.6f);
+            else // Shrink back to 1.5 (40% of time)
+                scale = Mathf.Lerp(2.0f, 1.5f, (p - 0.6f) / 0.4f);
+
+            transform.localScale = Vector3.one * scale;
             yield return null;
         }
-        transform.localScale = BaseScaleVec;
+        transform.localScale = Vector3.one * 1.5f;
 
         // Phase 2: Shake (wrong) or Pulse (correct)
-        float holdTime = duration - 0.55f;
-        if (holdTime < 0.3f) holdTime = 0.3f;
+        // If duration is short (like 0.25s for wrong answer), skip further phases
+        float holdTime = duration - bounceTime;
+        if (holdTime <= 0) { _activeRoutine = null; yield break; }
 
         if (!isCorrect)
         {

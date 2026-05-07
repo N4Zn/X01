@@ -8,7 +8,7 @@ public class ListenSelectModel
     public float GameTimer { get; set; }
     public float MaxGameTime { get; set; }
 
-    public string[] TargetLetters; // [playerIdx]
+    public string TargetLetter; // Shared target
     public string[][] Values;      // [playerIdx][boxIdx]
     public int[] BoxCount;        // [playerIdx]
 
@@ -18,23 +18,24 @@ public class ListenSelectModel
         Player2Score = 0;
         MaxGameTime = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 100f;
         GameTimer = MaxGameTime;
-        TargetLetters = new string[2];
+        TargetLetter = "";
         Values = new string[2][];
         BoxCount = new int[] { 3, 3 };
     }
 
-    public int GetBoxCountForDifficulty(int playerIndex)
+    public int GetBoxCountForDifficulty()
     {
-        int score = (playerIndex == 0) ? Player1Score : Player2Score;
-        if (score >= 8) return 5;
-        if (score >= 4) return 4;
+        int avgScore = (Player1Score + Player2Score) / 2;
+        if (avgScore >= 8) return 5;
+        if (avgScore >= 4) return 4;
         return 3;
     }
 
-    public void GenerateRound(int playerIndex)
+    public void GenerateRound()
     {
-        int count = GetBoxCountForDifficulty(playerIndex);
-        BoxCount[playerIndex] = count;
+        int count = GetBoxCountForDifficulty();
+        BoxCount[0] = count;
+        BoxCount[1] = count;
 
         List<char> pool = new List<char>();
         for (char c = 'A'; c <= 'Z'; c++) pool.Add(c);
@@ -46,28 +47,64 @@ public class ListenSelectModel
             char tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
         }
 
-        // Target is the first one
         char target = pool[0];
-        TargetLetters[playerIndex] = target.ToString();
+        TargetLetter = target.ToString();
 
-        // Values contains target and count-1 distractors
+        // Generate same set of letters for both players to be fair
         List<string> roundValues = new List<string>();
-        for (int i = 0; i < count; i++) roundValues.Add(pool[i].ToString());
+        roundValues.Add(TargetLetter);
 
-        // Shuffle round values so target isn't always at index 0
-        for (int i = roundValues.Count - 1; i > 0; i--)
+        int addedCount = 1;
+        int poolIdx = 1;
+        while (addedCount < count && poolIdx < pool.Count)
         {
-            int j = Random.Range(0, i + 1);
-            string tmp = roundValues[i]; roundValues[i] = roundValues[j]; roundValues[j] = tmp;
+            char candidate = pool[poolIdx];
+            bool skip = false;
+
+            // Check if adding this candidate violates I/Y rule
+            if (candidate == 'I' || candidate == 'Y')
+            {
+                foreach (string val in roundValues)
+                {
+                    if ((candidate == 'I' && val == "Y") || (candidate == 'Y' && val == "I"))
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!skip)
+            {
+                roundValues.Add(candidate.ToString());
+                addedCount++;
+            }
+            poolIdx++;
         }
 
-        Values[playerIndex] = roundValues.ToArray();
+        // For Player 1
+        List<string> p1List = new List<string>(roundValues);
+        Shuffle(p1List);
+        Values[0] = p1List.ToArray();
+
+        // For Player 2
+        List<string> p2List = new List<string>(roundValues);
+        Shuffle(p2List);
+        Values[1] = p2List.ToArray();
+    }
+
+    private void Shuffle(List<string> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            string tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+        }
     }
 
     public bool CheckTap(int playerIndex, int boxIndex)
     {
-        if (boxIndex < 0 || boxIndex >= Values[playerIndex].Length) return false;
-        return Values[playerIndex][boxIndex] == TargetLetters[playerIndex];
+        return Values[playerIndex][boxIndex] == TargetLetter;
     }
 
     public void ResetGame()

@@ -967,7 +967,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &311113856
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1163,8 +1163,6 @@ MonoBehaviour:
   retryButton: {fileID: 1811670690}
   p1BarNameText: {fileID: 535761681}
   p2BarNameText: {fileID: 188239377}
-  p1TargetText: {fileID: 628466903}
-  p2TargetText: {fileID: 583484637}
   p1ScoreBarFill: {fileID: 372918371}
   p2ScoreBarFill: {fileID: 773122502}
   p1ScoreLabel: {fileID: 248225110}
@@ -1980,7 +1978,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &583484635
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2336,7 +2334,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &628466901
 RectTransform:
   m_ObjectHideFlags: 0

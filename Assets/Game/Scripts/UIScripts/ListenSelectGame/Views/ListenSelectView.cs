@@ -17,11 +17,9 @@ public class ListenSelectView : MonoBehaviour
     [SerializeField] private Text gameOverResultText;
     [SerializeField] private Button retryButton;
 
-    [Header("=== Team Bar Names & Targets ===")]
+    [Header("=== Team Bar Names ===")]
     [SerializeField] private Text p1BarNameText;
     [SerializeField] private Text p2BarNameText;
-    [SerializeField] private Text p1TargetText; // To show "Find: A"
-    [SerializeField] private Text p2TargetText; // To show "Find: A"
 
     [Header("=== Score ===")]
     [SerializeField] private Image p1ScoreBarFill;
@@ -96,12 +94,6 @@ public class ListenSelectView : MonoBehaviour
         if (p2BarNameText != null) p2BarNameText.text = p2;
     }
 
-    public void SetTargetText(int playerIndex, string letter)
-    {
-        Text targetTxt = (playerIndex == 0) ? p1TargetText : p2TargetText;
-        if (targetTxt != null) targetTxt.text = "Find: " + letter;
-    }
-
     public void UpdateTimer(float time)
     {
         if (timerText != null) timerText.text = Mathf.CeilToInt(time).ToString();
@@ -151,37 +143,48 @@ public class ListenSelectView : MonoBehaviour
         float halfLeft = (playerIndex == 0) ? 0.04f : 0.54f;
         float halfRight = (playerIndex == 0) ? 0.46f : 0.96f;
         float yMin = 0.10f;
-        float yMax = 0.80f;
+        float yMax = 0.85f;
 
-        float sizeScale = (count <= 3) ? 1.1f : 0.9f;
-        float baseW = 0.18f * sizeScale;
-        float baseH = 0.31f * sizeScale;
+        float sizeScale = (count <= 3) ? 1f : (count == 4) ? 0.85f : 0.75f;
+        float baseBoxW = 0.18f * sizeScale;
+        float baseBoxH = 0.31f * sizeScale;
 
-        Vector2[] pos = GenerateRandomPositions(count, halfLeft, halfRight, yMin, yMax, baseW, baseH);
+        float[] boxWs = new float[count];
+        float[] boxHs = new float[count];
+        for (int i = 0; i < count; i++)
+        {
+            float s = UnityEngine.Random.Range(0.9f, 1.1f);
+            boxWs[i] = baseBoxW * s;
+            boxHs[i] = baseBoxH * s;
+        }
+
+        Vector2[] positions = GenerateRandomPositions(count, halfLeft, halfRight, yMin, yMax, boxWs, boxHs);
 
         for (int i = 0; i < count; i++)
         {
             if (btns[i] != null)
             {
                 RectTransform rt = btns[i].GetComponent<RectTransform>();
-                rt.anchorMin = pos[i];
-                rt.anchorMax = pos[i] + new Vector2(baseW, baseH);
+                rt.anchorMin = new Vector2(positions[i].x, positions[i].y);
+                rt.anchorMax = new Vector2(positions[i].x + boxWs[i], positions[i].y + boxHs[i]);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
                 FloatingEffect fe = btns[i].gameObject.GetComponent<FloatingEffect>();
                 if (fe == null) fe = btns[i].gameObject.AddComponent<FloatingEffect>();
-                fe.amplitude = UnityEngine.Random.Range(5f, 15f);
-                fe.speed = UnityEngine.Random.Range(1f, 2.5f);
+                fe.amplitude = UnityEngine.Random.Range(5f, 12f);
+                fe.speed = UnityEngine.Random.Range(1f, 2f);
                 fe.ResetStartPos();
             }
             if (imgs[i] != null && planetSprites != null && planetSprites.Length > 0)
             {
                 imgs[i].sprite = planetSprites[UnityEngine.Random.Range(0, planetSprites.Length)];
+                imgs[i].preserveAspect = true;
                 imgs[i].raycastTarget = true;
-                RotateEffect re = imgs[i].gameObject.GetComponent<RotateEffect>();
-                if (re == null) re = imgs[i].gameObject.AddComponent<RotateEffect>();
-                re.rotationSpeed = UnityEngine.Random.Range(15f, 35f);
+
+                RotateEffect rotate = imgs[i].gameObject.GetComponent<RotateEffect>();
+                if (rotate == null) rotate = imgs[i].gameObject.AddComponent<RotateEffect>();
+                rotate.rotationSpeed = UnityEngine.Random.Range(10f, 25f);
             }
             if (txts[i] != null)
             {
@@ -193,15 +196,38 @@ public class ListenSelectView : MonoBehaviour
         }
     }
 
-    private Vector2[] GenerateRandomPositions(int count, float xMin, float xMax, float yMin, float yMax, float w, float h)
+    private Vector2[] GenerateRandomPositions(int count, float xMin, float xMax, float yMin, float yMax, float[] boxWs, float[] boxHs)
     {
         Vector2[] result = new Vector2[count];
+        float areaW = xMax - xMin;
+        float areaH = yMax - yMin;
+
+        float[][,] layouts3 = new float[][,]
+        {
+            new float[,] { {0.15f, 0.75f}, {0.50f, 0.25f}, {0.85f, 0.70f} },
+            new float[,] { {0.20f, 0.25f}, {0.80f, 0.25f}, {0.50f, 0.75f} }
+        };
+        float[][,] layouts4 = new float[][,]
+        {
+            new float[,] { {0.20f, 0.25f}, {0.80f, 0.25f}, {0.20f, 0.75f}, {0.80f, 0.75f} },
+            new float[,] { {0.50f, 0.15f}, {0.15f, 0.50f}, {0.85f, 0.50f}, {0.50f, 0.85f} }
+        };
+        float[][,] layouts5 = new float[][,]
+        {
+            new float[,] { {0.20f, 0.20f}, {0.80f, 0.20f}, {0.50f, 0.50f}, {0.20f, 0.80f}, {0.80f, 0.80f} },
+            new float[,] { {0.50f, 0.15f}, {0.15f, 0.42f}, {0.85f, 0.42f}, {0.25f, 0.80f}, {0.75f, 0.80f} }
+        };
+
+        float[][,] pool = (count <= 3) ? layouts3 : (count == 4) ? layouts4 : layouts5;
+        float[,] layout = pool[UnityEngine.Random.Range(0, pool.Length)];
+
         for (int i = 0; i < count; i++)
         {
-            // Simple random for now, ideally use grid/layout to avoid overlap
-            float rx = UnityEngine.Random.Range(xMin, xMax - w);
-            float ry = UnityEngine.Random.Range(yMin, yMax - h);
-            result[i] = new Vector2(rx, ry);
+            float cx = xMin + layout[i, 0] * areaW;
+            float cy = yMin + layout[i, 1] * areaH;
+            float x = Mathf.Clamp(cx - boxWs[i] * 0.5f, xMin, xMax - boxWs[i]);
+            float y = Mathf.Clamp(cy - boxHs[i] * 0.5f, yMin, yMax - boxHs[i]);
+            result[i] = new Vector2(x, y);
         }
         return result;
     }

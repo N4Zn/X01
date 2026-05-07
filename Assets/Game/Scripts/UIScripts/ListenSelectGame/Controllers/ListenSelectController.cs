@@ -15,8 +15,10 @@ public class ListenSelectController : MonoBehaviour
     private ListenSelectModel _model;
     private Coroutine _p1FeedbackCoroutine;
     private Coroutine _p2FeedbackCoroutine;
+    private Coroutine _audioReminderCoroutine;
 
     private float _feedbackDelay = 1.2f;
+    private float _audioInterval = 3f;
 
     void Start()
     {
@@ -71,7 +73,7 @@ public class ListenSelectController : MonoBehaviour
         if (tutorialPanel != null)
         {
             tutorialPanel.OnStartGame += StartGame;
-            tutorialPanel.ShowPlaceholder("Hướng dẫn: Listen & Select\nNghe hoặc nhìn chữ cái yêu cầu và chọn đúng hành tinh!");
+            tutorialPanel.ShowPlaceholder("Hướng dẫn: Listen & Select\nNghe âm thanh phát ra và chọn đúng hành tinh!");
         }
         else StartGame();
     }
@@ -84,9 +86,8 @@ public class ListenSelectController : MonoBehaviour
     private void StartGame()
     {
         gameView.UpdateScores(0, 0);
-        LoadNewRound(0);
-        LoadNewRound(1);
-        _fsm.StateMachineChange(ListenSelectState.Playing);
+        _fsm.StateMachineChange(ListenSelectState.Playing); // Chuyển sang Playing trước
+        LoadNewRound();
         MusicManager.Instance.PlayGameplayMusic();
     }
 
@@ -101,25 +102,36 @@ public class ListenSelectController : MonoBehaviour
 
     // ===== Logic =====
 
-    private void LoadNewRound(int playerIndex)
+    private void LoadNewRound()
     {
-        _model.GenerateRound(playerIndex);
-        gameView.HideFeedback(playerIndex);
-        gameView.SetTargetText(playerIndex, _model.TargetLetters[playerIndex]);
-        gameView.ShowBoxes(playerIndex, _model.Values[playerIndex]);
-        gameView.SetPlayerInteractable(playerIndex, true);
+        _model.GenerateRound();
+        gameView.HideFeedback();
 
-        // Play Audio for the letter
-        PlayLetterAudio(_model.TargetLetters[playerIndex]);
+        gameView.ShowBoxes(0, _model.Values[0]);
+        gameView.ShowBoxes(1, _model.Values[1]);
+
+        gameView.SetPlayerInteractable(0, true);
+        gameView.SetPlayerInteractable(1, true);
+
+        // Start repeating audio reminder
+        if (_audioReminderCoroutine != null) StopCoroutine(_audioReminderCoroutine);
+        _audioReminderCoroutine = StartCoroutine(AudioReminderRoutine(_model.TargetLetter));
+    }
+
+    private IEnumerator AudioReminderRoutine(string letter)
+    {
+        while (GetState() == ListenSelectState.Playing)
+        {
+            PlayLetterAudio(letter);
+            yield return new WaitForSeconds(_audioInterval);
+        }
     }
 
     private void PlayLetterAudio(string letter)
     {
-        // Path: Assets/Game/Resources/Audio/Letters/A.mp3
         AudioClip clip = Resources.Load<AudioClip>("Audio/Letters/" + letter);
         if (clip != null)
         {
-            // Assuming MusicManager has a generic PlaySfx(AudioClip) or we use a temporary source
             AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
         }
         else
@@ -135,51 +147,59 @@ public class ListenSelectController : MonoBehaviour
         bool correct = _model.CheckTap(playerIndex, boxIndex);
         if (correct)
         {
+            // Stop reminder as soon as someone wins
+            if (_audioReminderCoroutine != null) { StopCoroutine(_audioReminderCoroutine); _audioReminderCoroutine = null; }
+
             MusicManager.Instance.PlayCorrectSfx();
             gameView.SetBoxCorrect(playerIndex, boxIndex);
+
             if (playerIndex == 0) _model.Player1Score++; else _model.Player2Score++;
             gameView.UpdateScores(_model.Player1Score, _model.Player2Score);
             gameView.ShowFeedback(playerIndex, true);
 
-            if (playerIndex == 0)
-            {
-                if (_p1FeedbackCoroutine != null) StopCoroutine(_p1FeedbackCoroutine);
-                _p1FeedbackCoroutine = StartCoroutine(NextRoundRoutine(playerIndex));
-            }
-            else
-            {
-                if (_p2FeedbackCoroutine != null) StopCoroutine(_p2FeedbackCoroutine);
-                _p2FeedbackCoroutine = StartCoroutine(NextRoundRoutine(playerIndex));
-            }
+            // First player correct ends the round for both
+            gameView.SetPlayerInteractable(0, false);
+            gameView.SetPlayerInteractable(1, false);
+
+            if (_p1FeedbackCoroutine != null) StopCoroutine(_p1FeedbackCoroutine);
+            _p1FeedbackCoroutine = StartCoroutine(NextRoundRoutine());
         }
         else
         {
             MusicManager.Instance.PlayWrongSfx();
             gameView.SetBoxWrong(playerIndex, boxIndex);
             gameView.ShowFeedback(playerIndex, false);
-            // Optionally reset round or just wait
+
+            // Hiện wrong icon trong 0.2s rồi tắt
+            StartCoroutine(HideWrongFeedbackRoutine(playerIndex));
         }
     }
 
-    private IEnumerator NextRoundRoutine(int playerIndex)
+    private IEnumerator HideWrongFeedbackRoutine(int playerIndex)
     {
-        gameView.SetPlayerInteractable(playerIndex, false);
+        yield return new WaitForSeconds(0.25f);
+        gameView.HideFeedback(playerIndex);
+    }
+
+    private IEnumerator NextRoundRoutine()
+    {
         yield return new WaitForSeconds(_feedbackDelay);
         if (GetState() != ListenSelectState.Playing) yield break;
 
-        // Team mode countdown logic if needed
         if (GameSessionManager.Instance != null && GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
         {
-            gameView.HideFeedback(playerIndex);
-            gameView.HideAllBoxes(); // Simplified for now
+            gameView.HideFeedback();
+            gameView.HideAllBoxes();
             for (int i = 2; i >= 1; i--)
             {
-                gameView.ShowCountdown(playerIndex, i);
+                gameView.ShowCountdown(0, i);
+                gameView.ShowCountdown(1, i);
                 yield return new WaitForSeconds(1f);
             }
-            gameView.HideCountdown(playerIndex);
+            gameView.HideCountdown(0);
+            gameView.HideCountdown(1);
         }
 
-        LoadNewRound(playerIndex);
+        LoadNewRound();
     }
 }
