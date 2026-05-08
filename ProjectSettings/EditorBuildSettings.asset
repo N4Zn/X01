@@ -50,5 +50,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/NumbersGame/NumbersGame.unity
     guid: 15eb8aade9d9468d9b0d339316e8cef7
+  - enabled: 1
+    path: Assets/Game/Scenes/ListenGame/ListenGame.unity
+    guid: 1e6d30a886eff7b44982a6b0cbc3b778
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
