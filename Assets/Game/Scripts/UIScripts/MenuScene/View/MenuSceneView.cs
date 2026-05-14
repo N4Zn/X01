@@ -67,7 +67,7 @@ public class MenuSceneView : MonoBehaviour
     /// </summary>
     public static readonly string[,] GameNames = new string[CATEGORY_COUNT, MAX_GAMES_PER_PAGE]
     {
-        { "AddUp", "NumberAddUp", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
+        { "AddUp", "NumberAddUp", "AddNumber", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "TrainPath", "PathFinder", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "PlanetOrder", "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
@@ -80,7 +80,7 @@ public class MenuSceneView : MonoBehaviour
     /// </summary>
     public static readonly string[,] GameSceneNames = new string[CATEGORY_COUNT, MAX_GAMES_PER_PAGE]
     {
-        { "AddUpGame", "NumberAddUpGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
+        { "AddUpGame", "NumberAddUpGame", "AddNumberGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { "TrainPathGame", "PathFinderGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { "PlanetOrderGame", "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
