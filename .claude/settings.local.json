@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/c/Users/ADMIN/AndroidStudioProjects/EduGame/edu-game\" && find Assets/Game/Scripts -type f -name \"*.cs\" | head -100)",
+      "Bash(cd \"/c/Users/ADMIN/AndroidStudioProjects/EduGame/edu-game\" && find Assets/MasterData -type d | sort)",
+      "Bash(cd \"/c/Users/ADMIN/AndroidStudioProjects/EduGame/edu-game\" && find Assets/Game/Scripts/UIScripts/AddUpGame -name \"*.cs\" -o -path \"*/TrainPathGame/*\" -name \"*.cs\" -o -path \"*/PathFinderGame/*\" -name \"*.cs\" -o -path \"*/TongHopGame/*\" -name \"*.cs\" 2>/dev/null | sort)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ADMIN\\\\AndroidStudioProjects\\\\EduGame\\\\edu-game\\\\Assets\\\\Game\\\\Scripts\\\\UIScripts\\\\\" -Recurse -File | Select-Object FullName)",
+      "Bash(findstr /n \"Math.Round\\\\|MathF.Round\" *.cs Logger\\\\*.cs Managers\\\\*.cs Display\\\\*.cs Items\\\\*.cs Data\\\\*.cs)",
+      "Bash(git add *)"
+    ]
+  }
+}

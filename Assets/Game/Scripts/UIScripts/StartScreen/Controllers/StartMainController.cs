@@ -80,7 +80,17 @@ public class StartMainController : MonoBehaviour
         
         // Wait a bit more to ensure all data is cached
         yield return new WaitForSeconds(1.0f);
-        
+
+        // Load TestTongHop runtime config (JSON editable on-device)
+        Debug.Log("NDL: Loading TongHopConfig...");
+        yield return TongHopConfig.Load();
+        Debug.Log("NDL: TongHopConfig loaded");
+
+        // Preload audio asset overrides từ persistentDataPath (nếu có)
+        Debug.Log("NDL: Preloading asset overrides...");
+        yield return AssetOverrideLoader.PreloadAudio();
+        Debug.Log("NDL: Asset overrides ready");
+
         // Verify AddUpMaster is loaded
         try
         {

@@ -1,0 +1,21 @@
+{
+    "matchingDeselectDelay": 2.0,
+    "chooseDeselectDelay": 2,
+    "weightFloating": 95,
+    "weightButton": 0,
+    "weightMatching": 5,
+    "orbitCenterX": 265.0,
+    "orbitRadius": 150.0,
+    "orbitSpeed": 8.0,
+    "floatingSize": 125.0,
+    "feedbackDelayCorrect": 1.2,
+    "feedbackDelayWrong": 2.0,
+    "nextQuestionDelay": 4,
+    "adaptiveDifficulty": true,
+    "correctStreakToLevelUp": 3,
+    "wrongStreakToLevelDown": 2,
+    "totalRounds": 50,
+    "difficulty": 1,
+    "difficultyMin": 1,
+    "difficultyMax": 10
+}

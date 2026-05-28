@@ -1,0 +1,268 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Tổ 1",
+    "playerRight": "Tổ 2",
+    "sessionDate": "2026-04-04",
+    "sessionTime": "06:14:54",
+    "durationSeconds": 111.19999694824219,
+    "scoreLeft": 3,
+    "scoreRight": 1,
+    "totalRounds": 4,
+    "rounds": [
+        {
+            "round": 1,
+            "questionId": "q04",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "isCorrect": true,
+            "winnerName": "Tổ 1",
+            "responseTimeSeconds": 26.399999618530275,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "clicks": [
+                {
+                    "time": "06:15:19.411",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:24.176",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:25.053",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:26.052",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 4,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "06:15:29.455",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:30.992",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:32.655",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:33.273",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 3,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:34.154",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 4,
+                    "result": "CorrectFinal"
+                }
+            ]
+        },
+        {
+            "round": 2,
+            "questionId": "q03",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "MultiSelect",
+            "isCorrect": true,
+            "winnerName": "Tổ 1",
+            "responseTimeSeconds": 9.109999656677246,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                6
+            ],
+            "clicks": [
+                {
+                    "time": "06:15:42.469",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:44.611",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:46.853",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:47.991",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 6,
+                    "result": "CorrectFinal"
+                }
+            ]
+        },
+        {
+            "round": 3,
+            "questionId": "q06",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "isCorrect": true,
+            "winnerName": "Tổ 2",
+            "responseTimeSeconds": 6.199999809265137,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "clicks": [
+                {
+                    "time": "06:15:56.570",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:57.731",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:58.370",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:59.190",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 3,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:15:59.820",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 4,
+                    "result": "CorrectFinal"
+                }
+            ]
+        },
+        {
+            "round": 4,
+            "questionId": "m02",
+            "topic": "Math",
+            "questionType": "Choose",
+            "answerMode": "MultiSelect",
+            "isCorrect": true,
+            "winnerName": "Tổ 1",
+            "responseTimeSeconds": 21.34000015258789,
+            "correctAnswers": [
+                0,
+                4,
+                5
+            ],
+            "clicks": [
+                {
+                    "time": "06:16:11.552",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 5,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:16:14.181",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 5,
+                    "result": "Deselected"
+                },
+                {
+                    "time": "06:16:14.388",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 4,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:16:16.349",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 5,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:16:21.559",
+                    "playerName": "Tổ 2",
+                    "side": "Right",
+                    "answerIndex": 3,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "06:16:24.468",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 5,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:16:26.514",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 4,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "06:16:26.697",
+                    "playerName": "Tổ 1",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectFinal"
+                }
+            ]
+        }
+    ]
+}

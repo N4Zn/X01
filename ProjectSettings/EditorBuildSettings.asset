@@ -56,5 +56,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/AddNumberGame/AddNumberGame.unity
     guid: b65b82366252e1e429fae3a00d7a81c3
+  - enabled: 1
+    path: Assets/Game/Scenes/TongHopGame/TongHopGame.unity
+    guid: a77b82366252e1e429fae3a00d7a81d4
+  - enabled: 1
+    path: Assets/Game/Scenes/TestTongHopGame/TestTongHopGame.unity
+    guid: f45d80488b08f2b47a5cefd002fca317
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

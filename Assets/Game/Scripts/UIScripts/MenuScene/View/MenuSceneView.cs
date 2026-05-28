@@ -72,7 +72,7 @@ public class MenuSceneView : MonoBehaviour
         { "PlanetOrder", "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
         { "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD"},
-        { "ListenSelect", "ChuCai", "SoDem", "Numbers", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" }
+        { "ListenSelect", "ChuCai", "SoDem", "Numbers", "TongHop", "TestTongHop", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" }
     };
 
     /// <summary>
@@ -85,7 +85,7 @@ public class MenuSceneView : MonoBehaviour
         { "PlanetOrderGame", "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
         { null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { "ListenGame", "ChuCaiGame", "SoDemGame", "NumbersGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null }
+        { "ListenGame", "ChuCaiGame", "SoDemGame", "NumbersGame", "TongHopGame", "TestTongHopGame", null, null, null, null, null, null, null, null, null, null, null, null }
     };
 
     public void InitView()
@@ -288,17 +288,13 @@ public class MenuSceneView : MonoBehaviour
                     }
 
                     _gameIcons[i].sprite = loadedSprite;
-                    Color c = _gameIcons[i].color;
-                    c.a = 1f;
-                    _gameIcons[i].color = c;
+                    _gameIcons[i].color = Color.white;   // reset toàn bộ RGBA — tránh bake màu cũ từ SceneBuilder
                 }
                 else
                 {
                     // If "???", you can set a default "Locked" or "Question" sprite if you have one
                     // _gameIcons[i].sprite = defaultLockedSprite;
-                    Color c = _gameIcons[i].color;
-                    c.a = 0.35f;
-                    _gameIcons[i].color = c;
+                    _gameIcons[i].color = new Color(1f, 1f, 1f, 0.35f);   // reset RGB về white, chỉ giảm alpha
                 }
             }
 

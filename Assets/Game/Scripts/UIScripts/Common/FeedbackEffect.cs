@@ -25,7 +25,10 @@ public class FeedbackEffect : MonoBehaviour
     /// <summary>
     /// Play feedback animation. Call after SetActive(true).
     /// </summary>
-    public void Play(bool isCorrect, float duration = 1.5f)
+    /// <param name="isCorrect">true = bounce+pulse, false = bounce+shake</param>
+    /// <param name="duration">Tổng thời gian animation (không tính fade out)</param>
+    /// <param name="withFadeOut">false = giữ nguyên icon sau animation, không tự fade</param>
+    public void Play(bool isCorrect, float duration = 1.5f, bool withFadeOut = true)
     {
         EnsureCanvasGroup();
         if (_activeRoutine != null) StopCoroutine(_activeRoutine);
@@ -34,7 +37,7 @@ public class FeedbackEffect : MonoBehaviour
         transform.localScale = BaseScaleVec;
         _canvasGroup.alpha = 1f;
 
-        _activeRoutine = StartCoroutine(RunEffect(isCorrect, duration));
+        _activeRoutine = StartCoroutine(RunEffect(isCorrect, duration, withFadeOut));
     }
 
     public void StopEffect()
@@ -44,7 +47,7 @@ public class FeedbackEffect : MonoBehaviour
         if (_canvasGroup != null) _canvasGroup.alpha = 1f;
     }
 
-    private IEnumerator RunEffect(bool isCorrect, float duration)
+    private IEnumerator RunEffect(bool isCorrect, float duration, bool withFadeOut)
     {
         Vector3 basePos = transform.localPosition;
 
@@ -104,16 +107,19 @@ public class FeedbackEffect : MonoBehaviour
             transform.localScale = BaseScaleVec;
         }
 
-        // Phase 3: Fade out over 0.3s
-        float fadeTime = 0.3f;
-        t = 0f;
-        while (t < fadeTime)
+        // Phase 3: Fade out over 0.3s (chỉ chạy nếu withFadeOut = true)
+        if (withFadeOut)
         {
-            t += Time.deltaTime;
-            float progress = Mathf.Clamp01(t / fadeTime);
-            _canvasGroup.alpha = 1f - progress;
-            transform.localScale = BaseScaleVec * Mathf.Lerp(1f, 0.6f, progress);
-            yield return null;
+            float fadeTime = 0.3f;
+            t = 0f;
+            while (t < fadeTime)
+            {
+                t += Time.deltaTime;
+                float progress = Mathf.Clamp01(t / fadeTime);
+                _canvasGroup.alpha = 1f - progress;
+                transform.localScale = BaseScaleVec * Mathf.Lerp(1f, 0.6f, progress);
+                yield return null;
+            }
         }
 
         // Reset — let controller handle SetActive(false)
