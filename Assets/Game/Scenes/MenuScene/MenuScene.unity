@@ -4574,6 +4574,7 @@ GameObject:
   - component: {fileID: 1255275347}
   - component: {fileID: 1255275346}
   - component: {fileID: 1255275345}
+  - component: {fileID: 1255275348}
   m_Layer: 0
   m_Name: MenuSceneRoot
   m_TagString: Untagged
@@ -4675,6 +4676,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1255275348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1255275344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a31351a59b8be4418f10eafe0a37089, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LauncherBehaviour
+  homeSceneName: MenuScene
+  keepScreenAwake: 1
 --- !u!1 &1258402909
 GameObject:
   m_ObjectHideFlags: 0

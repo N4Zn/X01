@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,7 +30,7 @@ public class SoDemController : MonoBehaviour
 
         gameView.OnBoxTapped += OnBoxTapped;
         gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
-        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("HomeScene"); };
+        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnRetryClicked += () => { _fsm.StateMachineChange(SoDemState.Initialize); };
 
         gameView.SetPlayerNames(
@@ -73,7 +73,7 @@ public class SoDemController : MonoBehaviour
         if (tutorialPanel != null)
         {
             tutorialPanel.OnStartGame += StartGame;
-            tutorialPanel.ShowPlaceholder("Hướng dẫn: Số Đếm\nNghe âm thanh phát ra và chọn đúng hành tinh mang số đó!");
+            tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Sá»‘ Äáº¿m\nNghe Ã¢m thanh phÃ¡t ra vÃ  chá»n Ä‘Ãºng hÃ nh tinh mang sá»‘ Ä‘Ã³!");
         }
         else StartGame();
     }
@@ -171,7 +171,7 @@ public class SoDemController : MonoBehaviour
             gameView.SetBoxWrong(playerIndex, boxIndex);
             gameView.ShowFeedback(playerIndex, false);
 
-            // Hiện wrong icon trong 1s rồi tắt
+            // Hiá»‡n wrong icon trong 1s rá»“i táº¯t
             StartCoroutine(HideWrongFeedbackRoutine(playerIndex));
         }
     }

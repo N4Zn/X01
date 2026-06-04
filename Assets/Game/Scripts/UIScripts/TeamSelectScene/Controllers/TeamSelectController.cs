@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Controller for TeamSelect scene — manages class/player/team selection flow.
+/// Controller for TeamSelect scene â€” manages class/player/team selection flow.
 /// </summary>
 public class TeamSelectController : MonoBehaviour
 {
@@ -289,7 +289,7 @@ public class TeamSelectController : MonoBehaviour
 
     private void OnClickBack()
     {
-        SceneManager.LoadScene("HomeScene");
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnClickStart()
@@ -336,8 +336,8 @@ public class TeamSelectController : MonoBehaviour
         if (string.IsNullOrEmpty(_model.SelectedClassName))
         {
             // Create a default class first
-            DataManager.Instance.CreateClass("Lớp 1");
-            _model.SelectedClassName = "Lớp 1";
+            DataManager.Instance.CreateClass("Lá»›p 1");
+            _model.SelectedClassName = "Lá»›p 1";
             RefreshClassDropdown();
         }
 
@@ -365,7 +365,7 @@ public class TeamSelectController : MonoBehaviour
     {
         _stateBeforePanel = GetCurrentState();
 
-        string newName = "Lớp " + (DataManager.Instance.GetAllClassNames().Count + 1);
+        string newName = "Lá»›p " + (DataManager.Instance.GetAllClassNames().Count + 1);
         ClassData newClass = DataManager.Instance.CreateClass(newName);
         _model.SelectedClassName = newName;
 
@@ -649,7 +649,7 @@ public class TeamSelectController : MonoBehaviour
         // Validate: name is required
         if (string.IsNullOrEmpty(playerName) || string.IsNullOrEmpty(playerName.Trim()))
         {
-            teamSelectView.PanelPlayer.ShowNameError("Vui lòng nhập tên học sinh");
+            teamSelectView.PanelPlayer.ShowNameError("Vui lÃ²ng nháº­p tÃªn há»c sinh");
             return;
         }
 

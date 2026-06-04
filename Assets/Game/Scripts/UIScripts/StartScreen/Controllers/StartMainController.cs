@@ -109,7 +109,8 @@ public class StartMainController : MonoBehaviour
             Debug.LogWarning($"NDL: AddUpMaster verification error: {ex.Message}");
         }
         
-        SceneManager.LoadScene("HomeScene");
+        // EduXplore 2.0: skip HomeScene, go straight to game selection
+        SceneManager.LoadScene("MenuScene");
         yield return null;
     }
 

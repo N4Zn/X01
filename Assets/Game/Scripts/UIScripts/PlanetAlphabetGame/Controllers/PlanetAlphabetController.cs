@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Controller for PlanetAlphabet game.
-/// Split screen — each player has boxes with letters, tap in alphabetical order.
+/// Split screen â€” each player has boxes with letters, tap in alphabetical order.
 /// </summary>
 public class PlanetAlphabetController : MonoBehaviour
 {
@@ -42,7 +42,7 @@ public class PlanetAlphabetController : MonoBehaviour
 
         gameView.OnBoxTapped += OnBoxTapped;
         gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
-        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("HomeScene"); };
+        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnSettingClicked += () => { Debug.Log("PlanetAlphabet - Setting"); };
         gameView.OnRetryClicked += () => { gameView.HideGameOver(); _customFSMManager.StateMachineChange(PlanetAlphabetState.Initialize); };
 
@@ -91,7 +91,7 @@ public class PlanetAlphabetController : MonoBehaviour
         if (tutorialPanel != null)
         {
             tutorialPanel.OnStartGame += OnTutorialStart;
-            tutorialPanel.ShowPlaceholder("Hướng dẫn: Planet Alphabet\nNhấn các hành tinh theo thứ tự bảng chữ cái!");
+            tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Planet Alphabet\nNháº¥n cÃ¡c hÃ nh tinh theo thá»© tá»± báº£ng chá»¯ cÃ¡i!");
         }
         else { StartGame(); }
     }
@@ -125,7 +125,7 @@ public class PlanetAlphabetController : MonoBehaviour
     {
         _model.ResetGame();
         gameView.HideGameOver();
-        gameView.SetQuestionText("Nhấn theo thứ tự bảng chữ cái!");
+        gameView.SetQuestionText("Nháº¥n theo thá»© tá»± báº£ng chá»¯ cÃ¡i!");
         gameView.UpdateScores(0, 0);
         LoadNewRound(0);
         LoadNewRound(1);

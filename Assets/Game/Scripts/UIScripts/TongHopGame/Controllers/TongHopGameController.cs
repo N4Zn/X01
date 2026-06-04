@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -497,7 +497,7 @@ public class TongHopGameController : MonoBehaviour
     private void OnHomeClicked()
     {
         MusicManager.Instance.PlayMainMusic();
-        SceneManager.LoadScene("HomeScene");
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnSettingClicked()

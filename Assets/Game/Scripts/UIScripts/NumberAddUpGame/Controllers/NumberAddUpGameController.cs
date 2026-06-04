@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 using MasterData;
 
 /// <summary>
-/// Controller for NumberAddUp game — same logic as AddUp but displays numbers instead of items.
+/// Controller for NumberAddUp game â€” same logic as AddUp but displays numbers instead of items.
 /// Reuses AddUpMaster CSV data.
 /// </summary>
 public class NumberAddUpGameController : MonoBehaviour
@@ -321,14 +321,14 @@ public class NumberAddUpGameController : MonoBehaviour
 
         if (result == 1)
         {
-            // First correct pick — disable just this button; others stay clickable for second pick
+            // First correct pick â€” disable just this button; others stay clickable for second pick
             MusicManager.Instance.PlayCorrectSfx();
             gameView.SetCorrectAnswerBorder(playerIndex, answerIndex);
             gameView.SetAnswerButtonInteractable(playerIndex, answerIndex, false);
         }
         else if (result == 2)
         {
-            // Both correct — round complete
+            // Both correct â€” round complete
             MusicManager.Instance.PlayCorrectSfx();
             gameView.SetCorrectAnswerBorder(playerIndex, answerIndex);
             gameView.ShowFeedback(playerIndex, true);
@@ -417,7 +417,7 @@ public class NumberAddUpGameController : MonoBehaviour
     {
         Debug.Log("NDL: NumberAddUp - Home");
         MusicManager.Instance.PlayMainMusic();
-        SceneManager.LoadScene("HomeScene");
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnSettingClicked()

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Controller for PlanetOrder game.
-/// Split screen — each player has 3 boxes with numbers, tap in ascending order.
+/// Split screen â€” each player has 3 boxes with numbers, tap in ascending order.
 /// Both players play simultaneously (like AddUp).
 /// Correct round = +1 star + new round. Wrong tap = reset that player's round.
 /// Team mode: 3s countdown between rounds.
@@ -45,7 +45,7 @@ public class PlanetOrderController : MonoBehaviour
 
         gameView.OnBoxTapped += OnBoxTapped;
         gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
-        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("HomeScene"); };
+        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnSettingClicked += () => { Debug.Log("NDL: PlanetOrder - Setting"); };
         gameView.OnRetryClicked += () => { gameView.HideGameOver(); _customFSMManager.StateMachineChange(PlanetOrderState.Initialize); };
 
@@ -209,7 +209,7 @@ public class PlanetOrderController : MonoBehaviour
             }
             else
             {
-                // Partial progress — restart timeout so player still has a deadline for next tap
+                // Partial progress â€” restart timeout so player still has a deadline for next tap
                 StartQuestionTimeout(playerIndex);
             }
         }

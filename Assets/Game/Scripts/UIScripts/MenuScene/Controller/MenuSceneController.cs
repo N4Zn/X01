@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -28,6 +28,16 @@ public class MenuSceneController : MonoBehaviour
         menuSceneView.onClickHome += OnClickHome;
         menuSceneView.onClickSettings += OnClickSettings;
         menuSceneView.onClickStart += OnClickStart;
+
+        // Setting panel
+        menuSceneView.onSettingClose          += OnSettingClose;
+        menuSceneView.onSfxVolumeChanged      += OnSfxVolumeChanged;
+        menuSceneView.onMusicVolumeChanged    += OnMusicVolumeChanged;
+        menuSceneView.onSfxMuteToggle         += OnSfxMuteToggle;
+        menuSceneView.onMusicMuteToggle       += OnMusicMuteToggle;
+        menuSceneView.onGameTimeSelected      += OnGameTimeSelected;
+        menuSceneView.onFeedbackSpeedSelected += OnFeedbackSpeedSelected;
+        menuSceneView.onQuestionTimeoutSelected += OnQuestionTimeoutSelected;
 
         // Category & game
         menuSceneView.onCategorySelected += OnCategorySelected;
@@ -85,12 +95,73 @@ public class MenuSceneController : MonoBehaviour
     private void OnClickHome()
     {
         Debug.Log("NDL: MenuScene - OnClickHome - Loading HomeScene");
-        SceneManager.LoadScene("HomeScene");
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnClickSettings()
     {
         Debug.Log("NDL: MenuScene - OnClickSettings");
+        var gs = GameSettings.Instance;
+        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+        menuSceneView.ShowSettingPanel();
+    }
+
+    // ===== Setting Panel Handlers =====
+
+    private void OnSettingClose()
+    {
+        GameSettings.Instance.Save();
+        menuSceneView.HideSettingPanel();
+    }
+
+    private void OnSfxVolumeChanged(float volume)
+    {
+        GameSettings.Instance.SfxVolume = volume;
+        menuSceneView.UpdateSfxMuteLabel(volume <= 0f);
+        MusicManager.Instance.ApplyVolumes();
+    }
+
+    private void OnMusicVolumeChanged(float volume)
+    {
+        GameSettings.Instance.MusicVolume = volume;
+        menuSceneView.UpdateMusicMuteLabel(volume <= 0f);
+        MusicManager.Instance.ApplyVolumes();
+    }
+
+    private void OnSfxMuteToggle()
+    {
+        var gs = GameSettings.Instance;
+        gs.SfxVolume = gs.SfxVolume > 0f ? 0f : 1f;
+        menuSceneView.UpdateSfxMuteLabel(gs.SfxVolume <= 0f);
+        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+        MusicManager.Instance.ApplyVolumes();
+    }
+
+    private void OnMusicMuteToggle()
+    {
+        var gs = GameSettings.Instance;
+        gs.MusicVolume = gs.MusicVolume > 0f ? 0f : 1f;
+        menuSceneView.UpdateMusicMuteLabel(gs.MusicVolume <= 0f);
+        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+        MusicManager.Instance.ApplyVolumes();
+    }
+
+    private void OnGameTimeSelected(int seconds)
+    {
+        GameSettings.Instance.GameTime = seconds;
+        menuSceneView.SetTimeHighlight(seconds);
+    }
+
+    private void OnFeedbackSpeedSelected(FeedbackSpeed speed)
+    {
+        GameSettings.Instance.FeedbackSpeedSetting = speed;
+        menuSceneView.SetFeedbackHighlight(speed);
+    }
+
+    private void OnQuestionTimeoutSelected(int seconds)
+    {
+        GameSettings.Instance.QuestionTimeout = seconds;
+        menuSceneView.SetQuestionTimeoutHighlight(seconds);
     }
 
     // ===== Category =====

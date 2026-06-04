@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -412,14 +412,14 @@ public class AddUpGameController : MonoBehaviour
 
         if (result == 1)
         {
-            // First correct pick — highlight it, disable just this button (others stay clickable for second pick)
+            // First correct pick â€” highlight it, disable just this button (others stay clickable for second pick)
             MusicManager.Instance.PlayCorrectSfx();
             gameView.SetCorrectAnswerBorder(playerIndex, answerIndex);
             gameView.SetAnswerButtonInteractable(playerIndex, answerIndex, false);
         }
         else if (result == 2)
         {
-            // Second correct pick — round complete!
+            // Second correct pick â€” round complete!
             MusicManager.Instance.PlayCorrectSfx();
             gameView.SetCorrectAnswerBorder(playerIndex, answerIndex);
             gameView.ShowFeedback(playerIndex, true);
@@ -508,7 +508,7 @@ public class AddUpGameController : MonoBehaviour
     private void OnHomeClicked()
     {
         MusicManager.Instance.PlayMainMusic();
-        SceneManager.LoadScene("HomeScene");
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnSettingClicked()

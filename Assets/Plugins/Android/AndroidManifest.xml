@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.unity3d.player"
+          android:versionCode="1"
+          android:versionName="1.0">
+
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.VIBRATE" />
+
+  <application
+    android:label="@string/app_name"
+    android:icon="@mipmap/app_icon"
+    android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+    android:hardwareAccelerated="true">
+
+    <!--
+      EduXplore 2.0 — Floor Projection Launcher
+      Landscape locked, multi-touch, fullscreen.
+      Acts as Android HOME launcher — appears in launcher picker on install.
+      Dùng UnityPlayerActivity (class thực tế trong build Unity 2022.3 IL2CPP).
+    -->
+    <activity
+      android:name="com.unity3d.player.UnityPlayerActivity"
+      android:screenOrientation="landscape"
+      android:launchMode="singleTask"
+      android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
+      android:exported="true">
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+        <category android:name="android.intent.category.HOME" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+    </activity>
+
+  </application>
+</manifest>

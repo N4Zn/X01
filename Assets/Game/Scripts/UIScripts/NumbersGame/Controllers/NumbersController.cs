@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,7 +30,7 @@ public class NumbersController : MonoBehaviour
 
         gameView.OnBoxTapped += OnBoxTapped;
         gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
-        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("HomeScene"); };
+        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnRetryClicked += () => { _fsm.StateMachineChange(NumbersState.Initialize); };
 
         gameView.SetPlayerNames(
@@ -73,7 +73,7 @@ public class NumbersController : MonoBehaviour
         if (tutorialPanel != null)
         {
             tutorialPanel.OnStartGame += StartGame;
-            tutorialPanel.ShowPlaceholder("Hướng dẫn: Numbers\nListen to the number and choose the correct planet!");
+            tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Numbers\nListen to the number and choose the correct planet!");
         }
         else StartGame();
     }
@@ -171,7 +171,7 @@ public class NumbersController : MonoBehaviour
             gameView.SetBoxWrong(playerIndex, boxIndex);
             gameView.ShowFeedback(playerIndex, false);
 
-            // Hiện wrong icon trong 1s rồi tắt
+            // Hiá»‡n wrong icon trong 1s rá»“i táº¯t
             StartCoroutine(HideWrongFeedbackRoutine(playerIndex));
         }
     }

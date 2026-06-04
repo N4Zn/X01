@@ -41,14 +41,52 @@ public class MenuSceneView : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Text startButtonText;
 
+    [Header("=== Setting Panel ===")]
+    [SerializeField] private GameObject settingPanelRoot;
+    [SerializeField] private Button settingCloseButton;
+    [SerializeField] private Slider sfxVolumeSlider;
+    [SerializeField] private Button sfxMuteButton;
+    [SerializeField] private Text sfxMuteLabel;
+    [SerializeField] private Slider musicVolumeSlider;
+    [SerializeField] private Button musicMuteButton;
+    [SerializeField] private Text musicMuteLabel;
+    [SerializeField] private Button time60Button;
+    [SerializeField] private Button time90Button;
+    [SerializeField] private Button time120Button;
+    [SerializeField] private InputField timeCustomInput;
+    [SerializeField] private Image time60Highlight;
+    [SerializeField] private Image time90Highlight;
+    [SerializeField] private Image time120Highlight;
+    [SerializeField] private Button feedbackFastButton;
+    [SerializeField] private Button feedbackMediumButton;
+    [SerializeField] private Button feedbackSlowButton;
+    [SerializeField] private Image feedbackFastHighlight;
+    [SerializeField] private Image feedbackMediumHighlight;
+    [SerializeField] private Image feedbackSlowHighlight;
+    [SerializeField] private Button timeout10Button;
+    [SerializeField] private Button timeout15Button;
+    [SerializeField] private Button timeout20Button;
+    [SerializeField] private Image timeout10Highlight;
+    [SerializeField] private Image timeout15Highlight;
+    [SerializeField] private Image timeout20Highlight;
+
     // Events
     public event Action onClickBack = delegate { };
     public event Action onClickHome = delegate { };
     public event Action onClickSettings = delegate { };
-    public event Action<int> onCategorySelected = delegate { };     // 0-4
-    public event Action<int> onGameSelected = delegate { };         // 0-9 (grid index)
+    public event Action<int> onCategorySelected = delegate { };
+    public event Action<int> onGameSelected = delegate { };
     public event Action onClickRandomSelect = delegate { };
     public event Action onClickStart = delegate { };
+    // Setting panel events
+    public event Action onSettingClose = delegate { };
+    public event Action<float> onSfxVolumeChanged = delegate { };
+    public event Action<float> onMusicVolumeChanged = delegate { };
+    public event Action onSfxMuteToggle = delegate { };
+    public event Action onMusicMuteToggle = delegate { };
+    public event Action<int> onGameTimeSelected = delegate { };
+    public event Action<FeedbackSpeed> onFeedbackSpeedSelected = delegate { };
+    public event Action<int> onQuestionTimeoutSelected = delegate { };
 
     private Color _selectedGameColor = new Color(1f, 0.95f, 0.35f, 1f);    // bright yellow glow border
     private Color _unselectedGameColor = new Color(0f, 0f, 0f, 0f);        // fully transparent
@@ -96,6 +134,27 @@ public class MenuSceneView : MonoBehaviour
         if (settingsButton != null) settingsButton.onClick.AddListener(() => onClickSettings());
         if (startButton != null) startButton.onClick.AddListener(() => onClickStart());
         if (randomSelectButton != null) randomSelectButton.onClick.AddListener(() => onClickRandomSelect());
+
+        // Setting panel
+        if (settingCloseButton  != null) settingCloseButton.onClick.AddListener(() => onSettingClose());
+        if (sfxMuteButton       != null) sfxMuteButton.onClick.AddListener(() => onSfxMuteToggle());
+        if (musicMuteButton     != null) musicMuteButton.onClick.AddListener(() => onMusicMuteToggle());
+        if (sfxVolumeSlider     != null) sfxVolumeSlider.onValueChanged.AddListener(v => onSfxVolumeChanged(v));
+        if (musicVolumeSlider   != null) musicVolumeSlider.onValueChanged.AddListener(v => onMusicVolumeChanged(v));
+        if (time60Button        != null) time60Button.onClick.AddListener(() => onGameTimeSelected(60));
+        if (time90Button        != null) time90Button.onClick.AddListener(() => onGameTimeSelected(90));
+        if (time120Button       != null) time120Button.onClick.AddListener(() => onGameTimeSelected(120));
+        if (timeCustomInput     != null) timeCustomInput.onEndEdit.AddListener(val =>
+        {
+            if (int.TryParse(val, out int t) && t > 0) onGameTimeSelected(t);
+        });
+        if (feedbackFastButton   != null) feedbackFastButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Fast));
+        if (feedbackMediumButton != null) feedbackMediumButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Medium));
+        if (feedbackSlowButton   != null) feedbackSlowButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Slow));
+        if (timeout10Button     != null) timeout10Button.onClick.AddListener(() => onQuestionTimeoutSelected(10));
+        if (timeout15Button     != null) timeout15Button.onClick.AddListener(() => onQuestionTimeoutSelected(15));
+        if (timeout20Button     != null) timeout20Button.onClick.AddListener(() => onQuestionTimeoutSelected(20));
+        HideSettingPanel();
 
         // Category tabs
         if (categoryTabButtons != null)
@@ -412,5 +471,47 @@ public class MenuSceneView : MonoBehaviour
             if (img != null)
                 img.color = enabled ? Color.white : new Color(1f, 1f, 1f, 0.4f);
         }
+    }
+
+    // ===== Setting Panel =====
+
+    public void ShowSettingPanel() { if (settingPanelRoot != null) settingPanelRoot.SetActive(true); }
+    public void HideSettingPanel() { if (settingPanelRoot != null) settingPanelRoot.SetActive(false); }
+
+    public void UpdateSettingUI(float sfxVol, float musicVol, int gameTime, FeedbackSpeed speed, int questionTimeout)
+    {
+        if (sfxVolumeSlider   != null) sfxVolumeSlider.SetValueWithoutNotify(sfxVol);
+        if (musicVolumeSlider != null) musicVolumeSlider.SetValueWithoutNotify(musicVol);
+        UpdateSfxMuteLabel(sfxVol <= 0f);
+        UpdateMusicMuteLabel(musicVol <= 0f);
+        SetTimeHighlight(gameTime);
+        if (timeCustomInput != null)
+            timeCustomInput.text = (gameTime != 60 && gameTime != 90 && gameTime != 120) ? gameTime.ToString() : "";
+        SetFeedbackHighlight(speed);
+        SetQuestionTimeoutHighlight(questionTimeout);
+    }
+
+    public void UpdateSfxMuteLabel(bool isMuted)   { if (sfxMuteLabel   != null) sfxMuteLabel.text   = isMuted ? "ON" : "OFF"; }
+    public void UpdateMusicMuteLabel(bool isMuted) { if (musicMuteLabel != null) musicMuteLabel.text = isMuted ? "ON" : "OFF"; }
+
+    public void SetTimeHighlight(int gameTime)
+    {
+        if (time60Highlight  != null) time60Highlight.color  = gameTime == 60  ? Color.white : Color.clear;
+        if (time90Highlight  != null) time90Highlight.color  = gameTime == 90  ? Color.white : Color.clear;
+        if (time120Highlight != null) time120Highlight.color = gameTime == 120 ? Color.white : Color.clear;
+    }
+
+    public void SetFeedbackHighlight(FeedbackSpeed speed)
+    {
+        if (feedbackFastHighlight   != null) feedbackFastHighlight.color   = speed == FeedbackSpeed.Fast   ? Color.white : Color.clear;
+        if (feedbackMediumHighlight != null) feedbackMediumHighlight.color = speed == FeedbackSpeed.Medium ? Color.white : Color.clear;
+        if (feedbackSlowHighlight   != null) feedbackSlowHighlight.color   = speed == FeedbackSpeed.Slow   ? Color.white : Color.clear;
+    }
+
+    public void SetQuestionTimeoutHighlight(int seconds)
+    {
+        if (timeout10Highlight != null) timeout10Highlight.color = seconds == 10 ? Color.white : Color.clear;
+        if (timeout15Highlight != null) timeout15Highlight.color = seconds == 15 ? Color.white : Color.clear;
+        if (timeout20Highlight != null) timeout20Highlight.color = seconds == 20 ? Color.white : Color.clear;
     }
 }

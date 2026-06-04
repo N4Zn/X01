@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -120,7 +120,7 @@ public class CharacterSelectController : MonoBehaviour
     private void OnClickBack()
     {
         Debug.Log("NDL: CharacterSelect - Back to HomeScene");
-        SceneManager.LoadScene("HomeScene");
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void OnClickNext()

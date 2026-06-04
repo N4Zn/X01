@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,7 +30,7 @@ public class ListenSelectController : MonoBehaviour
 
         gameView.OnBoxTapped += OnBoxTapped;
         gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
-        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("HomeScene"); };
+        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnRetryClicked += () => { _fsm.StateMachineChange(ListenSelectState.Initialize); };
 
         gameView.SetPlayerNames(
@@ -73,7 +73,7 @@ public class ListenSelectController : MonoBehaviour
         if (tutorialPanel != null)
         {
             tutorialPanel.OnStartGame += StartGame;
-            tutorialPanel.ShowPlaceholder("Hướng dẫn: Listen & Select\nNghe âm thanh phát ra và chọn đúng hành tinh!");
+            tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Listen & Select\nNghe Ã¢m thanh phÃ¡t ra vÃ  chá»n Ä‘Ãºng hÃ nh tinh!");
         }
         else StartGame();
     }
@@ -86,7 +86,7 @@ public class ListenSelectController : MonoBehaviour
     private void StartGame()
     {
         gameView.UpdateScores(0, 0);
-        _fsm.StateMachineChange(ListenSelectState.Playing); // Chuyển sang Playing trước
+        _fsm.StateMachineChange(ListenSelectState.Playing); // Chuyá»ƒn sang Playing trÆ°á»›c
         LoadNewRound();
         MusicManager.Instance.PlayGameplayMusic();
     }
@@ -171,7 +171,7 @@ public class ListenSelectController : MonoBehaviour
             gameView.SetBoxWrong(playerIndex, boxIndex);
             gameView.ShowFeedback(playerIndex, false);
 
-            // Hiện wrong icon trong 0.2s rồi tắt
+            // Hiá»‡n wrong icon trong 0.2s rá»“i táº¯t
             StartCoroutine(HideWrongFeedbackRoutine(playerIndex));
         }
     }
