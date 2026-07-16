@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd313ac8e6ecba4468c8e39a5c09a2a2, type: 3}
+  m_Name: Jupiter
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetData
+  planetName: Jupiter
+  planetNameVi: "Sao M\u1ED9c"
+  descriptionVi: "H\xE0nh tinh l\u1EDBn nh\u1EA5t h\u1EC7 m\u1EB7t tr\u1EDDi. V\u1EBFt
+    \u0111\u1ECF l\u1EDBn l\xE0 c\u01A1n b\xE3o \u0111\xE3 k\xE9o d\xE0i h\xE0ng
+    tr\u0103m n\u0103m."
+  texturePath: SolarSystem/Textures/2k_jupiter
+  orbitRadius: 24
+  orbitSpeed: 1.3
+  selfRotateSpeed: 120
+  scale: 6
+  distanceFromSun: "778.5 tri\u1EC7u km"
+  diameter: 139,820 km
+  numberOfMoons: 95
+  surfaceTemp: "-108\xB0C (m\xE2y)"
+  hasSaturnRings: 0
+  isSun: 0
+  axialTilt: 3.1

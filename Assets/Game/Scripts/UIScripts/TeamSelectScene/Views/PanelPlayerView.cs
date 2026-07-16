@@ -65,7 +65,9 @@ public class PanelPlayerView : MonoBehaviour
     private int _selectedHairIndex = 0;
     private int _selectedGlassesIndex = -1;
     private int _selectedGender = 0; // 0=male, 1=female
-    private bool _showingHairTab = true;
+#pragma warning disable CS0414
+    private bool _showingHairTab = true;  // ghi để track tab, đọc khi UI expand
+#pragma warning restore CS0414
 
     public void InitPanel()
     {

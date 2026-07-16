@@ -659,7 +659,7 @@ public class AddNumberGameView : MonoBehaviour
         if (txt != null)
         {
             txt.resizeTextForBestFit = true;
-            txt.text = "Next question in " + seconds + "s";
+            txt.text = "Next in " + seconds + "s";
             txt.gameObject.SetActive(true);
         }
     }

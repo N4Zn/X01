@@ -26,21 +26,29 @@ public static class MenuSceneBuilder
     private static readonly Color BLUE_TEAM_COLOR = new Color(0.3f, 0.6f, 0.95f, 1f);
     private static readonly Color RED_TEAM_COLOR = new Color(0.95f, 0.35f, 0.35f, 1f);
 
-    // Category tab sprite names (order: Tinh toan, Phan tich, Hinh anh, Tri nho, Nhan biet)
+    // Category tab sprite names — 6 tab tương ứng GameRegistry.CATEGORY_COUNT.
+    // Nếu không có sprite riêng, builder sẽ dùng màu nền + text label.
     private static readonly string[] TAB_SPRITES = {
-        "tab_tinh_toan", "tab_phan_tich", "tab_hinh_anh", "tab_tri_nho", "tab_nhan_biet"
+        "tab_tinh_toan", "tab_phan_tich", "tab_hinh_anh",
+        "tab_tri_nho",   "tab_nhan_biet", "tab_nhan_biet"
     };
 
-    // Game icon sprites per category [col, row] — all same size
+    // Game icon sprites [col 0-5, row 0-3] cho 4 rows × 6 cols = 24 slot.
+    // Chỉ dùng khi build scene tĩnh; runtime UpdateGrid() load từ Resources/GameIcons/
     private static readonly string[,] GAME_ICON_SPRITES = {
-        { "icon_tinh_toan_2", "icon_tinh_toan_1" },
-        { "icon_phan_tich_1", "icon_phan_tich_2" },
-        { "icon_unknown", "icon_unknown" },
-        { "icon_unknown", "icon_unknown" },
-        { "icon_unknown", "icon_unknown" }
+        { "icon_tinh_toan_2", "icon_tinh_toan_1", "icon_unknown", "icon_unknown" },
+        { "icon_phan_tich_1", "icon_phan_tich_2", "icon_unknown", "icon_unknown" },
+        { "icon_unknown",     "icon_unknown",     "icon_unknown", "icon_unknown" },
+        { "icon_unknown",     "icon_unknown",     "icon_unknown", "icon_unknown" },
+        { "icon_unknown",     "icon_unknown",     "icon_unknown", "icon_unknown" },
+        { "icon_unknown",     "icon_unknown",     "icon_unknown", "icon_unknown" },
     };
 
-    [MenuItem("Tools/MenuScene/Build Menu Scene")]
+    /// <summary>
+    /// Tạo scene mới hoàn toàn từ đầu — MỌI chỉnh sửa thủ công trong Inspector sẽ BỊ MẤT.
+    /// Chỉ dùng lần đầu hoặc khi muốn reset hoàn toàn.
+    /// </summary>
+    [MenuItem("Tools/MenuScene/Build Menu Scene (Reset - Xoa chinh sua tay)")]
     public static void BuildMenuScene()
     {
         if (EditorApplication.isPlaying)
@@ -48,12 +56,178 @@ public static class MenuSceneBuilder
             Debug.LogError("MenuSceneBuilder: Cannot build scene while in Play mode.");
             return;
         }
+
+        bool confirm = EditorUtility.DisplayDialog(
+            "Xác nhận Reset Scene",
+            "Thao tác này sẽ XOÁ TOÀN BỘ chỉnh sửa thủ công trong MenuScene và build lại từ đầu.\n\nBạn có chắc không?",
+            "Xoá và build lại",
+            "Huỷ"
+        );
+        if (!confirm) return;
+
         EnsureFolders();
         BuildScene();
         AddSceneToBuildSettings(ScenePath);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("MenuSceneBuilder: finished generating MenuScene.");
+    }
+
+    /// <summary>
+    /// Chỉ wire lại references (script → UI objects) mà KHÔNG đụng vào vị trí/kích thước.
+    /// Dùng sau khi đã chỉnh layout thủ công — giữ nguyên mọi transform đã chỉnh.
+    /// </summary>
+    [MenuItem("Tools/MenuScene/Rewire References Only (Giu nguyen vi tri)")]
+    public static void RewireReferencesOnly()
+    {
+        if (EditorApplication.isPlaying)
+        {
+            Debug.LogError("MenuSceneBuilder: Cannot rewire while in Play mode.");
+            return;
+        }
+
+        if (!System.IO.File.Exists(ToAbsolutePath(ScenePath)))
+        {
+            Debug.LogWarning("MenuSceneBuilder: MenuScene chưa tồn tại. Chạy Build trước.");
+            return;
+        }
+
+        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+        // Tìm root objects
+        var root = GameObject.Find("MenuSceneRoot");
+        if (root == null) { Debug.LogError("Không tìm thấy MenuSceneRoot trong scene!"); return; }
+
+        var view       = root.GetComponent<MenuSceneView>();
+        var controller = root.GetComponent<MenuSceneController>();
+        if (view == null || controller == null)
+        {
+            Debug.LogError("Không tìm thấy MenuSceneView / MenuSceneController!"); return;
+        }
+
+        // Thu thập tabs
+        var tabButtonList = new System.Collections.Generic.List<Button>();
+        var tabImageList  = new System.Collections.Generic.List<Image>();
+        for (int i = 0; i < GameRegistry.CATEGORY_COUNT; i++)
+        {
+            var tabGo = GameObject.Find("CategoryTab_" + i);
+            if (tabGo != null)
+            {
+                tabButtonList.Add(tabGo.GetComponent<Button>());
+                tabImageList.Add(tabGo.GetComponent<Image>());
+            }
+        }
+
+        // Thu thập game slots
+        var slotList = new System.Collections.Generic.List<GameObject>();
+        for (int i = 0; i < GameRegistry.MAX_PER_CATEGORY; i++)
+        {
+            var slotGo = GameObject.Find("GameSlot_" + i);
+            if (slotGo != null) slotList.Add(slotGo);
+        }
+
+        // Tìm object theo tên — bao gồm cả object đang inactive (SetActive=false)
+        var allGOs   = Resources.FindObjectsOfTypeAll<GameObject>();
+        System.Func<string, GameObject> findByName = n =>
+            System.Array.Find(allGOs, g => g.scene == scene && g.name == n);
+
+        var backBtn      = findByName("BackButton_Hidden");
+        var homeBtn      = findByName("HomeButton");
+        var settingsBtn  = findByName("SettingsButton_Hidden");
+        var blueLabel    = findByName("BlueTeamNameText");
+        var redLabel     = findByName("RedTeamNameText");
+        var blueAvatar   = findByName("BlueTeamAvatarContainer");
+        var redAvatar    = findByName("RedTeamAvatarContainer");
+        var slotTemplate = findByName("TeamAvatarSlotTemplate");
+        var randomBtn    = findByName("RandomSelectButton");
+        var startBtn     = findByName("StartButton");
+
+        if (tabButtonList.Count == 0 || slotList.Count == 0)
+        {
+            Debug.LogWarning("MenuSceneBuilder: Không tìm thấy đủ tab/slot. " +
+                             "Hãy đảm bảo tên object khớp (CategoryTab_0..N, GameSlot_0..M).");
+        }
+
+        WireReferences(view, controller,
+            backBtn, homeBtn, settingsBtn,
+            blueLabel, redLabel, blueAvatar, redAvatar, slotTemplate,
+            tabButtonList.ToArray(), tabImageList.ToArray(),
+            slotList.ToArray(),
+            randomBtn, startBtn);
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        AddSceneToBuildSettings(ScenePath);
+        Debug.Log($"MenuSceneBuilder: Rewire xong — {tabButtonList.Count} tab, {slotList.Count} slot. Vị trí giữ nguyên.");
+    }
+
+    /// <summary>
+    /// Thêm các slot còn thiếu vào GameGridPanel mà KHÔNG đụng vào slot đã có.
+    /// Dùng khi đổi số slot (ví dụ 18 → 24) mà không muốn mất layout đã chỉnh.
+    /// Sau khi thêm slot xong sẽ tự Rewire để cập nhật gameSlots[].
+    /// </summary>
+    [MenuItem("Tools/MenuScene/Patch Grid — Add Missing Slots Only")]
+    public static void PatchGrid()
+    {
+        if (EditorApplication.isPlaying)
+        {
+            Debug.LogError("MenuSceneBuilder: Cannot patch while in Play mode.");
+            return;
+        }
+
+        if (!System.IO.File.Exists(ToAbsolutePath(ScenePath)))
+        {
+            Debug.LogWarning("MenuSceneBuilder: MenuScene chưa tồn tại. Chạy Build trước.");
+            return;
+        }
+
+        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+        // Tìm GameGridPanel — dùng FindObjectsOfTypeAll để bắt cả inactive
+        var allGOs = Resources.FindObjectsOfTypeAll<GameObject>();
+        GameObject gridPanel = System.Array.Find(allGOs, g => g.scene == scene && g.name == "GameGridPanel");
+        if (gridPanel == null)
+        {
+            Debug.LogError("MenuSceneBuilder: Không tìm thấy GameGridPanel! Hãy chạy Build trước.");
+            return;
+        }
+
+        const int SLOT_COUNT = 24; // 6 cols × 4 rows
+        Sprite circleSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+            "Assets/Game/Textures/Common/circle_white_256.png");
+
+        int added   = 0;
+        int skipped = 0;
+
+        // GridLayoutGroup trên gridPanel tự xếp vị trí — chỉ cần thêm child đúng thứ tự
+        for (int i = 0; i < SLOT_COUNT; i++)
+        {
+            string slotName = "GameSlot_" + i;
+
+            // Bỏ qua nếu slot đã tồn tại trong scene (kể cả inactive)
+            bool exists = System.Array.Exists(allGOs,
+                g => g.scene == scene && g.name == slotName);
+            if (exists) { skipped++; continue; }
+
+            CreateSlot(i, gridPanel.transform, circleSprite);
+            added++;
+        }
+
+        if (added == 0)
+        {
+            Debug.Log($"MenuSceneBuilder: PatchGrid — tất cả {SLOT_COUNT} slot đã tồn tại, không cần thêm.");
+            EditorUtility.DisplayDialog("Patch Grid", $"Tất cả {SLOT_COUNT} slot đã tồn tại.\nKhông cần thêm gì.", "OK");
+            return;
+        }
+
+        Debug.Log($"MenuSceneBuilder: PatchGrid — thêm {added} slot mới, bỏ qua {skipped} slot đã có.");
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+
+        // Rewire để cập nhật gameSlots[] với toàn bộ 24 slot
+        RewireReferencesOnly();
+
+        EditorUtility.DisplayDialog("Patch Grid", $"Đã thêm {added} slot mới.\n{skipped} slot cũ giữ nguyên.\ngameSlots[] đã được Rewire.", "OK");
     }
 
     [MenuItem("Tools/MenuScene/Add Camera To Menu Scene")]
@@ -230,120 +404,97 @@ public static class MenuSceneBuilder
         slotText.GetComponent<Text>().fontStyle = FontStyle.Bold;
         teamAvatarSlotTemplate.SetActive(false);
 
-        // ===== Category Tabs (5 pill buttons with sprite images) — editor-adjusted offsets =====
-        Button[] tabButtons = new Button[5];
-        Image[] tabImages = new Image[5];
+        // ===== Category Tabs (GameRegistry.CATEGORY_COUNT tabs) =====
+        // Mỗi tab = sprite nếu có + text label tên category ở trên.
+        int tabCount = GameRegistry.CATEGORY_COUNT;
+        Button[] tabButtons = new Button[tabCount];
+        Image[] tabImages   = new Image[tabCount];
 
         float tabAreaY0 = 0.68f;
         float tabAreaY1 = 0.80f;
-        float tabWidth = 0.155f;
-        float tabGap = 0.012f;
-        float tabStartX = 0.045f;
+        float tabWidth  = 0.14f;
+        float tabGap    = 0.008f;
+        // Căn giữa toàn bộ dải tab trên canvas
+        float totalTabW = tabCount * tabWidth + (tabCount - 1) * tabGap;
+        float tabStartX = (1f - totalTabW) * 0.5f;
 
-        // Per-tab nudge offsets (anchoredPosition) captured from manual editor tweaks
-        Vector2[] tabOffsets = new Vector2[]
-        {
-            new Vector2(21f, -1f),
-            new Vector2(31.3f, 0f),
-            new Vector2(44.8f, 1f),
-            new Vector2(59f, 1f),
-            new Vector2(61f, 2f),
-        };
-
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < tabCount; i++)
         {
             float x0 = tabStartX + i * (tabWidth + tabGap);
             float x1 = x0 + tabWidth;
 
-            Sprite tabSprite = LoadSprite(TAB_SPRITES[i]);
+            Sprite tabSprite = (i < TAB_SPRITES.Length) ? LoadSprite(TAB_SPRITES[i]) : null;
 
-            GameObject tab = new GameObject("CategoryTab_" + i, typeof(RectTransform), typeof(Image), typeof(Button));
+            GameObject tab = new GameObject("CategoryTab_" + i,
+                typeof(RectTransform), typeof(Image), typeof(Button));
             tab.transform.SetParent(canvasGo.transform, false);
+
             Image tabImg = tab.GetComponent<Image>();
-            tabImg.sprite = tabSprite;
-            tabImg.type = Image.Type.Sliced;
-            tabImg.preserveAspect = true;
+            if (tabSprite != null)
+            {
+                tabImg.sprite      = tabSprite;
+                tabImg.type        = Image.Type.Sliced;
+                tabImg.preserveAspect = true;
+            }
+            else
+            {
+                tabImg.color = new Color(0.55f, 0.75f, 0.95f, 0.9f);
+            }
+
             RectTransform tabRT = tab.GetComponent<RectTransform>();
             tabRT.anchorMin = new Vector2(x0, tabAreaY0);
             tabRT.anchorMax = new Vector2(x1, tabAreaY1);
-            tabRT.offsetMin = tabOffsets[i];
-            tabRT.offsetMax = tabOffsets[i];
+            tabRT.offsetMin = Vector2.zero;
+            tabRT.offsetMax = Vector2.zero;
 
-            tabButtons[i] = tab.GetComponent<Button>();
-            tabImages[i] = tabImg;
+            // Text label — tên category đọc từ GameRegistry
+            string catName = (i < GameRegistry.CategoryNames.Length)
+                ? GameRegistry.CategoryNames[i] : ("Cat" + i);
+            GameObject tabLabel = CreateText("Label", tab.transform, catName, 11, TextAnchor.MiddleCenter);
+            SetAnchors(tabLabel, 0.04f, 0.04f, 0.96f, 0.96f);
+            tabLabel.GetComponent<Text>().color      = Color.white;
+            tabLabel.GetComponent<Text>().fontStyle  = FontStyle.Bold;
+            tabLabel.GetComponent<Text>().raycastTarget = false;
 
-            // Make button use no color transition (sprite already has visual)
             var btnComp = tab.GetComponent<Button>();
             var nav = btnComp.navigation;
             nav.mode = Navigation.Mode.None;
             btnComp.navigation = nav;
+
+            tabButtons[i] = btnComp;
+            tabImages[i]  = tabImg;
         }
 
-        // ===== Game Grid (2 rows x 5 cols — equal size icons) =====
+        // ===== Game Grid — 3 rows × 6 cols = 18 slots (GameRegistry.MAX_PER_CATEGORY) =====
+        // Cấu trúc mỗi slot:
+        //   GameSlot_X  (RectTransform, Image trong suốt — container)
+        //     ├── Highlight  (Image — vòng glow, tên "Highlight" để InitView.Find() tìm được)
+        //     └── Icon       (Image + Button — tên "Icon" để InitView.Find() tìm được)
+
         GameObject gridPanel = CreatePanel("GameGridPanel", canvasGo.transform, new Color(0, 0, 0, 0));
-        SetAnchors(gridPanel, 0.02f, 0.18f, 0.98f, 0.67f);
+        SetAnchors(gridPanel, 0.02f, 0.14f, 0.98f, 0.67f);
 
-        Button[] gameButtons = new Button[10];
-        Image[] gameIcons = new Image[10];
-        Image[] gameHighlights = new Image[10];
+        // GridLayoutGroup — Unity tự sắp xếp slot, không cần tính anchor thủ công.
+        // cellSize tính trên canvas 1024×600:
+        //   panel w ≈ 0.96×1024 = 983px → (983 - 2×4 padding - 5×6 spacing) / 6 ≈ 155px/cell
+        //   panel h ≈ 0.53×600  = 318px → (318 - 2×4 padding - 3×6 spacing) / 4 ≈  72px/cell
+        var glg = gridPanel.AddComponent<GridLayoutGroup>();
+        glg.constraint      = GridLayoutGroup.Constraint.FixedColumnCount;
+        glg.constraintCount = 6;
+        glg.cellSize        = new Vector2(155f, 72f);
+        glg.spacing         = new Vector2(6f, 6f);
+        glg.padding         = new RectOffset(4, 4, 4, 4);
+        glg.childAlignment  = TextAnchor.UpperLeft;
+        glg.startCorner     = GridLayoutGroup.Corner.UpperLeft;
+        glg.startAxis       = GridLayoutGroup.Axis.Horizontal;
 
-        // Circular glow sprite (reused from Common textures)
-        Sprite circleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Game/Textures/Common/circle_white_256.png");
+        const int SLOT_COUNT = 24; // 6 cols × 4 rows
+        GameObject[] gameSlotObjects = new GameObject[SLOT_COUNT];
+        Sprite circleSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+            "Assets/Game/Textures/Common/circle_white_256.png");
 
-        float iconSize = 0.145f;   // same width for all icons
-        float colWidth = 0.19f;
-        float colStart = 0.025f;
-
-        // Row centers (relative to gridPanel) — equal spacing
-        float row0CenterY = 0.70f;
-        float row1CenterY = 0.28f;
-        float halfH = 0.20f;
-
-        for (int row = 0; row < 2; row++)
-        {
-            for (int col = 0; col < 5; col++)
-            {
-                int idx = row * 5 + col;
-
-                float centerY = (row == 0) ? row0CenterY : row1CenterY;
-                float colCenterX = colStart + col * colWidth + colWidth * 0.5f;
-                float halfW = iconSize * 0.5f;
-
-                float x0 = colCenterX - halfW;
-                float x1 = colCenterX + halfW;
-                float y0 = centerY - halfH;
-                float y1 = centerY + halfH;
-
-                string spriteName = GAME_ICON_SPRITES[col, row];
-                Sprite iconSprite = LoadSprite(spriteName);
-
-                bool implemented = MenuSceneView.GameSceneNames[col, row] != null;
-
-                // Circular glow highlight (behind the icon, slightly larger, preserveAspect for circle shape)
-                GameObject hlGo = new GameObject("Highlight_" + idx, typeof(RectTransform), typeof(Image));
-                hlGo.transform.SetParent(gridPanel.transform, false);
-                Image hlImg = hlGo.GetComponent<Image>();
-                if (circleSprite != null) hlImg.sprite = circleSprite;
-                hlImg.preserveAspect = true;
-                hlImg.color = new Color(1f, 0.95f, 0.35f, 0f); // bright yellow, transparent by default
-                hlImg.raycastTarget = false;
-                SetAnchors(hlGo, x0 - 0.025f, y0 - 0.05f, x1 + 0.025f, y1 + 0.05f);
-
-                // Game icon button (on top of highlight)
-                GameObject card = new GameObject("GameIcon_" + idx, typeof(RectTransform), typeof(Image), typeof(Button));
-                card.transform.SetParent(gridPanel.transform, false);
-                Image cardImg = card.GetComponent<Image>();
-                cardImg.sprite = iconSprite;
-                cardImg.preserveAspect = true;
-                cardImg.color = implemented ? Color.white : new Color(0.7f, 0.7f, 0.7f, 0.8f);
-                SetAnchors(card, x0, y0, x1, y1);
-                card.GetComponent<Button>().interactable = implemented;
-
-                gameButtons[idx] = card.GetComponent<Button>();
-                gameIcons[idx] = cardImg;
-                gameHighlights[idx] = hlGo.GetComponent<Image>();
-            }
-        }
+        for (int i = 0; i < SLOT_COUNT; i++)
+            gameSlotObjects[i] = CreateSlot(i, gridPanel.transform, circleSprite);
 
         // ===== Bottom Bar =====
         GameObject bottomBar = CreatePanel("BottomBar", canvasGo.transform, new Color(0, 0, 0, 0));
@@ -380,7 +531,7 @@ public static class MenuSceneBuilder
             blueTeamLabel, redTeamLabel, blueAvatarContainer, redAvatarContainer,
             teamAvatarSlotTemplate,
             tabButtons, tabImages,
-            gameButtons, gameIcons, gameHighlights,
+            gameSlotObjects,
             randomButton, startButtonGo);
 
         EditorUtility.SetDirty(root);
@@ -390,6 +541,17 @@ public static class MenuSceneBuilder
 
     // ===== Wire References =====
 
+    // Helper: gán 1 component vào SerializedProperty — bỏ qua nếu go hoặc component null
+    static void SetProp<T>(SerializedProperty prop, GameObject go) where T : Component
+    {
+        if (prop == null) return;
+        prop.objectReferenceValue = go != null ? go.GetComponent<T>() : null;
+    }
+    static void SetPropObj(SerializedProperty prop, UnityEngine.Object obj)
+    {
+        if (prop != null) prop.objectReferenceValue = obj;
+    }
+
     private static void WireReferences(
         MenuSceneView view, MenuSceneController controller,
         GameObject backButton, GameObject homeButton, GameObject settingsButton,
@@ -397,45 +559,45 @@ public static class MenuSceneBuilder
         GameObject blueAvatarContainer, GameObject redAvatarContainer,
         GameObject teamAvatarSlotTemplate,
         Button[] tabButtons, Image[] tabImages,
-        Button[] gameButtons, Image[] gameIcons, Image[] gameHighlights,
+        GameObject[] gameSlots,
         GameObject randomButton, GameObject startButton)
     {
         SerializedObject viewSo = new SerializedObject(view);
 
-        // Top bar
-        viewSo.FindProperty("backButton").objectReferenceValue = backButton.GetComponent<Button>();
-        viewSo.FindProperty("homeButton").objectReferenceValue = homeButton.GetComponent<Button>();
-        viewSo.FindProperty("settingsButton").objectReferenceValue = settingsButton.GetComponent<Button>();
+        // Top bar (null-safe — hidden buttons có thể không tìm được qua Find())
+        SetProp<Button>(viewSo.FindProperty("backButton"),     backButton);
+        SetProp<Button>(viewSo.FindProperty("homeButton"),     homeButton);
+        SetProp<Button>(viewSo.FindProperty("settingsButton"), settingsButton);
 
         // Team banner
-        viewSo.FindProperty("blueTeamNameText").objectReferenceValue = blueTeamNameText.GetComponent<Text>();
-        viewSo.FindProperty("redTeamNameText").objectReferenceValue = redTeamNameText.GetComponent<Text>();
-        viewSo.FindProperty("blueTeamAvatarContainer").objectReferenceValue = blueAvatarContainer.transform;
-        viewSo.FindProperty("redTeamAvatarContainer").objectReferenceValue = redAvatarContainer.transform;
-        viewSo.FindProperty("teamAvatarSlotTemplate").objectReferenceValue = teamAvatarSlotTemplate;
+        SetProp<Text>     (viewSo.FindProperty("blueTeamNameText"),       blueTeamNameText);
+        SetProp<Text>     (viewSo.FindProperty("redTeamNameText"),         redTeamNameText);
+        SetPropObj        (viewSo.FindProperty("blueTeamAvatarContainer"), blueAvatarContainer?.transform);
+        SetPropObj        (viewSo.FindProperty("redTeamAvatarContainer"),  redAvatarContainer?.transform);
+        SetPropObj        (viewSo.FindProperty("teamAvatarSlotTemplate"),  teamAvatarSlotTemplate);
 
         // Avatar bg + character sprites
-        viewSo.FindProperty("avatarBgBlue").objectReferenceValue = LoadSpriteFromFolder("Assets/Game/Textures/TeamSelectScene", "AvatarBgBlue");
-        viewSo.FindProperty("avatarBgRed").objectReferenceValue = LoadSpriteFromFolder("Assets/Game/Textures/TeamSelectScene", "AvatarBgRed");
+        viewSo.FindProperty("avatarBgBlue").objectReferenceValue  = LoadSpriteFromFolder("Assets/Game/Textures/TeamSelectScene", "AvatarBgBlue");
+        viewSo.FindProperty("avatarBgRed").objectReferenceValue   = LoadSpriteFromFolder("Assets/Game/Textures/TeamSelectScene", "AvatarBgRed");
         viewSo.FindProperty("charBodySprite").objectReferenceValue = LoadSpriteFromFolder("Assets/Game/Textures/PlayerPanel", "body_male");
         SerializedProperty hairArr = viewSo.FindProperty("charHairSprites");
         hairArr.arraySize = 6;
         for (int i = 0; i < 6; i++)
-            hairArr.GetArrayElementAtIndex(i).objectReferenceValue = LoadSpriteFromFolder("Assets/Game/Textures/PlayerPanel", "char_hair_" + (i + 1));
+            hairArr.GetArrayElementAtIndex(i).objectReferenceValue =
+                LoadSpriteFromFolder("Assets/Game/Textures/PlayerPanel", "char_hair_" + (i + 1));
 
         // Category tabs
         SetArrayProperty(viewSo, "categoryTabButtons", tabButtons);
-        SetArrayProperty(viewSo, "categoryTabImages", tabImages);
+        SetArrayProperty(viewSo, "categoryTabImages",  tabImages);
 
-        // Game grid
-        SetArrayProperty(viewSo, "gameButtons", gameButtons);
-        SetArrayProperty(viewSo, "gameIcons", gameIcons);
-        SetArrayProperty(viewSo, "gameHighlights", gameHighlights);
+        // Game grid slots (runtime InitView() tự tìm Button/Icon/Highlight trong children)
+        SetArrayProperty(viewSo, "gameSlots", gameSlots);
 
         // Bottom bar
-        viewSo.FindProperty("randomSelectButton").objectReferenceValue = randomButton.GetComponent<Button>();
-        viewSo.FindProperty("startButton").objectReferenceValue = startButton.GetComponent<Button>();
-        viewSo.FindProperty("startButtonText").objectReferenceValue = startButton.GetComponentInChildren<Text>();
+        SetProp<Button>(viewSo.FindProperty("randomSelectButton"), randomButton);
+        SetProp<Button>(viewSo.FindProperty("startButton"),        startButton);
+        SetPropObj(viewSo.FindProperty("startButtonText"),
+            startButton != null ? startButton.GetComponentInChildren<Text>() : null);
 
         viewSo.ApplyModifiedPropertiesWithoutUndo();
 
@@ -527,6 +689,40 @@ public static class MenuSceneBuilder
         go.GetComponent<Image>().color = color;
         go.GetComponent<Image>().raycastTarget = false;
         return go;
+    }
+
+    /// <summary>
+    /// Tạo 1 GameSlot với đúng hierarchy: Slot > Highlight + Icon.
+    /// Kích thước và vị trí do GridLayoutGroup trên GameGridPanel quản lý.
+    /// Dùng chung bởi BuildScene() và PatchGrid().
+    /// </summary>
+    private static GameObject CreateSlot(int idx, Transform parent, Sprite circleSprite)
+    {
+        // ── Slot container — GridLayoutGroup tự set kích thước & vị trí ────────
+        GameObject slot = new GameObject("GameSlot_" + idx, typeof(RectTransform), typeof(Image));
+        slot.transform.SetParent(parent, false);
+        slot.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
+        slot.GetComponent<Image>().raycastTarget = false;
+
+        // ── Highlight (tên chính xác "Highlight" — InitView dùng Transform.Find) ──
+        GameObject hlGo = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
+        hlGo.transform.SetParent(slot.transform, false);
+        Image hlImg = hlGo.GetComponent<Image>();
+        if (circleSprite != null) hlImg.sprite = circleSprite;
+        hlImg.preserveAspect = true;
+        hlImg.color = new Color(1f, 0.95f, 0.35f, 0f); // alpha=0 → ẩn mặc định
+        hlImg.raycastTarget = false;
+        SetAnchors(hlGo, 0f, 0f, 1f, 1f); // phủ toàn slot
+
+        // ── Icon (tên chính xác "Icon" — InitView dùng Transform.Find) ──────
+        GameObject iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(Button));
+        iconGo.transform.SetParent(slot.transform, false);
+        iconGo.GetComponent<Image>().preserveAspect = true;
+        iconGo.GetComponent<Image>().color = Color.white;
+        iconGo.GetComponent<Button>().interactable = true;
+        SetAnchors(iconGo, 0.06f, 0.06f, 0.94f, 0.94f); // inset nhẹ để có khoảng trống trực quan
+
+        return slot;
     }
 
     private static GameObject CreateText(string name, Transform parent, string content, int size, TextAnchor anchor)

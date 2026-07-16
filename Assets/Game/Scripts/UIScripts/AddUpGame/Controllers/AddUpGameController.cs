@@ -45,37 +45,25 @@ public class AddUpGameController : MonoBehaviour
 
     private IEnumerator InitializeGameWithMasterData()
     {
-        bool isLoaded = false;
-        int retryCount = 0;
-        const int maxRetries = 10;
-
-        while (!isLoaded && retryCount < maxRetries)
-        {
-            bool checkResult = CheckAndLoadAddUpMaster();
-
-            if (checkResult)
-            {
-                isLoaded = true;
-            }
-            else
-            {
-                Debug.LogWarning($"NDL: AddUpMaster not loaded yet, retrying... ({retryCount + 1}/{maxRetries})");
-                yield return new WaitForSeconds(0.5f);
-                retryCount++;
-            }
-        }
-
-        if (!isLoaded)
-        {
-            Debug.LogError("NDL: Failed to load AddUpMaster after retries. Returning to MenuScene.");
-            SceneManager.LoadScene("MenuScene");
-            yield break;
-        }
+        // [CSV-SKIP] game is fully procedural — AddUpMaster not used by model.
+        // To revert: remove the yield return null below and uncomment the block.
+        yield return null;
+        // bool isLoaded = false;
+        // int retryCount = 0;
+        // const int maxRetries = 10;
+        // while (!isLoaded && retryCount < maxRetries)
+        // {
+        //     bool checkResult = CheckAndLoadAddUpMaster();
+        //     if (checkResult) { isLoaded = true; }
+        //     else { Debug.LogWarning($"NDL: AddUpMaster not loaded yet, retrying... ({retryCount + 1}/{maxRetries})"); yield return new WaitForSeconds(0.5f); retryCount++; }
+        // }
+        // if (!isLoaded) { Debug.LogError("NDL: Failed to load AddUpMaster after retries. Returning to MenuScene."); SceneManager.LoadScene("MenuScene"); yield break; }
 
         _gameModel = new AddUpGameModel();
-        _gameModel.LoadQuestions();
+        // [CSV-SKIP] _gameModel.LoadQuestions(); // data not used — model generates procedurally
 
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
+        if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
         gameView.InitView();
 
@@ -208,7 +196,7 @@ public class AddUpGameController : MonoBehaviour
     protected void StateMachineEnter_Playing(Enum previousState, Dictionary<string, object> options)
     {
         Debug.Log("NDL: AddUp - StateMachineEnter_Playing");
-        MusicManager.Instance.PlayGameplayMusic();
+        MusicManager.Instance?.PlayGameplayMusic();
     }
 
     protected void StateMachineExit_Playing(Enum previousState, Dictionary<string, object> options)
@@ -243,7 +231,7 @@ public class AddUpGameController : MonoBehaviour
         Debug.Log("NDL: AddUp - StateMachineEnter_GameOver");
         gameView.SetPlayerAnswersInteractable(0, false);
         gameView.SetPlayerAnswersInteractable(1, false);
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
 
         GameSessionManager.Instance.RecordScores(_gameModel.Player1Score, _gameModel.Player2Score);
         GameSessionManager.Instance.LastPlayedGame = "AddUpGame";
@@ -288,7 +276,7 @@ public class AddUpGameController : MonoBehaviour
         LoadQuestionForPlayer(1);
 
         gameView.HideFeedbackIcons();
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
     }
 
     private void LoadQuestionForPlayer(int playerIndex)
@@ -336,7 +324,7 @@ public class AddUpGameController : MonoBehaviour
         if (answered) yield break;
 
         if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
-        MusicManager.Instance.PlayWrongSfx();
+        MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerAnswersInteractable(playerIndex, false);
         ScheduleNextQuestion(playerIndex);
@@ -381,7 +369,7 @@ public class AddUpGameController : MonoBehaviour
 
         if (isCorrect)
         {
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             int difficulty = _gameModel.GetQuestionDifficulty(playerIndex);
             int stars = _gameModel.GetStarsForDifficulty(difficulty);
 
@@ -397,7 +385,7 @@ public class AddUpGameController : MonoBehaviour
         }
         else
         {
-            MusicManager.Instance.PlayWrongSfx();
+            MusicManager.Instance?.PlayWrongSfx();
             gameView.SetWrongAnswerBorder(playerIndex, answerIndex);
             gameView.ShowFeedback(playerIndex, false);
         }
@@ -413,14 +401,14 @@ public class AddUpGameController : MonoBehaviour
         if (result == 1)
         {
             // First correct pick â€” highlight it, disable just this button (others stay clickable for second pick)
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             gameView.SetCorrectAnswerBorder(playerIndex, answerIndex);
             gameView.SetAnswerButtonInteractable(playerIndex, answerIndex, false);
         }
         else if (result == 2)
         {
             // Second correct pick â€” round complete!
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             gameView.SetCorrectAnswerBorder(playerIndex, answerIndex);
             gameView.ShowFeedback(playerIndex, true);
 
@@ -438,7 +426,7 @@ public class AddUpGameController : MonoBehaviour
         else
         {
             // Wrong pick
-            MusicManager.Instance.PlayWrongSfx();
+            MusicManager.Instance?.PlayWrongSfx();
             gameView.SetWrongAnswerBorder(playerIndex, answerIndex);
             gameView.ShowFeedback(playerIndex, false);
 
@@ -465,32 +453,27 @@ public class AddUpGameController : MonoBehaviour
 
     private IEnumerator LoadNextQuestionForPlayer(int playerIndex)
     {
-        yield return new WaitForSeconds(_feedbackDelay);
-
+        yield return new WaitForSeconds(1f); // feedback icon visible
         if (GetCurrentState() != AddUpSceneState.Playing) yield break;
 
-        // Team mode: 3-second countdown before next question
-        if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
-        {
-            // NamNN change with Android Studio Agent: Hide question and feedback before countdown
-            gameView.HideQuestion(playerIndex);
-            gameView.HideFeedbackIcon(playerIndex);
+        gameView.HideFeedbackIcon(playerIndex);
+        gameView.HideQuestion(playerIndex);
 
-            for (int i = 3; i >= 1; i--)
-            {
-                gameView.ShowCountdown(playerIndex, i);
-                yield return new WaitForSeconds(1f);
-                if (GetCurrentState() != AddUpSceneState.Playing) yield break;
-            }
-            gameView.HideCountdown(playerIndex);
+        int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
+        for (int i = countSeconds; i >= 1; i--)
+        {
+            gameView.ShowCountdown(playerIndex, i);
+            yield return new WaitForSeconds(1f);
+            if (GetCurrentState() != AddUpSceneState.Playing) yield break;
         }
+        gameView.HideCountdown(playerIndex);
 
         if (playerIndex == 0) _p1Answered = false;
         else _p2Answered = false;
 
         gameView.HideFeedbackIcons();
         LoadQuestionForPlayer(playerIndex);
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
     }
 
     private void OnRetryClicked()
@@ -501,13 +484,13 @@ public class AddUpGameController : MonoBehaviour
 
     private void OnBackClicked()
     {
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("MenuScene");
     }
 
     private void OnHomeClicked()
     {
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("MenuScene");
     }
 

@@ -285,10 +285,16 @@ public static class ScoreSceneBuilder
         GameObject replayButton = CreateSpriteButton("ReplayButton", canvasGo.transform, replaySprite);
         SetAnchors(replayButton, 0.12f, 0.02f, 0.38f, 0.13f);
 
-        // Change team button (right) — "Doi doi"
+        // "Chọn game" button (right) — navigate back to MenuScene
         Sprite changeTeamSprite = LoadSpriteFrom("Assets/Game/Textures/MenuScene", "btn_start");
         GameObject changeTeamButton = CreateSpriteButton("ChangeTeamButton", canvasGo.transform, changeTeamSprite);
         SetAnchors(changeTeamButton, 0.62f, 0.02f, 0.88f, 0.13f);
+        // Label overlay (sits on top of the button sprite)
+        GameObject changeTeamLabel = CreateText("Label", changeTeamButton.transform, "Chon game", 18, TextAnchor.MiddleCenter);
+        SetAnchors(changeTeamLabel, 0f, 0f, 1f, 1f);
+        changeTeamLabel.GetComponent<Text>().color = Color.white;
+        changeTeamLabel.GetComponent<Text>().fontStyle = FontStyle.Bold;
+        changeTeamLabel.GetComponent<Text>().raycastTarget = false;
 
         // ============================================================
         // WIRE REFERENCES

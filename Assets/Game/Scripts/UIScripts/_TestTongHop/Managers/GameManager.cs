@@ -11,8 +11,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] string gameName = "TestTongHop";
-    // totalRounds → TongHopConfig.Current.totalRounds (gameconfig.json)
-
     ScoreManager _score;
     GameLogger   _logger;
     int          _roundsPlayed;
@@ -21,8 +19,6 @@ public class GameManager : MonoBehaviour
 
     public ScoreManager Score        => _score;
     public int          RoundsPlayed => _roundsPlayed;
-    public int          TotalRounds  => TongHopConfig.Current.totalRounds;
-    public bool         IsGameOver   => _roundsPlayed >= TongHopConfig.Current.totalRounds;
 
     public float GameTimer   { get; set; }
     public float MaxGameTime { get; private set; }
@@ -59,11 +55,12 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void LogRoundStart(QuestionData q) => _logger.BeginRound(_roundsPlayed, q);
 
-    /// <summary>Ghi nhận kết quả round và cập nhật điểm.</summary>
-    public void RecordAnswer(QuestionData q, bool isCorrect, Team team, float responseTime)
+    /// <summary>Ghi nhận kết quả round và cập nhật điểm.
+    /// addScore=false khi điểm đã được cộng từng phần (MultiSelect PartialCorrect).</summary>
+    public void RecordAnswer(QuestionData q, bool isCorrect, Team team, float responseTime, bool addScore = true)
     {
         _logger.EndRound(isCorrect, team, responseTime, q);
-        if (isCorrect) _score.AddPoint(team);
+        if (isCorrect && addScore) _score.AddPoint(team);
     }
 
     /// <summary>Xuất log session ra file JSON.</summary>

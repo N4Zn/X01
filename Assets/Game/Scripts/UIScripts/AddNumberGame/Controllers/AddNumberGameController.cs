@@ -45,37 +45,26 @@ public class AddNumberGameController : MonoBehaviour
 
     private IEnumerator InitializeGameWithMasterData()
     {
-        bool isLoaded = false;
-        int retryCount = 0;
-        const int maxRetries = 10;
+        // [CSV-SKIP] game is fully procedural — AddUpMaster not used by model.
+        // To revert: remove the yield return null below and uncomment the block.
+        yield return null;
+        // bool isLoaded = false;
+        // int retryCount = 0;
+        // const int maxRetries = 10;
+        // while (!isLoaded && retryCount < maxRetries)
+        // {
+        //     bool checkResult = CheckAndLoadAddUpMaster();
+        //     if (checkResult) { isLoaded = true; }
+        //     else { Debug.LogWarning($"NDL: AddUpMaster not loaded yet, retrying... ({retryCount + 1}/{maxRetries})"); yield return new WaitForSeconds(0.5f); retryCount++; }
+        // }
+        // if (!isLoaded) { Debug.LogError("NDL: Failed to load AddUpMaster after retries. Returning to MenuScene."); SceneManager.LoadScene("MenuScene"); yield break; }
 
-        while (!isLoaded && retryCount < maxRetries)
-        {
-            bool checkResult = CheckAndLoadAddUpMaster();
-
-            if (checkResult)
-            {
-                isLoaded = true;
-            }
-            else
-            {
-                Debug.LogWarning($"NDL: AddUpMaster not loaded yet, retrying... ({retryCount + 1}/{maxRetries})");
-                yield return new WaitForSeconds(0.5f);
-                retryCount++;
-            }
-        }
-
-        if (!isLoaded)
-        {
-            Debug.LogError("NDL: Failed to load AddUpMaster after retries. Returning to MenuScene.");
-            SceneManager.LoadScene("MenuScene");
-            yield break;
-        }
-
-        _gameModel = new AddNumberGameModel();
+        int maxSum = GameSessionManager.Instance?.SelectedGameName == "AddNumber5" ? 5 : 10;
+        _gameModel = new AddNumberGameModel(maxSum);
         // _gameModel.LoadQuestions(); // Removed as we use procedural generation now
 
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
+        if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
         gameView.InitView();
 
@@ -208,7 +197,7 @@ public class AddNumberGameController : MonoBehaviour
     protected void StateMachineEnter_Playing(Enum previousState, Dictionary<string, object> options)
     {
         Debug.Log("NDL: AddNumber - StateMachineEnter_Playing");
-        MusicManager.Instance.PlayGameplayMusic();
+        MusicManager.Instance?.PlayGameplayMusic();
     }
 
     protected void StateMachineExit_Playing(Enum previousState, Dictionary<string, object> options)
@@ -243,7 +232,7 @@ public class AddNumberGameController : MonoBehaviour
         Debug.Log("NDL: AddNumber - StateMachineEnter_GameOver");
         gameView.SetPlayerAnswersInteractable(0, false);
         gameView.SetPlayerAnswersInteractable(1, false);
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
 
         GameSessionManager.Instance.RecordScores(_gameModel.Player1Score, _gameModel.Player2Score);
         GameSessionManager.Instance.LastPlayedGame = "AddNumberGame";
@@ -288,7 +277,7 @@ public class AddNumberGameController : MonoBehaviour
         LoadQuestionForPlayer(1);
 
         gameView.HideFeedbackIcons();
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
     }
 
     private void LoadQuestionForPlayer(int playerIndex)
@@ -309,7 +298,7 @@ public class AddNumberGameController : MonoBehaviour
         gameView.DisplayAnswers(playerIndex, answers, q.image_type);
 
         gameView.SetPlayerAnswersInteractable(playerIndex, true);
-        StartQuestionTimeout(playerIndex);
+        // StartQuestionTimeout(playerIndex); // tạm tắt giới hạn thời gian mỗi câu
     }
 
     private void StartQuestionTimeout(int playerIndex)
@@ -334,7 +323,7 @@ public class AddNumberGameController : MonoBehaviour
         if (answered) yield break;
 
         if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
-        MusicManager.Instance.PlayWrongSfx();
+        MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerAnswersInteractable(playerIndex, false);
         ScheduleNextQuestion(playerIndex);
@@ -394,7 +383,7 @@ public class AddNumberGameController : MonoBehaviour
             CancelQuestionTimeout(playerIndex);
             if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
 
-            MusicManager.Instance.PlayWrongSfx();
+            MusicManager.Instance?.PlayWrongSfx();
 
             if (_gameModel.IsMultiPick[playerIndex])
             {
@@ -412,14 +401,14 @@ public class AddNumberGameController : MonoBehaviour
         }
         else if (result == 1) // Partial Correct / Toggle
         {
-            MusicManager.Instance.PlayCorrectSfx(); // Selection sound
+            MusicManager.Instance?.PlayCorrectSfx(); // Selection sound
         }
         else if (result == 2) // Fully Correct
         {
             CancelQuestionTimeout(playerIndex);
             if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
 
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             gameView.UpdateScores(_gameModel.Player1Score, _gameModel.Player2Score);
             gameView.UpdateStars(playerIndex, playerIndex == 0 ? _gameModel.Player1Score : _gameModel.Player2Score);
 
@@ -457,32 +446,27 @@ public class AddNumberGameController : MonoBehaviour
 
     private IEnumerator LoadNextQuestionForPlayer(int playerIndex)
     {
-        yield return new WaitForSeconds(_feedbackDelay);
-
+        yield return new WaitForSeconds(1f); // feedback icon visible
         if (GetCurrentState() != AddNumberSceneState.Playing) yield break;
 
-        // Team mode: 3-second countdown before next question
-        if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
-        {
-            // NamNN change with Android Studio Agent: Hide question and feedback before countdown
-            gameView.HideQuestion(playerIndex);
-            gameView.HideFeedbackIcon(playerIndex);
+        gameView.HideFeedbackIcon(playerIndex);
+        gameView.HideQuestion(playerIndex);
 
-            for (int i = 3; i >= 1; i--)
-            {
-                gameView.ShowCountdown(playerIndex, i);
-                yield return new WaitForSeconds(1f);
-                if (GetCurrentState() != AddNumberSceneState.Playing) yield break;
-            }
-            gameView.HideCountdown(playerIndex);
+        int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
+        for (int i = countSeconds; i >= 1; i--)
+        {
+            gameView.ShowCountdown(playerIndex, i);
+            yield return new WaitForSeconds(1f);
+            if (GetCurrentState() != AddNumberSceneState.Playing) yield break;
         }
+        gameView.HideCountdown(playerIndex);
 
         if (playerIndex == 0) _p1Answered = false;
         else _p2Answered = false;
 
         gameView.HideFeedbackIcons();
         LoadQuestionForPlayer(playerIndex);
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
     }
 
     private void OnRetryClicked()
@@ -493,13 +477,13 @@ public class AddNumberGameController : MonoBehaviour
 
     private void OnBackClicked()
     {
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("MenuScene");
     }
 
     private void OnHomeClicked()
     {
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("MenuScene");
     }
 

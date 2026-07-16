@@ -29,6 +29,7 @@ public class AnswerDisplayManager : MonoBehaviour
     // weightFloating / weightButton / weightMatching
 
     IAnswerDisplay _active;
+    IAnswerDisplay _independentDisplay;
 
     /// <summary>Câu hỏi đang được hiển thị — Controller đọc để log.</summary>
     public QuestionData CurrentQuestion { get; private set; }
@@ -38,8 +39,10 @@ public class AnswerDisplayManager : MonoBehaviour
     /// <summary>
     /// Chọn display + câu hỏi dựa trên weight, bắt đầu hiển thị.
     /// onPlayerFailed: callback ngay khi 1 player hết lượt (sai) — trước khi cả 2 xong.
+    /// onPartialCorrect: MultiSelect — mỗi lần click đúng 1 đáp án (+1 điểm, SFX, không icon).
     /// </summary>
-    public void Show(Action<bool, Team, int[]> onResult, Action<Team> onPlayerFailed = null)
+    public void Show(Action<bool, Team, int[]> onResult, Action<Team> onPlayerFailed = null,
+                     Action<Team> onPartialCorrect = null)
     {
         HideAll();
 
@@ -76,18 +79,59 @@ public class AnswerDisplayManager : MonoBehaviour
 
         (_active as MonoBehaviour)?.gameObject.SetActive(true);
         _active.Setup(q, onResult, onPlayerFailed);
+        (_active as FloatingDisplay)?.SetPartialCorrectCallback(onPartialCorrect);
+        (_active as ButtonDisplay)?.SetPartialCorrectCallback(onPartialCorrect);
+    }
+
+    /// <summary>
+    /// Independent mode: setup button group của MỘT player với câu hỏi riêng.
+    /// Player kia không bị ảnh hưởng.
+    /// </summary>
+    public void SetupPlayerIndependent(Team team, QuestionData q, Action<bool, Team, int[]> onDone)
+    {
+        if (q != null && q.displayMode == ChooseDisplayMode.Floating)
+        {
+            floatingDisplay?.SetupPlayerIndependent(team, q, onDone);
+            _independentDisplay = floatingDisplay;
+        }
+        else
+        {
+            buttonDisplay?.SetupPlayerIndependent(team, q, onDone);
+            _independentDisplay = buttonDisplay;
+        }
+    }
+
+    /// <summary>
+    /// Independent play: lấy 1 câu hỏi tiếp theo từ pool mà không chạy display.
+    /// Ưu tiên Choose; fallback sang Matching nếu không có.
+    /// </summary>
+    public QuestionData GetNextQuestion()
+    {
+        if (questionPool.HasChoose)   return questionPool.GetNextChoose();
+        if (questionPool.HasMatching) return questionPool.GetNextMatching();
+        return null;
     }
 
     public void Cleanup()
     {
         _active?.Cleanup();
+        if (_independentDisplay != null && _independentDisplay != _active)
+            _independentDisplay.Cleanup();
         HideAll();
-        _active        = null;
-        CurrentQuestion = null;
+        _active             = null;
+        _independentDisplay = null;
+        CurrentQuestion     = null;
     }
 
-    /// <summary>Ẩn phần đáp án của 1 player (sau khi họ fail) — giữ nguyên bên player kia.</summary>
-    public void HidePlayerAnswers(Team team) => _active?.HidePlayerAnswers(team);
+    /// <summary>Ẩn phần đáp án của 1 player — giữ nguyên bên player kia.
+    /// Shared mode: qua _active. Independent mode: gọi thẳng buttonDisplay.</summary>
+    public void HidePlayerAnswers(Team team)
+    {
+        if (_active != null)
+            _active.HidePlayerAnswers(team);
+        else
+            (_independentDisplay ?? (IAnswerDisplay)buttonDisplay)?.HidePlayerAnswers(team);
+    }
 
     // ─── Slot selection ───────────────────────────────────────────────────────
 
@@ -108,21 +152,24 @@ public class AnswerDisplayManager : MonoBehaviour
 
     /// <summary>
     /// Lấy câu hỏi phù hợp với slot.
-    /// Fallback: nếu pool loại cần không có thì thử loại kia.
+    /// Fallback chỉ xảy ra khi weight của loại đó > 0 — tránh hiện Matching khi weightMatching=0.
     /// </summary>
     QuestionData GetQuestionForSlot(int slot)
     {
-        bool wantMatching = (slot == 2);
+        bool wantMatching  = (slot == 2);
+        var  cfg           = TongHopConfig.Current;
+        bool matchingAllowed = cfg.weightMatching > 0;
+        bool chooseAllowed   = cfg.weightFloating + cfg.weightButton > 0;
 
         if (wantMatching)
         {
             if (questionPool.HasMatching) return questionPool.GetNextMatching();
-            if (questionPool.HasChoose)   return questionPool.GetNextChoose();   // fallback
+            if (chooseAllowed && questionPool.HasChoose) return questionPool.GetNextChoose();   // fallback
         }
         else
         {
             if (questionPool.HasChoose)   return questionPool.GetNextChoose();
-            if (questionPool.HasMatching) return questionPool.GetNextMatching(); // fallback
+            if (matchingAllowed && questionPool.HasMatching) return questionPool.GetNextMatching(); // fallback
         }
         return null;
     }

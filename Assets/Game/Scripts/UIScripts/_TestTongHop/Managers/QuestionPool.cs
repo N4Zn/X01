@@ -20,7 +20,74 @@ public class QuestionPool : MonoBehaviour
     int _chooseIdx;
     int _matchingIdx;
 
-    void Awake() => BuildPool();
+    void Awake()
+    {
+        // ── Dynamic loading theo SelectedGameName ─────────────────────────────
+        // Nếu MenuScene đã set GameSessionManager.SelectedGameName (vd: "ChuCai"),
+        // load CSV từ Resources/TongHop/{variant}/choose  và  .../matching
+        // Nếu không có file trong Resources → giữ nguyên SerializeField đã gán trong Inspector
+        string variant = GameSessionManager.Instance != null
+            ? GameSessionManager.Instance.SelectedGameName : "";
+
+        if (!string.IsNullOrEmpty(variant))
+        {
+            var dynChoose   = Resources.Load<TextAsset>($"TongHop/{variant}/choose");
+            var dynMatching = Resources.Load<TextAsset>($"TongHop/{variant}/matching");
+
+            if (dynChoose == null && dynMatching == null)
+            {
+                Debug.LogWarning($"[QuestionPool] Không tìm thấy CSV cho variant '{variant}' " +
+                                 $"tại Resources/TongHop/{variant}/choose(.txt/.csv). " +
+                                 "Dùng TextAsset đã gán trong Inspector (nếu có).");
+                // KHÔNG override imageRoot — giữ nguyên config gốc ("TestTongHop/images")
+                // để game gốc (TestTongHop) vẫn load sprite đúng đường dẫn.
+            }
+            else
+            {
+                // Variant có ít nhất 1 file CSV → complete override:
+                // CSV không có trong variant folder thì clear về null
+                // (tránh Inspector-assigned CSV của scene mặc định bị giữ lại).
+                chooseCSV   = dynChoose;    // null nếu variant không có choose
+                matchingCSV = dynMatching;  // null nếu variant không có matching
+
+                Debug.Log($"[QuestionPool] Loaded variant '{variant}'" +
+                          $" | choose={dynChoose != null} | matching={dynMatching != null}");
+
+                // Override imageRoot / audioRoot CHỈ KHI có file CSV trong Resources.
+                //
+                // Ví dụ variant = "Counting":
+                //   imageRoot = "Counting"
+                //   CSV "T-Rex" → AutoResolvePaths → "Counting/T-Rex"
+                //   Resolve("Counting/T-Rex", "Counting") → đã có prefix → giữ nguyên
+                //   Resources.Load("Counting/T-Rex") → Assets/Resources/Counting/T-Rex.png ✓
+                TongHopConfig.Current.imageRoot = variant;
+                TongHopConfig.Current.audioRoot = variant;
+            }
+
+            // ── Variant-specific config override (luôn chạy nếu variant != "") ────
+            // Load Resources/TongHop/{variant}/config.json nếu có,
+            // merge vào TongHopConfig.Current (JsonUtility.FromJsonOverwrite chỉ ghi đè
+            // các field có trong JSON, giữ nguyên phần còn lại của global config).
+            // Ví dụ: Resources/TongHop/Counting/config.json có "independentPlay": true
+            //         → chỉ Counting dùng independent play, các variant khác không bị ảnh hưởng.
+            var variantCfg = Resources.Load<TextAsset>($"TongHop/{variant}/config");
+            if (variantCfg != null)
+            {
+                try
+                {
+                    JsonUtility.FromJsonOverwrite(variantCfg.text, TongHopConfig.Current);
+                    Debug.Log($"[QuestionPool] Applied variant config for '{variant}'");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[QuestionPool] Variant config parse error: {e.Message}");
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        BuildPool();
+    }
 
     public void SetDifficulty(int d)
     {
@@ -60,18 +127,29 @@ public class QuestionPool : MonoBehaviour
         // Difficulty từ config file (1–10) — có thể thay đổi mà không cần rebuild
         int diff = TongHopConfig.Current.difficulty;
 
-        if (chooseCSV != null)
-            _choosePool.AddRange(
-                ParseChooseCSV(chooseCSV.text)
-                    .Where(q => q.difficulty == diff));
+        List<QuestionData> allChoose   = chooseCSV   != null ? ParseChooseCSV(chooseCSV.text)     : new List<QuestionData>();
+        List<QuestionData> allMatching = matchingCSV != null ? ParseMatchingCSV(matchingCSV.text) : new List<QuestionData>();
 
-        if (matchingCSV != null)
-            _matchingPool.AddRange(
-                ParseMatchingCSV(matchingCSV.text)
-                    .Where(q => q.difficulty == diff));
+        _choosePool.AddRange(allChoose.Where(q => q.difficulty == diff));
+        _matchingPool.AddRange(allMatching.Where(q => q.difficulty == diff));
+
+        // Fallback: nếu không có câu nào khớp difficulty → dùng toàn bộ CSV (bất kể difficulty)
+        // Tránh pool rỗng khi giá trị difficulty trong config không khớp với CSV.
+        if (_choosePool.Count == 0 && allChoose.Count > 0)
+        {
+            Debug.LogWarning($"[QuestionPool] Không có câu Choose nào ở difficulty={diff} — dùng toàn bộ {allChoose.Count} câu.");
+            _choosePool.AddRange(allChoose);
+        }
+        if (_matchingPool.Count == 0 && allMatching.Count > 0)
+        {
+            Debug.LogWarning($"[QuestionPool] Không có câu Matching nào ở difficulty={diff} — dùng toàn bộ {allMatching.Count} câu.");
+            _matchingPool.AddRange(allMatching);
+        }
 
         Shuffle(_choosePool);
         Shuffle(_matchingPool);
+
+        Debug.Log($"[QuestionPool] BuildPool — diff={diff} | choose={_choosePool.Count} | matching={_matchingPool.Count}");
     }
 
     // ─── Parse Choose CSV ─────────────────────────────────────────────────────
@@ -128,6 +206,7 @@ public class QuestionPool : MonoBehaviour
                                      : ChooseDisplayMode.Auto
             };
             AutoResolvePaths(qChoose);
+            AutoFillIconCompose(qChoose);
             list.Add(qChoose);
         }
         return list;
@@ -274,9 +353,117 @@ public class QuestionPool : MonoBehaviour
     int ParseInt(string raw, int defaultVal = 1) =>
         int.TryParse(raw.Trim(), out var v) ? v : defaultVal;
 
-    int[] ParseIntArray(string raw) =>
-        raw.Trim().Split(',').Select(s => int.Parse(s.Trim())).ToArray();
+    int[] ParseIntArray(string raw)
+    {
+        var s = raw.Trim();
+        if (string.IsNullOrEmpty(s)) return System.Array.Empty<int>();
+        return s.Split(',')
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => int.TryParse(x.Trim(), out var v) ? v : 0)
+                .ToArray();
+    }
 
     T ParseEnum<T>(string raw) where T : struct =>
         System.Enum.TryParse<T>(raw.Trim(), out var v) ? v : default;
+
+    // ─── Auto-fill IconCompose answers ────────────────────────────────────────
+
+    /// <summary>
+    /// Nếu câu hỏi là IconCompose và answers/correctAnswers bị bỏ trống trong CSV,
+    /// tự tính:
+    ///   1. Tổng số icon (total) từ "sprite:N" trong questionMediaValue.
+    ///   2. 4 đáp án xoay quanh total (ví dụ total=3 → 1,2,3,4).
+    ///   3. correctAnswers = index của total trong mảng answers.
+    ///
+    /// Cho phép CSV chỉ cần viết:
+    ///   RANDOM:3 ,,,,  Single,, Button
+    /// mà không cần điền đáp án hay chỉ số đáp án đúng.
+    /// </summary>
+    static void AutoFillIconCompose(QuestionData q)
+    {
+        if (q.questionMediaType != QuestionMediaType.IconCompose) return;
+
+        // ── Auto-fill TẠM THỜI BỊ COMMENT — correctAnswers lấy thẳng từ CSV ──
+        // Khi muốn bật lại: bỏ comment toàn bộ khối bên dưới.
+        // Hiển thị ảnh random con vật (QuestionMediaDisplay) không bị ảnh hưởng.
+
+        /*
+        // ── 1. Tính tổng icon từ questionMediaValue ──────────────────────────
+        //    Gọi sau AutoResolvePaths nên value đã có prefix, vd "Counting/RANDOM:3"
+        int total = 0;
+        foreach (var seg in q.questionMediaValue.Split(','))
+        {
+            var t = seg.Trim();
+            if (string.IsNullOrEmpty(t)) continue;
+            int colon = t.LastIndexOf(':');
+            if (colon > 0 && int.TryParse(t.Substring(colon + 1), out int n))
+                total += n;
+        }
+        if (total <= 0) return;
+
+        // ── 2. Nếu answers rỗng → sinh 4 lựa chọn quanh total ───────────────
+        bool answersEmpty = q.answers == null ||
+                            q.answers.All(string.IsNullOrEmpty);
+        if (answersEmpty)
+        {
+            int[] choices = BuildDistractors(total, 4);
+            q.answers = new string[7];
+            for (int i = 0; i < choices.Length; i++)
+                q.answers[i] = choices[i].ToString();
+        }
+
+        // ── 3. LUÔN tính lại correctAnswers từ total ─────────────────────────
+        //    Bỏ qua giá trị CSV cũ — đảm bảo đáp án khớp số icon thực tế.
+        //    Tìm index của total trong answers hiện tại.
+        for (int i = 0; i < q.answers.Length; i++)
+        {
+            if (int.TryParse(q.answers[i], out int v) && v == total)
+            {
+                q.correctAnswers = new[] { i };
+                return;
+            }
+        }
+
+        // ── 4. total không có trong answers (vd: CSV cũ có [1,2,3,4] nhưng total=10)
+        //    → sinh lại answers mới bao gồm total, rồi tính correctAnswers.
+        {
+            int[] choices = BuildDistractors(total, 4);
+            q.answers = new string[7];
+            for (int i = 0; i < choices.Length; i++)
+                q.answers[i] = choices[i].ToString();
+
+            for (int i = 0; i < q.answers.Length; i++)
+            {
+                if (int.TryParse(q.answers[i], out int v) && v == total)
+                {
+                    q.correctAnswers = new[] { i };
+                    return;
+                }
+            }
+        }
+        */
+    }
+
+    /// <summary>
+    /// Tạo mảng <paramref name="count"/> số nguyên dương, luôn chứa
+    /// <paramref name="correct"/>, các số còn lại là lân cận (≥ 1),
+    /// được sắp xếp tăng dần.
+    /// Ví dụ: correct=3, count=4 → [1, 2, 3, 4]
+    ///         correct=1, count=4 → [1, 2, 3, 4]
+    ///         correct=12,count=4 → [10,11,12,13]
+    /// </summary>
+    static int[] BuildDistractors(int correct, int count)
+    {
+        var set = new System.Collections.Generic.HashSet<int> { correct };
+        int offset = 1;
+        while (set.Count < count)
+        {
+            if (correct - offset >= 1) set.Add(correct - offset);
+            if (set.Count < count)     set.Add(correct + offset);
+            offset++;
+        }
+        var arr = set.ToArray();
+        System.Array.Sort(arr);
+        return arr;
+    }
 }

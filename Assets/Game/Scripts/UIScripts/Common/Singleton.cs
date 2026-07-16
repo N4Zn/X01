@@ -31,9 +31,9 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
             {
                 if (_instance == null)
                 {
-                    _instance = (T)FindObjectOfType(typeof(T));
- 
-                    if (FindObjectsOfType(typeof(T)).Length > 1)
+                    _instance = FindFirstObjectByType<T>();
+
+                    if (FindObjectsByType<T>(FindObjectsSortMode.None).Length > 1)
                     {
                         Debug.LogError("[Singleton] Something went really wrong " +
                             " - there should never be more than 1 singleton!" +
@@ -75,10 +75,12 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     ///   even after stopping playing the Application. Really bad!
     /// So, this was made to be sure we're not creating that buggy ghost object.
     /// </summary>
-    public virtual void OnDestroy()
+    public virtual void OnApplicationQuit()
     {
         applicationIsQuitting = true;
     }
+
+    public virtual void OnDestroy() { }
 
     protected virtual void OnCreated()
     {

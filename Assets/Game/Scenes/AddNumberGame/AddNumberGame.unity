@@ -1163,7 +1163,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AddNumberGameController
   gameView: {fileID: 158916531}
-  tutorialPanel: {fileID: 1210715096}
+  tutorialPanel: {fileID: 0}
   tutorialClip: {fileID: 0}
   forceResolution1024x600: 1
 --- !u!1 &159941650
@@ -3838,7 +3838,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &954228765
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4309,7 +4309,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1022515826
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4895,7 +4895,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1210715095
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4928,7 +4928,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd1c2232591ae4cb68953439976f2b5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panelRoot: {fileID: 533706904}
+  panelRoot: {fileID: 0}
   videoDisplay: {fileID: 1673486706}
   videoPlayer: {fileID: 555445266}
   audioSource: {fileID: 0}
@@ -7499,7 +7499,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2082773461
 RectTransform:
   m_ObjectHideFlags: 0

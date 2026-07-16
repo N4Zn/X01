@@ -53,8 +53,11 @@ public class AddNumberGameModel
     // All available questions
     private List<AddUpMaster.Param> allQuestions;
 
-    public AddNumberGameModel()
+    private int _maxSum;
+
+    public AddNumberGameModel(int maxSum = 10)
     {
+        _maxSum = maxSum;
         Player1Score = 0;
         Player2Score = 0;
         CurrentRound = 0;
@@ -100,7 +103,7 @@ public class AddNumberGameModel
 
     private AddUpMaster.Param GenerateQuestionByLevel(int playerIndex, int level)
     {
-        int maxSum = PlayerRound[playerIndex] <= 5 ? 5 : 10;
+        int maxSum = PlayerRound[playerIndex] <= 5 ? Mathf.Min(5, _maxSum) : _maxSum;
         int sum = Random.Range(2, maxSum + 1); // Start from 2 (1+1)
         int a = Random.Range(1, sum);
         int b = sum - a;
@@ -148,27 +151,25 @@ public class AddNumberGameModel
         }
 
         // Fill remaining slots with wrong answers
+        bool isMultiHidden = hidden.Length > 1;
         foreach (int slot in availableSlots)
         {
             int wrong;
             int attempts = 0;
-            // Select a random correct value to base the distractor on (result +- 3)
             int baseVal = requiredValues[Random.Range(0, requiredValues.Count)];
 
             do
             {
-                // Wrong answers should be within correct value +- 3
                 wrong = baseVal + Random.Range(-3, 4);
                 attempts++;
-            } while ((wrong < 1 || wrong == a || wrong == b || wrong == sum || System.Array.IndexOf(answers, wrong) >= 0) && attempts < 25);
+            } while (attempts < 25 && IsInvalidWrong(wrong, a, b, sum, answers, isMultiHidden));
 
-            // If we couldn't find a unique wrong answer within narrow range, fallback to general range
             if (attempts >= 25)
             {
                 do {
                     wrong = Random.Range(1, maxSum + 5);
                     attempts++;
-                } while ((wrong == a || wrong == b || wrong == sum || System.Array.IndexOf(answers, wrong) >= 0) && attempts < 50);
+                } while (attempts < 50 && IsInvalidWrong(wrong, a, b, sum, answers, isMultiHidden));
             }
             answers[slot] = wrong;
         }
@@ -352,6 +353,20 @@ public class AddNumberGameModel
                 ConsecutiveWrong[playerIndex] = 0;
             }
         }
+    }
+
+    // wrong không hợp lệ nếu: trùng đáp án đúng, trùng số đã có, hoặc (multi-pick)
+    // ghép với số đã có trong answers tạo thành tổng đúng → player không biết chọn cặp nào
+    private static bool IsInvalidWrong(int wrong, int a, int b, int sum, int[] answers, bool checkPairs)
+    {
+        if (wrong < 1 || wrong == a || wrong == b || wrong == sum) return true;
+        if (System.Array.IndexOf(answers, wrong) >= 0) return true;
+        if (checkPairs)
+        {
+            for (int k = 0; k < answers.Length; k++)
+                if (answers[k] != 0 && answers[k] + wrong == sum) return true;
+        }
+        return false;
     }
 
     public string GetRandomImageType()

@@ -13,6 +13,7 @@ public class MusicManager : Singleton<MusicManager>
     // Cached clips
     private AudioClip _mainMusic;
     private AudioClip _gameplayMusic;
+    private AudioClip _solarSystemMusic;
     private AudioClip _questionSfx;
     private AudioClip _correctSfx;
     private AudioClip _wrongSfx;
@@ -36,6 +37,7 @@ public class MusicManager : Singleton<MusicManager>
         // Load clips from Resources
         _mainMusic = Resources.Load<AudioClip>("Audio/Music/main");
         _gameplayMusic = Resources.Load<AudioClip>("Audio/Music/gameplay");
+        _solarSystemMusic = Resources.Load<AudioClip>("Audio/Music/solar_system");
         _questionSfx = Resources.Load<AudioClip>("Audio/SFX/question");
         _correctSfx = Resources.Load<AudioClip>("Audio/SFX/correct");
         _wrongSfx = Resources.Load<AudioClip>("Audio/SFX/wrong");
@@ -81,6 +83,15 @@ public class MusicManager : Singleton<MusicManager>
     public void PlayGameplayMusic()
     {
         PlayBgm(_gameplayMusic, "gameplay");
+    }
+
+    /// <summary>
+    /// Play Solar System scene background music.
+    /// Clip: Assets/Resources/Audio/Music/solar_system.mp3 (or .ogg / .wav)
+    /// </summary>
+    public void PlaySolarSystemMusic()
+    {
+        PlayBgm(_solarSystemMusic, "solar_system");
     }
 
     /// <summary>

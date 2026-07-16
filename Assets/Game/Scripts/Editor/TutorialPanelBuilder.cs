@@ -53,7 +53,7 @@ public static class TutorialPanelBuilder
     [MenuItem("Tools/Tutorial/Add TutorialPanel to Current Scene")]
     public static void AddToCurrentScene()
     {
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             Debug.LogError("TutorialPanelBuilder: No Canvas found in current scene.");
@@ -61,12 +61,11 @@ public static class TutorialPanelBuilder
         }
 
         // Try to find any game controller
-        MonoBehaviour controller = Object.FindObjectOfType<AddUpGameController>() as MonoBehaviour;
-        string controllerProp = "tutorialPanel";
+        MonoBehaviour controller = Object.FindFirstObjectByType<AddUpGameController>() as MonoBehaviour;
         System.Type controllerType = null;
 
-        if (controller == null) controller = Object.FindObjectOfType<TrainPathGameController>();
-        if (controller == null) controller = Object.FindObjectOfType<PathFinderGameController>();
+        if (controller == null) controller = Object.FindFirstObjectByType<TrainPathGameController>();
+        if (controller == null) controller = Object.FindFirstObjectByType<PathFinderGameController>();
 
         if (controller != null) controllerType = controller.GetType();
 
@@ -88,14 +87,14 @@ public static class TutorialPanelBuilder
         Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
 
         // Check if TutorialPanel already exists
-        TutorialPanel existing = Object.FindObjectOfType<TutorialPanel>();
+        TutorialPanel existing = Object.FindFirstObjectByType<TutorialPanel>();
         if (existing != null)
         {
             Debug.Log($"TutorialPanelBuilder: TutorialPanel already exists in {scenePath}. Skipping.");
             return;
         }
 
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             Debug.LogError($"TutorialPanelBuilder: No Canvas found in {scenePath}.");
@@ -106,7 +105,7 @@ public static class TutorialPanelBuilder
         TutorialPanel panel = panelGo.GetComponent<TutorialPanel>();
 
         // Find controller and wire up
-        MonoBehaviour controller = Object.FindObjectOfType(controllerType) as MonoBehaviour;
+        MonoBehaviour controller = Object.FindFirstObjectByType(controllerType) as MonoBehaviour;
         if (controller != null)
         {
             WireTutorialPanel(controller, panel);

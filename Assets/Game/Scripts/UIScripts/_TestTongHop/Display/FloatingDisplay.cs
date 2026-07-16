@@ -22,6 +22,7 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
     AnswerValidator           _rightValidator;
     Action<bool, Team, int[]> _onResult;
     Action<Team>              _onPlayerFailed;
+    Action<Team>              _onPartialCorrect;
     QuestionData              _current;
     bool                      _orbitRunning;
     Coroutine                 _orbitCoroutine;
@@ -34,13 +35,23 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
     readonly System.Collections.Generic.Dictionary<int, float> _leftSelectTimes  = new();
     readonly System.Collections.Generic.Dictionary<int, float> _rightSelectTimes = new();
 
+    // ── Independent play mode ─────────────────────────────────────────────────
+    bool                      _isIndependent;
+    QuestionData              _leftQuestionInd;
+    QuestionData              _rightQuestionInd;
+    Action<bool, Team, int[]> _leftOnDoneInd;
+    Action<bool, Team, int[]> _rightOnDoneInd;
+
     // ─── IAnswerDisplay ───────────────────────────────────────────────────────
+
+    public void SetPartialCorrectCallback(Action<Team> cb) => _onPartialCorrect = cb;
 
     public void Setup(QuestionData q, Action<bool, Team, int[]> onResult, Action<Team> onPlayerFailed)
     {
         _current             = q;
         _onResult            = onResult;
         _onPlayerFailed      = onPlayerFailed;
+        _onPartialCorrect    = null;
         _leftValidator       = new AnswerValidator(q);
         _rightValidator      = new AnswerValidator(q);
         _leftAnsweredWrong   = false;
@@ -72,6 +83,54 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
         foreach (var item in _rightItems) if (item) Destroy(item.gameObject);
         _leftItems.Clear();  _rightItems.Clear();
         _leftRts.Clear();    _rightRts.Clear();
+        _isIndependent    = false;
+        _leftQuestionInd  = null;
+        _rightQuestionInd = null;
+        _leftOnDoneInd    = null;
+        _rightOnDoneInd   = null;
+        _onPartialCorrect = null;
+    }
+
+    // ─── Independent play ─────────────────────────────────────────────────────
+
+    public void SetupPlayerIndependent(Team team, QuestionData q, Action<bool, Team, int[]> onDone)
+    {
+        _isIndependent = true;
+        gameObject.SetActive(true);  // activate first — spawnParent and coroutines need active GO
+        bool isLeft    = team == Team.Left;
+
+        var items = isLeft ? _leftItems : _rightItems;
+        var rts   = isLeft ? _leftRts   : _rightRts;
+        foreach (var item in items) if (item) Destroy(item.gameObject);
+        items.Clear();
+        rts.Clear();
+
+        if (isLeft)
+        {
+            _leftQuestionInd   = q;
+            _leftOnDoneInd     = onDone;
+            _leftValidator     = new AnswerValidator(q);
+            _leftFinalised     = false;
+            _leftAnsweredWrong = false;
+            _leftSelectTimes.Clear();
+        }
+        else
+        {
+            _rightQuestionInd   = q;
+            _rightOnDoneInd     = onDone;
+            _rightValidator     = new AnswerValidator(q);
+            _rightFinalised     = false;
+            _rightAnsweredWrong = false;
+            _rightSelectTimes.Clear();
+        }
+
+        SpawnItemsForTeam(team, q);
+
+        if (!_orbitRunning)
+        {
+            _orbitRunning   = true;
+            _orbitCoroutine = StartCoroutine(OrbitCoroutine());
+        }
     }
 
     // ─── Spawn ────────────────────────────────────────────────────────────────
@@ -153,6 +212,58 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
         return item;
     }
 
+    void SpawnItemsForTeam(Team team, QuestionData q)
+    {
+        bool  isLeft = team == Team.Left;
+        float cx     = TongHopConfig.Current.orbitCenterX;
+
+        var validIndices = new List<int>();
+        for (int i = 0; i < q.answers.Length; i++)
+            if (!string.IsNullOrWhiteSpace(q.answers[i]))
+                validIndices.Add(i);
+
+        int count      = validIndices.Count;
+        int orbitCount = Mathf.Min(count, 6);
+
+        float[] angles = new float[orbitCount];
+        if (isLeft) _leftAngles = angles; else _rightAngles = angles;
+
+        int[]    order   = ShuffledIndices(count);
+        Sprite[] planets = PickRandomPlanets(count);
+
+        var items = isLeft ? _leftItems : _rightItems;
+        var rts   = isLeft ? _leftRts   : _rightRts;
+
+        for (int i = 0; i < orbitCount; i++)
+        {
+            angles[i] = 360f * i / orbitCount;
+            int  idx  = validIndices[order[i]];
+            var  item = SpawnOneItemWith(q, idx, planets[i], i * 0.1f, team);
+            var  rt   = item.GetComponent<RectTransform>();
+            rt.anchoredPosition = OrbitPos(isLeft ? -cx : cx, angles[i]);
+            items.Add(item);
+            rts.Add(rt);
+        }
+        for (int i = orbitCount; i < count; i++)
+        {
+            int idx  = validIndices[order[i]];
+            var item = SpawnOneItemWith(q, idx, planets[i], i * 0.1f, team);
+            item.GetComponent<RectTransform>().anchoredPosition = new Vector2(isLeft ? -cx : cx, 0f);
+            items.Add(item);
+        }
+    }
+
+    FloatingItem SpawnOneItemWith(QuestionData q, int answerIndex, Sprite planet, float delay, Team team)
+    {
+        var item = Instantiate(itemPrefab, spawnParent);
+        float size = TongHopConfig.Current.floatingSize;
+        item.GetComponent<RectTransform>().sizeDelta = new Vector2(size, size);
+        item.Setup(q.answers[answerIndex], q.answerMediaType, answerIndex, OnItemClicked, team);
+        item.SetPlanet(planet);
+        item.PlaySpawnAnim(delay);
+        return item;
+    }
+
     // ─── Orbit ────────────────────────────────────────────────────────────────
 
     IEnumerator OrbitCoroutine()
@@ -168,6 +279,9 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
                     _leftAngles[i] += speed * Time.deltaTime;
                     _leftRts[i].anchoredPosition = OrbitPos(-cx, _leftAngles[i]);
                 }
+            }
+            for (int i = 0; i < _rightRts.Count; i++)
+            {
                 if (_rightRts[i] != null)
                 {
                     _rightAngles[i] += speed * Time.deltaTime;
@@ -190,72 +304,67 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
 
     void OnItemClicked(int answerIndex, Team team)
     {
-        bool        isLeft      = team == Team.Left;
+        bool isLeft = team == Team.Left;
         if (isLeft ? _leftFinalised : _rightFinalised) return;
 
-        var         validator   = isLeft ? _leftValidator   : _rightValidator;
-        var         myItems     = isLeft ? _leftItems        : _rightItems;
-        var         theirItems  = isLeft ? _rightItems       : _leftItems;
-        var         selectTimes = isLeft ? _leftSelectTimes  : _rightSelectTimes;
+        var q = _isIndependent
+            ? (isLeft ? _leftQuestionInd : _rightQuestionInd)
+            : _current;
+        if (q == null) return;
 
-        // ── Interact guard (chống bấm nhầm nhanh) — chỉ áp dụng cho MultiSelect ──
-        if (_current.answerMode == AnswerMode.MultiSelect)
-        {
-            float t = selectTimes.TryGetValue(answerIndex, out var st) ? st : 0f;
-            if (Time.time - t < TongHopConfig.Current.chooseDeselectDelay) return;
-        }
+        var validator  = isLeft ? _leftValidator : _rightValidator;
+        var myItems    = isLeft ? _leftItems     : _rightItems;
+        var theirItems = isLeft ? _rightItems    : _leftItems;
 
         var result = validator.RegisterClick(answerIndex);
         GameLogger.Current?.LogClick(team, answerIndex, result);
 
         switch (result)
         {
-            case ClickResult.WrongPartial:
-                // Xám — không hé lộ sai, vẫn deselect được sau delay
-                GetItemFrom(myItems, answerIndex)?.SetChosen();
-                selectTimes[answerIndex] = Time.time;
-                break;
-
             case ClickResult.WrongFinal:
                 if (isLeft) _leftFinalised = true; else _rightFinalised = true;
-                _orbitRunning = false;
-                if (_current.answerMode == AnswerMode.OrderedSequence)
+                if (!_isIndependent) _orbitRunning = false;
+                if (q.answerMode == AnswerMode.OrderedSequence)
                     ApplyOrderedFinalState(myItems, validator, answerIndex);
                 else
-                    ApplyMultiFinalState(myItems, validator, _current.correctAnswers);
-                if (isLeft) _leftAnsweredWrong  = true;
-                else        _rightAnsweredWrong = true;
-                _onPlayerFailed?.Invoke(team);
-                CheckBothWrong();
+                    ApplyMultiFinalState(myItems, validator, q.correctAnswers);
+                if (_isIndependent)
+                    (isLeft ? _leftOnDoneInd : _rightOnDoneInd)?.Invoke(false, team, q.correctAnswers);
+                else
+                {
+                    if (isLeft) _leftAnsweredWrong = true; else _rightAnsweredWrong = true;
+                    _onPlayerFailed?.Invoke(team);
+                    CheckBothWrong();
+                }
                 break;
 
             case ClickResult.CorrectPartial:
             {
                 var picked = GetItemFrom(myItems, answerIndex);
-                if (_current.answerMode == AnswerMode.OrderedSequence)
+                if (q.answerMode == AnswerMode.OrderedSequence)
                 {
-                    picked?.SetState(ItemState.Correct);  // xanh ngay
-                    picked?.Lock();                        // khoá — không click lại
+                    picked?.SetState(ItemState.Correct);
+                    picked?.Lock();
                 }
-                else
+                else // MultiSelect: ẩn item + +1 điểm + SFX, round tiếp tục
                 {
-                    picked?.SetChosen();                   // xám — chưa hé lộ đúng/sai
+                    if (picked != null) picked.gameObject.SetActive(false);
+                    _onPartialCorrect?.Invoke(team);
                 }
-                selectTimes[answerIndex] = Time.time;
                 break;
             }
 
-            case ClickResult.Deselected:
-                GetItemFrom(myItems, answerIndex)?.SetState(ItemState.Normal);
-                selectTimes[answerIndex] = Time.time;
-                break;
-
             case ClickResult.CorrectFinal:
                 if (isLeft) _leftFinalised = true; else _rightFinalised = true;
-                _orbitRunning = false;
-                ApplyFinalState(myItems, _current.correctAnswers);
-                foreach (var item in theirItems) item.SetState(ItemState.Locked);
-                _onResult?.Invoke(true, team, _current.correctAnswers);
+                if (!_isIndependent) _orbitRunning = false;
+                ApplyFinalState(myItems, q.correctAnswers);
+                if (_isIndependent)
+                    (isLeft ? _leftOnDoneInd : _rightOnDoneInd)?.Invoke(true, team, q.correctAnswers);
+                else
+                {
+                    foreach (var item in theirItems) item.SetState(ItemState.Locked);
+                    _onResult?.Invoke(true, team, q.correctAnswers);
+                }
                 break;
 
             // WrongInSequence không còn dùng — ValidateOrdered trả WrongFinal trực tiếp

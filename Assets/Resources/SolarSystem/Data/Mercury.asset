@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd313ac8e6ecba4468c8e39a5c09a2a2, type: 3}
+  m_Name: Mercury
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetData
+  planetName: Mercury
+  planetNameVi: "Sao Th\u1EE7y"
+  descriptionVi: "H\xE0nh tinh nh\u1ECF nh\u1EA5t v\xE0 g\u1EA7n M\u1EB7t Tr\u1EDDi
+    nh\u1EA5t. Kh\xF4ng c\xF3 kh\xED quy\u1EC3n b\u1EA3o v\u1EC7, nhi\u1EC7t \u0111\u1ED9
+    thay \u0111\u1ED5i c\u1EF1c l\u1EDBn."
+  texturePath: SolarSystem/Textures/2k_mercury
+  orbitRadius: 6
+  orbitSpeed: 4.7
+  selfRotateSpeed: 10
+  scale: 1.05
+  distanceFromSun: "57.9 tri\u1EC7u km"
+  diameter: 4,879 km
+  numberOfMoons: 0
+  surfaceTemp: "-180\xB0C \u0111\u1EBFn 430\xB0C"
+  hasSaturnRings: 0
+  isSun: 0
+  axialTilt: 0.03

@@ -79,7 +79,7 @@ public class ScoreSceneController : MonoBehaviour
 
     private void OnClickChangeTeam()
     {
-        Debug.Log("NDL: ScoreScene - OnClickChangeTeam - Loading TeamSelectScene");
-        SceneManager.LoadScene("TeamSelectScene");
+        Debug.Log("NDL: ScoreScene - OnClickChangeTeam - Loading MenuScene");
+        SceneManager.LoadScene("MenuScene");
     }
 }

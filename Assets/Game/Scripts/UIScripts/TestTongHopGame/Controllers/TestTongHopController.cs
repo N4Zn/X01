@@ -55,6 +55,12 @@ public class TestTongHopController : MonoBehaviour
     // Wrong  : Time.time + 0 (icon đã hiện đủ thời gian cùng với delay ẩn câu hỏi)
     float _iconDisplayUntil;
 
+    // ── Independent play state ────────────────────────────────────────────────
+    bool _isIndependentPlay;
+    bool _independentStarted;
+    int  _leftRoundsCompleted;
+    int  _rightRoundsCompleted;
+
     // ── Unity lifecycle ───────────────────────────────────────────────────────
 
     void Update()
@@ -113,7 +119,20 @@ public class TestTongHopController : MonoBehaviour
             rightName = session.GetDisplayName2();
         }
 
-        gameHud?.Initialize(gameModel.Score, leftName, rightName, gameModel.TotalRounds);
+        // Override timing từ MenuScene settings (nhất quán với tất cả game khác)
+        if (GameSettings.Instance != null)
+        {
+            float roundDelay = GameSettings.Instance.RoundEndDelay;
+            TongHopConfig.Current.feedbackDelayCorrect = 1f;
+            TongHopConfig.Current.feedbackDelayWrong = 1f;
+            int countdownSecs = Mathf.Max(0, Mathf.RoundToInt(roundDelay) - 1);
+            TongHopConfig.Current.nextQuestionDelay = countdownSecs;
+            TongHopConfig.Current.nextQuestionDelayPerPlayer = countdownSecs;
+        }
+
+        _isIndependentPlay = TongHopConfig.Current.independentPlay;
+
+        gameHud?.Initialize(gameModel.Score, leftName, rightName);
         _fsm.StateMachineChange(TestTongHopSceneState.ShowQuestion);
     }
 
@@ -125,9 +144,15 @@ public class TestTongHopController : MonoBehaviour
 
     protected void StateMachineEnter_ShowQuestion(Enum prev, Dictionary<string, object> opts)
     {
-        if (gameModel.IsGameOver)
+        // ── Independent play: chỉ khởi động 1 lần, rồi park FSM ở WaitAnswer ──
+        if (_isIndependentPlay)
         {
-            _fsm.StateMachineChange(TestTongHopSceneState.GameOver);
+            if (!_independentStarted)
+            {
+                _independentStarted = true;
+                StartIndependentPlay();
+                _fsm.StateMachineChange(TestTongHopSceneState.WaitAnswer);
+            }
             return;
         }
 
@@ -136,7 +161,7 @@ public class TestTongHopController : MonoBehaviour
         _questionHidden[0] = _questionHidden[1] = false;
 
         // AnswerDisplayManager chọn loại câu hỏi (dựa trên weight) và lấy từ pool
-        answerDisplayManager.Show(OnAnswerResult, OnPlayerFailed);
+        answerDisplayManager.Show(OnAnswerResult, OnPlayerFailed, OnPartialCorrect);
 
         _currentQuestion   = answerDisplayManager.CurrentQuestion;
         _questionStartTime = Time.time;
@@ -168,6 +193,13 @@ public class TestTongHopController : MonoBehaviour
     protected void StateMachineEnter_WaitAnswer(Enum prev, Dictionary<string, object> opts) { }
     protected void StateMachineExit_WaitAnswer(Enum prev, Dictionary<string, object> opts) { }
 
+    // MultiSelect: mỗi lần click đúng 1 đáp án → +1 điểm ngay + SFX (không hiện icon)
+    void OnPartialCorrect(Team team)
+    {
+        gameModel.Score.AddPoint(team);
+        MusicManager.Instance?.PlayCorrectSfx();
+    }
+
     // Callback: ngay khi 1 player hết lượt và sai — hiện ✗ static, schedule ẩn câu hỏi sau delay
     void OnPlayerFailed(Team team)
     {
@@ -186,7 +218,9 @@ public class TestTongHopController : MonoBehaviour
         if (GetCurrentState() != TestTongHopSceneState.WaitAnswer) return;
 
         float responseTime = Time.time - _questionStartTime;
-        gameModel.RecordAnswer(_currentQuestion, isCorrect, team, responseTime);
+        // MultiSelect: điểm đã cộng từng phần qua OnPartialCorrect → chỉ log, không cộng lại
+        bool addScore = !(isCorrect && _currentQuestion?.answerMode == AnswerMode.MultiSelect);
+        gameModel.RecordAnswer(_currentQuestion, isCorrect, team, responseTime, addScore);
 
         _lastCorrect = isCorrect;
         _lastTeam    = team;
@@ -252,21 +286,16 @@ public class TestTongHopController : MonoBehaviour
 
     IEnumerator FeedbackThenNext()
     {
-        // 1. Chờ đồng thời 2 điều kiện:
-        //    a) Cả 2 câu hỏi đã ẩn:
-        //       - Loser  : ẩn sau feedbackDelayWrong  (HideQuestionAfterDelay coroutine)
-        //       - Winner : ẩn ngay trong OnAnswerResult
-        //    b) Icon winner đã hiện đủ feedbackDelayCorrect giây
-        //       (Wrong case: _iconDisplayUntil = Time.time → điều kiện ngay lập tức true)
-        yield return new WaitUntil(() =>
-            _questionHidden[0] && _questionHidden[1] && Time.time >= _iconDisplayUntil);
+        // 1. Hiện feedback icon ~1.5s (feedbackDelayCorrect), câu hỏi tự ẩn song song
+        yield return new WaitForSeconds(TongHopConfig.Current.feedbackDelayCorrect);
         if (GetCurrentState() != TestTongHopSceneState.Feedback) yield break;
 
-        // 2. Ẩn icon + dọn toàn bộ câu hỏi/đáp án — countdown hiện trên nền trống
+        // 2. Ẩn icon + force-hide câu hỏi/đáp án (nếu HideQuestionAfterDelay chưa xong)
         HideFeedbackIcons();
+        foreach (var d in questionDisplays) d?.Hide();
         answerDisplayManager.Cleanup();
 
-        // 3. Đếm ngược "Next in Xs" (cả 2 bên đồng thời)
+        // 3. Đếm ngược "Next in Xs" trên nền trống
         int countFrom = Mathf.Max(1, TongHopConfig.Current.nextQuestionDelay);
         for (int i = countFrom; i >= 1; i--)
         {
@@ -381,6 +410,108 @@ public class TestTongHopController : MonoBehaviour
     {
         if (leftCountdownText)  leftCountdownText.gameObject.SetActive(false);
         if (rightCountdownText) rightCountdownText.gameObject.SetActive(false);
+    }
+
+    // =========================================================================
+    // Independent Play — mỗi player chạy coroutine riêng, không chờ nhau
+    // =========================================================================
+
+    void StartIndependentPlay()
+    {
+        _leftRoundsCompleted  = 0;
+        _rightRoundsCompleted = 0;
+        StartCoroutine(PlayerLoop(Team.Left));
+        StartCoroutine(PlayerLoop(Team.Right));
+    }
+
+    IEnumerator PlayerLoop(Team team)
+    {
+        int playerIdx = team == Team.Left ? 0 : 1;
+
+        // Chạy đến khi timer hết (Update() trigger GameOver)
+        while (GetCurrentState() != TestTongHopSceneState.GameOver)
+        {
+            // 1. Lấy câu hỏi tiếp theo từ pool
+            QuestionData q = answerDisplayManager.GetNextQuestion();
+            if (q == null) { Debug.LogError("[IndependentPlay] Pool rỗng!"); break; }
+            // [DEBUG] trace — xóa khi đã xác nhận
+            Debug.Log($"[PlayerLoop] {team} → q={q.id} | correct=[{string.Join(",", q.correctAnswers)}] | answers=[{string.Join(",", q.answers ?? System.Array.Empty<string>())}]");
+
+            // 2. Hiện câu hỏi phía player này
+            if (playerIdx < questionDisplays.Length)
+                questionDisplays[playerIdx].Show(q);
+
+            // 3. Setup buttons cho player này — callback báo khi player xong
+            bool answered  = false;
+            bool isCorrect = false;
+            answerDisplayManager.SetupPlayerIndependent(team, q, (ok, _, __) =>
+            {
+                isCorrect = ok;
+                answered  = true;
+            });
+
+            float startTime = Time.time;
+
+            // 4. Chờ player trả lời hoặc hết giờ
+            yield return new WaitUntil(() => answered ||
+                GetCurrentState() == TestTongHopSceneState.GameOver);
+            if (GetCurrentState() == TestTongHopSceneState.GameOver) yield break;
+
+            // 5. Ghi kết quả
+            // [DEBUG] trace — xóa khi đã xác nhận
+            Debug.Log($"[PlayerLoop] {team} answered q={q.id} → isCorrect={isCorrect}");
+            gameModel.RecordAnswer(q, isCorrect, team, Time.time - startTime);
+            if (team == Team.Left) _leftRoundsCompleted++; else _rightRoundsCompleted++;
+
+            // 6. Feedback icon
+            if (isCorrect) { MusicManager.Instance?.PlayCorrectSfx(); ShowCorrectIcon(team); }
+            else           { MusicManager.Instance?.PlayWrongSfx();   ShowWrongIcon(team);   }
+
+            // 7. Ẩn câu hỏi + đáp án của player này ngay
+            if (playerIdx < questionDisplays.Length) questionDisplays[playerIdx].Hide();
+            answerDisplayManager.HidePlayerAnswers(team);
+
+            // 8. Hiện feedback icon ~1.5s
+            yield return new WaitForSeconds(TongHopConfig.Current.feedbackDelayCorrect);
+            if (GetCurrentState() == TestTongHopSceneState.GameOver) yield break;
+
+            // 9. Ẩn icon
+            HidePlayerFeedbackIcon(team);
+
+            // 10. Đếm ngược
+            int delay = TongHopConfig.Current.nextQuestionDelayPerPlayer;
+            for (int i = delay; i >= 1; i--)
+            {
+                if (GetCurrentState() == TestTongHopSceneState.GameOver) yield break;
+                ShowCountdownForPlayer(team, i);
+                yield return new WaitForSeconds(1f);
+            }
+            HideCountdownForPlayer(team);
+        }
+
+        // Hết giờ hoặc pool rỗng — ẩn giao diện bên này
+        int idx = team == Team.Left ? 0 : 1;
+        if (idx < questionDisplays.Length) questionDisplays[idx].Hide();
+        answerDisplayManager.HidePlayerAnswers(team);
+    }
+
+    void ShowCountdownForPlayer(Team team, int seconds)
+    {
+        string msg = $"Next in {seconds}s";
+        var txt    = team == Team.Left ? leftCountdownText : rightCountdownText;
+        if (txt) { txt.text = msg; txt.gameObject.SetActive(true); }
+    }
+
+    void HideCountdownForPlayer(Team team)
+    {
+        var txt = team == Team.Left ? leftCountdownText : rightCountdownText;
+        if (txt) txt.gameObject.SetActive(false);
+    }
+
+    void HidePlayerFeedbackIcon(Team team)
+    {
+        if (team == Team.Left) { StopFeedback(p1CorrectIcon); StopFeedback(p1WrongIcon); }
+        else                   { StopFeedback(p2CorrectIcon); StopFeedback(p2WrongIcon); }
     }
 
     // ── Adaptive difficulty ────────────────────────────────────────────────────

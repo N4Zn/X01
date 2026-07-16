@@ -40,7 +40,7 @@ public class PathFinderGameController : MonoBehaviour
 
         if (GameSettings.Instance != null)
         {
-            _feedbackDelay = GameSettings.Instance.GetFeedbackDelay();
+            _feedbackDelay = GameSettings.Instance.RoundEndDelay;
             _questionTimeout = GameSettings.Instance.QuestionTimeout;
         }
 
@@ -109,7 +109,7 @@ public class PathFinderGameController : MonoBehaviour
     protected void StateMachineEnter_Playing(Enum previousState, Dictionary<string, object> options)
     {
         Debug.Log("NDL: PathFinder - StateMachineEnter_Playing");
-        MusicManager.Instance.PlayGameplayMusic();
+        MusicManager.Instance?.PlayGameplayMusic();
     }
 
     protected void StateMachineExit_Playing(Enum previousState, Dictionary<string, object> options)
@@ -156,7 +156,7 @@ public class PathFinderGameController : MonoBehaviour
 
         // Display after a short delay to let layout settle
         StartCoroutine(DisplayMazesDelayed(p1, p2));
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
         StartQuestionTimeout(0);
         StartQuestionTimeout(1);
 
@@ -219,7 +219,7 @@ public class PathFinderGameController : MonoBehaviour
         if (answered) yield break;
 
         if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
-        MusicManager.Instance.PlayWrongSfx();
+        MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         if (playerIndex == 0)
         { if (_p1FeedbackCoroutine != null) StopCoroutine(_p1FeedbackCoroutine); _p1FeedbackCoroutine = StartCoroutine(NextRoundAfterDelay(playerIndex)); }
@@ -248,7 +248,7 @@ public class PathFinderGameController : MonoBehaviour
 
         if (isCorrect)
         {
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             int points = _gameModel.GetScoreForDifficulty(puzzle.Difficulty);
             if (playerIndex == 0)
                 _gameModel.Player1Score += points;
@@ -260,7 +260,7 @@ public class PathFinderGameController : MonoBehaviour
         }
         else
         {
-            MusicManager.Instance.PlayWrongSfx();
+            MusicManager.Instance?.PlayWrongSfx();
         }
 
         gameView.ShowAnswerResult(playerIndex, choice, isCorrect);
@@ -280,30 +280,24 @@ public class PathFinderGameController : MonoBehaviour
 
     private IEnumerator NextRoundAfterDelay(int playerIndex)
     {
-        yield return new WaitForSeconds(_feedbackDelay);
-
+        yield return new WaitForSeconds(1f); // feedback icon visible
         Enum state = _customFSMManager.GetCurrentState();
         if (state == null || state.ToString() != PathFinderSceneState.Playing.ToString())
             yield break;
 
-        // Team mode: 3-second countdown before next round
-        if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
-        {
-            //NamNN change with Android Studio Agent
-            // Hide this player's feedback icon before showing countdown
-            gameView.HideFeedback(playerIndex);
-            gameView.HideQuestion(playerIndex);
+        gameView.HideFeedback(playerIndex);
+        gameView.HideQuestion(playerIndex);
 
-            for (int i = 3; i >= 1; i--)
-            {
-                gameView.ShowCountdown(playerIndex, i);
-                yield return new WaitForSeconds(1f);
-                state = _customFSMManager.GetCurrentState();
-                if (state == null || state.ToString() != PathFinderSceneState.Playing.ToString())
-                    yield break;
-            }
-            gameView.HideCountdown(playerIndex);
+        int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
+        for (int i = countSeconds; i >= 1; i--)
+        {
+            gameView.ShowCountdown(playerIndex, i);
+            yield return new WaitForSeconds(1f);
+            state = _customFSMManager.GetCurrentState();
+            if (state == null || state.ToString() != PathFinderSceneState.Playing.ToString())
+                yield break;
         }
+        gameView.HideCountdown(playerIndex);
 
         if (playerIndex == 0)
         {
@@ -319,7 +313,7 @@ public class PathFinderGameController : MonoBehaviour
         _gameModel.CurrentRound++;
         MazeGenerator.MazePuzzle puzzle = _gameModel.GenerateNewPuzzle(playerIndex);
         gameView.DisplayMaze(playerIndex, puzzle);
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
         StartQuestionTimeout(playerIndex);
     }
 
@@ -328,7 +322,7 @@ public class PathFinderGameController : MonoBehaviour
     private void OnGameOver()
     {
         Debug.Log($"NDL: PathFinder GameOver - P1:{_gameModel.Player1Score} P2:{_gameModel.Player2Score}");
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
 
         GameSessionManager.Instance.RecordScores(_gameModel.Player1Score, _gameModel.Player2Score);
         GameSessionManager.Instance.LastPlayedGame = "PathFinderGame";
@@ -344,7 +338,7 @@ public class PathFinderGameController : MonoBehaviour
 
     private void OnBackClicked()
     {
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("MenuScene");
     }
 }

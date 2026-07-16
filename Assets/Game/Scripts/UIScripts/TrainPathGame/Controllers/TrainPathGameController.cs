@@ -76,6 +76,7 @@ public class TrainPathGameController : MonoBehaviour
         _gameModel.LoadQuestions();
 
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
+        if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
         gameView.InitView();
         gameView.SetMaxScore(GameSessionManager.Instance.TargetScore);
@@ -201,7 +202,7 @@ public class TrainPathGameController : MonoBehaviour
     protected void StateMachineEnter_Playing(Enum previousState, Dictionary<string, object> options)
     {
         Debug.Log("NDL: TrainPath - StateMachineEnter_Playing");
-        MusicManager.Instance.PlayGameplayMusic();
+        MusicManager.Instance?.PlayGameplayMusic();
     }
 
     protected void StateMachineExit_Playing(Enum previousState, Dictionary<string, object> options)
@@ -236,7 +237,7 @@ public class TrainPathGameController : MonoBehaviour
         Debug.Log("NDL: TrainPath - StateMachineEnter_GameOver");
         gameView.SetPlayerOptionsInteractable(0, false);
         gameView.SetPlayerOptionsInteractable(1, false);
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
 
         GameSessionManager.Instance.RecordScores(_gameModel.Player1Score, _gameModel.Player2Score);
         GameSessionManager.Instance.LastPlayedGame = "TrainPathGame";
@@ -286,7 +287,7 @@ public class TrainPathGameController : MonoBehaviour
         gameView.SetPlayerOptionsInteractable(0, true);
         gameView.SetPlayerOptionsInteractable(1, true);
         gameView.HideFeedbackIcons();
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
         StartQuestionTimeout(0);
         StartQuestionTimeout(1);
     }
@@ -313,7 +314,7 @@ public class TrainPathGameController : MonoBehaviour
         if (answered) yield break;
 
         if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
-        MusicManager.Instance.PlayWrongSfx();
+        MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerOptionsInteractable(playerIndex, false);
         if (playerIndex == 0)
@@ -353,7 +354,7 @@ public class TrainPathGameController : MonoBehaviour
 
         if (isCorrect)
         {
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             int difficulty = _gameModel.GetPuzzleDifficulty(playerIndex);
             int stars = _gameModel.GetStarsForDifficulty(difficulty);
 
@@ -377,7 +378,7 @@ public class TrainPathGameController : MonoBehaviour
         }
         else
         {
-            MusicManager.Instance.PlayWrongSfx();
+            MusicManager.Instance?.PlayWrongSfx();
             if (playerIndex == 0) _p1Answered = true;
             else _p2Answered = true;
 
@@ -406,26 +407,20 @@ public class TrainPathGameController : MonoBehaviour
 
     private IEnumerator LoadNextPuzzleForPlayer(int playerIndex)
     {
-        yield return new WaitForSeconds(_feedbackDelay);
-
+        yield return new WaitForSeconds(1f); // feedback icon visible
         if (GetCurrentState() != TrainPathSceneState.Playing) yield break;
 
-        // Team mode: 3-second countdown before next puzzle
-        if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
-        {
-            //NamNN change with Android Studio Agent
-            // Hide this player's feedback icon before showing countdown
-            gameView.HideFeedbackIcon(playerIndex);
-            gameView.HideQuestion(playerIndex);
+        gameView.HideFeedbackIcon(playerIndex);
+        gameView.HideQuestion(playerIndex);
 
-            for (int i = 3; i >= 1; i--)
-            {
-                gameView.ShowCountdown(playerIndex, i);
-                yield return new WaitForSeconds(1f);
-                if (GetCurrentState() != TrainPathSceneState.Playing) yield break;
-            }
-            gameView.HideCountdown(playerIndex);
+        int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
+        for (int i = countSeconds; i >= 1; i--)
+        {
+            gameView.ShowCountdown(playerIndex, i);
+            yield return new WaitForSeconds(1f);
+            if (GetCurrentState() != TrainPathSceneState.Playing) yield break;
         }
+        gameView.HideCountdown(playerIndex);
 
         // Stop any ongoing train animation
         gameView.StopTrainAnimation(playerIndex);
@@ -439,13 +434,13 @@ public class TrainPathGameController : MonoBehaviour
         gameView.DisplayPuzzle(playerIndex, puzzle);
         gameView.SetPlayerOptionsInteractable(playerIndex, true);
         gameView.HideFeedbackIcons();
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
         StartQuestionTimeout(playerIndex);
     }
 
     private void OnBackClicked()
     {
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("MenuScene");
     }
 }

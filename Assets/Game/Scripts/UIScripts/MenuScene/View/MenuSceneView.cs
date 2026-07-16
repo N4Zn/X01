@@ -57,12 +57,7 @@ public class MenuSceneView : MonoBehaviour
     [SerializeField] private Image time60Highlight;
     [SerializeField] private Image time90Highlight;
     [SerializeField] private Image time120Highlight;
-    [SerializeField] private Button feedbackFastButton;
-    [SerializeField] private Button feedbackMediumButton;
-    [SerializeField] private Button feedbackSlowButton;
-    [SerializeField] private Image feedbackFastHighlight;
-    [SerializeField] private Image feedbackMediumHighlight;
-    [SerializeField] private Image feedbackSlowHighlight;
+    [SerializeField] private InputField roundDelayInput;
     [SerializeField] private Button timeout10Button;
     [SerializeField] private Button timeout15Button;
     [SerializeField] private Button timeout20Button;
@@ -85,49 +80,24 @@ public class MenuSceneView : MonoBehaviour
     public event Action onSfxMuteToggle = delegate { };
     public event Action onMusicMuteToggle = delegate { };
     public event Action<int> onGameTimeSelected = delegate { };
-    public event Action<FeedbackSpeed> onFeedbackSpeedSelected = delegate { };
+    public event Action<float> onRoundDelaySelected = delegate { };
     public event Action<int> onQuestionTimeoutSelected = delegate { };
 
-    private Color _selectedGameColor = new Color(1f, 0.95f, 0.35f, 1f);    // bright yellow glow border
+    private Color _selectedGameColor   = new Color(1f, 0.95f, 0.35f, 1f);  // bright yellow glow border
     private Color _unselectedGameColor = new Color(0f, 0f, 0f, 0f);        // fully transparent
     private readonly Dictionary<int, Coroutine> _glowRoutines = new Dictionary<int, Coroutine>();
+
+    // Sprite hiển thị cho slot chưa có game (TBD) — load 1 lần trong InitView
+    private Sprite _tbdSprite;
 
     private List<GameObject> _blueAvatarSlots = new List<GameObject>();
     private List<GameObject> _redAvatarSlots = new List<GameObject>();
 
-    public const int MAX_GAMES_PER_PAGE = 18;
-    public const int CATEGORY_COUNT = 6;
-
-    public static readonly string[] CategoryNames = { "Tinh toan", "Phan tich", "Hinh anh", "Tri nho", "Nhan biet", "Am thanh" };
-
-    /// <summary>
-    /// Game names: [categoryIndex, gridIndex] — 6 categories, 18 games each.
-    /// </summary>
-    public static readonly string[,] GameNames = new string[CATEGORY_COUNT, MAX_GAMES_PER_PAGE]
-    {
-        { "AddUp", "NumberAddUp", "AddNumber", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
-        { "TrainPath", "PathFinder", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
-        { "PlanetOrder", "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
-        { "PlanetAlphabet", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" },
-        { "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD"},
-        { "ListenSelect", "ChuCai", "SoDem", "Numbers", "TongHop", "TestTongHop", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD", "TBD" }
-    };
-
-    /// <summary>
-    /// Scene names: [categoryIndex, gridIndex]
-    /// </summary>
-    public static readonly string[,] GameSceneNames = new string[CATEGORY_COUNT, MAX_GAMES_PER_PAGE]
-    {
-        { "AddUpGame", "NumberAddUpGame", "AddNumberGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { "TrainPathGame", "PathFinderGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { "PlanetOrderGame", "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { "PlanetAlphabetGame", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null },
-        { "ListenGame", "ChuCaiGame", "SoDemGame", "NumbersGame", "TongHopGame", "TestTongHopGame", null, null, null, null, null, null, null, null, null, null, null, null }
-    };
-
     public void InitView()
     {
+        // Cache TBD sprite (dùng cho slot trống)
+        _tbdSprite = Resources.Load<Sprite>("GameIcons/icon_unknown");
+
         // Navigation buttons
         if (backButton != null) backButton.onClick.AddListener(() => onClickBack());
         if (homeButton != null) homeButton.onClick.AddListener(() => onClickHome());
@@ -148,9 +118,10 @@ public class MenuSceneView : MonoBehaviour
         {
             if (int.TryParse(val, out int t) && t > 0) onGameTimeSelected(t);
         });
-        if (feedbackFastButton   != null) feedbackFastButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Fast));
-        if (feedbackMediumButton != null) feedbackMediumButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Medium));
-        if (feedbackSlowButton   != null) feedbackSlowButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Slow));
+        if (roundDelayInput != null) roundDelayInput.onEndEdit.AddListener(val =>
+        {
+            if (float.TryParse(val, out float seconds)) onRoundDelaySelected(seconds);
+        });
         if (timeout10Button     != null) timeout10Button.onClick.AddListener(() => onQuestionTimeoutSelected(10));
         if (timeout15Button     != null) timeout15Button.onClick.AddListener(() => onQuestionTimeoutSelected(15));
         if (timeout20Button     != null) timeout20Button.onClick.AddListener(() => onQuestionTimeoutSelected(20));
@@ -309,7 +280,7 @@ public class MenuSceneView : MonoBehaviour
         if (gameSlots == null || _gameButtons == null) return;
         for (int i = 0; i < gameSlots.Length; i++)
         {
-            if (i >= MAX_GAMES_PER_PAGE)
+            if (i >= GameRegistry.MAX_PER_CATEGORY)
             {
                 gameSlots[i].SetActive(false);
                 continue;
@@ -317,29 +288,26 @@ public class MenuSceneView : MonoBehaviour
 
             gameSlots[i].SetActive(true);
 
-            string sceneName = GameSceneNames[categoryIndex, i];
-            string gameName = GameNames[categoryIndex, i];
-
-            bool hasGame = !string.IsNullOrEmpty(gameName) && gameName != "???";
-            bool isImplemented = !string.IsNullOrEmpty(sceneName);
+            var entry = GameRegistry.Games[categoryIndex, i];
+            bool hasGame      = !entry.IsEmpty;
+            bool isImplemented = entry.IsImplemented;
 
             // 1. Update Icon Sprite dynamically from Resources
             if (_gameIcons[i] != null)
             {
-                // Sửa lại đoạn nạp Icon trong MenuSceneView.cs (khoảng dòng 230)
                 if (hasGame)
                 {
-                    // 1. Luôn ưu tiên nạp trực tiếp bằng kiểu <Sprite>
-                    Sprite loadedSprite = Resources.Load<Sprite>("GameIcons/" + gameName);
+                    // Luôn ưu tiên nạp trực tiếp bằng kiểu <Sprite>
+                    Sprite loadedSprite = Resources.Load<Sprite>("GameIcons/" + entry.name);
 
                     // 2. Nếu vẫn null, thử nạp kiểu Object để debug sâu
                     if (loadedSprite == null)
                     {
-                        UnityEngine.Object raw = Resources.Load("GameIcons/" + gameName);
+                        UnityEngine.Object raw = Resources.Load("GameIcons/" + entry.name);
                         if (raw == null) {
-                            Debug.LogError($"LỖI: Không thấy file tại Resources/GameIcons/{gameName}");
+                            Debug.LogError($"LỖI: Không thấy file tại Resources/GameIcons/{entry.name}");
                         } else {
-                            Debug.LogError($"LỖI: Tìm thấy file {gameName} nhưng nó là {raw.GetType().Name}. " +
+                            Debug.LogError($"LỖI: Tìm thấy file {entry.name} nhưng nó là {raw.GetType().Name}. " +
                                            "HÃY ĐỔI 'Sprite Mode' THÀNH 'Single' VÀ NHẤN APPLY!");
                         }
                         // Fallback về icon mặc định
@@ -347,13 +315,16 @@ public class MenuSceneView : MonoBehaviour
                     }
 
                     _gameIcons[i].sprite = loadedSprite;
-                    _gameIcons[i].color = Color.white;   // reset toàn bộ RGBA — tránh bake màu cũ từ SceneBuilder
+                    // Implemented → full, chưa implement → dim 55% (có icon nhưng chưa mở)
+                    _gameIcons[i].color = isImplemented
+                        ? Color.white
+                        : new Color(1f, 1f, 1f, 0.55f);
                 }
                 else
                 {
-                    // If "???", you can set a default "Locked" or "Question" sprite if you have one
-                    // _gameIcons[i].sprite = defaultLockedSprite;
-                    _gameIcons[i].color = new Color(1f, 1f, 1f, 0.35f);   // reset RGB về white, chỉ giảm alpha
+                    // Slot trống: hiển thị icon TBD mờ
+                    _gameIcons[i].sprite = _tbdSprite;                     // icon_unknown (có thể null nếu chưa có file)
+                    _gameIcons[i].color  = new Color(1f, 1f, 1f, 0.30f);  // mờ 30%
                 }
             }
 
@@ -478,7 +449,7 @@ public class MenuSceneView : MonoBehaviour
     public void ShowSettingPanel() { if (settingPanelRoot != null) settingPanelRoot.SetActive(true); }
     public void HideSettingPanel() { if (settingPanelRoot != null) settingPanelRoot.SetActive(false); }
 
-    public void UpdateSettingUI(float sfxVol, float musicVol, int gameTime, FeedbackSpeed speed, int questionTimeout)
+    public void UpdateSettingUI(float sfxVol, float musicVol, int gameTime, float roundDelay, int questionTimeout)
     {
         if (sfxVolumeSlider   != null) sfxVolumeSlider.SetValueWithoutNotify(sfxVol);
         if (musicVolumeSlider != null) musicVolumeSlider.SetValueWithoutNotify(musicVol);
@@ -487,7 +458,7 @@ public class MenuSceneView : MonoBehaviour
         SetTimeHighlight(gameTime);
         if (timeCustomInput != null)
             timeCustomInput.text = (gameTime != 60 && gameTime != 90 && gameTime != 120) ? gameTime.ToString() : "";
-        SetFeedbackHighlight(speed);
+        SetRoundDelayText(roundDelay);
         SetQuestionTimeoutHighlight(questionTimeout);
     }
 
@@ -501,11 +472,9 @@ public class MenuSceneView : MonoBehaviour
         if (time120Highlight != null) time120Highlight.color = gameTime == 120 ? Color.white : Color.clear;
     }
 
-    public void SetFeedbackHighlight(FeedbackSpeed speed)
+    public void SetRoundDelayText(float seconds)
     {
-        if (feedbackFastHighlight   != null) feedbackFastHighlight.color   = speed == FeedbackSpeed.Fast   ? Color.white : Color.clear;
-        if (feedbackMediumHighlight != null) feedbackMediumHighlight.color = speed == FeedbackSpeed.Medium ? Color.white : Color.clear;
-        if (feedbackSlowHighlight   != null) feedbackSlowHighlight.color   = speed == FeedbackSpeed.Slow   ? Color.white : Color.clear;
+        if (roundDelayInput != null) roundDelayInput.text = seconds.ToString("0.#");
     }
 
     public void SetQuestionTimeoutHighlight(int seconds)

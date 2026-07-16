@@ -36,7 +36,7 @@ public class MenuSceneController : MonoBehaviour
         menuSceneView.onSfxMuteToggle         += OnSfxMuteToggle;
         menuSceneView.onMusicMuteToggle       += OnMusicMuteToggle;
         menuSceneView.onGameTimeSelected      += OnGameTimeSelected;
-        menuSceneView.onFeedbackSpeedSelected += OnFeedbackSpeedSelected;
+        menuSceneView.onRoundDelaySelected    += OnRoundDelaySelected;
         menuSceneView.onQuestionTimeoutSelected += OnQuestionTimeoutSelected;
 
         // Category & game
@@ -88,13 +88,13 @@ public class MenuSceneController : MonoBehaviour
 
     private void OnClickBack()
     {
-        Debug.Log("NDL: MenuScene - OnClickBack - Loading TeamSelectScene");
-        SceneManager.LoadScene("TeamSelectScene");
+        // MenuScene là màn hình gốc — Back không làm gì
+        Debug.Log("NDL: MenuScene - OnClickBack - (MenuScene is home, ignored)");
     }
 
     private void OnClickHome()
     {
-        Debug.Log("NDL: MenuScene - OnClickHome - Loading HomeScene");
+        Debug.Log("NDL: MenuScene - OnClickHome - Reloading MenuScene");
         SceneManager.LoadScene("MenuScene");
     }
 
@@ -102,7 +102,7 @@ public class MenuSceneController : MonoBehaviour
     {
         Debug.Log("NDL: MenuScene - OnClickSettings");
         var gs = GameSettings.Instance;
-        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.RoundEndDelay, gs.QuestionTimeout);
         menuSceneView.ShowSettingPanel();
     }
 
@@ -118,14 +118,14 @@ public class MenuSceneController : MonoBehaviour
     {
         GameSettings.Instance.SfxVolume = volume;
         menuSceneView.UpdateSfxMuteLabel(volume <= 0f);
-        MusicManager.Instance.ApplyVolumes();
+        MusicManager.Instance?.ApplyVolumes();
     }
 
     private void OnMusicVolumeChanged(float volume)
     {
         GameSettings.Instance.MusicVolume = volume;
         menuSceneView.UpdateMusicMuteLabel(volume <= 0f);
-        MusicManager.Instance.ApplyVolumes();
+        MusicManager.Instance?.ApplyVolumes();
     }
 
     private void OnSfxMuteToggle()
@@ -133,8 +133,8 @@ public class MenuSceneController : MonoBehaviour
         var gs = GameSettings.Instance;
         gs.SfxVolume = gs.SfxVolume > 0f ? 0f : 1f;
         menuSceneView.UpdateSfxMuteLabel(gs.SfxVolume <= 0f);
-        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
-        MusicManager.Instance.ApplyVolumes();
+        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.RoundEndDelay, gs.QuestionTimeout);
+        MusicManager.Instance?.ApplyVolumes();
     }
 
     private void OnMusicMuteToggle()
@@ -142,8 +142,8 @@ public class MenuSceneController : MonoBehaviour
         var gs = GameSettings.Instance;
         gs.MusicVolume = gs.MusicVolume > 0f ? 0f : 1f;
         menuSceneView.UpdateMusicMuteLabel(gs.MusicVolume <= 0f);
-        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
-        MusicManager.Instance.ApplyVolumes();
+        menuSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.RoundEndDelay, gs.QuestionTimeout);
+        MusicManager.Instance?.ApplyVolumes();
     }
 
     private void OnGameTimeSelected(int seconds)
@@ -152,10 +152,11 @@ public class MenuSceneController : MonoBehaviour
         menuSceneView.SetTimeHighlight(seconds);
     }
 
-    private void OnFeedbackSpeedSelected(FeedbackSpeed speed)
+    private void OnRoundDelaySelected(float seconds)
     {
-        GameSettings.Instance.FeedbackSpeedSetting = speed;
-        menuSceneView.SetFeedbackHighlight(speed);
+        float clamped = Mathf.Clamp(seconds, 1f, 4f);
+        GameSettings.Instance.RoundEndDelay = clamped;
+        menuSceneView.SetRoundDelayText(clamped);
     }
 
     private void OnQuestionTimeoutSelected(int seconds)
@@ -185,10 +186,10 @@ public class MenuSceneController : MonoBehaviour
     private void OnGameSelected(int gridIndex)
     {
         // gridIndex is the index in the 18-button array
-        if (gridIndex < 0 || gridIndex >= MenuSceneView.MAX_GAMES_PER_PAGE) return;
+        if (gridIndex < 0 || gridIndex >= GameRegistry.MAX_PER_CATEGORY) return;
 
-        string sceneName = MenuSceneView.GameSceneNames[_currentCategory, gridIndex];
-        if (string.IsNullOrEmpty(sceneName))
+        var entry = GameRegistry.Games[_currentCategory, gridIndex];
+        if (!entry.IsImplemented)
         {
             Debug.Log("NDL: MenuScene - Game not implemented: category=" + _currentCategory + " grid=" + gridIndex);
             return;
@@ -211,7 +212,7 @@ public class MenuSceneController : MonoBehaviour
         _selectedGameIndex = _selectedGames.Count > 0 ? gridIndex : -1;
         menuSceneView.SetStartButtonEnabled(_selectedGames.Count > 0);
 
-        Debug.Log("NDL: MenuScene - GameSelected: " + gridIndex + " (" + MenuSceneView.GameNames[_currentCategory, gridIndex] + ")");
+        Debug.Log("NDL: MenuScene - GameSelected: " + gridIndex + " (" + GameRegistry.Games[_currentCategory, gridIndex].name + ")");
     }
 
     // ===== Random Selection =====
@@ -224,12 +225,10 @@ public class MenuSceneController : MonoBehaviour
         List<int> implementedGames = new List<int>();
 
         // Find all implemented games in current category
-        for (int i = 0; i < MenuSceneView.MAX_GAMES_PER_PAGE; i++)
+        for (int i = 0; i < GameRegistry.MAX_PER_CATEGORY; i++)
         {
-            if (!string.IsNullOrEmpty(MenuSceneView.GameSceneNames[_currentCategory, i]))
-            {
+            if (GameRegistry.Games[_currentCategory, i].IsImplemented)
                 implementedGames.Add(i);
-            }
         }
 
         if (implementedGames.Count == 0) return;
@@ -243,7 +242,7 @@ public class MenuSceneController : MonoBehaviour
         menuSceneView.SetGameHighlights(_selectedGames);
         menuSceneView.SetStartButtonEnabled(true);
 
-        Debug.Log("NDL: MenuScene - RandomSelected: " + MenuSceneView.GameNames[_currentCategory, picked]);
+        Debug.Log("NDL: MenuScene - RandomSelected: " + GameRegistry.Games[_currentCategory, picked].name);
     }
 
     // ===== Start =====
@@ -259,16 +258,20 @@ public class MenuSceneController : MonoBehaviour
             break;
         }
 
-        string sceneName = MenuSceneView.GameSceneNames[_currentCategory, gridIndex];
+        var selected = GameRegistry.Games[_currentCategory, gridIndex];
 
-        if (sceneName == null)
+        if (!selected.IsImplemented)
         {
             Debug.LogWarning("NDL: MenuScene - Selected game has no scene");
             return;
         }
 
-        Debug.Log("NDL: MenuScene - Starting game: " + sceneName);
-        GameSessionManager.Instance.LastPlayedGame = sceneName;
-        SceneManager.LoadScene(sceneName);
+        // Lưu tên game (variant) để game scene biết load CSV nào
+        // VD: "ChuCai", "SoDem" → QuestionPool load Resources/TongHop/{name}/
+        GameSessionManager.Instance.SelectedGameName = selected.name;
+        GameSessionManager.Instance.LastPlayedGame = selected.sceneName;
+
+        Debug.Log($"NDL: MenuScene - Starting game: {selected.sceneName} (variant: {selected.name})");
+        SceneManager.LoadScene(selected.sceneName);
     }
 }

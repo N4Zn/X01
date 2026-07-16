@@ -30,12 +30,7 @@ public class HomeSceneView : MonoBehaviour
     [SerializeField] private Image time60Highlight;
     [SerializeField] private Image time90Highlight;
     [SerializeField] private Image time120Highlight;
-    [SerializeField] private Button feedbackFastButton;
-    [SerializeField] private Button feedbackMediumButton;
-    [SerializeField] private Button feedbackSlowButton;
-    [SerializeField] private Image feedbackFastHighlight;
-    [SerializeField] private Image feedbackMediumHighlight;
-    [SerializeField] private Image feedbackSlowHighlight;
+    [SerializeField] private InputField roundDelayInput;
     [SerializeField] private Button timeout10Button;
     [SerializeField] private Button timeout15Button;
     [SerializeField] private Button timeout20Button;
@@ -53,7 +48,7 @@ public class HomeSceneView : MonoBehaviour
     public event Action onSfxMuteToggle = delegate { };
     public event Action onMusicMuteToggle = delegate { };
     public event Action<int> onGameTimeSelected = delegate { };
-    public event Action<FeedbackSpeed> onFeedbackSpeedSelected = delegate { };
+    public event Action<float> onRoundDelaySelected = delegate { };
     public event Action<int> onQuestionTimeoutSelected = delegate { };
 
     private Color _activeColor = Color.white;
@@ -68,7 +63,7 @@ public class HomeSceneView : MonoBehaviour
 
         // Main buttons
         if (startButton != null) startButton.onClick.AddListener(() => onClickStart());
-        if (settingsButton != null) settingsButton.onClick.AddListener(() => onClickSettings());
+        if (settingsButton != null) settingsButton.gameObject.SetActive(false); // Settings moved to MenuScene
 
         // Setting panel buttons
         if (settingCloseButton != null) settingCloseButton.onClick.AddListener(() => onSettingClose());
@@ -97,10 +92,15 @@ public class HomeSceneView : MonoBehaviour
             });
         }
 
-        // Feedback speed buttons
-        if (feedbackFastButton != null) feedbackFastButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Fast));
-        if (feedbackMediumButton != null) feedbackMediumButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Medium));
-        if (feedbackSlowButton != null) feedbackSlowButton.onClick.AddListener(() => onFeedbackSpeedSelected(FeedbackSpeed.Slow));
+        // Round delay input (seconds between questions, 1-4s)
+        if (roundDelayInput != null)
+        {
+            roundDelayInput.onEndEdit.AddListener((val) =>
+            {
+                if (float.TryParse(val, out float seconds))
+                    onRoundDelaySelected(seconds);
+            });
+        }
 
         // Question timeout buttons
         if (timeout10Button != null) timeout10Button.onClick.AddListener(() => onQuestionTimeoutSelected(10));
@@ -122,7 +122,7 @@ public class HomeSceneView : MonoBehaviour
         if (settingPanelRoot != null) settingPanelRoot.SetActive(false);
     }
 
-    public void UpdateSettingUI(float sfxVol, float musicVol, int gameTime, FeedbackSpeed speed, int questionTimeout)
+    public void UpdateSettingUI(float sfxVol, float musicVol, int gameTime, float roundDelay, int questionTimeout)
     {
         if (sfxVolumeSlider != null) sfxVolumeSlider.SetValueWithoutNotify(sfxVol);
         if (musicVolumeSlider != null) musicVolumeSlider.SetValueWithoutNotify(musicVol);
@@ -142,8 +142,8 @@ public class HomeSceneView : MonoBehaviour
                 timeCustomInput.text = "";
         }
 
-        // Feedback speed
-        SetFeedbackHighlight(speed);
+        // Round delay
+        SetRoundDelayText(roundDelay);
 
         // Question timeout
         SetQuestionTimeoutHighlight(questionTimeout);
@@ -166,14 +166,9 @@ public class HomeSceneView : MonoBehaviour
         if (time120Highlight != null) time120Highlight.color = gameTime == 120 ? _activeColor : _inactiveColor;
     }
 
-    public void SetFeedbackHighlight(FeedbackSpeed speed)
+    public void SetRoundDelayText(float seconds)
     {
-        if (feedbackFastHighlight != null)
-            feedbackFastHighlight.color = speed == FeedbackSpeed.Fast ? _activeColor : _inactiveColor;
-        if (feedbackMediumHighlight != null)
-            feedbackMediumHighlight.color = speed == FeedbackSpeed.Medium ? _activeColor : _inactiveColor;
-        if (feedbackSlowHighlight != null)
-            feedbackSlowHighlight.color = speed == FeedbackSpeed.Slow ? _activeColor : _inactiveColor;
+        if (roundDelayInput != null) roundDelayInput.text = seconds.ToString("0.#");
     }
 
     public void SetQuestionTimeoutHighlight(int seconds)

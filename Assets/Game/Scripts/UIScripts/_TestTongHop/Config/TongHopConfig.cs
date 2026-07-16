@@ -27,13 +27,13 @@ public class TongHopConfigData
 
     // ── Floating display ──────────────────────────────────────────────────────
     /// <summary>Khoảng cách từ tâm màn hình đến tâm quỹ đạo mỗi bên (pixel).</summary>
-    public float orbitCenterX  = 220f;
+    public float orbitCenterX  = 265f;
     /// <summary>Bán kính quỹ đạo (pixel).</summary>
     public float orbitRadius   = 150f;
     /// <summary>Tốc độ xoay quỹ đạo (độ/giây).</summary>
-    public float orbitSpeed    = 20f;
+    public float orbitSpeed    = 2f;
     /// <summary>Kích thước (width = height) của mỗi floating item (pixel).</summary>
-    public float floatingSize  = 120f;
+    public float floatingSize  = 125f;
 
     // ── Choose display ────────────────────────────────────────────────────────
     /// <summary>
@@ -75,9 +75,18 @@ public class TongHopConfigData
     /// </summary>
     public string audioRoot = "TestTongHop/audio";
 
+    // ── Game mechanics ────────────────────────────────────────────────────────
+    /// <summary>
+    /// true = chế độ độc lập: mỗi player tự trả lời câu hỏi riêng, không chờ người kia.
+    /// Bên nào xong trước thì đếm ngược nextQuestionDelayPerPlayer rồi nhận câu tiếp theo.
+    /// Không giới hạn thời gian.
+    /// false (mặc định) = chia sẻ hiện tại (ai đúng trước thắng vòng đó).
+    /// </summary>
+    public bool independentPlay = false;
+    /// <summary>Giây chờ của từng player trước khi nhận câu tiếp (chỉ dùng khi independentPlay=true).</summary>
+    public int nextQuestionDelayPerPlayer = 4;
+
     // ── Game ──────────────────────────────────────────────────────────────────
-    /// <summary>Số vòng chơi mỗi ván.</summary>
-    public int totalRounds = 10;
     /// <summary>Độ khó hiện tại (1–10). Adaptive sẽ điều chỉnh trong phạm vi [difficultyMin, difficultyMax].</summary>
     public int difficulty    = 1;
     /// <summary>Giới hạn dưới của độ khó (1–10). difficultyMin == difficultyMax → cố định.</summary>
@@ -170,37 +179,59 @@ public static class TongHopConfig
     // ── Load (coroutine, dùng trong StartMainController) ─────────────────────
 
     /// <summary>
-    /// Coroutine — gọi từ StartMainController trước khi chuyển sang HomeScene.
+    /// Coroutine — gọi từ StartMainController trước khi chuyển sang MenuScene.
+    /// Luôn đọc trực tiếp từ StreamingAssets (nguồn gốc trong APK) để tránh
+    /// file cache cũ ở persistentDataPath từ bản install trước override sai giá trị.
     /// </summary>
     public static IEnumerator Load()
     {
         IsLoaded = false;
 
-        // Bước 1: Tạo thư mục nếu chưa có
         string dir = Path.GetDirectoryName(UserConfigPath);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             Directory.CreateDirectory(dir);
 
-        // Bước 2: Nếu file người dùng chưa tồn tại → copy từ StreamingAssets
-        if (!File.Exists(UserConfigPath))
-            yield return CopyDefaultToUserPath();
+        string json = null;
+        string src  = Path.Combine(Application.streamingAssetsPath, SubPath);
 
-        // Bước 3: Load từ file người dùng
-        if (File.Exists(UserConfigPath))
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // Android: StreamingAssets nằm trong APK — phải dùng UnityWebRequest
+        using (var req = UnityWebRequest.Get(src))
         {
-            ApplyJson(File.ReadAllText(UserConfigPath));
-            Debug.Log($"[TongHopConfig] Loaded from: {UserConfigPath}");
+            yield return req.SendWebRequest();
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                json = req.downloadHandler.text;
+                // Cache sang persistentDataPath để AutoLoad() dùng được ở lần chạy sau
+                try { File.WriteAllText(UserConfigPath, json); }
+                catch (Exception ex) { Debug.LogWarning($"[TongHopConfig] Cache write failed: {ex.Message}"); }
+            }
+            else
+            {
+                Debug.LogWarning($"[TongHopConfig] Cannot read StreamingAssets: {req.error}");
+                // Chỉ fall back sang cache nếu UnityWebRequest thực sự lỗi
+                if (File.Exists(UserConfigPath))
+                    json = File.ReadAllText(UserConfigPath);
+            }
+        }
+#else
+        // Editor / Standalone: đọc trực tiếp từ file
+        if (File.Exists(src)) json = File.ReadAllText(src);
+        yield return null;
+#endif
+
+        if (json != null)
+        {
+            ApplyJson(json);
         }
         else
         {
-            Debug.LogWarning("[TongHopConfig] No config file found — using hardcoded defaults.");
+            Debug.LogWarning("[TongHopConfig] No config found — using hardcoded defaults.");
         }
 
         IsLoaded = true;
-        Debug.Log($"[TongHopConfig] Ready — rounds={Current.totalRounds}, " +
-                  $"difficulty={Current.difficulty}, " +
-                  $"weights={Current.weightFloating}/{Current.weightButton}/{Current.weightMatching}, " +
-                  $"orbit speed={Current.orbitSpeed}");
+        Debug.Log($"[TongHopConfig] Ready — difficulty={Current.difficulty}, " +
+                  $"weights={Current.weightFloating}/{Current.weightButton}/{Current.weightMatching}");
     }
 
     /// <summary>
@@ -250,7 +281,7 @@ public static class TongHopConfig
 #else
         if (File.Exists(src))
         {
-            File.Copy(src, UserConfigPath, overwrite: false);
+            File.Copy(src, UserConfigPath, overwrite: true);
             Debug.Log($"[TongHopConfig] Default config copied to {UserConfigPath}");
         }
         else

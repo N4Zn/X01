@@ -62,5 +62,14 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/TestTongHopGame/TestTongHopGame.unity
     guid: f45d80488b08f2b47a5cefd002fca317
+  - enabled: 1
+    path: Assets/Game/Scenes/RiverCrossGame/RiverCrossGame.unity
+    guid: 79c3e0146638a874b9a7935158bce106
+  - enabled: 1
+    path: Assets/Game/Scenes/BalloonGame/BalloonGame.unity
+    guid: 300237b06fa40004db2c69fcf062421f
+  - enabled: 1
+    path: Assets/Game/Scenes/SolarSystemScene/SolarSystemScene.unity
+    guid: ecd7f7b374d5ae7458b500f8ec1601df
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

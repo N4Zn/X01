@@ -40,7 +40,7 @@ public static class HomeSceneBuilder
 
         Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         Camera existingMain = Camera.main;
-        Camera[] allCameras = Object.FindObjectsOfType<Camera>();
+        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
         if (existingMain == null && (allCameras == null || allCameras.Length == 0))
         {
             CreateMainCamera();
@@ -179,9 +179,7 @@ public static class HomeSceneBuilder
         Sprite timeIconSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingTimeIcon.png");
         Sprite ringIconSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingRingIcon.png");
         Sprite greenBtnSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingButtonGreen.png");
-        Sprite greenBigBtnSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingButtonGreenBig.png");
         Sprite grayBtnSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingButtonGray.png");
-        Sprite grayBigBtnSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingButtonGrayBig.png");
         Sprite graySmallBtnSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SettingTextureFolder + "/SettingButtonGraySmall.png");
 
         Font quicksandBold = GetQuicksandFont("Bold");
@@ -309,29 +307,23 @@ public static class HomeSceneBuilder
             timeCustomInput.GetComponent<Image>().color = Color.white;
         }
 
-        // ===== Row 4: Mức độ phản hồi (Feedback Speed) =====
+        // ===== Row 4: Khoảng nghỉ giữa câu hỏi (Round Delay) =====
         CreateSettingSpriteIcon(innerPanel.transform, ringIconSprite,
             iconL, iconR, row4B, row4T);
 
-        GameObject feedbackLabel = CreateFontText("FeedbackLabel", innerPanel.transform, "Mức độ phản hồi", 18,
+        GameObject feedbackLabel = CreateFontText("FeedbackLabel", innerPanel.transform, "Khoảng nghỉ giữa câu (giây)", 18,
             TextAnchor.MiddleLeft, labelColor, quicksandBold);
         SetRect(feedbackLabel.GetComponent<RectTransform>(), new Vector2(lblL, row4B), new Vector2(lblR, row4T), Vector2.zero, Vector2.zero);
 
-        // Feedback buttons — evenly spaced in controls column
-        float fbStart = ctrlL;
-        GameObject feedbackFastButton = CreateSpriteToggleButton("FeedbackFastButton", innerPanel.transform, "Nhanh",
-            grayBtnSprite, greenBtnSprite,
-            new Vector2(fbStart, row4B), new Vector2(fbStart + tbW, row4T));
-        fbStart += tbW + tbGap;
-
-        GameObject feedbackMediumButton = CreateSpriteToggleButton("FeedbackMediumButton", innerPanel.transform, "Trung Bình",
-            grayBigBtnSprite, greenBigBtnSprite,
-            new Vector2(fbStart, row4B), new Vector2(fbStart + 0.16f, row4T));
-        fbStart += 0.16f + tbGap;
-
-        GameObject feedbackSlowButton = CreateSpriteToggleButton("FeedbackSlowButton", innerPanel.transform, "Chậm",
-            grayBtnSprite, greenBtnSprite,
-            new Vector2(fbStart, row4B), new Vector2(fbStart + tbW, row4T));
+        // Round delay input — 1 ô nhập số giây (1-4s)
+        GameObject roundDelayInput = CreateInputField("RoundDelayInput", innerPanel.transform, "1-4");
+        SetRect(roundDelayInput.GetComponent<RectTransform>(), new Vector2(ctrlL, row4B), new Vector2(ctrlL + 0.08f, row4T), Vector2.zero, Vector2.zero);
+        roundDelayInput.GetComponent<InputField>().contentType = InputField.ContentType.DecimalNumber;
+        if (graySmallBtnSprite != null)
+        {
+            roundDelayInput.GetComponent<Image>().sprite = graySmallBtnSprite;
+            roundDelayInput.GetComponent<Image>().color = Color.white;
+        }
 
         // ===== Row 5: Thời gian mỗi câu (Question Timeout) =====
         CreateSettingSpriteIcon(innerPanel.transform, timeIconSprite,
@@ -594,20 +586,9 @@ public static class HomeSceneBuilder
         viewSo.FindProperty("time120Highlight").objectReferenceValue =
             innerPanel.Find("Time120Button/Highlight").GetComponent<Image>();
 
-        // Feedback speed buttons + highlights
-        viewSo.FindProperty("feedbackFastButton").objectReferenceValue =
-            innerPanel.Find("FeedbackFastButton").GetComponent<Button>();
-        viewSo.FindProperty("feedbackMediumButton").objectReferenceValue =
-            innerPanel.Find("FeedbackMediumButton").GetComponent<Button>();
-        viewSo.FindProperty("feedbackSlowButton").objectReferenceValue =
-            innerPanel.Find("FeedbackSlowButton").GetComponent<Button>();
-
-        viewSo.FindProperty("feedbackFastHighlight").objectReferenceValue =
-            innerPanel.Find("FeedbackFastButton/Highlight").GetComponent<Image>();
-        viewSo.FindProperty("feedbackMediumHighlight").objectReferenceValue =
-            innerPanel.Find("FeedbackMediumButton/Highlight").GetComponent<Image>();
-        viewSo.FindProperty("feedbackSlowHighlight").objectReferenceValue =
-            innerPanel.Find("FeedbackSlowButton/Highlight").GetComponent<Image>();
+        // Round delay input (seconds between questions, 1-4s)
+        viewSo.FindProperty("roundDelayInput").objectReferenceValue =
+            innerPanel.Find("RoundDelayInput").GetComponent<InputField>();
 
         // Question timeout buttons + highlights
         viewSo.FindProperty("timeout10Button").objectReferenceValue =

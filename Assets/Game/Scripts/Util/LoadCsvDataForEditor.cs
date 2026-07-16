@@ -10,7 +10,9 @@ public class LoadCsvDataForEditor : Singleton<LoadCsvDataForEditor>
     // Cache for loaded CSV content (to avoid reloading)
     private Dictionary<string, string> _csvCache = new Dictionary<string, string>();
     private Dictionary<string, bool> _loadingCsv = new Dictionary<string, bool>();
-    private bool _isPreloadingCsv = false;
+#pragma warning disable CS0414
+    private bool _isPreloadingCsv = false;  // flag preload — đọc khi cần guard async
+#pragma warning restore CS0414
     /// <summary>
     /// Get the path to CSV file - works in both Editor and Build
     /// </summary>

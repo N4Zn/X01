@@ -34,6 +34,7 @@ public class PlanetOrderController : MonoBehaviour
         _model = new PlanetOrderModel();
 
         if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
+        if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
         gameView.InitView();
 
@@ -44,8 +45,8 @@ public class PlanetOrderController : MonoBehaviour
         }
 
         gameView.OnBoxTapped += OnBoxTapped;
-        gameView.OnBackClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
-        gameView.OnHomeClicked += () => { MusicManager.Instance.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
+        gameView.OnBackClicked += () => { MusicManager.Instance?.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
+        gameView.OnHomeClicked += () => { MusicManager.Instance?.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnSettingClicked += () => { Debug.Log("NDL: PlanetOrder - Setting"); };
         gameView.OnRetryClicked += () => { gameView.HideGameOver(); _customFSMManager.StateMachineChange(PlanetOrderState.Initialize); };
 
@@ -104,7 +105,7 @@ public class PlanetOrderController : MonoBehaviour
     }
     private void OnTutorialStart() { StartGame(); }
 
-    protected void StateMachineEnter_Playing(Enum prev, Dictionary<string, object> opt) { MusicManager.Instance.PlayGameplayMusic(); }
+    protected void StateMachineEnter_Playing(Enum prev, Dictionary<string, object> opt) { MusicManager.Instance?.PlayGameplayMusic(); }
     protected void StateMachineExit_Playing(Enum prev, Dictionary<string, object> opt) { }
     protected void StateMachineEnter_WaitingSwitch(Enum prev, Dictionary<string, object> opt) { }
     protected void StateMachineExit_WaitingSwitch(Enum prev, Dictionary<string, object> opt) { }
@@ -115,7 +116,7 @@ public class PlanetOrderController : MonoBehaviour
     {
         gameView.SetPlayerInteractable(0, false);
         gameView.SetPlayerInteractable(1, false);
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
         GameSessionManager.Instance.RecordScores(_model.Player1Score, _model.Player2Score);
         GameSessionManager.Instance.LastPlayedGame = "PlanetOrderGame";
         SceneManager.LoadScene("ScoreScene");
@@ -141,7 +142,7 @@ public class PlanetOrderController : MonoBehaviour
         gameView.HideFeedback(playerIndex);
         gameView.ShowBoxes(playerIndex, _model.Values[playerIndex]);
         gameView.SetPlayerInteractable(playerIndex, true);
-        MusicManager.Instance.PlayQuestionSfx();
+        MusicManager.Instance?.PlayQuestionSfx();
         StartQuestionTimeout(playerIndex);
     }
 
@@ -164,7 +165,7 @@ public class PlanetOrderController : MonoBehaviour
         yield return new WaitForSeconds(_questionTimeout);
         if (GetState() != PlanetOrderState.Playing) yield break;
 
-        MusicManager.Instance.PlayWrongSfx();
+        MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerInteractable(playerIndex, false);
         if (playerIndex == 0)
@@ -183,7 +184,7 @@ public class PlanetOrderController : MonoBehaviour
 
         if (correct)
         {
-            MusicManager.Instance.PlayCorrectSfx();
+            MusicManager.Instance?.PlayCorrectSfx();
             _model.AdvanceCorrect(playerIndex);
             gameView.SetBoxCorrect(playerIndex, boxIndex);
 
@@ -216,7 +217,7 @@ public class PlanetOrderController : MonoBehaviour
         else
         {
             // Wrong! Show feedback, reset round after delay
-            MusicManager.Instance.PlayWrongSfx();
+            MusicManager.Instance?.PlayWrongSfx();
             gameView.SetBoxWrong(playerIndex, boxIndex);
             gameView.ShowFeedback(playerIndex, false);
             gameView.SetPlayerInteractable(playerIndex, false);
@@ -237,52 +238,41 @@ public class PlanetOrderController : MonoBehaviour
     private IEnumerator LoadNextRoundForPlayer(int playerIndex)
     {
         gameView.SetPlayerInteractable(playerIndex, false);
-        yield return new WaitForSeconds(_feedbackDelay);
+        yield return new WaitForSeconds(1f); // feedback icon visible
         if (GetState() != PlanetOrderState.Playing) yield break;
 
-        // Team mode countdown
-        if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
-        {
-            //NamNN change with Android Studio Agent
-            // Hide this player's feedback icon before showing countdown
-            gameView.HideFeedback(playerIndex);
-            gameView.HideBoxes(playerIndex);
+        gameView.HideFeedback(playerIndex);
+        gameView.HideBoxes(playerIndex);
 
-            for (int i = 3; i >= 1; i--)
-            {
-                gameView.ShowCountdown(playerIndex, i);
-                yield return new WaitForSeconds(1f);
-                if (GetState() != PlanetOrderState.Playing) yield break;
-            }
-            gameView.HideCountdown(playerIndex);
+        int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
+        for (int i = countSeconds; i >= 1; i--)
+        {
+            gameView.ShowCountdown(playerIndex, i);
+            yield return new WaitForSeconds(1f);
+            if (GetState() != PlanetOrderState.Playing) yield break;
         }
+        gameView.HideCountdown(playerIndex);
 
         LoadNewRound(playerIndex);
     }
 
     private IEnumerator ResetRoundForPlayer(int playerIndex)
     {
-        yield return new WaitForSeconds(_feedbackDelay);
+        yield return new WaitForSeconds(1f); // feedback icon visible
         if (GetState() != PlanetOrderState.Playing) yield break;
 
-        // Team mode countdown
-        if (GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
+        gameView.HideFeedback(playerIndex);
+        gameView.HideBoxes(playerIndex);
+
+        int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
+        for (int i = countSeconds; i >= 1; i--)
         {
-            //NamNN change with Android Studio Agent
-            // Hide this player's feedback icon before showing countdown
-            gameView.HideFeedback(playerIndex);
-            gameView.HideBoxes(playerIndex);
-
-            for (int i = 3; i >= 1; i--)
-            {
-                gameView.ShowCountdown(playerIndex, i);
-                yield return new WaitForSeconds(1f);
-                if (GetState() != PlanetOrderState.Playing) yield break;
-            }
-            gameView.HideCountdown(playerIndex);
+            gameView.ShowCountdown(playerIndex, i);
+            yield return new WaitForSeconds(1f);
+            if (GetState() != PlanetOrderState.Playing) yield break;
         }
+        gameView.HideCountdown(playerIndex);
 
-        // Generate new round (fresh numbers)
         LoadNewRound(playerIndex);
     }
 }

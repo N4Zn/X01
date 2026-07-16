@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 public class AnswerValidator
 {
@@ -34,32 +33,21 @@ public class AnswerValidator
 
     // ─── MultiSelect ─────────────────────────────────────────────────────────
     //
-    // Luật mới:
-    //   - Chọn đúng / sai đều được, miễn là số đã chọn < số đáp án đúng.
-    //   - Sai → WrongPartial: hiện màu đỏ nhưng vẫn cho deselect và thử lại.
-    //   - Khi đã chọn đủ slot (= correctCount) → submit:
-    //       tất cả đúng → CorrectFinal
-    //       có sai       → WrongFinal (khoá, không retry nữa)
+    // Luật:
+    //   - Sai → WrongFinal: kết thúc round ngay.
+    //   - Đúng nhưng chưa hết → CorrectPartial: +1 điểm, ẩn item, round tiếp tục.
+    //   - Đúng và là cái cuối cùng → CorrectFinal: kết thúc round.
+    //   Không có toggle/deselect, không có retry.
 
     ClickResult ValidateMulti(int index)
     {
-        // Toggle off — cho phép bỏ chọn bất cứ lúc nào trước khi submit
-        if (_selected.Contains(index))
-        {
-            _selected.Remove(index);
-            return ClickResult.Deselected;
-        }
+        if (!_correctSet.Contains(index))
+            return ClickResult.WrongFinal;
 
         _selected.Add(index);
-        bool thisCorrect = _correctSet.Contains(index);
-
-        // Chưa đủ slot → chưa submit, cho phép thay đổi
-        if (_selected.Count < _correctSet.Count)
-            return thisCorrect ? ClickResult.CorrectPartial : ClickResult.WrongPartial;
-
-        // Đủ slot → submit ngay
-        bool allCorrect = _selected.All(i => _correctSet.Contains(i));
-        return allCorrect ? ClickResult.CorrectFinal : ClickResult.WrongFinal;
+        return _selected.Count == _correctSet.Count
+            ? ClickResult.CorrectFinal
+            : ClickResult.CorrectPartial;
     }
 
     // ─── OrderedSequence ──────────────────────────────────────────────────────

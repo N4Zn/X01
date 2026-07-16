@@ -28,7 +28,7 @@ public class HomeSceneController : MonoBehaviour
         homeSceneView.onSfxMuteToggle += OnSfxMuteToggle;
         homeSceneView.onMusicMuteToggle += OnMusicMuteToggle;
         homeSceneView.onGameTimeSelected += OnGameTimeSelected;
-        homeSceneView.onFeedbackSpeedSelected += OnFeedbackSpeedSelected;
+        homeSceneView.onRoundDelaySelected += OnRoundDelaySelected;
         homeSceneView.onQuestionTimeoutSelected += OnQuestionTimeoutSelected;
     }
 
@@ -48,7 +48,7 @@ public class HomeSceneController : MonoBehaviour
     protected void StateMachineEnter_Idle(Enum previousState, Dictionary<string, object> options)
     {
         Debug.Log("NDL: HomeScene - StateMachineEnter_Idle");
-        MusicManager.Instance.PlayMainMusic();
+        MusicManager.Instance?.PlayMainMusic();
     }
 
     protected void StateMachineExit_Idle(Enum previousState, Dictionary<string, object> options)
@@ -68,7 +68,7 @@ public class HomeSceneController : MonoBehaviour
     {
         Debug.Log("NDL: HomeScene - OnClickSettings");
         var gs = GameSettings.Instance;
-        homeSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+        homeSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.RoundEndDelay, gs.QuestionTimeout);
         homeSceneView.ShowSettingPanel();
     }
 
@@ -84,14 +84,14 @@ public class HomeSceneController : MonoBehaviour
     {
         GameSettings.Instance.SfxVolume = volume;
         homeSceneView.UpdateSfxMuteLabel(volume <= 0f);
-        MusicManager.Instance.ApplyVolumes();
+        MusicManager.Instance?.ApplyVolumes();
     }
 
     private void OnMusicVolumeChanged(float volume)
     {
         GameSettings.Instance.MusicVolume = volume;
         homeSceneView.UpdateMusicMuteLabel(volume <= 0f);
-        MusicManager.Instance.ApplyVolumes();
+        MusicManager.Instance?.ApplyVolumes();
     }
 
     private void OnSfxMuteToggle()
@@ -99,10 +99,10 @@ public class HomeSceneController : MonoBehaviour
         var gs = GameSettings.Instance;
         gs.SfxVolume = gs.SfxVolume > 0f ? 0f : 1f;
         homeSceneView.UpdateSfxMuteLabel(gs.SfxVolume <= 0f);
-        MusicManager.Instance.ApplyVolumes();
+        MusicManager.Instance?.ApplyVolumes();
         if (homeSceneView != null)
         {
-            homeSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+            homeSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.RoundEndDelay, gs.QuestionTimeout);
         }
     }
 
@@ -111,10 +111,10 @@ public class HomeSceneController : MonoBehaviour
         var gs = GameSettings.Instance;
         gs.MusicVolume = gs.MusicVolume > 0f ? 0f : 1f;
         homeSceneView.UpdateMusicMuteLabel(gs.MusicVolume <= 0f);
-        MusicManager.Instance.ApplyVolumes();
+        MusicManager.Instance?.ApplyVolumes();
         if (homeSceneView != null)
         {
-            homeSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.FeedbackSpeedSetting, gs.QuestionTimeout);
+            homeSceneView.UpdateSettingUI(gs.SfxVolume, gs.MusicVolume, gs.GameTime, gs.RoundEndDelay, gs.QuestionTimeout);
         }
     }
 
@@ -124,10 +124,11 @@ public class HomeSceneController : MonoBehaviour
         homeSceneView.SetTimeHighlight(seconds);
     }
 
-    private void OnFeedbackSpeedSelected(FeedbackSpeed speed)
+    private void OnRoundDelaySelected(float seconds)
     {
-        GameSettings.Instance.FeedbackSpeedSetting = speed;
-        homeSceneView.SetFeedbackHighlight(speed);
+        float clamped = Mathf.Clamp(seconds, 1f, 4f);
+        GameSettings.Instance.RoundEndDelay = clamped;
+        homeSceneView.SetRoundDelayText(clamped);
     }
 
     private void OnQuestionTimeoutSelected(int seconds)

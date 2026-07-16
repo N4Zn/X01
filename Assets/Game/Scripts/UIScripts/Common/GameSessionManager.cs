@@ -50,6 +50,14 @@ public class GameSessionManager : Singleton<GameSessionManager>
     public int Player2FinalScore { get; set; }
 
     /// <summary>
+    /// Tên entry game đã chọn từ GameRegistry (vd: "ChuCai", "AddNumber5").
+    /// Set bởi MenuSceneController trước khi LoadScene.
+    /// TongHop games: QuestionPool dùng để load CSV từ Resources/TongHop/{SelectedGameName}/
+    /// AddNumber variants: Controller dùng để xác định maxSum.
+    /// </summary>
+    public string SelectedGameName { get; set; }
+
+    /// <summary>
     /// Calculated target score based on GameSettings (1 point per 5 seconds).
     /// </summary>
     public int TargetScore
@@ -168,6 +176,7 @@ public class GameSessionManager : Singleton<GameSessionManager>
         BlueTeamPlayers.Clear();
         RedTeamPlayers.Clear();
         LastPlayedGame = "";
+        SelectedGameName = "";
         Player1FinalScore = 0;
         Player2FinalScore = 0;
     }

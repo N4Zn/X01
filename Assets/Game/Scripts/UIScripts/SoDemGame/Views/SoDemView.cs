@@ -252,6 +252,13 @@ public class SoDemView : MonoBehaviour
         if (boxIndex < txts.Length && txts[boxIndex] != null) txts[boxIndex].color = _wrongTextColor;
     }
 
+    public void SetBoxInteractable(int playerIndex, int boxIndex, bool interactable)
+    {
+        Button[] btns = GetButtons(playerIndex);
+        if (boxIndex < btns.Length && btns[boxIndex] != null)
+            btns[boxIndex].interactable = interactable;
+    }
+
     public void SetPlayerInteractable(int playerIndex, bool interactable)
     {
         Button[] btns = GetButtons(playerIndex);

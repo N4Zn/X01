@@ -29,6 +29,13 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
     Team _team;
     bool _locked;
 
+    void Awake()
+    {
+        // Chỉ bgImage nhận raycast; Label/Image content không được chặn click
+        if (textLabel  != null) textLabel.raycastTarget  = false;
+        if (imageHolder != null) imageHolder.raycastTarget = false;
+    }
+
     public void Setup(string value, AnswerMediaType mediaType, int index, Action<int, Team> onClick, Team team)
     {
         AnswerIndex   = index;
@@ -69,6 +76,46 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        var rt = GetComponent<RectTransform>();
+        Vector3[] corners = new Vector3[4]; // [0]=BL [1]=TL [2]=TR [3]=BR
+        rt.GetWorldCorners(corners);
+
+        // Bounds của bgImage
+        string bgBounds = "null";
+        if (bgImage != null)
+        {
+            var bgRt = bgImage.GetComponent<RectTransform>();
+            if (bgRt != null)
+            {
+                Vector3[] bgC = new Vector3[4];
+                bgRt.GetWorldCorners(bgC);
+                bgBounds = $"x[{bgC[0].x:F0}~{bgC[2].x:F0}]";
+            }
+        }
+
+        // Bounds của textLabel (cái bị hit)
+        string labelBounds = "null";
+        if (textLabel != null)
+        {
+            var lbRt = textLabel.GetComponent<RectTransform>();
+            if (lbRt != null)
+            {
+                Vector3[] lbC = new Vector3[4];
+                lbRt.GetWorldCorners(lbC);
+                labelBounds = $"x[{lbC[0].x:F0}~{lbC[2].x:F0}]y[{lbC[0].y:F0}~{lbC[1].y:F0}]";
+            }
+        }
+
+        string hitObj = eventData.pointerCurrentRaycast.gameObject != null
+            ? eventData.pointerCurrentRaycast.gameObject.name : "null";
+
+        string displayVal = textLabel != null && textSlot != null && textSlot.activeSelf ? textLabel.text : "?";
+        Debug.Log($"[C5:RawClick] sib={transform.GetSiblingIndex()} idx={AnswerIndex} val=\"{displayVal}\" locked={_locked}" +
+                  $" | click=({eventData.position.x:F1},{eventData.position.y:F1})" +
+                  $" | myBounds=x[{corners[0].x:F0}~{corners[2].x:F0}]" +
+                  $" | bgBounds={bgBounds}" +
+                  $" | labelBounds={labelBounds}" +
+                  $" | hitObj={hitObj}");
         if (_locked) return;
         _onClick?.Invoke(AnswerIndex, _team);
     }

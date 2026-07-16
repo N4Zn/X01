@@ -76,6 +76,12 @@ public class GameHUD : MonoBehaviour
         if (timerText) timerText.text = Mathf.CeilToInt(timeRemaining).ToString();
     }
 
+    /// <summary>Ẩn timer khi game kết thúc theo số vòng thay vì countdown.</summary>
+    public void HideTimer()
+    {
+        if (timerText) timerText.gameObject.SetActive(false);
+    }
+
     // ── Internal ──────────────────────────────────────────────────────────────
 
     void HandleScoreChanged(Team team, int left, int right)
