@@ -26,6 +26,8 @@ MonoBehaviour:
   diameter: 6,779 km
   numberOfMoons: 2
   surfaceTemp: "-153\xB0C \u0111\u1EBFn 20\xB0C"
+  videoPath: Mars
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 25.2
+  orbitInclination: 0

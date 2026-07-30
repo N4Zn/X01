@@ -26,6 +26,8 @@ MonoBehaviour:
   diameter: 139,820 km
   numberOfMoons: 95
   surfaceTemp: "-108\xB0C (m\xE2y)"
+  videoPath: Jupiter
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 3.1
+  orbitInclination: 0

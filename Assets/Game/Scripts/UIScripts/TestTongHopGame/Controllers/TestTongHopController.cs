@@ -106,7 +106,13 @@ public class TestTongHopController : MonoBehaviour
 
     protected void StateMachineEnter_Initialize(Enum prev, Dictionary<string, object> opts)
     {
-        MusicManager.Instance?.PlayGameplayMusic();
+        // SolarQuiz variants use SolarSystem ambient music; all other games use gameplay music.
+        string gameName = GameSessionManager.Instance?.SelectedGameName ?? "";
+        bool isSolarQuiz = gameName == "SolarQuiz" || gameName == "SolarQuizEn";
+        if (isSolarQuiz)
+            MusicManager.Instance?.PlaySolarSystemMusic();
+        else
+            MusicManager.Instance?.PlayGameplayMusic();
 
         // Lấy tên hiển thị từ GameSessionManager — dùng cùng API với ScoreScene
         // để HUD và màn kết quả luôn hiện nhất quán (OneVsOne: tên cá nhân, Team: tên đội).
@@ -296,7 +302,7 @@ public class TestTongHopController : MonoBehaviour
         answerDisplayManager.Cleanup();
 
         // 3. Đếm ngược "Next in Xs" trên nền trống
-        int countFrom = Mathf.Max(1, TongHopConfig.Current.nextQuestionDelay);
+        int countFrom = TongHopConfig.Current.nextQuestionDelay;
         for (int i = countFrom; i >= 1; i--)
         {
             ShowCountdown(i);

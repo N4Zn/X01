@@ -25,6 +25,8 @@ MonoBehaviour:
   diameter: 49,244 km
   numberOfMoons: 16
   surfaceTemp: "-218\xB0C"
+  videoPath: Neptune
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 28.3
+  orbitInclination: 0

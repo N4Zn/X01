@@ -93,6 +93,15 @@ public class TongHopConfigData
     public int difficultyMin = 1;
     /// <summary>Giới hạn trên của độ khó (1–10).</summary>
     public int difficultyMax = 10;
+
+    // ── Question batching ─────────────────────────────────────────────────────
+    /// <summary>
+    /// Chia câu hỏi thành lô từ CSV theo vị trí hàng (không lọc difficulty).
+    /// Lô 1 = hàng 1..batches[0], lô 2 = hàng tiếp theo..., mỗi lô shuffle riêng.
+    /// Ví dụ: [10, 10, 9] → lô 1 hàng 1-10, lô 2 hàng 11-20, lô 3 hàng 21-29.
+    /// Null hoặc rỗng = hành vi mặc định (lọc theo difficulty, shuffle toàn bộ).
+    /// </summary>
+    public int[] questionBatches;
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────

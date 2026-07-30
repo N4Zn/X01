@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<paths>
-    <!-- Application.persistentDataPath = /data/user/0/PACKAGE/files/ -->
-    <files-path name="apk_files" path="." />
-</paths>

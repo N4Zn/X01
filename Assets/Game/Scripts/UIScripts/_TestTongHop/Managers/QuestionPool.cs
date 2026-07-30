@@ -15,8 +15,9 @@ public class QuestionPool : MonoBehaviour
     // difficulty → TongHopConfig.Current.difficulty (gameconfig.json)
 
     // Hai pool riêng — shuffle độc lập
-    readonly List<QuestionData> _choosePool   = new();
-    readonly List<QuestionData> _matchingPool = new();
+    readonly List<QuestionData> _choosePool        = new();
+    readonly List<QuestionData> _choosePoolOrdered = new(); // giữ thứ tự CSV để batch re-shuffle
+    readonly List<QuestionData> _matchingPool      = new();
     int _chooseIdx;
     int _matchingIdx;
 
@@ -103,7 +104,22 @@ public class QuestionPool : MonoBehaviour
     public QuestionData GetNextChoose()
     {
         if (_choosePool.Count == 0) return null;
-        if (_chooseIdx >= _choosePool.Count) { Shuffle(_choosePool); _chooseIdx = 0; }
+        if (_chooseIdx >= _choosePool.Count)
+        {
+            int[] batches = TongHopConfig.Current.questionBatches;
+            if (batches != null && batches.Length > 0)
+            {
+                // Restore CSV order then re-shuffle within batches for next cycle
+                _choosePool.Clear();
+                _choosePool.AddRange(_choosePoolOrdered);
+                BatchShuffle(_choosePool, batches);
+            }
+            else
+            {
+                Shuffle(_choosePool);
+            }
+            _chooseIdx = 0;
+        }
         return _choosePool[_chooseIdx++];
     }
 
@@ -121,35 +137,45 @@ public class QuestionPool : MonoBehaviour
     void BuildPool()
     {
         _choosePool.Clear();
+        _choosePoolOrdered.Clear();
         _matchingPool.Clear();
         _chooseIdx = _matchingIdx = 0;
 
-        // Difficulty từ config file (1–10) — có thể thay đổi mà không cần rebuild
         int diff = TongHopConfig.Current.difficulty;
 
         List<QuestionData> allChoose   = chooseCSV   != null ? ParseChooseCSV(chooseCSV.text)     : new List<QuestionData>();
         List<QuestionData> allMatching = matchingCSV != null ? ParseMatchingCSV(matchingCSV.text) : new List<QuestionData>();
 
-        _choosePool.AddRange(allChoose.Where(q => q.difficulty == diff));
-        _matchingPool.AddRange(allMatching.Where(q => q.difficulty == diff));
+        int[] batches  = TongHopConfig.Current.questionBatches;
+        bool useBatches = batches != null && batches.Length > 0;
 
-        // Fallback: nếu không có câu nào khớp difficulty → dùng toàn bộ CSV (bất kể difficulty)
-        // Tránh pool rỗng khi giá trị difficulty trong config không khớp với CSV.
-        if (_choosePool.Count == 0 && allChoose.Count > 0)
+        if (useBatches)
         {
-            Debug.LogWarning($"[QuestionPool] Không có câu Choose nào ở difficulty={diff} — dùng toàn bộ {allChoose.Count} câu.");
+            // Batch mode: dùng toàn bộ CSV theo vị trí hàng, shuffle trong từng lô
+            _choosePoolOrdered.AddRange(allChoose);   // lưu thứ tự gốc để re-shuffle khi hết
             _choosePool.AddRange(allChoose);
+            BatchShuffle(_choosePool, batches);
         }
+        else
+        {
+            _choosePool.AddRange(allChoose.Where(q => q.difficulty == diff));
+            if (_choosePool.Count == 0 && allChoose.Count > 0)
+            {
+                Debug.LogWarning($"[QuestionPool] Không có câu Choose nào ở difficulty={diff} — dùng toàn bộ {allChoose.Count} câu.");
+                _choosePool.AddRange(allChoose);
+            }
+            Shuffle(_choosePool);
+        }
+
+        _matchingPool.AddRange(allMatching.Where(q => q.difficulty == diff));
         if (_matchingPool.Count == 0 && allMatching.Count > 0)
         {
             Debug.LogWarning($"[QuestionPool] Không có câu Matching nào ở difficulty={diff} — dùng toàn bộ {allMatching.Count} câu.");
             _matchingPool.AddRange(allMatching);
         }
-
-        Shuffle(_choosePool);
         Shuffle(_matchingPool);
 
-        Debug.Log($"[QuestionPool] BuildPool — diff={diff} | choose={_choosePool.Count} | matching={_matchingPool.Count}");
+        Debug.Log($"[QuestionPool] BuildPool — diff={diff} | choose={_choosePool.Count} | matching={_matchingPool.Count} | batches={useBatches}");
     }
 
     // ─── Parse Choose CSV ─────────────────────────────────────────────────────
@@ -333,6 +359,30 @@ public class QuestionPool : MonoBehaviour
             int j = Random.Range(0, i + 1);
             (list[i], list[j]) = (list[j], list[i]);
         }
+    }
+
+    // Giả định pool đang ở thứ tự CSV gốc. Shuffle từng lô riêng, giữ thứ tự giữa các lô.
+    void BatchShuffle(List<QuestionData> pool, int[] batches)
+    {
+        var result = new List<QuestionData>(pool.Count);
+        int start = 0;
+        foreach (int size in batches)
+        {
+            if (start >= pool.Count) break;
+            int count = Mathf.Min(size, pool.Count - start);
+            var batch = pool.GetRange(start, count);
+            Shuffle(batch);
+            result.AddRange(batch);
+            start += count;
+        }
+        if (start < pool.Count)
+        {
+            var tail = pool.GetRange(start, pool.Count - start);
+            Shuffle(tail);
+            result.AddRange(tail);
+        }
+        pool.Clear();
+        pool.AddRange(result);
     }
 
     string[] SplitCSVLine(string line)

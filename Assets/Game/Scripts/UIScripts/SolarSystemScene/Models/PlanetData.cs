@@ -29,6 +29,10 @@ public class PlanetData : ScriptableObject
     public int    numberOfMoons;
     public string surfaceTemp;          // VD: "15°C trung bình"
 
+    [Header("Video")]
+    [Tooltip("Tên file video trong StreamingAssets/Videos/ (không có .mp4). Bỏ trống nếu chưa có.")]
+    public string videoPath;
+
     [Header("Special")]
     public bool   hasSaturnRings;
     public bool   isSun;

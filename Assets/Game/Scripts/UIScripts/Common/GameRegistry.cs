@@ -23,6 +23,7 @@ public static class GameRegistry
         ArcadeGame,     // Vận động / chiếu sàn — RiverCross, ...
         BalloonGame,    // Cooperative balloon-pop — BalloonAlpha, BalloonNumber
         ExploreGame,    // Khám phá / mô phỏng — SolarSystem, ...
+        MiniGameKit,    // Game dựng từ Assets/Game/Scripts/Core/MiniGameKit — mỗi game 1 scene riêng
     }
 
     // ── GameEntry: 1 struct thay cho 2 mảng song song ────────────────────────
@@ -81,6 +82,9 @@ public static class GameRegistry
         Set(0, 16, "Things",       "TestTongHopGame",  Engine.TongHopGame);
         Set(0, 17, "SolarSystem", "SolarSystemScene", Engine.ExploreGame);
         Set(0, 18, "WaterAnimal", "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 19, "SolarQuizVi",  "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 20, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 21, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame);
 
 		
 		
@@ -99,7 +103,9 @@ public static class GameRegistry
         Set(3, 0, "PlanetAlphabet", "PlanetAlphabetGame", Engine.PlanetGame);
 
         // ── Category 4: Nhận biết ─────────────────────────────────────────────
-        // (chưa có game — để trống)
+        Set(4, 0, "WhoIsIt", "WhoIsItGame", Engine.MiniGameKit);
+        Set(4, 1, "FamilySpellingJump", "FamilySpellingGame", Engine.MiniGameKit);
+        Set(4, 2, "Monopoly", "MonopolyGame", Engine.MiniGameKit);
 
         // ── Category 5: Âm thanh ─────────────────────────────────────────────
         // ListenSelect / ChuCai / SoDem / Numbers: scene riêng, sinh nội dung procedurally.

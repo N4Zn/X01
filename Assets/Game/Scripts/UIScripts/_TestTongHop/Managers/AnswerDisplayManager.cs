@@ -18,9 +18,12 @@ using UnityEngine;
 public class AnswerDisplayManager : MonoBehaviour
 {
     [Header("Display references")]
-    [SerializeField] FloatingDisplay  floatingDisplay;
-    [SerializeField] ButtonDisplay    buttonDisplay;
-    [SerializeField] MatchingDisplay  matchingDisplay;
+    [SerializeField] FloatingDisplay    floatingDisplay;
+    [SerializeField] ButtonDisplay      buttonDisplay;
+    [SerializeField] MatchingDisplay    matchingDisplay;
+    [SerializeField] SolarSystemDisplay  solarSystemDisplay;   // optional — auto-created if null
+    [SerializeField] SolarSystemDisplay  solarSystemEnDisplay; // English version — auto-created if null
+    [SerializeField] PlanetOrderDisplay  planetOrderDisplay;   // single-player column game
 
     [Header("Question pool")]
     [SerializeField] QuestionPool questionPool;
@@ -69,9 +72,12 @@ public class AnswerDisplayManager : MonoBehaviour
         {
             _active = q.displayMode switch
             {
-                ChooseDisplayMode.Button   => buttonDisplay,
-                ChooseDisplayMode.Floating => floatingDisplay,
-                _                          => slot == 0 ? (IAnswerDisplay)floatingDisplay : buttonDisplay
+                ChooseDisplayMode.Button        => buttonDisplay,
+                ChooseDisplayMode.Floating      => floatingDisplay,
+                ChooseDisplayMode.SolarSystem   => GetOrCreateSolarSystem(),
+                ChooseDisplayMode.SolarSystemEn => GetOrCreateSolarSystemEn(),
+                ChooseDisplayMode.PlanetOrder   => GetOrCreatePlanetOrder(),
+                _                               => slot == 0 ? (IAnswerDisplay)floatingDisplay : buttonDisplay
             };
         }
 
@@ -117,7 +123,9 @@ public class AnswerDisplayManager : MonoBehaviour
         _active?.Cleanup();
         if (_independentDisplay != null && _independentDisplay != _active)
             _independentDisplay.Cleanup();
-        HideAll();
+        // Don't call HideAll() here — each display's Cleanup() handles its own visibility.
+        // PlanetOrderDisplay intentionally stays active to cover the split-screen during
+        // the inter-question transition. Show() calls HideAll() before the next question.
         _active             = null;
         _independentDisplay = null;
         CurrentQuestion     = null;
@@ -181,6 +189,54 @@ public class AnswerDisplayManager : MonoBehaviour
         floatingDisplay.gameObject.SetActive(false);
         buttonDisplay.gameObject.SetActive(false);
         matchingDisplay.gameObject.SetActive(false);
+        solarSystemDisplay?.gameObject.SetActive(false);
+        solarSystemEnDisplay?.gameObject.SetActive(false);
+        planetOrderDisplay?.gameObject.SetActive(false);
+    }
+
+    SolarSystemDisplay GetOrCreateSolarSystem()
+    {
+        if (solarSystemDisplay != null) return solarSystemDisplay;
+
+        var go = new GameObject("SolarSystemDisplay");
+        go.transform.SetParent(transform.parent, false);
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        solarSystemDisplay = go.AddComponent<SolarSystemDisplay>();
+        go.SetActive(false);
+        return solarSystemDisplay;
+    }
+
+    SolarSystemDisplay GetOrCreateSolarSystemEn()
+    {
+        if (solarSystemEnDisplay != null) return solarSystemEnDisplay;
+
+        var go = new GameObject("SolarSystemEnDisplay");
+        go.transform.SetParent(transform.parent, false);
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        solarSystemEnDisplay = go.AddComponent<SolarSystemEnDisplay>();
+        go.SetActive(false);
+        return solarSystemEnDisplay;
+    }
+
+    PlanetOrderDisplay GetOrCreatePlanetOrder()
+    {
+        if (planetOrderDisplay != null) return planetOrderDisplay;
+
+        var go = new GameObject("PlanetOrderDisplay");
+        go.transform.SetParent(transform.parent, false);
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        planetOrderDisplay = go.AddComponent<PlanetOrderDisplay>();
+        go.SetActive(false);
+        return planetOrderDisplay;
     }
 }
 

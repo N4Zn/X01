@@ -26,6 +26,8 @@ MonoBehaviour:
   diameter: 12,104 km
   numberOfMoons: 0
   surfaceTemp: "465\xB0C"
+  videoPath: Venus
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 2.64
+  orbitInclination: 0

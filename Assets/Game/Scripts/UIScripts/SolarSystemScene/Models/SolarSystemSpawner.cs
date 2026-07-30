@@ -1,4 +1,8 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using TMPro;
+using System.Collections;
 using System.Reflection;
 
 public class SolarSystemSpawner : MonoBehaviour
@@ -44,14 +48,26 @@ public class SolarSystemSpawner : MonoBehaviour
     Transform _asteroidBeltTransform = null;
     Light     _sunLight              = null;
 
+    // ── Tap + Info panel ──────────────────────────────────────────────────────
+    Camera          _mainCam;
+    GameObject      _infoPanel;
+    TextMeshProUGUI _infoPlanetName, _infoDesc, _infoStats;
+    Button          _btnWatchVideo;
+    PlanetData      _currentData;
+    // Video modal
+    GameObject      _videoModal;
+    TextMeshProUGUI _loadingLabel;
+    RawImage        _videoImage;
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     void Start()
     {
-        // Reset static để tránh TimeScale = 0 còn sót từ lần chạy trước (HUD.Start cũng reset)
         PlanetOrbit.TimeScale = 1f;
         MusicManager.Instance?.PlaySolarSystemMusic();
+        _mainCam = Camera.main ?? FindObjectOfType<Camera>();
         SpawnAll();
+        WireBtnBack();
     }
 
     void Update()
@@ -63,6 +79,8 @@ public class SolarSystemSpawner : MonoBehaviour
         if (_asteroidBeltTransform != null)
             _asteroidBeltTransform.Rotate(Vector3.up,
                 asteroidOrbitSpeed * PlanetOrbit.TimeScale * Time.deltaTime, Space.World);
+
+        HandleTap();
     }
 
     // ── Spawn ─────────────────────────────────────────────────────────────────
@@ -99,6 +117,7 @@ public class SolarSystemSpawner : MonoBehaviour
         if (_earthTransform != null) SpawnMoon(_earthTransform);
         SpawnAsteroidBelt();
         SetupSkybox();
+        BuildInfoPanel();
     }
 
     // ── Mặt Trời ─────────────────────────────────────────────────────────────
@@ -191,6 +210,28 @@ public class SolarSystemSpawner : MonoBehaviour
                 }
                 catch { }
             }
+        }
+
+        // Make Sun tappable — add PlanetOrbit with null parent so it never moves
+        if (sunTransform.GetComponent<Collider>() == null)
+            sunTransform.gameObject.AddComponent<SphereCollider>();
+
+        if (sunTransform.GetComponent<PlanetOrbit>() == null)
+        {
+            // Copy educational data; zero out orbit so Sun stays at origin
+            var sunInfo = ScriptableObject.CreateInstance<PlanetData>();
+            sunInfo.planetName      = data.planetName;
+            sunInfo.planetNameVi    = string.IsNullOrEmpty(data.planetNameVi) ? "Mặt Trời" : data.planetNameVi;
+            sunInfo.descriptionVi   = data.descriptionVi;
+            sunInfo.distanceFromSun = data.distanceFromSun;
+            sunInfo.diameter        = data.diameter;
+            sunInfo.numberOfMoons   = data.numberOfMoons;
+            sunInfo.surfaceTemp     = data.surfaceTemp;
+            sunInfo.videoPath       = data.videoPath;
+            sunInfo.scale           = data.scale;
+            sunInfo.orbitRadius     = 0f;  // không quỹ đạo
+            sunInfo.orbitSpeed      = 0f;
+            sunTransform.gameObject.AddComponent<PlanetOrbit>().Init(sunInfo, null, false);
         }
     }
 
@@ -322,7 +363,7 @@ public class SolarSystemSpawner : MonoBehaviour
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         go.name = data.planetName;
-        Destroy(go.GetComponent<SphereCollider>());
+        // Keep SphereCollider for tap/raycast detection — do NOT destroy it
         go.transform.localScale = Vector3.one * data.scale;
 
         var pShader = Shader.Find("Standard") ?? Shader.Find("Diffuse") ?? Shader.Find("Unlit/Color");
@@ -356,7 +397,7 @@ public class SolarSystemSpawner : MonoBehaviour
         Debug.Log($"[SolarSystem] Spawning Moon (earthTransform={earthTransform?.name})");
         var moonGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         moonGo.name = "Moon";
-        Destroy(moonGo.GetComponent<SphereCollider>());
+        // Keep SphereCollider for tap detection
 
         var mShader = Shader.Find("Standard") ?? Shader.Find("Diffuse") ?? Shader.Find("Unlit/Color");
         var mat = new Material(mShader ?? Shader.Find("Unlit/Color"));
@@ -371,12 +412,17 @@ public class SolarSystemSpawner : MonoBehaviour
 
         var moonData = ScriptableObject.CreateInstance<PlanetData>();
         moonData.planetName      = "Moon";
-        moonData.planetNameVi    = "Mặt Trăng";
+        moonData.planetNameVi    = "Moon";
+        moonData.descriptionVi   = "Earth's only natural satellite, 384,400 km away. Its gravitational pull drives ocean tides and stabilizes Earth's axial tilt.";
+        moonData.distanceFromSun = "384,400 km";
+        moonData.diameter        = "3,474 km";
+        moonData.numberOfMoons   = 0;
+        moonData.surfaceTemp     = "-173°C to 127°C";
         moonData.orbitRadius     = moonOrbitRadius;
         moonData.orbitSpeed      = moonOrbitSpeed;
-        moonData.selfRotateSpeed = 0f;   // không dùng — khóa thủy triều xử lý rotation
+        moonData.selfRotateSpeed = 0f;
         moonData.scale           = moonScale;
-        moonData.axialTilt       = 0f;   // LookRotation tự xử lý hướng, axialTilt sẽ ghi đè
+        moonData.axialTilt       = 0f;
 
         var orbit = moonGo.AddComponent<PlanetOrbit>();
         orbit.Init(moonData, earthTransform);
@@ -439,6 +485,312 @@ public class SolarSystemSpawner : MonoBehaviour
         mesh.RecalculateNormals(); mesh.RecalculateBounds();
         return mesh;
     }
+
+    // ── Back button ──────────────────────────────────────────────────────────
+
+    void WireBtnBack()
+    {
+        var go = GameObject.Find("BtnBack");
+        if (go == null) return;
+
+        // Rename label to English
+        var txt = go.GetComponentInChildren<TextMeshProUGUI>();
+        if (txt != null) txt.text = "← Back";
+
+        var btn = go.GetComponent<Button>();
+        if (btn != null)
+        {
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() => SceneManager.LoadScene("MenuScene"));
+        }
+    }
+
+    // ── Tap detection ────────────────────────────────────────────────────────
+
+    void HandleTap()
+    {
+        bool    tapped    = false;
+        Vector2 tapPos    = Vector2.zero;
+        int     pointerId = -1;
+
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0)) { tapped = true; tapPos = Input.mousePosition; }
+#else
+        if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            var t = Input.GetTouch(0);
+            tapped = true; tapPos = t.position; pointerId = t.fingerId;
+        }
+#endif
+        if (!tapped) return;
+
+        var es = UnityEngine.EventSystems.EventSystem.current;
+        if (es != null && es.IsPointerOverGameObject(pointerId)) return;
+
+        if (_mainCam == null) return;
+        var ray = _mainCam.ScreenPointToRay(tapPos);
+        if (Physics.Raycast(ray, out RaycastHit hit, 300f))
+        {
+            var orbit = hit.transform.GetComponent<PlanetOrbit>()
+                     ?? hit.transform.GetComponentInParent<PlanetOrbit>();
+            if (orbit != null && orbit.Data != null)
+            {
+                ShowPlanetInfo(orbit.Data);
+                return;
+            }
+        }
+        HidePlanetInfo();
+    }
+
+    // ── Info panel (built at runtime) ────────────────────────────────────────
+
+    void BuildInfoPanel()
+    {
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+
+        _infoPanel = new GameObject("PlanetInfoPanel");
+        _infoPanel.transform.SetParent(canvas.transform, false);
+
+        var rt = _infoPanel.AddComponent<RectTransform>();
+        rt.anchorMin        = new Vector2(1f, 0.5f);
+        rt.anchorMax        = new Vector2(1f, 0.5f);
+        rt.pivot            = new Vector2(1f, 0.5f);
+        rt.sizeDelta        = new Vector2(270f, 320f);
+        rt.anchoredPosition = new Vector2(-8f, 0f);
+
+        var bg = _infoPanel.AddComponent<Image>();
+        bg.color = new Color(0.05f, 0.08f, 0.18f, 0.94f);
+        bg.raycastTarget = true;
+
+        // Close button
+        var closeGo = new GameObject("BtnClose");
+        closeGo.transform.SetParent(_infoPanel.transform, false);
+        var closeRt = closeGo.AddComponent<RectTransform>();
+        closeRt.anchorMin = new Vector2(1f, 1f); closeRt.anchorMax = new Vector2(1f, 1f);
+        closeRt.pivot = new Vector2(1f, 1f);
+        closeRt.anchoredPosition = new Vector2(-4f, -4f);
+        closeRt.sizeDelta = new Vector2(32f, 32f);
+        var closeImg = closeGo.AddComponent<Image>();
+        closeImg.color = new Color(0.80f, 0.18f, 0.10f, 0.85f);
+        var clLblGo = new GameObject("X"); clLblGo.transform.SetParent(closeGo.transform, false);
+        var clRt = clLblGo.AddComponent<RectTransform>();
+        clRt.anchorMin = Vector2.zero; clRt.anchorMax = Vector2.one;
+        clRt.offsetMin = clRt.offsetMax = Vector2.zero;
+        var clTxt = clLblGo.AddComponent<TextMeshProUGUI>();
+        clTxt.text = "X"; clTxt.fontSize = 18f; clTxt.fontStyle = FontStyles.Bold;
+        clTxt.color = Color.white; clTxt.alignment = TextAlignmentOptions.Center;
+        clTxt.raycastTarget = false;
+        var closeBtn = closeGo.AddComponent<Button>();
+        closeBtn.targetGraphic = closeImg;
+        closeBtn.onClick.AddListener(HidePlanetInfo);
+
+        // Planet name
+        var nameGo = new GameObject("PlanetName");
+        nameGo.transform.SetParent(_infoPanel.transform, false);
+        var nameRt = nameGo.AddComponent<RectTransform>();
+        nameRt.anchorMin = new Vector2(0f, 1f); nameRt.anchorMax = new Vector2(1f, 1f);
+        nameRt.pivot = new Vector2(0.5f, 1f);
+        nameRt.anchoredPosition = new Vector2(0f, -8f);
+        nameRt.sizeDelta = new Vector2(-16f, 72f);
+        _infoPlanetName = nameGo.AddComponent<TextMeshProUGUI>();
+        _infoPlanetName.enableAutoSizing = true;
+        _infoPlanetName.fontSizeMin = 16f;
+        _infoPlanetName.fontSizeMax = 38f;
+        _infoPlanetName.fontStyle = FontStyles.Bold;
+        _infoPlanetName.color = new Color(1f, 0.87f, 0.30f);
+        _infoPlanetName.alignment = TextAlignmentOptions.Center;
+        _infoPlanetName.raycastTarget = false;
+
+        // Description
+        var descGo = new GameObject("Desc");
+        descGo.transform.SetParent(_infoPanel.transform, false);
+        var descRt = descGo.AddComponent<RectTransform>();
+        descRt.anchorMin = new Vector2(0f, 1f); descRt.anchorMax = new Vector2(1f, 1f);
+        descRt.pivot = new Vector2(0.5f, 1f);
+        descRt.anchoredPosition = new Vector2(0f, -88f);
+        descRt.sizeDelta = new Vector2(-16f, 80f);
+        _infoDesc = descGo.AddComponent<TextMeshProUGUI>();
+        _infoDesc.enableAutoSizing = true;
+        _infoDesc.fontSizeMin = 10f;
+        _infoDesc.fontSizeMax = 22f;
+        _infoDesc.fontStyle = FontStyles.Bold;
+        _infoDesc.color = new Color(0.82f, 0.88f, 1f);
+        _infoDesc.alignment = TextAlignmentOptions.TopLeft;
+        _infoDesc.enableWordWrapping = true;
+        _infoDesc.raycastTarget = false;
+
+        // Stats
+        var statsGo = new GameObject("Stats");
+        statsGo.transform.SetParent(_infoPanel.transform, false);
+        var statsRt = statsGo.AddComponent<RectTransform>();
+        statsRt.anchorMin = new Vector2(0f, 1f); statsRt.anchorMax = new Vector2(1f, 1f);
+        statsRt.pivot = new Vector2(0.5f, 1f);
+        statsRt.anchoredPosition = new Vector2(0f, -176f);
+        statsRt.sizeDelta = new Vector2(-16f, 100f);
+        _infoStats = statsGo.AddComponent<TextMeshProUGUI>();
+        _infoStats.enableAutoSizing = true;
+        _infoStats.fontSizeMin = 10f;
+        _infoStats.fontSizeMax = 22f;
+        _infoStats.fontStyle = FontStyles.Bold;
+        _infoStats.color = new Color(0.75f, 0.85f, 1f);
+        _infoStats.alignment = TextAlignmentOptions.TopLeft;
+        _infoStats.enableWordWrapping = true;
+        _infoStats.raycastTarget = false;
+
+        // Watch Video button
+        var vidBtnGo = new GameObject("BtnWatchVideo");
+        vidBtnGo.transform.SetParent(_infoPanel.transform, false);
+        var vidBtnRt = vidBtnGo.AddComponent<RectTransform>();
+        vidBtnRt.anchorMin = new Vector2(0f, 0f); vidBtnRt.anchorMax = new Vector2(1f, 0f);
+        vidBtnRt.pivot = new Vector2(0.5f, 0f);
+        vidBtnRt.anchoredPosition = new Vector2(0f, 8f);
+        vidBtnRt.sizeDelta = new Vector2(-16f, 36f);
+        var vidBtnImg = vidBtnGo.AddComponent<Image>();
+        vidBtnImg.color = new Color(0.10f, 0.45f, 0.90f, 0.92f);
+        var vidLblGo = new GameObject("Lbl"); vidLblGo.transform.SetParent(vidBtnGo.transform, false);
+        var vidLblRt = vidLblGo.AddComponent<RectTransform>();
+        vidLblRt.anchorMin = Vector2.zero; vidLblRt.anchorMax = Vector2.one;
+        vidLblRt.offsetMin = vidLblRt.offsetMax = Vector2.zero;
+        var vidLbl = vidLblGo.AddComponent<TextMeshProUGUI>();
+        vidLbl.text = "> Play Video"; vidLbl.fontSize = 16f;
+        vidLbl.fontStyle = FontStyles.Bold; vidLbl.color = Color.white;
+        vidLbl.alignment = TextAlignmentOptions.Center; vidLbl.raycastTarget = false;
+        _btnWatchVideo = vidBtnGo.AddComponent<Button>();
+        _btnWatchVideo.targetGraphic = vidBtnImg;
+        _btnWatchVideo.onClick.AddListener(OpenVideoModal);
+
+        _infoPanel.SetActive(false);
+        BuildVideoModal(canvas);
+    }
+
+    void ShowPlanetInfo(PlanetData data)
+    {
+        _currentData = data;
+        if (_infoPanel == null) return;
+        _infoPanel.SetActive(true);
+
+        if (_infoPlanetName != null)
+        {
+            bool hasVi = !string.IsNullOrEmpty(data.planetNameVi) && data.planetNameVi != data.planetName;
+            _infoPlanetName.text = hasVi
+                ? $"{data.planetName} ({data.planetNameVi})"
+                : data.planetName;
+        }
+
+        if (_infoDesc != null)
+            _infoDesc.text = data.descriptionVi;
+
+        if (_infoStats != null)
+        {
+            bool isMoon = data.planetName == "Moon";
+            bool isSun  = data.planetName == "Sun";
+            var sb = new System.Text.StringBuilder();
+
+            if (isSun)
+                sb.AppendLine("Dist. from Milky Way:  ~26,000 light-years");
+            else if (!string.IsNullOrEmpty(data.distanceFromSun))
+                sb.AppendLine(isMoon
+                    ? $"Dist. from Earth:  {data.distanceFromSun}"
+                    : $"Distance from Sun:  {data.distanceFromSun}");
+
+            if (!string.IsNullOrEmpty(data.diameter))    sb.AppendLine($"Diameter:  {data.diameter}");
+            if (!isMoon && !isSun)                       sb.AppendLine($"Moons:  {data.numberOfMoons}");
+            if (!string.IsNullOrEmpty(data.surfaceTemp)) sb.AppendLine($"Temp:  {data.surfaceTemp}");
+            _infoStats.text = sb.ToString().TrimEnd();
+        }
+
+        if (_btnWatchVideo != null)
+            _btnWatchVideo.gameObject.SetActive(!string.IsNullOrEmpty(data.videoPath));
+    }
+
+    void HidePlanetInfo()
+    {
+        _infoPanel?.SetActive(false);
+        _currentData = null;
+    }
+
+    // ── Video modal ───────────────────────────────────────────────────────────
+
+    void BuildVideoModal(Canvas canvas)
+    {
+        _videoModal = new GameObject("VideoModal");
+        _videoModal.transform.SetParent(canvas.transform, false);
+
+        var rt = _videoModal.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+        var bg = _videoModal.AddComponent<Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.92f);
+        bg.raycastTarget = true;
+
+        // Loading label shown while copying video from APK
+        var lblGo = new GameObject("LoadingLabel");
+        lblGo.transform.SetParent(_videoModal.transform, false);
+        var lblRt = lblGo.AddComponent<RectTransform>();
+        lblRt.anchorMin = new Vector2(0.1f, 0.4f); lblRt.anchorMax = new Vector2(0.9f, 0.6f);
+        lblRt.offsetMin = lblRt.offsetMax = Vector2.zero;
+        _loadingLabel = lblGo.AddComponent<TextMeshProUGUI>();
+        _loadingLabel.text = "Đang tải video...";
+        _loadingLabel.fontSize = 28f;
+        _loadingLabel.fontStyle = FontStyles.Bold;
+        _loadingLabel.color = Color.white;
+        _loadingLabel.alignment = TextAlignmentOptions.Center;
+        _loadingLabel.raycastTarget = false;
+
+        // Keep _videoImage reference (unused but field still declared)
+        var vidGo = new GameObject("VideoImage");
+        vidGo.transform.SetParent(_videoModal.transform, false);
+        _videoImage = vidGo.AddComponent<RawImage>();
+        _videoImage.color = Color.clear;
+
+        // Cancel button
+        var closeGo = new GameObject("BtnClose");
+        closeGo.transform.SetParent(_videoModal.transform, false);
+        var closeRt = closeGo.AddComponent<RectTransform>();
+        closeRt.anchorMin = new Vector2(1f, 1f); closeRt.anchorMax = new Vector2(1f, 1f);
+        closeRt.pivot = new Vector2(1f, 1f);
+        closeRt.anchoredPosition = new Vector2(-12f, -12f);
+        closeRt.sizeDelta = new Vector2(48f, 48f);
+        var closeImg = closeGo.AddComponent<Image>();
+        closeImg.color = new Color(0.85f, 0.15f, 0.10f, 0.90f);
+        var clLblGo = new GameObject("X"); clLblGo.transform.SetParent(closeGo.transform, false);
+        var clLblRt = clLblGo.AddComponent<RectTransform>();
+        clLblRt.anchorMin = Vector2.zero; clLblRt.anchorMax = Vector2.one;
+        clLblRt.offsetMin = clLblRt.offsetMax = Vector2.zero;
+        var clTxt = clLblGo.AddComponent<TextMeshProUGUI>();
+        clTxt.text = "X"; clTxt.fontSize = 22f; clTxt.fontStyle = FontStyles.Bold;
+        clTxt.color = Color.white; clTxt.alignment = TextAlignmentOptions.Center;
+        clTxt.raycastTarget = false;
+        var closeBtn = closeGo.AddComponent<Button>();
+        closeBtn.targetGraphic = closeImg;
+        closeBtn.onClick.AddListener(CloseVideoModal);
+
+        _videoModal.SetActive(false);
+    }
+
+    void OpenVideoModal()
+    {
+        Debug.Log($"[SolarSystem] OpenVideoModal — data={_currentData?.videoPath ?? "NULL"}");
+        if (_currentData == null || string.IsNullOrEmpty(_currentData.videoPath))
+        {
+            Debug.LogWarning("[SolarSystem] OpenVideoModal: _currentData null or videoPath empty — abort");
+            return;
+        }
+        if (_loadingLabel) _loadingLabel.text = "Đang tải video...";
+        _videoModal.SetActive(true);
+        MusicManager.Instance?.SetMusicVolumeMultiplier(0.2f);
+        NativeVideoPlayer.Play(_currentData.videoPath, CloseVideoModal);
+    }
+
+    void CloseVideoModal()
+    {
+        _videoModal?.SetActive(false);
+        MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
+    }
+
+    void OnDestroy() { }
 
     // ── Gizmos (Scene view) ───────────────────────────────────────────────────
 

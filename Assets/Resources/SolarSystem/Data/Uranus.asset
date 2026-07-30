@@ -25,6 +25,8 @@ MonoBehaviour:
   diameter: 50,724 km
   numberOfMoons: 28
   surfaceTemp: "-224\xB0C"
+  videoPath: Uranus
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 97.8
+  orbitInclination: 0

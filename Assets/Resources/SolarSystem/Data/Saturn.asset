@@ -26,6 +26,8 @@ MonoBehaviour:
   diameter: 116,460 km
   numberOfMoons: 146
   surfaceTemp: "-178\xB0C"
+  videoPath: Saturn
   hasSaturnRings: 1
   isSun: 0
   axialTilt: 26.7
+  orbitInclination: 0

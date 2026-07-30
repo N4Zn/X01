@@ -25,6 +25,8 @@ MonoBehaviour:
   diameter: 1,392,700 km
   numberOfMoons: 0
   surfaceTemp: "5,500\xB0C (b\u1EC1 m\u1EB7t)"
+  videoPath: Sun
   hasSaturnRings: 0
   isSun: 1
   axialTilt: 7.25
+  orbitInclination: 0

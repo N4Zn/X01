@@ -71,5 +71,14 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/SolarSystemScene/SolarSystemScene.unity
     guid: ecd7f7b374d5ae7458b500f8ec1601df
+  - enabled: 1
+    path: Assets/Game/Scenes/WhoIsItGame/WhoIsItGame.unity
+    guid: 204037a469e1ed842a7b82cf5566cd66
+  - enabled: 1
+    path: Assets/Game/Scenes/FamilySpellingGame/FamilySpellingGame.unity
+    guid: 1a85894a335efcd4ca73f334eb973db5
+  - enabled: 1
+    path: Assets/Game/Scenes/MonopolyGame/MonopolyGame.unity
+    guid: 87b5a5c885707b7428e842e5bcb0f51d
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

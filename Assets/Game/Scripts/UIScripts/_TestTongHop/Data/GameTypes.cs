@@ -18,7 +18,7 @@ public enum AnswerMediaType { Text, Image, IconCompose }
 public enum ItemState { Normal, Selected, Correct, Wrong, Revealed, Locked }
 
 /// <summary>Override display type per question. Auto = dùng weight trong config.</summary>
-public enum ChooseDisplayMode { Auto, Button, Floating }
+public enum ChooseDisplayMode { Auto, Button, Floating, SolarSystem, SolarSystemEn, PlanetOrder }
 
 public enum ClickResult
 {

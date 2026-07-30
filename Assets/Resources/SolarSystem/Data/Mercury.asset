@@ -26,6 +26,8 @@ MonoBehaviour:
   diameter: 4,879 km
   numberOfMoons: 0
   surfaceTemp: "-180\xB0C \u0111\u1EBFn 430\xB0C"
+  videoPath: Mercury
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 0.03
+  orbitInclination: 0

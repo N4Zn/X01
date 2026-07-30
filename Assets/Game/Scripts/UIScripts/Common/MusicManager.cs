@@ -17,6 +17,8 @@ public class MusicManager : Singleton<MusicManager>
     private AudioClip _questionSfx;
     private AudioClip _correctSfx;
     private AudioClip _wrongSfx;
+    private AudioClip _explosionSfx;
+    private AudioClip _meteorFallSfx;
 
     // Track which BGM is playing to avoid restart on same clip
     private string _currentBgmName;
@@ -35,12 +37,14 @@ public class MusicManager : Singleton<MusicManager>
         _sfxSource.playOnAwake = false;
 
         // Load clips from Resources
-        _mainMusic = Resources.Load<AudioClip>("Audio/Music/main");
-        _gameplayMusic = Resources.Load<AudioClip>("Audio/Music/gameplay");
-        _solarSystemMusic = Resources.Load<AudioClip>("Audio/Music/solar_system");
-        _questionSfx = Resources.Load<AudioClip>("Audio/SFX/question");
-        _correctSfx = Resources.Load<AudioClip>("Audio/SFX/correct");
-        _wrongSfx = Resources.Load<AudioClip>("Audio/SFX/wrong");
+        _mainMusic = Resources.Load<AudioClip>("audio/Music/main");
+        _gameplayMusic = Resources.Load<AudioClip>("audio/Music/gameplay");
+        _solarSystemMusic = Resources.Load<AudioClip>("audio/Music/solar_system");
+        _questionSfx  = Resources.Load<AudioClip>("Audio/SFX/question");
+        _correctSfx   = Resources.Load<AudioClip>("Audio/SFX/correct");
+        _wrongSfx     = Resources.Load<AudioClip>("Audio/SFX/wrong");
+        _explosionSfx  = Resources.Load<AudioClip>("Audio/SFX/explosion");
+        _meteorFallSfx = Resources.Load<AudioClip>("Audio/SFX/meteor_fall");
 
         ApplyVolumes();
     }
@@ -146,6 +150,24 @@ public class MusicManager : Singleton<MusicManager>
     {
         PlaySfx(_wrongSfx);
     }
+
+    /// <summary>
+    /// Play explosion sound effect (meteor impact).
+    /// </summary>
+    public void PlayExplosionSfx()
+    {
+        PlaySfx(_explosionSfx);
+    }
+
+    /// <summary>
+    /// Play meteor falling sound effect.
+    /// </summary>
+    public void PlayMeteorFallSfx()
+    {
+        PlaySfx(_meteorFallSfx);
+    }
+
+    public float MeteorFallClipLength => _meteorFallSfx != null ? _meteorFallSfx.length : 0f;
 
     private void PlaySfx(AudioClip clip)
     {
