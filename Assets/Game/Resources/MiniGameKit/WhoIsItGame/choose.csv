@@ -1,0 +1,8 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,answerMode,correctAnswers
+q1,Family,1,Image,mom,Text,Mom,Dad,Brother,Baby,,Single,0
+q2,Family,1,Image,dad,Text,Dad,Mom,Sister,Grandpa,,Single,0
+q3,Family,1,Image,sister,Text,Sister,Brother,Mom,Grandma,,Single,0
+q4,Family,1,Image,brother,Text,Brother,Sister,Dad,Baby,,Single,0
+q5,Family,1,Image,grandma,Text,Grandma,Grandpa,Mom,Sister,,Single,0
+q6,Family,1,Image,grandpa,Text,Grandpa,Grandma,Dad,Brother,,Single,0
+q7,Family,1,Image,baby,Text,Baby,Mom,Sister,Grandma,,Single,0
