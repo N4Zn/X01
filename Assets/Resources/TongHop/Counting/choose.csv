@@ -1,0 +1,11 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,a5,a6,answerMode,correctAnswers,displayMode
+q01,Counting,1,IconCompose,RANDOM:1,Text,1,2,3,4,,,,Single,0,Button
+q02,Counting,1,IconCompose,RANDOM:2,Text,1,2,3,4,,,,Single,1,Button
+q03,Counting,1,IconCompose,RANDOM:3,Text,1,2,3,4,,,,Single,2,Button
+q04,Counting,1,IconCompose,RANDOM:4,Text,2,3,4,5,,,,Single,2,Button
+q05,Counting,1,IconCompose,RANDOM:5,Text,3,4,5,6,,,,Single,2,Button
+q06,Counting,1,IconCompose,RANDOM:6,Text,4,5,6,7,,,,Single,2,Button
+q07,Counting,1,IconCompose,RANDOM:7,Text,5,6,7,8,,,,Single,2,Button
+q08,Counting,1,IconCompose,RANDOM:8,Text,6,7,8,9,,,,Single,2,Button
+q09,Counting,1,IconCompose,RANDOM:9,Text,7,8,9,10,,,,Single,2,Button
+q10,Counting,1,IconCompose,RANDOM:10,Text,8,9,10,11,,,,Single,2,Button

@@ -1,0 +1,11 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,a5,a6,answerMode,correctAnswers,displayMode
+q01,SaveEnvironment,1,Audio,chung_ta_nen_tiet_kiem_gi,Image,khi_thai,tui_rac,giot_nuoc,,,,,Single,2,Floating
+q02,SaveEnvironment,1,Audio,chung_ta_nen_lam_gi,Image,chat_cay,dot_rung,treo_cay,trong_cay,,,,Single,3,Floating
+q03,SaveEnvironment,1,Audio,chung_ta_khong_nen_lam_gi,Image,chat_cay,dot_rung,treo_cay,trong_cay,,,,MultiSelect,"0,1,2",Floating
+q04,SaveEnvironment,1,Audio,hanh_dong_nao_la_bao_ve_moi_truong,Image,thu_don_rac,trong_cay2,treo_cay,vut_rac_bua_bai,,,,MultiSelect,"0,1",Floating
+q05,SaveEnvironment,1,Audio,vo_chai_nhua_bo_vao_dau,Image,thung_rac_tai_che,thung_rac_huu_co,thung_rac_con_lai,,,,,Single,0,Floating
+q06,SaveEnvironment,1,Audio,vo_chuoi_bo_vao_dau,Image,thung_rac_tai_che,thung_rac_huu_co,thung_rac_con_lai,,,,,Single,1,Floating
+q07,SaveEnvironment,1,Audio,tui_nilon_bo_vao_dau,Image,thung_rac_tai_che,thung_rac_huu_co,thung_rac_con_lai,,,,,Single,2,Floating
+q08,SaveEnvironment,1,Audio,vo_banh_keo_bo_vao_dau,Image,thung_rac_tai_che,thung_rac_huu_co,thung_rac_con_lai,,,,,Single,2,Floating
+q09,SaveEnvironment,1,Audio,do_nao_tai_che_duoc,Image,vo_lon_coca,vo_keo,vo_chuoi,chai_nhua,cay_hoa,,,MultiSelect,"0,3",Floating
+q10,SaveEnvironment,1,Audio,do_nao_khong_tai_che_duoc,Image,vo_lon_coca,vo_keo,vo_chuoi,chai_nhua,cay_hoa,,,MultiSelect,"1,2,4",Floating

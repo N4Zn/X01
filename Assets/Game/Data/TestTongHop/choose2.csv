@@ -1,0 +1,13 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,a5,a6,answerMode,correctAnswers,displayMode
+q01,Science,1,Image,Science/Q.DuongDiCuaOxy,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+q02,Science,1,Image,Science/Q.ThanhPhanHeSinhDucNam,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+q03,Science,1,Image,Science/Q.DuongDiCuaOxy,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+q04,Science,1,Image,Science/Q.DuongDiCuaOxy,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+q05,Science,1,Image,Science/Q.DuongDiCuaOxy,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+q06,Science,1,Image,Science/Q.DuongDiCuaOxy,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+q07,Science,1,Image,Science/Q.DuongDiCuaOxy,Image,Science/Nose,Science/Lung,Science/Heart,Science/Body,,,,OrderedSequence,"0,1,2,3",Floating
+oc01,SoHoc,3,Text,Chon nhom tang dan so luong: 1→2→3,IconCompose,animals/cat:1,animals/cat:2,animals/cat:3,animals/dog:4,animals/fish:5,,,OrderedSequence,"0,1,2",
+mu01,SoHoc,3,Text,Chon cac so le,Text,1,2,3,4,5,,,MultiSelect,"0,2,4",
+mu02,DongVat,2,Text,Chon cac con vat biet bay,Text,Con meo,Con chim,Con cho,Con ong,Con bo,,,MultiSelect,"1,3",
+mui01,DongVat,3,Text,Chon cac con vat (khong phai trai cay),Image,animals/cat,animals/dog,animals/fish,fruits/apple,fruits/banana,,,MultiSelect,"0,1,2",
+mun01,SoHoc,3,Text,Chon cac nhom co duoi 3 con,IconCompose,animals/cat:1,animals/cat:2,animals/cat:3,animals/cat:4,animals/cat:5,,,MultiSelect,"0,1",

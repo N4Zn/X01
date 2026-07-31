@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Bullet
+  - Enemy
+  - ScreenBound
+  - Boss
+  - ScreenBoundRight
+  - ScreenBoundLeft
+  - ScreenBoundTop
+  - Reward
+  - Missle
+  - QuestionBall
+  - BulletSpawnTransform
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - ScreenBound
+  - Enemy
+  - Reward
+  - Background
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: BackGroundAnimate
+    uniqueID: 1726701401
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 644629661
+    locked: 0
+  - name: TopUI
+    uniqueID: 3820122295
+    locked: 0
