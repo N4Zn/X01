@@ -88,7 +88,14 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     protected virtual void Update()
     {
-        if (_useTimer && GetCurrentState() == MiniGameState.WaitAnswer)
+        // Timer chạy liên tục trong suốt ván (WaitAnswer + ShowQuestion + Feedback)
+        // để tránh timer bị dừng trong khoảng chờ feedback/chuyển câu.
+        var currentState = GetCurrentState();
+        bool isGamePlaying = currentState == MiniGameState.WaitAnswer
+                          || currentState == MiniGameState.ShowQuestion
+                          || currentState == MiniGameState.Feedback;
+
+        if (_useTimer && isGamePlaying)
         {
             _gameTimer -= Time.deltaTime;
             hud?.UpdateTimer(_gameTimer);
