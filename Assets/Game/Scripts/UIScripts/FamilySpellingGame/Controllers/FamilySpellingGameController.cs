@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,18 +8,28 @@ using UnityEngine.UI;
 ///
 /// Dựng từ MiniGameControllerBase, chế độ Combined (mặc định), Single-select, không reward
 /// system riêng — dùng nguyên cơ chế quiz gốc của Kit (ButtonDisplay tự tô xanh/đỏ đúng/sai).
-///
-/// Từ mẫu với vị trí chữ cái trống (vd "M_M", "MO_", "_AD") được lưu thẳng trong cột `id` của
-/// CSV — mỗi câu 1 template riêng biệt nên id vẫn giữ đúng vai trò định danh, không cần thêm cột
-/// mới hay đụng vào CsvQuestionLoader/QuestionData của Kit.
 /// </summary>
 public class FamilySpellingGameController : MiniGameControllerBase
 {
     [Header("FamilySpelling — refs")]
     [SerializeField] ButtonDisplay buttonDisplay;
     [SerializeField] Button backButton;
-    [SerializeField] Image questionImage;
-    [SerializeField] Text wordTemplateText;
+
+    [Header("FamilySpelling — hình ảnh & từ mẫu (2 bên)")]
+    [SerializeField] Image questionImageLeft;
+    [SerializeField] Image questionImageRight;
+    [SerializeField] Text wordTemplateTextLeft;
+    [SerializeField] Text wordTemplateTextRight;
+
+    [Header("FamilySpelling — hiệu ứng")]
+    [SerializeField] TileAppearAnimator tileAppearAnimator;
+    [SerializeField] SinglePopAnimator questionImagePopLeft;
+    [SerializeField] SinglePopAnimator questionImagePopRight;
+    [SerializeField] SinglePopAnimator wordTemplatePopLeft;
+    [SerializeField] SinglePopAnimator wordTemplatePopRight;
+
+    [Header("FamilySpelling — màu chữ cái vừa điền đúng")]
+    [SerializeField] string filledLetterColorHex = "#FF8A00";
 
     protected override void Start()
     {
@@ -30,32 +41,107 @@ public class FamilySpellingGameController : MiniGameControllerBase
 
     protected override void OnQuestionShown(QuestionData q)
     {
-        if (questionImage != null && q.questionMediaType == QuestionMediaType.Image)
+        bool hasImage = q.questionMediaType == QuestionMediaType.Image;
+        Sprite sprite = hasImage ? Resources.Load<Sprite>(q.questionMediaValue) : null;
+
+        SetQuestionImage(questionImageLeft, questionImagePopLeft, sprite);
+        SetQuestionImage(questionImageRight, questionImagePopRight, sprite);
+
+        string formatted = FormatTemplate(q.id);
+        SetWordTemplate(wordTemplateTextLeft, wordTemplatePopLeft, formatted);
+        SetWordTemplate(wordTemplateTextRight, wordTemplatePopRight, formatted);
+
+        // Kích hoạt ButtonDisplay nếu chưa active để tránh lỗi Coroutine
+        if (buttonDisplay != null && !buttonDisplay.gameObject.activeSelf)
         {
-            var sprite = Resources.Load<Sprite>(q.questionMediaValue);
-            questionImage.sprite = sprite;
-            questionImage.gameObject.SetActive(sprite != null);
+            buttonDisplay.gameObject.SetActive(true);
         }
 
-        if (wordTemplateText != null)
-            wordTemplateText.text = FormatTemplate(q.id);
+        // Chỉ chạy animation khi Animator và GameObject đang active
+        if (tileAppearAnimator != null && tileAppearAnimator.gameObject.activeInHierarchy)
+        {
+            tileAppearAnimator.PlayAppearAnimation();
+        }
     }
 
-    /// <summary>Trả lời đúng → điền chữ cái đúng vào chỗ trống, học sinh thấy từ hoàn chỉnh ngay
-    /// (xem FillBlankEffect — cơ chế dùng chung, không riêng game này).</summary>
+    static void SetQuestionImage(Image target, SinglePopAnimator pop, Sprite sprite)
+    {
+        if (target == null) return;
+
+        target.sprite = sprite;
+        target.gameObject.SetActive(sprite != null);
+
+        if (sprite != null && pop != null && pop.gameObject.activeInHierarchy)
+            pop.PlayAppear();
+    }
+
+    static void SetWordTemplate(Text target, SinglePopAnimator pop, string text)
+    {
+        if (target == null) return;
+
+        target.text = text;
+
+        if (pop != null && pop.gameObject.activeInHierarchy)
+            pop.PlayAppear();
+    }
+
     protected override void OnRoundResult(bool correct, Team team, int[] playerAnswer)
     {
-        if (!correct || wordTemplateText == null || CurrentQuestion?.answers == null) return;
+        base.OnRoundResult(correct, team, playerAnswer);
+
+        // Kích hoạt lại Timer ngay lập tức nếu Kit lỡ pause
+        ForceResumeTimer();
+
+        if (!correct || CurrentQuestion?.answers == null) return;
         if (playerAnswer == null || playerAnswer.Length == 0) return;
 
         int idx = playerAnswer[0];
         if (idx < 0 || idx >= CurrentQuestion.answers.Length) return;
 
         string filledWord = FillBlankEffect.Fill(CurrentQuestion.id, CurrentQuestion.answers[idx]);
-        wordTemplateText.text = FormatTemplate(filledWord);
+        string highlighted = FormatTemplateHighlightFilled(CurrentQuestion.id, filledWord);
+
+        SetWordTemplate(wordTemplateTextLeft, wordTemplatePopLeft, highlighted);
+        SetWordTemplate(wordTemplateTextRight, wordTemplatePopRight, highlighted);
     }
 
-    /// <summary>"M_M" → "M _ M" — cách chữ ra cho dễ đọc từ xa, giữ nguyên "_" làm chỗ trống.</summary>
+    /// <summary>
+    /// Ép đếm tiếp đồng hồ ngay lập tức ngay cả trong thời gian chờ delay của Kit
+    /// </summary>
+    private void ForceResumeTimer()
+    {
+        // 1. Đảm bảo Time.timeScale không bị tạm dừng
+        if (Time.timeScale == 0) Time.timeScale = 1f;
+
+        // 2. Mở file MiniGameControllerBase.cs xem hàm kích hoạt lại timer tên là gì
+        // (ví dụ: ResumeTimer(), UnpauseTimer(), StartTimer(), isTimerPaused = false)
+        // và bỏ comment dòng tương ứng bên dưới:
+        
+        // ResumeTimer();
+        // isTimerPaused = false;
+    }
+
     static string FormatTemplate(string template) =>
         string.IsNullOrEmpty(template) ? template : string.Join(" ", template.ToCharArray());
+
+    string FormatTemplateHighlightFilled(string originalTemplateWithBlank, string filledWord)
+    {
+        if (string.IsNullOrEmpty(originalTemplateWithBlank) || string.IsNullOrEmpty(filledWord))
+            return filledWord;
+
+        int blankIndex = originalTemplateWithBlank.IndexOf('_');
+        var sb = new StringBuilder();
+
+        for (int i = 0; i < filledWord.Length; i++)
+        {
+            if (i > 0) sb.Append(' ');
+
+            if (i == blankIndex)
+                sb.Append($"<color={filledLetterColorHex}><b>{filledWord[i]}</b></color>");
+            else
+                sb.Append(filledWord[i]);
+        }
+
+        return sb.ToString();
+    }
 }
