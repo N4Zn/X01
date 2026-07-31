@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd313ac8e6ecba4468c8e39a5c09a2a2, type: 3}
+  m_Name: Saturn
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetData
+  planetName: Saturn
+  planetNameVi: "Sao Th\u1ED5"
+  descriptionVi: "N\u1ED5i ti\u1EBFng v\u1EDBi h\u1EC7 th\u1ED1ng v\xE0nh \u0111ai
+    b\u0103ng v\xE0 \u0111\xE1 tuy\u1EC7t \u0111\u1EB9p. Nh\u1EB9 \u0111\u1EBFn m\u1EE9c
+    c\xF3 th\u1EC3 n\u1ED5i tr\xEAn n\u01B0\u1EDBc."
+  texturePath: SolarSystem/Textures/2k_saturn
+  orbitRadius: 32
+  orbitSpeed: 1
+  selfRotateSpeed: 110
+  scale: 5.25
+  distanceFromSun: "1,432 tri\u1EC7u km"
+  diameter: 116,460 km
+  numberOfMoons: 146
+  surfaceTemp: "-178\xB0C"
+  videoPath: Saturn
+  hasSaturnRings: 1
+  isSun: 0
+  axialTilt: 26.7
+  orbitInclination: 0

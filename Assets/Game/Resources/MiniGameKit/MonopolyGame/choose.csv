@@ -1,0 +1,15 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,answerMode,correctAnswers
+qa1,Family,1,Image,mom,Text,Mom,Dad,Sister,Baby,,Single,0
+qa2,Family,1,Image,dad,Text,Dad,Mom,Grandpa,Brother,,Single,0
+qa3,Family,1,Image,sister,Text,Sister,Brother,Mom,Grandma,,Single,0
+qa4,Family,1,Image,brother,Text,Brother,Sister,Dad,Baby,,Single,0
+qa5,Family,1,Image,grandma,Text,Grandma,Grandpa,Mom,Sister,,Single,0
+qa6,Family,1,Image,grandpa,Text,Grandpa,Grandma,Dad,Brother,,Single,0
+qa7,Family,1,Image,baby,Text,Baby,Mom,Sister,Grandma,,Single,0
+qb1,Family,1,Text,Where is mom?,Image,mom,dad,sister,brother,,Single,0
+qb2,Family,1,Text,Where is dad?,Image,dad,mom,grandpa,baby,,Single,0
+qb3,Family,1,Text,Where is sister?,Image,sister,brother,grandma,mom,,Single,0
+qb4,Family,1,Text,Where is brother?,Image,brother,sister,baby,dad,,Single,0
+qb5,Family,1,Text,Where is grandma?,Image,grandma,grandpa,mom,sister,,Single,0
+qb6,Family,1,Text,Where is grandpa?,Image,grandpa,grandma,dad,brother,,Single,0
+qb7,Family,1,Text,Where is baby?,Image,baby,mom,sister,grandma,,Single,0

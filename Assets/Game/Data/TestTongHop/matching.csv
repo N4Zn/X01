@@ -1,0 +1,2 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,left0,left1,left2,right0,right1,right2,correctPairs,rightMediaType
+m01,Math,1,Image,M10,Image,M10.0,M10.2,M10.4,M10.1,M10.3,M10.5,"0,1,2",

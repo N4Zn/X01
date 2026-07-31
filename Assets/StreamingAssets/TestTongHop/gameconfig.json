@@ -1,0 +1,22 @@
+{
+    "matchingDeselectDelay": 2.0,
+    "chooseDeselectDelay": 2,
+    "weightFloating": 100,
+    "weightButton": 0,
+    "weightMatching": 0,
+    "orbitCenterX": 265.0,
+    "orbitRadius": 150.0,
+    "orbitSpeed": 2.0,
+    "floatingSize": 125.0,
+    "feedbackDelayCorrect": 1.2,
+    "feedbackDelayWrong": 2.0,
+    "nextQuestionDelay": 3,
+    "adaptiveDifficulty": false,
+    "correctStreakToLevelUp": 3,
+    "wrongStreakToLevelDown": 2,
+    "difficulty": 1,
+    "difficultyMin": 1,
+    "difficultyMax": 1,
+    "independentPlay": false,
+    "nextQuestionDelayPerPlayer": 3
+}
