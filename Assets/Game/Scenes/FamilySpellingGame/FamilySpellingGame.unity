@@ -1171,7 +1171,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.76, y: 0.05}
   m_AnchorMax: {x: 0.85, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &519333066
@@ -1526,7 +1530,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.65, y: 0.05}
   m_AnchorMax: {x: 0.74, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &660511895
@@ -2060,7 +2068,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 925360166}
+<<<<<<< HEAD
   m_Enabled: 0
+=======
+  m_Enabled: 1
+>>>>>>> origin/feature/add_game
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
   m_Name: 
@@ -2273,7 +2285,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.53999996, y: 0.05}
   m_AnchorMax: {x: 0.63, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &983680343
@@ -2386,7 +2402,10 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 961723189}
+<<<<<<< HEAD
   - {fileID: 1169087462}
+=======
+>>>>>>> origin/feature/add_game
   - {fileID: 2076535815}
   m_Father: {fileID: 904643273}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2409,7 +2428,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0.75}
+<<<<<<< HEAD
   m_RaycastTarget: 0
+=======
+  m_RaycastTarget: 1
+>>>>>>> origin/feature/add_game
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -2641,7 +2664,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.15, y: 0.05}
   m_AnchorMax: {x: 0.24, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1107320879
@@ -2982,7 +3009,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.36999997, y: 0.05}
   m_AnchorMax: {x: 0.45999998, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1160717168
@@ -3124,6 +3155,7 @@ MonoBehaviour:
   m_Spacing: {x: 0, y: 0}
   m_Constraint: 1
   m_ConstraintCount: 3
+<<<<<<< HEAD
 --- !u!1 &1169087461
 GameObject:
   m_ObjectHideFlags: 0
@@ -3199,6 +3231,8 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1169087461}
   m_CullTransparentMesh: 1
+=======
+>>>>>>> origin/feature/add_game
 --- !u!1 &1182533035
 GameObject:
   m_ObjectHideFlags: 0
@@ -3238,7 +3272,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.26, y: 0.05}
   m_AnchorMax: {x: 0.35000002, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1182533037
@@ -4736,7 +4774,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.87, y: 0.05}
   m_AnchorMax: {x: 0.96000004, y: 0.32}
+<<<<<<< HEAD
   m_AnchoredPosition: {x: 0, y: -0.000030517578}
+=======
+  m_AnchoredPosition: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1735046754
@@ -5808,9 +5850,15 @@ RectTransform:
   m_Father: {fileID: 1027941271}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.4, y: 0.15}
+<<<<<<< HEAD
   m_AnchorMax: {x: 0.4, y: 0.15}
   m_AnchoredPosition: {x: 113, y: -20}
   m_SizeDelta: {x: 300, y: 150}
+=======
+  m_AnchorMax: {x: 0.6, y: 0.3}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+>>>>>>> origin/feature/add_game
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2076535816
 MonoBehaviour:
@@ -5869,16 +5917,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
+<<<<<<< HEAD
   m_Color: {r: 1, g: 1, b: 1, a: 1}
+=======
+  m_Color: {r: 0.9, g: 0.9, b: 0.9, a: 1}
+>>>>>>> origin/feature/add_game
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
+<<<<<<< HEAD
   m_Sprite: {fileID: 21300000, guid: 4638585362bca59479202c00548471e9, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
+=======
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+>>>>>>> origin/feature/add_game
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1

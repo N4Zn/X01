@@ -86,6 +86,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         InitFsm();
     }
 
+<<<<<<< HEAD
 protected virtual void Update()
 {
     // Đếm ngược liên tục trong suốt quá trình chơi (WaitAnswer, ShowQuestion, Feedback)
@@ -105,6 +106,28 @@ protected virtual void Update()
         }
     }
 }
+=======
+    protected virtual void Update()
+    {
+        // Timer chạy liên tục trong suốt ván (WaitAnswer + ShowQuestion + Feedback)
+        // để tránh timer bị dừng trong khoảng chờ feedback/chuyển câu.
+        var currentState = GetCurrentState();
+        bool isGamePlaying = currentState == MiniGameState.WaitAnswer
+                          || currentState == MiniGameState.ShowQuestion
+                          || currentState == MiniGameState.Feedback;
+
+        if (_useTimer && isGamePlaying)
+        {
+            _gameTimer -= Time.deltaTime;
+            hud?.UpdateTimer(_gameTimer);
+            if (_gameTimer <= 0f)
+            {
+                _gameTimer = 0f;
+                Fsm.StateMachineChange(MiniGameState.GameOver);
+            }
+        }
+    }
+>>>>>>> origin/feature/add_game
 
     // ── Setup ────────────────────────────────────────────────────────────────
 

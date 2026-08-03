@@ -1513,6 +1513,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 378695677}
   m_CullTransparentMesh: 1
+<<<<<<< HEAD
 --- !u!1 &380387424
 GameObject:
   m_ObjectHideFlags: 0
@@ -1588,6 +1589,8 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 380387424}
   m_CullTransparentMesh: 1
+=======
+>>>>>>> origin/feature/add_game
 --- !u!1 &381394338
 GameObject:
   m_ObjectHideFlags: 0
@@ -2409,12 +2412,15 @@ MonoBehaviour:
   nextSceneName: ScoreScene
   backSceneName: MenuScene
   playMode: 0
+<<<<<<< HEAD
   leftCorrectIcon: {fileID: 0}
   leftWrongIcon: {fileID: 0}
   rightCorrectIcon: {fileID: 0}
   rightWrongIcon: {fileID: 0}
   leftCountdownText: {fileID: 0}
   rightCountdownText: {fileID: 0}
+=======
+>>>>>>> origin/feature/add_game
   buttonDisplay: {fileID: 627153256}
   backButton: {fileID: 2009006169}
   questionFrameRoot: {fileID: 1887886303}
@@ -2803,6 +2809,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 634256157}
   m_CullTransparentMesh: 1
+<<<<<<< HEAD
 --- !u!1 &663887907
 GameObject:
   m_ObjectHideFlags: 0
@@ -2878,6 +2885,8 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 663887907}
   m_CullTransparentMesh: 1
+=======
+>>>>>>> origin/feature/add_game
 --- !u!1001 &701254724
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6279,8 +6288,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+<<<<<<< HEAD
   - {fileID: 380387425}
   - {fileID: 663887908}
+=======
+>>>>>>> origin/feature/add_game
   - {fileID: 2003585393}
   - {fileID: 790564764}
   - {fileID: 154841063}
