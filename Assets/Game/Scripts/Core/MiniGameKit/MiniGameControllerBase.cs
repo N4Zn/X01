@@ -86,25 +86,6 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         InitFsm();
     }
 
-protected virtual void Update()
-{
-    // Đếm ngược liên tục trong suốt quá trình chơi (WaitAnswer, ShowQuestion, Feedback)
-    var currentState = GetCurrentState();
-    bool isGamePlaying = currentState == MiniGameState.WaitAnswer 
-                      || currentState == MiniGameState.ShowQuestion 
-                      || currentState == MiniGameState.Feedback;
-
-    if (_useTimer && isGamePlaying)
-    {
-        _gameTimer -= Time.deltaTime;
-        hud?.UpdateTimer(_gameTimer);
-        if (_gameTimer <= 0f)
-        {
-            _gameTimer = 0f;
-            Fsm.StateMachineChange(MiniGameState.GameOver);
-        }
-    }
-}
     protected virtual void Update()
     {
         // Timer chạy liên tục trong suốt ván (WaitAnswer + ShowQuestion + Feedback)
