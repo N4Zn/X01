@@ -68,7 +68,11 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
         for (int i = 0; i < cells.Length; i++)
         {
             int idx = i;
-            if (cells[i] != null) cells[i].onClick.AddListener(() => OnCellClicked(team, idx));
+            if (cells[i] != null)
+            {
+                cells[i].transition = Selectable.Transition.None;
+                cells[i].onClick.AddListener(() => OnCellClicked(team, idx));
+            }
         }
     }
 
@@ -216,7 +220,7 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
         rt.sizeDelta = new Vector2(maxX - minX + highlightPadding * 2f, maxY - minY + highlightPadding * 2f);
 
         // Render sau các cell để không che chữ, nhưng trước background grid.
-        go.transform.SetAsFirstSibling();
+        go.transform.SetAsLastSibling();
     }
 
     // Sinh sprite bo góc 64x64, 9-slice — chỉ tạo 1 lần rồi cache.

@@ -71,6 +71,17 @@ public class MusicManager : Singleton<MusicManager>
         _bgmSource.volume = baseVol * multiplier;
     }
 
+    /// <summary>
+    /// Set BGM playback pitch (e.g. LaneDashGame speeding up music as difficulty ramps up).
+    /// Reset to 1 automatically next time a new BGM starts via PlayBgm, so it doesn't leak into
+    /// whatever scene/game plays music next.
+    /// </summary>
+    public void SetMusicPitch(float pitch)
+    {
+        if (_bgmSource == null) return;
+        _bgmSource.pitch = pitch;
+    }
+
     // ===== BGM =====
 
     /// <summary>
@@ -121,6 +132,7 @@ public class MusicManager : Singleton<MusicManager>
         _bgmSource.Stop();
         _bgmSource.clip = clip;
         _bgmSource.volume = GameSettings.Instance != null ? GameSettings.Instance.MusicVolume : 1f;
+        _bgmSource.pitch = 1f; // reset — tránh pitch tăng dần của LaneDashGame lọt sang scene sau
         _bgmSource.Play();
         _currentBgmName = clipName;
     }

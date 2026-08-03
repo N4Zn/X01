@@ -94,6 +94,7 @@ public static class GameRegistry
         // ── Category 1: Phân tích ─────────────────────────────────────────────
         Set(1, 0, "TrainPath",  "TrainPathGame",  Engine.TrainGame);
         Set(1, 1, "PathFinder", "PathFinderGame", Engine.PathGame);
+        Set(1, 2, "LaneDash",   "LaneDashGame",   Engine.ArcadeGame);
 
         // ── Category 2: Hình ảnh ── engine: PlanetGame ───────────────────────
         Set(2, 0, "PlanetOrder",    "PlanetOrderGame",    Engine.PlanetGame);
@@ -106,6 +107,7 @@ public static class GameRegistry
         Set(4, 0, "WhoIsIt", "WhoIsItGame", Engine.MiniGameKit);
         Set(4, 1, "FamilySpellingJump", "FamilySpellingGame", Engine.MiniGameKit);
         Set(4, 2, "Monopoly", "MonopolyGame", Engine.MiniGameKit);
+        Set(4, 3, "WordHuntMaze", "WordHuntMazeGame", Engine.MiniGameKit);
 
         // ── Category 5: Âm thanh ─────────────────────────────────────────────
         // ListenSelect / ChuCai / SoDem / Numbers: scene riêng, sinh nội dung procedurally.
