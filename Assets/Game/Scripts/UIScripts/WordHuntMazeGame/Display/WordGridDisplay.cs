@@ -32,17 +32,15 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
     [SerializeField] Button[] rightCells;
     [SerializeField] Text[] rightCellTexts;
 
-    // Nền
-    static readonly Color NormalBg = Color.white;
-    static readonly Color TappedBg = Color.black;
-    static readonly Color FoundBg  = new Color(0.18f, 0.92f, 0.38f, 1f); // xanh lá rất tươi
-    // Chữ
-    static readonly Color NormalText = Color.black;
-    static readonly Color TappedText = Color.white;
-    static readonly Color FoundText  = Color.black;
-    // Rounded-rect highlight border quanh từ đúng
-    static readonly Color HighlightBorderColor = new Color(0.05f, 0.70f, 0.20f, 1f); // xanh đậm hơn FoundBg để tạo border
-    const float HighlightPadding = 5f;
+    [Header("Màu ô")]
+    [SerializeField] Color normalBg        = Color.white;
+    [SerializeField] Color tappedBg        = Color.black;
+    [SerializeField] Color foundBg         = new Color(0.18f, 0.92f, 0.38f, 1f);
+    [SerializeField] Color normalText      = Color.black;
+    [SerializeField] Color tappedText      = Color.white;
+    [SerializeField] Color foundText       = Color.black;
+    [SerializeField] Color highlightBorder = new Color(0.05f, 0.70f, 0.20f, 1f);
+    [SerializeField] float highlightPadding = 5f;
 
     // Sprite 9-slice bo góc, sinh 1 lần, dùng chung cho mọi highlight
     static Sprite _roundedSprite;
@@ -103,10 +101,10 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
             {
                 texts[i].text = grid.letters[i].ToString();
                 texts[i].fontStyle = FontStyle.Bold;
-                texts[i].color = NormalText;
+                texts[i].color = normalText;
             }
             var img = cells[i] != null ? cells[i].GetComponent<Image>() : null;
-            if (img != null) img.color = NormalBg;
+            if (img != null) img.color = normalBg;
             if (cells[i] != null) cells[i].interactable = true;
         }
     }
@@ -127,7 +125,7 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
 
         visited.Add(cellIndex);
         if (cells[cellIndex] != null) cells[cellIndex].interactable = false;
-        SetCellStyle(cells, texts, cellIndex, TappedBg, TappedText);
+        SetCellStyle(cells, texts, cellIndex, tappedBg, tappedText);
 
         for (int w = 0; w < WordCount; w++)
         {
@@ -143,7 +141,7 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
             if (!allVisited) continue;
 
             done[w] = true;
-            foreach (var idx in path) SetCellStyle(cells, texts, idx, FoundBg, FoundText);
+            foreach (var idx in path) SetCellStyle(cells, texts, idx, foundBg, foundText);
             DrawWordHighlight(cells, path);
             MusicManager.Instance?.PlayCorrectSfx();
         }
@@ -208,14 +206,14 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
         var img = go.AddComponent<Image>();
         img.sprite = GetRoundedSprite();
         img.type = Image.Type.Sliced;
-        img.color = HighlightBorderColor;
+        img.color = highlightBorder;
         img.raycastTarget = false;
 
         var rt = go.GetComponent<RectTransform>();
         rt.anchorMin = rt.anchorMax = new Vector2(0f, 0f);
         rt.pivot = new Vector2(0f, 0f);
-        rt.anchoredPosition = new Vector2(minX - HighlightPadding, minY - HighlightPadding);
-        rt.sizeDelta = new Vector2(maxX - minX + HighlightPadding * 2f, maxY - minY + HighlightPadding * 2f);
+        rt.anchoredPosition = new Vector2(minX - highlightPadding, minY - highlightPadding);
+        rt.sizeDelta = new Vector2(maxX - minX + highlightPadding * 2f, maxY - minY + highlightPadding * 2f);
 
         // Render sau các cell để không che chữ, nhưng trước background grid.
         go.transform.SetAsFirstSibling();
