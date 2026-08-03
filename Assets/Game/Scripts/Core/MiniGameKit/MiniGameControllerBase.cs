@@ -86,7 +86,6 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         InitFsm();
     }
 
-<<<<<<< HEAD
 protected virtual void Update()
 {
     // Đếm ngược liên tục trong suốt quá trình chơi (WaitAnswer, ShowQuestion, Feedback)
@@ -106,7 +105,6 @@ protected virtual void Update()
         }
     }
 }
-=======
     protected virtual void Update()
     {
         // Timer chạy liên tục trong suốt ván (WaitAnswer + ShowQuestion + Feedback)
@@ -127,7 +125,6 @@ protected virtual void Update()
             }
         }
     }
->>>>>>> origin/feature/add_game
 
     // ── Setup ────────────────────────────────────────────────────────────────
 

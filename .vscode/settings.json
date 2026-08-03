@@ -56,9 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-<<<<<<< HEAD
+    "X01-feature-add_game.slnx=======dotnet.defaultSolution": "game.sln>>>>>>>origin/feature/add_game",
     "dotnet.defaultSolution": "X01-feature-add_game.slnx"
-=======
-    "dotnet.defaultSolution": "game.sln"
->>>>>>> origin/feature/add_game
 }
