@@ -493,16 +493,17 @@ public class WhoIsItGameController : MiniGameControllerBase
         // chọn hộp quà), câu hỏi mới luôn cần nó hiện ra.
         if (buttonDisplay != null) buttonDisplay.gameObject.SetActive(true);
 
+        string captionNoun = null;
         if (q.questionMediaType == QuestionMediaType.Image)
         {
-            var sprite = Resources.Load<Sprite>(q.questionMediaValue);
-            SetQuestionImage(leftQuestionImage, sprite);
-            SetQuestionImage(rightQuestionImage, sprite);
+            var sprite = AssetOverrideLoader.GetSprite(q.questionMediaValue);
+            SetQuestionImage(leftQuestionImage, sprite, out captionNoun, q.questionMediaValue);
+            SetQuestionImage(rightQuestionImage, sprite, out _, q.questionMediaValue);
         }
 
         if (questionCaption != null)
         {
-            string key = LastPathSegment(q.questionMediaValue);
+            string key = captionNoun ?? LastPathSegment(q.questionMediaValue);
             string noun = CaptionNouns.TryGetValue(key, out var n) ? n : key;
             questionCaption.text = $"Picture of {noun}";
         }
@@ -511,9 +512,10 @@ public class WhoIsItGameController : MiniGameControllerBase
         AnimateAnswerButtonsPopIn();
     }
 
-    // Cùng 1 sprite gán cho cả 2 ảnh trái/phải — tách helper để tránh lặp code null-check.
-    static void SetQuestionImage(Image img, Sprite sprite)
+    // Cùng 1 sprite gán cho cả 2 ảnh trái/phải. captionKey trả về tên file để hiện caption fallback.
+    static void SetQuestionImage(Image img, Sprite sprite, out string captionKey, string path)
     {
+        captionKey = LastPathSegment(path);
         if (img == null) return;
         img.sprite = sprite;
         img.gameObject.SetActive(sprite != null);
