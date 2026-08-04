@@ -49,7 +49,7 @@ public class FamilyMemberGameController : MiniGameControllerBase
     IEnumerator PlayWordAudio(string resourcePath, float delay)
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
-        var clip = AssetOverrideLoader.GetClip(resourcePath);
+        var clip = Resources.Load<AudioClip>(resourcePath);
         MusicManager.Instance?.PlaySfx(clip);
     }
 }

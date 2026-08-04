@@ -73,6 +73,8 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
             {
                 cells[i].transition = Selectable.Transition.None;
                 cells[i].onClick.AddListener(() => OnCellClicked(team, idx));
+                var img = cells[i].GetComponent<Image>();
+                if (img != null) img.raycastPadding = new Vector4(-10f, -10f, -10f, -10f);
             }
         }
     }
@@ -201,7 +203,7 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
         string path = $"{audioFolder}/{word.ToLower()}";
-        var clip = AssetOverrideLoader.GetClip(path);
+        var clip = Resources.Load<AudioClip>(path);
         MusicManager.Instance?.PlaySfx(clip);
     }
 }
