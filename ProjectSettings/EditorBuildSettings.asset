@@ -80,5 +80,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/MonopolyGame/MonopolyGame.unity
     guid: 87b5a5c885707b7428e842e5bcb0f51d
+  - enabled: 1
+    path: Assets/Game/Scenes/WordHuntMazeGame/WordHuntMazeGame.unity
+    guid: cb273eedad913584ea289abeecefb974
+  - enabled: 1
+    path: Assets/Game/Scenes/LaneDashGame/LaneDashGame.unity
+    guid: 9517a908d8e6d39448b8f599f39032d8
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

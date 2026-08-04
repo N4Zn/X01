@@ -39,12 +39,6 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
     [SerializeField] Color normalText      = Color.black;
     [SerializeField] Color tappedText      = Color.white;
     [SerializeField] Color foundText       = Color.black;
-    [SerializeField] Color highlightBorder = new Color(0.05f, 0.70f, 0.20f, 1f);
-    [SerializeField] float highlightPadding = 5f;
-
-    // Sprite 9-slice bo góc, sinh 1 lần, dùng chung cho mọi highlight
-    static Sprite _roundedSprite;
-
     Action<bool, Team, int[]> _onResult;
     WordGridGenerator.Grid _leftGrid;
     WordGridGenerator.Grid _rightGrid;
@@ -92,7 +86,6 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
         // 2 bảng sinh ĐỘC LẬP (cùng từ, khác layout/chữ điền) — không phải cùng 1 Grid dùng chung.
         _leftGrid = WordGridGenerator.Generate(words, gridSize);
         _rightGrid = WordGridGenerator.Generate(words, gridSize);
-        ClearHighlights();
         ApplyGrid(leftCells, leftCellTexts, _leftGrid);
         ApplyGrid(rightCells, rightCellTexts, _rightGrid);
     }
@@ -146,7 +139,6 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
 
             done[w] = true;
             foreach (var idx in path) SetCellStyle(cells, texts, idx, foundBg, foundText);
-            DrawWordHighlight(cells, path);
             MusicManager.Instance?.PlayCorrectSfx();
         }
 
@@ -175,117 +167,6 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
         if (img != null) img.color = bg;
         if (texts != null && index < texts.Length && texts[index] != null)
             texts[index].color = textColor;
-    }
-
-    // Vẽ rounded-rect border bao quanh tất cả ô của từ vừa tìm được.
-    void DrawWordHighlight(Button[] cells, int[] path)
-    {
-        if (path == null || path.Length == 0 || cells == null) return;
-
-        // Tính bounding box trong local space của parent chứa các cell.
-        var parentRt = cells[path[0]]?.GetComponent<RectTransform>()?.parent as RectTransform;
-        if (parentRt == null) return;
-
-        float minX = float.MaxValue, minY = float.MaxValue;
-        float maxX = float.MinValue, maxY = float.MinValue;
-        var corners = new Vector3[4];
-
-        foreach (var idx in path)
-        {
-            if (idx < 0 || idx >= cells.Length || cells[idx] == null) continue;
-            cells[idx].GetComponent<RectTransform>().GetWorldCorners(corners);
-            foreach (var c in corners)
-            {
-                var local = parentRt.InverseTransformPoint(c);
-                if (local.x < minX) minX = local.x;
-                if (local.y < minY) minY = local.y;
-                if (local.x > maxX) maxX = local.x;
-                if (local.y > maxY) maxY = local.y;
-            }
-        }
-
-        var go = new GameObject("_wordHighlight");
-        go.transform.SetParent(parentRt, false);
-
-        var img = go.AddComponent<Image>();
-        img.sprite = GetRoundedSprite();
-        img.type = Image.Type.Sliced;
-        img.color = highlightBorder;
-        img.raycastTarget = false;
-
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = new Vector2(0f, 0f);
-        rt.pivot = new Vector2(0f, 0f);
-        rt.anchoredPosition = new Vector2(minX - highlightPadding, minY - highlightPadding);
-        rt.sizeDelta = new Vector2(maxX - minX + highlightPadding * 2f, maxY - minY + highlightPadding * 2f);
-
-        // Render sau các cell để không che chữ, nhưng trước background grid.
-        go.transform.SetAsLastSibling();
-    }
-
-    // Sinh sprite bo góc 64x64, 9-slice — chỉ tạo 1 lần rồi cache.
-    static Sprite GetRoundedSprite()
-    {
-        if (_roundedSprite != null) return _roundedSprite;
-
-        const int size = 64, r = 16, border = 5;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
-        var pixels = new Color32[size * size];
-
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
-        {
-            bool outer = InRoundedRect(x, y, size, size, r);
-            bool inner = InRoundedRect(x, y, size, size, r - border, border, border, size - border - 1, size - border - 1);
-            pixels[y * size + x] = (outer && !inner)
-                ? new Color32(255, 255, 255, 255)
-                : new Color32(0, 0, 0, 0);
-        }
-
-        tex.SetPixels32(pixels);
-        tex.Apply();
-        _roundedSprite = Sprite.Create(tex, new Rect(0, 0, size, size),
-            new Vector2(0.5f, 0.5f), 1f, 0, SpriteMeshType.FullRect,
-            new Vector4(r, r, r, r));
-        return _roundedSprite;
-    }
-
-    // true nếu (px,py) nằm trong rounded-rect với corner radius r, trong vùng [x0,y0]-[x1,y1].
-    static bool InRoundedRect(int px, int py, int w, int h, int r,
-        int x0 = 0, int y0 = 0, int x1 = -1, int y1 = -1)
-    {
-        if (x1 < 0) x1 = w - 1;
-        if (y1 < 0) y1 = h - 1;
-        if (px < x0 || px > x1 || py < y0 || py > y1) return false;
-
-        // 4 góc: kiểm tra circle
-        bool inCornerX = px < x0 + r || px > x1 - r;
-        bool inCornerY = py < y0 + r || py > y1 - r;
-        if (!inCornerX || !inCornerY) return true;
-
-        int cx = px < x0 + r ? x0 + r : x1 - r;
-        int cy = py < y0 + r ? y0 + r : y1 - r;
-        float dx = px - cx, dy = py - cy;
-        return dx * dx + dy * dy <= (r - 0.5f) * (r - 0.5f);
-    }
-
-    void ClearHighlights()
-    {
-        // Xóa tất cả _wordHighlight GameObjects từ round trước.
-        foreach (Transform child in transform)
-            if (child.name == "_wordHighlight") Destroy(child.gameObject);
-
-        // Xóa cả trong parent của left/right cells
-        void ClearFrom(Button[] cells)
-        {
-            if (cells == null || cells.Length == 0 || cells[0] == null) return;
-            var p = cells[0].transform.parent;
-            if (p == null) return;
-            foreach (Transform child in p)
-                if (child.name == "_wordHighlight") Destroy(child.gameObject);
-        }
-        ClearFrom(leftCells);
-        ClearFrom(rightCells);
     }
 
     void LockAll()

@@ -7,28 +7,28 @@ using UnityEngine;
 /// dưới-phải — không bao giờ đảo ngược (học sinh vẫn được DẪM xuôi hoặc ngược khi tìm, xem
 /// WordGridDisplay, nhưng CHỮ hiện trên bảng luôn đúng chiều đọc).
 ///
-/// Cho phép 2 từ GIAO NHAU tại 1 ô nếu trùng đúng chữ cái tại đó (kiểu ô chữ/crossword) — cấm hoàn
-/// toàn chồng lấn sẽ gần như bất khả thi với từ dài 7 chữ trên board 7x7 (1 từ ngang dài 7 chiếm
-/// TRỌN 1 hàng, nên bất kỳ từ dọc dài 7 nào cũng BẮT BUỘC đi qua hàng đó ở đâu đó).
+/// Cho phép 2 từ GIAO NHAU tại 1 ô nếu trùng đúng chữ cái tại đó (kiểu ô chữ/crossword).
 /// </summary>
 public static class WordGridGenerator
 {
     static readonly (int dr, int dc) HorizontalDir = (0, 1);
-    static readonly (int dr, int dc) VerticalDir = (1, 0);
-    static readonly (int dr, int dc) DiagonalDir = (1, 1);
+    static readonly (int dr, int dc) VerticalDir    = (1, 0);
+    static readonly (int dr, int dc) DiagonalDir    = (1, 1);
 
     public struct Grid
     {
         public int size;
         public char[] letters; // flat, index = row*size+col
-        public string[] words; // [0]=ngang, [1]=dọc, [2]=chéo
-        public int[][] paths;  // path[i] = thứ tự ô (row*size+col) của words[i], LUÔN đúng chiều đọc
+        public string[] words;
+        public int[][] paths;  // path[w] = danh sách chỉ số ô của words[w]
     }
 
     public static Grid Generate(string[] words, int size)
     {
-        // Retry nếu ForcePlace ghi đè letter của từ đã đặt trước (vd BROTHER bị SISTER overwrite).
-        for (int attempt = 0; attempt < 20; attempt++)
+        // Thử tối đa 30 lần với chiều đặt từ ngẫu nhiên mỗi lần.
+        // Một số bộ từ (vd SISTER+BROTHER+GRANDMA) có xung đột bất khả thi khi chiều cố định —
+        // xáo ngẫu nhiên chiều đặt từ mỗi retry giải quyết điều này.
+        for (int attempt = 0; attempt < 30; attempt++)
         {
             var grid = GenerateOnce(words, size);
             if (IsValid(grid, words)) return grid;
@@ -41,30 +41,40 @@ public static class WordGridGenerator
         var letters = new char[size * size];
         for (int i = 0; i < letters.Length; i++) letters[i] = (char)('A' + Random.Range(0, 26));
 
-        var dirs = new[] { HorizontalDir, VerticalDir, DiagonalDir };
+        var allDirs = new (int dr, int dc)[] { HorizontalDir, VerticalDir, DiagonalDir };
         var paths = new int[3][];
-        var fixedLetters = new Dictionary<int, char>(); // ô nào đã có chữ CỐ ĐỊNH (thuộc 1 từ trước đó)
+        var fixedLetters = new Dictionary<int, char>();
 
-        // Đặt theo thứ tự RÀNG BUỘC CHẶT NHẤT trước: 1 từ dài đúng bằng size chỉ có ĐÚNG 1 vị trí
-        // khả dĩ theo hướng chéo (góc trên-trái→dưới-phải), ít vị trí hơn hẳn hướng dọc/ngang — đặt
-        // nó LÚC BẢNG CÒN TRỐNG (chéo→dọc→ngang) để tránh xung đột tốt hơn nhiều so với đặt sau cùng.
-        int[] placeOrder = { 2, 1, 0 };
-        foreach (int w in placeOrder)
+        // Gán ngẫu nhiên chiều (H/V/D) cho mỗi từ — xáo trộn Fisher-Yates.
+        // Chiều cố định (words[0]=H, [1]=V, [2]=D) gây deadlock với bộ từ 7-chữ (vd SISTER+BROTHER+GRANDMA).
+        var wordDirIdx = new int[] { 0, 1, 2 };
+        for (int i = 2; i > 0; i--)
         {
-            if (w >= words.Length) continue;
+            int j = Random.Range(0, i + 1);
+            (wordDirIdx[i], wordDirIdx[j]) = (wordDirIdx[j], wordDirIdx[i]);
+        }
+
+        // Đặt theo mức ràng buộc: diagonal (2) → vertical (1) → horizontal (0).
+        for (int dirPriority = 2; dirPriority >= 0; dirPriority--)
+        {
+            int w = -1;
+            for (int i = 0; i < 3 && i < words.Length; i++)
+                if (wordDirIdx[i] == dirPriority) { w = i; break; }
+            if (w < 0) continue;
+
             string word = (words[w] ?? "").ToUpperInvariant();
-            var (dr, dc) = dirs[w];
-            int[] path = TryPlace(word, size, dr, dc, fixedLetters, 300) ?? ForcePlace(word, size, dr, dc);
+            var dir = allDirs[wordDirIdx[w]];
+            int[] path = TryPlace(word, size, dir.dr, dir.dc, fixedLetters, 300)
+                      ?? ForcePlace(word, size, dir.dr, dir.dc);
             paths[w] = path;
             for (int i = 0; i < word.Length; i++) fixedLetters[path[i]] = word[i];
         }
 
         foreach (var kv in fixedLetters) letters[kv.Key] = kv.Value;
-
         return new Grid { size = size, letters = letters, words = words, paths = paths };
     }
 
-    // Kiểm tra mọi chữ trong path khớp với grid.letters — ForcePlace có thể ghi đè letters của từ trước.
+    // Kiểm tra mọi chữ trong path khớp với grid.letters.
     static bool IsValid(Grid grid, string[] words)
     {
         for (int w = 0; w < 3 && w < words.Length; w++)
@@ -77,8 +87,7 @@ public static class WordGridGenerator
         return true;
     }
 
-    /// <summary>Thử random vị trí bắt đầu, LUÔN đi theo (dr,dc) cố định (đúng chiều đọc). Chấp nhận
-    /// giao với từ đã đặt trước NẾU trùng chữ cái tại ô giao — chỉ từ chối khi chữ cái xung đột.</summary>
+    /// <summary>Thử random vị trí bắt đầu theo (dr,dc). Chấp nhận giao ô nếu trùng chữ cái.</summary>
     static int[] TryPlace(string word, int size, int dr, int dc, Dictionary<int, char> fixedLetters, int attempts)
     {
         if (word.Length == 0) return new int[0];
@@ -96,7 +105,8 @@ public static class WordGridGenerator
             for (int i = 0; i < word.Length; i++)
             {
                 int idx = (row + dr * i) * size + (col + dc * i);
-                if (fixedLetters.TryGetValue(idx, out char existing) && existing != word[i]) { ok = false; break; }
+                if (fixedLetters.TryGetValue(idx, out char existing) && existing != word[i])
+                { ok = false; break; }
                 candidate[i] = idx;
             }
             if (ok) return candidate;
@@ -104,9 +114,7 @@ public static class WordGridGenerator
         return null;
     }
 
-    /// <summary>Cực hiếm khi tới đây (cho phép giao chữ đã gần như luôn tìm được chỗ) — đặt ở góc
-    /// trên-trái (0,0), vẫn ĐÚNG CHIỀU ĐỌC, chấp nhận ghi đè nếu buộc phải vậy thay vì đảo hướng.
-    /// An toàn vì word.Length &lt;= size luôn đúng cho danh sách từ Family dùng trong game này.</summary>
+    /// <summary>Fallback: đặt tại (0,0) theo chiều (dr,dc). Chỉ dùng khi TryPlace thất bại.</summary>
     static int[] ForcePlace(string word, int size, int dr, int dc)
     {
         var path = new int[word.Length];
