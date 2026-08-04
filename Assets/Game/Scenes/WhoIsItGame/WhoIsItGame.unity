@@ -153,8 +153,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -14.539978, y: 7.070404}
-  m_SizeDelta: {x: 29.079, y: 14.1409}
+  m_AnchoredPosition: {x: -14.346191, y: 0.000030517578}
+  m_SizeDelta: {x: 28.6925, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &917275
 MonoBehaviour:
@@ -7200,10 +7200,35 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1699826239}
     m_Modifications:
+    - target: {fileID: 2628946084492880773, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2628946084492880773, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 192
+      objectReference: {fileID: 0}
+    - target: {fileID: 2682632145081623797, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 203
+      objectReference: {fileID: 0}
+    - target: {fileID: 3316513726529589500, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5348188960272800027, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
       propertyPath: m_Name
       value: GameHUD
+      objectReference: {fileID: 0}
+    - target: {fileID: 5348188960272800027, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5874051702375856634, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
@@ -7314,22 +7339,22 @@ PrefabInstance:
     - target: {fileID: 8178869094319114436, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 994.7192
+      value: 1001.2505
       objectReference: {fileID: 0}
     - target: {fileID: 8178869094319114436, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 473.61
+      value: 460.5472
       objectReference: {fileID: 0}
     - target: {fileID: 8178869094319114436, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 2.9079
+      value: 0.9483986
       objectReference: {fileID: 0}
     - target: {fileID: 8178869094319114436, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 8.1938
+      value: 0.35499954
       objectReference: {fileID: 0}
     - target: {fileID: 8263446764252554570, guid: 36fafda16dbd10c4489a90a8c83f39a7,
         type: 3}
@@ -7340,6 +7365,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 121
+      objectReference: {fileID: 0}
+    - target: {fileID: 8268094246535051229, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -232.78001
+      objectReference: {fileID: 0}
+    - target: {fileID: 8268094246535051229, guid: 36fafda16dbd10c4489a90a8c83f39a7,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 203
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -7653,7 +7688,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.02, y: 0.5}
   m_AnchorMax: {x: 0.48, y: 0.7}
-  m_AnchoredPosition: {x: -23.40033, y: 21}
+  m_AnchoredPosition: {x: -23.400574, y: 21}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &790564765
@@ -16129,7 +16164,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 14.94397, y: -0.000030517578}
+  m_AnchoredPosition: {x: 14.94397, y: 0}
   m_SizeDelta: {x: -29.8879, y: -0.000061035}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1878941558
