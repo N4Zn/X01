@@ -18,6 +18,10 @@ using UnityEngine.UI;
 ///   - JackpotTracker: cả 2 đội sai → điểm câu tiếp theo x2 (dồn), ai đúng ăn trọn.
 ///   - MysteryRewardPool: đội thắng chọn 1 trong 3 hộp quà ngẫu nhiên (bonus/penalty/share) —
 ///     override StateMachineEnter_Feedback để chèn bước chọn hộp trước khi qua câu tiếp theo.
+///
+/// Điều kiện thắng: thay vì chờ hết giờ (mặc định của Kit khi totalRounds &lt;= 0), game này kết
+/// thúc NGAY khi 1 trong 2 đội đầy thanh điểm HUD (chạm HudMaxScoreFallback) — xem
+/// CheckForFillBarWin() gọi cuối OnMysteryBoxClicked, nơi duy nhất thật sự cộng điểm.
 /// </summary>
 public class WhoIsItGameController : MiniGameControllerBase
 {
@@ -61,6 +65,10 @@ public class WhoIsItGameController : MiniGameControllerBase
     [Header("WhoIsIt — answer button idle sway")]
     [SerializeField] float swayAngle = 4f;
     [SerializeField] float swaySpeed = 1.3f;
+
+    [Header("WhoIsIt — win condition")]
+    [Tooltip("Thời gian chờ (giây) để xem hiệu ứng ăn mừng trước khi chuyển sang màn hình kết thúc, khi 1 đội vừa đầy thanh điểm.")]
+    [SerializeField] float winDelaySeconds = 1.5f;
 
     // Placeholder chưa có ảnh thật — hiện caption "Picture of X" trong khung ảnh để rõ ý câu hỏi.
     static readonly Dictionary<string, string> CaptionNouns = new()
@@ -170,7 +178,9 @@ public class WhoIsItGameController : MiniGameControllerBase
     protected override IAnswerDisplay GetDisplayForQuestion(QuestionData q) => buttonDisplay;
 
     // Điểm mỗi câu có thể lên vài chục (jackpot/hope star/thưởng), không phải +1 như mặc định Kit
-    // — nâng mốc fill-bar của HUD lên cho hợp lý hơn khi chơi theo thời gian.
+    // — nâng mốc fill-bar của HUD lên cho hợp lý hơn khi chơi theo thời gian. Đồng thời đây cũng
+    // chính là MỐC THẮNG: đội nào đầy thanh điểm (chạm mốc này) trước sẽ thắng ngay lập tức, xem
+    // CheckForFillBarWin().
     protected override int HudMaxScoreFallback => 10 * basePoints;
 
     // Tắt +1 điểm mặc định của Kit — WhoIsItGame tự chấm điểm ở OnMysteryBoxClicked (jackpot +
@@ -275,8 +285,8 @@ public class WhoIsItGameController : MiniGameControllerBase
 
     void UpdateBetUi()
     {
-        if (leftStarCountText != null) leftStarCountText.text = $"* {_stars.Remaining(Team.Left)}";
-        if (rightStarCountText != null) rightStarCountText.text = $"* {_stars.Remaining(Team.Right)}";
+        if (leftStarCountText != null) leftStarCountText.text = $"{_stars.Remaining(Team.Left)}";
+        if (rightStarCountText != null) rightStarCountText.text = $"{_stars.Remaining(Team.Right)}";
 
         if (leftYesButton != null) leftYesButton.interactable = !_leftDecided && _stars.Remaining(Team.Left) > 0;
         if (leftNoButton != null) leftNoButton.interactable = !_leftDecided;
@@ -718,6 +728,24 @@ public class WhoIsItGameController : MiniGameControllerBase
             }
         }
 
-        base.StateMachineEnter_Feedback(_pendingPrevState, _pendingOpts);
+        // Kiểm tra điều kiện thắng ngay: nếu 1 trong 2 đội vừa đầy thanh điểm (chạm
+        // HudMaxScoreFallback), kết thúc game NGAY thay vì chờ hết giờ — cho xem hiệu ứng ăn mừng
+        // vừa chạy ở trên (winDelaySeconds) rồi mới chuyển sang màn hình kết thúc.
+        if (CheckForFillBarWin())
+            StartCoroutine(GameOverAfterDelay(winDelaySeconds));
+        else
+            base.StateMachineEnter_Feedback(_pendingPrevState, _pendingOpts);
+    }
+
+    // Trả về true nếu 1 trong 2 đội đã đạt/vượt mốc HudMaxScoreFallback (thanh điểm đầy).
+    bool CheckForFillBarWin()
+    {
+        return ScoreManager.ScoreLeft >= HudMaxScoreFallback || ScoreManager.ScoreRight >= HudMaxScoreFallback;
+    }
+
+    IEnumerator GameOverAfterDelay(float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        Fsm.StateMachineChange(MiniGameState.GameOver);
     }
 }
