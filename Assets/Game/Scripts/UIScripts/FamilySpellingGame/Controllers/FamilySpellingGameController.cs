@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,6 +31,10 @@ public class FamilySpellingGameController : MiniGameControllerBase
 
     [Header("FamilySpelling — màu chữ cái vừa điền đúng")]
     [SerializeField] string filledLetterColorHex = "#FF8A00";
+
+    [Header("FamilySpelling — âm thanh từ đúng")]
+    [Tooltip("Giây chờ sau âm thanh correct rồi mới phát âm từ. Mặc định ~bằng độ dài clip correct.")]
+    [SerializeField] float wordAudioDelay = 0.8f;
 
     protected override void Start()
     {
@@ -103,6 +108,17 @@ public class FamilySpellingGameController : MiniGameControllerBase
 
         SetWordTemplate(wordTemplateTextLeft, wordTemplatePopLeft, highlighted);
         SetWordTemplate(wordTemplateTextRight, wordTemplatePopRight, highlighted);
+
+        // Phát âm từ đúng ngay sau âm thanh correct
+        if (!string.IsNullOrEmpty(CurrentQuestion.questionMediaValue))
+            StartCoroutine(PlayWordAudio(CurrentQuestion.questionMediaValue, wordAudioDelay));
+    }
+
+    IEnumerator PlayWordAudio(string resourcePath, float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        var clip = AssetOverrideLoader.GetClip(resourcePath);
+        MusicManager.Instance?.PlaySfx(clip);
     }
 
     /// <summary>
