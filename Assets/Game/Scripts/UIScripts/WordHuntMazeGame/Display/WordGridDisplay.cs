@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,6 +35,12 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
 
     [Header("Màu ô")]
     [SerializeField] Color normalBg        = Color.white;
+
+    [Header("Âm thanh từ đúng")]
+    [Tooltip("Giây chờ sau âm thanh correct rồi mới phát âm từ.")]
+    [SerializeField] float wordAudioDelay = 0.8f;
+    [Tooltip("Prefix folder trong Resources chứa audio, vd 'Family' → Resources/Family/{word}.mp3")]
+    [SerializeField] string audioFolder = "Family";
     [SerializeField] Color tappedBg        = Color.black;
     [SerializeField] Color foundBg         = new Color(0.18f, 0.92f, 0.38f, 1f);
     [SerializeField] Color normalText      = Color.black;
@@ -140,6 +147,7 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
             done[w] = true;
             foreach (var idx in path) SetCellStyle(cells, texts, idx, foundBg, foundText);
             MusicManager.Instance?.PlayCorrectSfx();
+            StartCoroutine(PlayWordAudio(grid.words[w], wordAudioDelay));
         }
 
         bool allDone = true;
@@ -187,5 +195,13 @@ public class WordGridDisplay : MonoBehaviour, IAnswerDisplay
     {
         _onResult = null;
         gameObject.SetActive(false);
+    }
+
+    IEnumerator PlayWordAudio(string word, float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        string path = $"{audioFolder}/{word.ToLower()}";
+        var clip = AssetOverrideLoader.GetClip(path);
+        MusicManager.Instance?.PlaySfx(clip);
     }
 }
