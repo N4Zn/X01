@@ -10,9 +10,9 @@ m02,Math,2,Image,M02,Text,1,4,2,8,5,7,,MultiSelect,"0,4,5",Floating
 m03,Math,2,Image,M03,Text,"85,72","85,8","86,61","85,17","85,71","58,71",,MultiSelect,"0,1,2",Floating
 m04,Math,2,Image,ChonSoTangDan,Text,"85,72","85,8","86,61","85,17","85,71","58,71",,OrderedSequence,"5,3,4,0,1,2",Floating
 m05,Math,2,Image,ChonSoTangDan,Text,"57,28","57,82","75,09","75,19","75,28","75,82",,OrderedSequence,"0,1,2,3,4,5",Floating
-m05,Math,2,Image,ChonSoTangDan,Text,"-57,28","-57,82","-75,09","75,19","75,28","75,82",,OrderedSequence,"0,1,2,3,4,5",Floating
-m06,Math,2,Image,ChonSoTangDan,Text,-85,-58,-3,1,4,7,12,OrderedSequence,"0,1,2,3,4,5,6",Floating
-m07,Math,2,Image,ChonSoTangDan,Text,-43,-42,-24,-2,12,18,23,OrderedSequence,"0,1,2,3,4,5,6",Floating
-m08,Math,2,Image,ChonSoTangDan,Text,-14,-12,-8,3,5,8,12,OrderedSequence,"0,1,2,3,4,5,6",Floating
-m09,Math,2,Image,M05,Text,"85,65","85,69","85,74","85,76","85,64","86,70",,MultiSelect,"0,1,2",Floating
-m10,Math,1,Image,M06,Text,"57,09","57,49","56,5","57,5","57,99",,,MultiSelect,"0,1,2",Floating
+m06,Math,2,Image,ChonSoTangDan,Text,"-57,28","-57,82","-75,09","75,19","75,28","75,82",,OrderedSequence,"0,1,2,3,4,5",Floating
+m07,Math,2,Image,ChonSoTangDan,Text,-85,-58,-3,1,4,7,12,OrderedSequence,"0,1,2,3,4,5,6",Floating
+m08,Math,2,Image,ChonSoTangDan,Text,-43,-42,-24,-2,12,18,23,OrderedSequence,"0,1,2,3,4,5,6",Floating
+m09,Math,2,Image,ChonSoTangDan,Text,-14,-12,-8,3,5,8,12,OrderedSequence,"0,1,2,3,4,5,6",Floating
+m10,Math,2,Image,M05,Text,"85,65","85,69","85,74","85,76","85,64","86,70",,MultiSelect,"0,1,2",Floating
+m11,Math,1,Image,M06,Text,"57,09","57,49","56,5","57,5","57,99",,,MultiSelect,"0,1,2",Floating
