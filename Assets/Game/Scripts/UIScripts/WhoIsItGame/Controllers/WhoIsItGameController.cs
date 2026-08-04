@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -17,6 +18,10 @@ using UnityEngine.UI;
 ///   - JackpotTracker: cả 2 đội sai → điểm câu tiếp theo x2 (dồn), ai đúng ăn trọn.
 ///   - MysteryRewardPool: đội thắng chọn 1 trong 3 hộp quà ngẫu nhiên (bonus/penalty/share) —
 ///     override StateMachineEnter_Feedback để chèn bước chọn hộp trước khi qua câu tiếp theo.
+///
+/// Điều kiện thắng: thay vì chờ hết giờ (mặc định của Kit khi totalRounds &lt;= 0), game này kết
+/// thúc NGAY khi 1 trong 2 đội đầy thanh điểm HUD (chạm HudMaxScoreFallback) — xem
+/// CheckForFillBarWin() gọi cuối OnMysteryBoxClicked, nơi duy nhất thật sự cộng điểm.
 /// </summary>
 public class WhoIsItGameController : MiniGameControllerBase
 {
@@ -24,13 +29,16 @@ public class WhoIsItGameController : MiniGameControllerBase
     [SerializeField] ButtonDisplay buttonDisplay;
     [SerializeField] Button backButton;
     [SerializeField] GameObject questionFrameRoot; // toàn bộ khung ảnh — ẩn đi khi hộp quà hiện
-    [SerializeField] Image questionImage;
+    [SerializeField] Image leftQuestionImage;  // ảnh nhân vật bên trái — giống hệt bên phải
+    [SerializeField] Image rightQuestionImage; // ảnh nhân vật bên phải — giống hệt bên trái
     [SerializeField] Text questionCaption;
     [SerializeField] RectTransform rewardBadge; // khung tròn "current reward" — to nhỏ theo điểm
     [SerializeField] Text rewardText;           // "N points!" bên trong khung tròn
     [SerializeField] Text leftFeedbackText;  // "Try again"/"Great job!"/reward message riêng cho Left
     [SerializeField] Text rightFeedbackText; // "Try again"/"Great job!"/reward message riêng cho Right
     [SerializeField] RectTransform starBurst;
+    [SerializeField] ParticleSystem correctAnswerVFX;
+    [SerializeField] ParticleSystem fireworksVFX; // pháo hoa khi mở được hộp quà thưởng (bonus/share)
 
     [Header("WhoIsIt — reward system")]
     [SerializeField] int basePoints = 5;
@@ -49,6 +57,19 @@ public class WhoIsItGameController : MiniGameControllerBase
     [SerializeField] Button[] leftMysteryBoxes;  // 3 nút "?"
     [SerializeField] Button[] rightMysteryBoxes; // 3 nút "?"
 
+    [Header("WhoIsIt — bet phase visuals")]
+    [SerializeField] RectTransform leftHopeStarIcon;
+    [SerializeField] RectTransform rightHopeStarIcon;
+    [SerializeField] float starIdlePulseDuration = 1f;
+
+    [Header("WhoIsIt — answer button idle sway")]
+    [SerializeField] float swayAngle = 4f;
+    [SerializeField] float swaySpeed = 1.3f;
+
+    [Header("WhoIsIt — win condition")]
+    [Tooltip("Thời gian chờ (giây) để xem hiệu ứng ăn mừng trước khi chuyển sang màn hình kết thúc, khi 1 đội vừa đầy thanh điểm.")]
+    [SerializeField] float winDelaySeconds = 1.5f;
+
     // Placeholder chưa có ảnh thật — hiện caption "Picture of X" trong khung ảnh để rõ ý câu hỏi.
     static readonly Dictionary<string, string> CaptionNouns = new()
     {
@@ -64,6 +85,8 @@ public class WhoIsItGameController : MiniGameControllerBase
     bool _leftDecided;
     bool _rightDecided;
     bool _betResolved;
+    Coroutine _leftStarPulseCo;
+    Coroutine _rightStarPulseCo;
 
     // Trạng thái round đang chờ chọn hộp quà (chỉ có ý nghĩa khi round vừa đúng)
     bool _awaitingBoxChoice;
@@ -72,6 +95,12 @@ public class WhoIsItGameController : MiniGameControllerBase
     RewardOption[] _currentBoxes;
     Enum _pendingPrevState;
     Dictionary<string, object> _pendingOpts;
+
+    // Toàn bộ RectTransform của các nút đáp án (LeftBtn_0..3, RightBtn_0..3) — tự thu thập 1 lần
+    // lúc Start, dựa theo ButtonItem (script thật sự gắn trên mỗi nút — không dùng Button chuẩn
+    // của Unity UI, xem CollectAnswerButtons()).
+    RectTransform[] _answerButtonRects;
+    Coroutine[] _answerSwayCoroutines;
 
     protected override void Start()
     {
@@ -84,12 +113,27 @@ public class WhoIsItGameController : MiniGameControllerBase
         base.Start();
 
         if (backButton != null) backButton.onClick.AddListener(GoBackToMenu);
-        if (leftYesButton != null) leftYesButton.onClick.AddListener(() => DecideBet(Team.Left, true));
-        if (leftNoButton != null) leftNoButton.onClick.AddListener(() => DecideBet(Team.Left, false));
-        if (rightYesButton != null) rightYesButton.onClick.AddListener(() => DecideBet(Team.Right, true));
-        if (rightNoButton != null) rightNoButton.onClick.AddListener(() => DecideBet(Team.Right, false));
+
+        if (leftYesButton != null) leftYesButton.onClick.AddListener(() => {
+            PunchButton(leftYesButton.GetComponent<RectTransform>());
+            DecideBet(Team.Left, true);
+        });
+        if (leftNoButton != null) leftNoButton.onClick.AddListener(() => {
+            PunchButton(leftNoButton.GetComponent<RectTransform>());
+            DecideBet(Team.Left, false);
+        });
+        if (rightYesButton != null) rightYesButton.onClick.AddListener(() => {
+            PunchButton(rightYesButton.GetComponent<RectTransform>());
+            DecideBet(Team.Right, true);
+        });
+        if (rightNoButton != null) rightNoButton.onClick.AddListener(() => {
+            PunchButton(rightNoButton.GetComponent<RectTransform>());
+            DecideBet(Team.Right, false);
+        });
+
         WireMysteryBoxes(leftMysteryBoxes, Team.Left);
         WireMysteryBoxes(rightMysteryBoxes, Team.Right);
+        CollectAnswerButtons();
 
         HideAllFeedback();
         HideBetPrompt();
@@ -106,10 +150,37 @@ public class WhoIsItGameController : MiniGameControllerBase
         }
     }
 
+    // Thu thập toàn bộ ButtonItem con bên trong buttonDisplay (LeftBtn_0..3, RightBtn_0..3) — chạy
+    // 1 lần lúc Start. Dùng ButtonItem thay vì Button chuẩn của Unity UI vì mỗi nút đáp án trong
+    // project này KHÔNG có component Button — chỉ có Image + ButtonItem (Script) tự xử lý click
+    // riêng. Đồng thời gắn EventTrigger để bấm có phản hồi punch-scale, hoạt động song song với
+    // logic chọn đáp án đã có sẵn trong ButtonItem (không thay thế logic đó).
+    void CollectAnswerButtons()
+    {
+        if (buttonDisplay == null) return;
+
+        var items = buttonDisplay.GetComponentsInChildren<ButtonItem>(true);
+        _answerButtonRects = new RectTransform[items.Length];
+        for (int i = 0; i < items.Length; i++)
+        {
+            _answerButtonRects[i] = items[i].GetComponent<RectTransform>();
+
+            var trigger = items[i].gameObject.GetComponent<EventTrigger>();
+            if (trigger == null) trigger = items[i].gameObject.AddComponent<EventTrigger>();
+
+            var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+            var rect = _answerButtonRects[i];
+            entry.callback.AddListener(_ => PunchButton(rect, 1.12f, 0.08f));
+            trigger.triggers.Add(entry);
+        }
+    }
+
     protected override IAnswerDisplay GetDisplayForQuestion(QuestionData q) => buttonDisplay;
 
     // Điểm mỗi câu có thể lên vài chục (jackpot/hope star/thưởng), không phải +1 như mặc định Kit
-    // — nâng mốc fill-bar của HUD lên cho hợp lý hơn khi chơi theo thời gian.
+    // — nâng mốc fill-bar của HUD lên cho hợp lý hơn khi chơi theo thời gian. Đồng thời đây cũng
+    // chính là MỐC THẮNG: đội nào đầy thanh điểm (chạm mốc này) trước sẽ thắng ngay lập tức, xem
+    // CheckForFillBarWin().
     protected override int HudMaxScoreFallback => 10 * basePoints;
 
     // Tắt +1 điểm mặc định của Kit — WhoIsItGame tự chấm điểm ở OnMysteryBoxClicked (jackpot +
@@ -179,28 +250,236 @@ public class WhoIsItGameController : MiniGameControllerBase
         if (questionFrameRoot != null) questionFrameRoot.SetActive(false);
         HideAllFeedback();
         UpdateRewardBadge();
+        StopAllAnswerSways();
     }
 
     void ShowBetPrompt()
     {
         if (betPromptRoot != null) betPromptRoot.SetActive(true);
         UpdateBetUi();
+
+        if (leftHopeStarIcon != null)
+            _leftStarPulseCo = StartCoroutine(LoopIdleStarPulse(leftHopeStarIcon));
+        if (rightHopeStarIcon != null)
+            _rightStarPulseCo = StartCoroutine(LoopIdleStarPulse(rightHopeStarIcon));
     }
 
     void HideBetPrompt()
     {
         if (betPromptRoot != null) betPromptRoot.SetActive(false);
+
+        if (_leftStarPulseCo != null) { StopCoroutine(_leftStarPulseCo); _leftStarPulseCo = null; }
+        if (_rightStarPulseCo != null) { StopCoroutine(_rightStarPulseCo); _rightStarPulseCo = null; }
+        if (leftHopeStarIcon != null) leftHopeStarIcon.localScale = Vector3.one;
+        if (rightHopeStarIcon != null) rightHopeStarIcon.localScale = Vector3.one;
+    }
+
+    // Nhấp nháy nhẹ liên tục trong lúc chờ chọn — tái dùng PulseEffect đã có sẵn trong project
+    // (dùng cho starBurst khi trả lời đúng), lặp vô hạn cho tới khi HideBetPrompt dừng coroutine.
+    IEnumerator LoopIdleStarPulse(RectTransform icon)
+    {
+        var cg = icon.GetComponent<CanvasGroup>();
+        while (true)
+            yield return PulseEffect.ScaleFadePulse(icon, cg, 0.9f, 1.15f, starIdlePulseDuration);
     }
 
     void UpdateBetUi()
     {
-        if (leftStarCountText != null) leftStarCountText.text = $"* {_stars.Remaining(Team.Left)}";
-        if (rightStarCountText != null) rightStarCountText.text = $"* {_stars.Remaining(Team.Right)}";
+        if (leftStarCountText != null) leftStarCountText.text = $"{_stars.Remaining(Team.Left)}";
+        if (rightStarCountText != null) rightStarCountText.text = $"{_stars.Remaining(Team.Right)}";
 
         if (leftYesButton != null) leftYesButton.interactable = !_leftDecided && _stars.Remaining(Team.Left) > 0;
         if (leftNoButton != null) leftNoButton.interactable = !_leftDecided;
         if (rightYesButton != null) rightYesButton.interactable = !_rightDecided && _stars.Remaining(Team.Right) > 0;
         if (rightNoButton != null) rightNoButton.interactable = !_rightDecided;
+    }
+
+    // ── Hiệu ứng dùng chung: punch-scale khi bấm ────────────────────────────────
+
+    void PunchButton(RectTransform rect, float scaleUp = 1.15f, float halfDuration = 0.12f)
+    {
+        if (rect != null) StartCoroutine(PunchScaleRoutine(rect, scaleUp, halfDuration));
+    }
+
+    IEnumerator PunchScaleRoutine(RectTransform rect, float scaleUp, float halfDuration)
+    {
+        Vector3 original = rect.localScale;
+        float t = 0f;
+        while (t < halfDuration)
+        {
+            t += Time.deltaTime;
+            rect.localScale = original * Mathf.Lerp(1f, scaleUp, t / halfDuration);
+            yield return null;
+        }
+        t = 0f;
+        while (t < halfDuration)
+        {
+            t += Time.deltaTime;
+            rect.localScale = original * Mathf.Lerp(scaleUp, 1f, t / halfDuration);
+            yield return null;
+        }
+        rect.localScale = original;
+    }
+
+    // ── Hiệu ứng cảm xúc: ăn mừng (thắng điểm) / buồn (bị phạt) ─────────────────
+
+    // Ăn mừng khi thắng điểm (đúng câu / mở hộp quà bonus) — nảy lên 2 nhịp liên tiếp kèm xoay
+    // lắc nhẹ 2 chiều, tạo cảm giác hào hứng. Dùng cho cả text feedback lẫn khung ảnh câu hỏi.
+    IEnumerator CelebrateRoutine(RectTransform rect)
+    {
+        if (rect == null) yield break;
+
+        Vector3 original = rect.localScale;
+        Quaternion originalRot = rect.localRotation;
+
+        for (int bounce = 0; bounce < 2; bounce++)
+        {
+            float t = 0f;
+            const float duration = 0.18f;
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                float p = t / duration;
+                float scale = Mathf.Sin(p * Mathf.PI) * 0.25f + 1f; // nảy lên rồi về 1
+                rect.localScale = original * scale;
+                rect.localRotation = originalRot * Quaternion.Euler(0f, 0f, Mathf.Sin(p * Mathf.PI * 2f) * 10f);
+                yield return null;
+            }
+        }
+        rect.localScale = original;
+        rect.localRotation = originalRot;
+    }
+
+    // Hiệu ứng buồn khi bị trừ điểm (mở hộp quà penalty) — rũ xuống nhẹ (co lại + lệch xuống) rồi
+    // trở lại, kiểu "xìu" chứ không giật mạnh như celebrate.
+    IEnumerator SadRoutine(RectTransform rect)
+    {
+        if (rect == null) yield break;
+
+        Vector3 original = rect.localScale;
+        Vector2 originalPos = rect.anchoredPosition;
+
+        const float duration = 0.35f;
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float p = t / duration;
+            float droop = Mathf.Sin(p * Mathf.PI) * 12f; // lún xuống rồi trở lại
+            rect.anchoredPosition = originalPos + Vector2.down * droop;
+            rect.localScale = original * Mathf.Lerp(1f, 0.9f, Mathf.Sin(p * Mathf.PI));
+            yield return null;
+        }
+        rect.anchoredPosition = originalPos;
+        rect.localScale = original;
+    }
+
+    // Lóe màu ngắn rồi trả về màu gốc — dùng để nhấn mạnh cảm xúc (vàng/xanh cho vui, xám cho
+    // buồn) mà không đổi màu vĩnh viễn của text.
+    IEnumerator FlashColor(Text text, Color flashColor, float duration = 0.4f)
+    {
+        if (text == null) yield break;
+        Color original = text.color;
+        text.color = flashColor;
+        yield return new WaitForSeconds(duration);
+        text.color = original;
+    }
+
+    // Bắn pháo hoa ngay tại vị trí đội thắng vừa mở hộp quà (bonus/share) — dùng chung 1 particle
+    // system, tự di chuyển tới đúng vị trí trước khi Play() mỗi lần, không cần Instantiate nhiều bản.
+    void PlayFireworksAt(RectTransform anchor)
+    {
+        if (fireworksVFX == null) return;
+        if (anchor != null)
+            fireworksVFX.transform.position = anchor.position;
+        fireworksVFX.Play();
+    }
+
+    // ── Animation pop-in + idle sway cho nút đáp án ─────────────────────────────
+
+    // Nút đáp án "pop in" khi câu hỏi vừa hiện — phồng to kèm xoay nhẹ (lắc qua lại rồi đứng yên),
+    // so le từng nút (stagger). Sau khi pop-in xong, mỗi nút tự chuyển sang lắc nhẹ liên tục
+    // (idle sway) cho tới khi bị dừng (round mới, hoặc lúc mở hộp quà).
+    void AnimateAnswerButtonsPopIn()
+    {
+        if (_answerButtonRects == null) return;
+
+        StopAllAnswerSways();
+        _answerSwayCoroutines = new Coroutine[_answerButtonRects.Length];
+
+        const float stagger = 0.06f;
+        for (int i = 0; i < _answerButtonRects.Length; i++)
+        {
+            if (_answerButtonRects[i] == null) continue;
+            int index = i;
+            StartCoroutine(PopInThenSway(_answerButtonRects[i], index, index * stagger));
+        }
+    }
+
+    IEnumerator PopInThenSway(RectTransform rect, int index, float delay)
+    {
+        yield return AnswerPopInRoutine(rect, delay);
+        _answerSwayCoroutines[index] = StartCoroutine(LoopIdleSway(rect, index));
+    }
+
+    IEnumerator AnswerPopInRoutine(RectTransform rect, float delay)
+    {
+        rect.localScale = Vector3.zero;
+        rect.localRotation = Quaternion.identity;
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+
+        const float duration = 0.3f;
+        const float overshoot = 1.12f;
+        const float wiggleAngle = 8f; // độ nghiêng lắc nhẹ lúc phồng lên
+        float t = 0f;
+
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float p = t / duration;
+
+            float scale = p < 0.6f
+                ? Mathf.Lerp(0f, overshoot, p / 0.6f)
+                : Mathf.Lerp(overshoot, 1f, (p - 0.6f) / 0.4f);
+            rect.localScale = Vector3.one * scale;
+
+            float wiggle = p < 0.6f
+                ? Mathf.Sin(p * Mathf.PI * 3f) * wiggleAngle * (1f - p / 0.6f)
+                : 0f;
+            rect.localRotation = Quaternion.Euler(0f, 0f, wiggle);
+
+            yield return null;
+        }
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+    }
+
+    // Lắc nhẹ qua lại kiểu con lắc, lệch pha theo index để 8 nút không đung đưa cùng nhịp — trông
+    // sống động tự nhiên hơn là đồng bộ cứng nhắc. Chạy vô hạn cho tới khi StopAllAnswerSways gọi.
+    IEnumerator LoopIdleSway(RectTransform rect, int index)
+    {
+        float phaseOffset = index * 0.7f;
+        float t = 0f;
+
+        while (true)
+        {
+            t += Time.deltaTime;
+            float angle = Mathf.Sin((t + phaseOffset) * swaySpeed) * swayAngle;
+            rect.localRotation = Quaternion.Euler(0f, 0f, angle);
+            yield return null;
+        }
+    }
+
+    void StopAllAnswerSways()
+    {
+        if (_answerSwayCoroutines == null) return;
+        foreach (var co in _answerSwayCoroutines)
+            if (co != null) StopCoroutine(co);
+        _answerSwayCoroutines = null;
+
+        if (_answerButtonRects != null)
+            foreach (var rect in _answerButtonRects)
+                if (rect != null) rect.localRotation = Quaternion.identity;
     }
 
     // ── Question shown ─────────────────────────────────────────────────────────
@@ -210,11 +489,15 @@ public class WhoIsItGameController : MiniGameControllerBase
         HideAllFeedback();
         if (questionFrameRoot != null) questionFrameRoot.SetActive(true);
 
-        if (questionImage != null && q.questionMediaType == QuestionMediaType.Image)
+        // Bật lại buttonDisplay — ShowMysteryBoxes() có thể đã tắt nó ở round trước (đội thắng
+        // chọn hộp quà), câu hỏi mới luôn cần nó hiện ra.
+        if (buttonDisplay != null) buttonDisplay.gameObject.SetActive(true);
+
+        if (q.questionMediaType == QuestionMediaType.Image)
         {
             var sprite = Resources.Load<Sprite>(q.questionMediaValue);
-            questionImage.sprite = sprite;
-            questionImage.gameObject.SetActive(sprite != null);
+            SetQuestionImage(leftQuestionImage, sprite);
+            SetQuestionImage(rightQuestionImage, sprite);
         }
 
         if (questionCaption != null)
@@ -225,6 +508,15 @@ public class WhoIsItGameController : MiniGameControllerBase
         }
 
         UpdateRewardBadge();
+        AnimateAnswerButtonsPopIn();
+    }
+
+    // Cùng 1 sprite gán cho cả 2 ảnh trái/phải — tách helper để tránh lặp code null-check.
+    static void SetQuestionImage(Image img, Sprite sprite)
+    {
+        if (img == null) return;
+        img.sprite = sprite;
+        img.gameObject.SetActive(sprite != null);
     }
 
     /// <summary>Cập nhật khung tròn "current reward" — điểm câu hỏi hiện tại (đã tính jackpot),
@@ -301,6 +593,13 @@ public class WhoIsItGameController : MiniGameControllerBase
         MusicManager.Instance?.PlayExplosionSfx();
         if (starBurst != null)
             StartCoroutine(PulseEffect.ScaleFadePulse(starBurst, starBurst.GetComponent<CanvasGroup>(), 0.3f, 1.3f, 0.6f));
+        if (correctAnswerVFX != null)
+            correctAnswerVFX.Play();
+
+        // Ăn mừng ngay trên khung ảnh câu hỏi phía đội thắng.
+        var winningImage = team == Team.Left ? leftQuestionImage : rightQuestionImage;
+        if (winningImage != null)
+            StartCoroutine(CelebrateRoutine(winningImage.GetComponent<RectTransform>()));
     }
 
     /// <summary>Round đúng → chèn bước "chọn hộp quà" trước khi thật sự chuyển câu tiếp theo.
@@ -320,16 +619,12 @@ public class WhoIsItGameController : MiniGameControllerBase
 
     // ── Hộp quà bí mật ───────────────────────────────────────────────────────────
 
-    static readonly Color[] BoxPalette =
-    {
-        new(0.95f, 0.55f, 0.35f), new(0.45f, 0.75f, 0.95f), new(0.95f, 0.80f, 0.35f),
-        new(0.65f, 0.55f, 0.90f), new(0.55f, 0.85f, 0.55f), new(0.95f, 0.50f, 0.65f),
-    };
-
     void ShowMysteryBoxes(Team winner)
     {
         _currentBoxes = MysteryRewardPool.PickThree();
         _awaitingBoxChoice = true;
+
+        StopAllAnswerSways();
 
         // Ẩn câu hỏi + đáp án phía sau trong lúc chọn hộp quà — tránh rối mắt/lẫn với nền.
         if (questionFrameRoot != null) questionFrameRoot.SetActive(false);
@@ -341,25 +636,19 @@ public class WhoIsItGameController : MiniGameControllerBase
         if (root != null) root.gameObject.SetActive(true);
     }
 
-    /// <summary>Random màu nền mỗi hộp quà mỗi lần hiện — chỉ để đẹp mắt, không ảnh hưởng phần
-    /// thưởng bên trong (vẫn hoàn toàn ngẫu nhiên/độc lập, xem MysteryRewardPool). Rút KHÔNG lặp
-    /// từ palette nên các hộp luôn khác màu nhau (không random độc lập từng hộp).</summary>
+    /// <summary>Trước đây tô màu ngẫu nhiên (multiply-tint) lên mỗi hộp quà cho vui mắt, nhưng
+    /// sprite hộp quà đã có màu sắc/chi tiết đẹp sẵn — multiply-tint của Unity UI Image làm ảnh
+    /// bị tối/xỉn màu so với thiết kế gốc. Giữ nguyên Color.white (không tint gì cả) để sprite
+    /// hiện đúng như thiết kế, không còn random màu nữa.</summary>
     static void RandomizeBoxColors(Button[] boxes)
     {
         if (boxes == null) return;
 
-        var pool = new List<Color>(BoxPalette);
-        for (int i = pool.Count - 1; i > 0; i--)
+        foreach (var box in boxes)
         {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (pool[i], pool[j]) = (pool[j], pool[i]);
-        }
-
-        for (int i = 0; i < boxes.Length; i++)
-        {
-            if (boxes[i] == null) continue;
-            var img = boxes[i].GetComponent<Image>();
-            if (img != null) img.color = pool[i % pool.Count];
+            if (box == null) continue;
+            var img = box.GetComponent<Image>();
+            if (img != null) img.color = Color.white;
         }
     }
 
@@ -407,6 +696,20 @@ public class WhoIsItGameController : MiniGameControllerBase
             };
             winnerText.color = Color.black;
             winnerText.gameObject.SetActive(true);
+
+            // Ăn mừng cho bonus/share (được cộng điểm, kèm pháo hoa), buồn cho penalty (bị trừ điểm).
+            var winnerRect = winnerText.GetComponent<RectTransform>();
+            if (reward.kind == RewardKind.PenaltyFixed)
+            {
+                StartCoroutine(SadRoutine(winnerRect));
+                StartCoroutine(FlashColor(winnerText, new Color(0.5f, 0.5f, 0.5f))); // xám buồn
+            }
+            else
+            {
+                StartCoroutine(CelebrateRoutine(winnerRect));
+                StartCoroutine(FlashColor(winnerText, new Color(1f, 0.75f, 0.1f))); // vàng ăn mừng
+                PlayFireworksAt(team == Team.Left ? leftMysteryBoxRoot : rightMysteryBoxRoot);
+            }
         }
 
         if (opponentPoints > 0)
@@ -418,9 +721,31 @@ public class WhoIsItGameController : MiniGameControllerBase
                 opponentText.text = FeedbackTextStyle.Gain(opponentPoints) + "!";
                 opponentText.color = Color.black;
                 opponentText.gameObject.SetActive(true);
+
+                var opponentRect = opponentText.GetComponent<RectTransform>();
+                StartCoroutine(CelebrateRoutine(opponentRect));
+                StartCoroutine(FlashColor(opponentText, new Color(1f, 0.75f, 0.1f)));
             }
         }
 
-        base.StateMachineEnter_Feedback(_pendingPrevState, _pendingOpts);
+        // Kiểm tra điều kiện thắng ngay: nếu 1 trong 2 đội vừa đầy thanh điểm (chạm
+        // HudMaxScoreFallback), kết thúc game NGAY thay vì chờ hết giờ — cho xem hiệu ứng ăn mừng
+        // vừa chạy ở trên (winDelaySeconds) rồi mới chuyển sang màn hình kết thúc.
+        if (CheckForFillBarWin())
+            StartCoroutine(GameOverAfterDelay(winDelaySeconds));
+        else
+            base.StateMachineEnter_Feedback(_pendingPrevState, _pendingOpts);
+    }
+
+    // Trả về true nếu 1 trong 2 đội đã đạt/vượt mốc HudMaxScoreFallback (thanh điểm đầy).
+    bool CheckForFillBarWin()
+    {
+        return ScoreManager.ScoreLeft >= HudMaxScoreFallback || ScoreManager.ScoreRight >= HudMaxScoreFallback;
+    }
+
+    IEnumerator GameOverAfterDelay(float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        Fsm.StateMachineChange(MiniGameState.GameOver);
     }
 }
