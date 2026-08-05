@@ -181,7 +181,9 @@ public class MusicManager : Singleton<MusicManager>
 
     public float MeteorFallClipLength => _meteorFallSfx != null ? _meteorFallSfx.length : 0f;
 
-    private void PlaySfx(AudioClip clip)
+    /// <summary>Phát 1 AudioClip TÙY Ý (không phải SFX cố định đã cache sẵn) — dùng khi clip được
+    /// load động lúc runtime (vd phát âm từng từ vựng theo QuestionData). Vẫn tôn trọng SfxVolume.</summary>
+    public void PlaySfx(AudioClip clip)
     {
         if (clip == null) return;
 

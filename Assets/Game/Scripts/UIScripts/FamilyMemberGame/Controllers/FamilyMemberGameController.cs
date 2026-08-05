@@ -17,7 +17,8 @@ public class FamilyMemberGameController : MiniGameControllerBase
     [Header("FamilyMember — refs")]
     [SerializeField] ButtonDisplay buttonDisplay;
     [SerializeField] Button backButton;
-    [SerializeField] Image questionImage;
+    [SerializeField] Image leftQuestionImage;  // ảnh câu hỏi bên trái — giống hệt bên phải
+    [SerializeField] Image rightQuestionImage; // ảnh câu hỏi bên phải — giống hệt bên trái
 
     [Header("FamilyMember — âm thanh từ đúng")]
     [Tooltip("Giây chờ sau âm thanh correct rồi mới phát âm từ.")]
@@ -33,10 +34,20 @@ public class FamilyMemberGameController : MiniGameControllerBase
 
     protected override void OnQuestionShown(QuestionData q)
     {
-        if (questionImage == null || q.questionMediaType != QuestionMediaType.Image) return;
-        var sprite = AssetOverrideLoader.GetSprite(q.questionMediaValue);
-        questionImage.sprite = sprite;
-        questionImage.gameObject.SetActive(sprite != null);
+        if (q.questionMediaType != QuestionMediaType.Image) return;
+        // KHÔNG dùng AssetOverrideLoader.GetSprite ở đây — nó tự prepend TongHopConfig.Current.imageRoot
+        // (mặc định "TestTongHop/images", và có thể bị game khác đổi runtime), trong khi ảnh Family
+        // của Kit nằm thẳng ở Resources/Family/, gây lỗi "Sprite not found: TestTongHop/images/Family/...".
+        var sprite = Resources.Load<Sprite>(q.questionMediaValue);
+        SetQuestionImage(leftQuestionImage, sprite);
+        SetQuestionImage(rightQuestionImage, sprite);
+    }
+
+    static void SetQuestionImage(Image image, Sprite sprite)
+    {
+        if (image == null) return;
+        image.sprite = sprite;
+        image.gameObject.SetActive(sprite != null);
     }
 
     protected override void OnRoundResult(bool correct, Team team, int[] playerAnswer)

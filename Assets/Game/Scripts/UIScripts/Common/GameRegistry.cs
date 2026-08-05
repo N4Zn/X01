@@ -108,6 +108,8 @@ public static class GameRegistry
         Set(4, 1, "FamilySpellingJump", "FamilySpellingGame", Engine.MiniGameKit);
         Set(4, 2, "Monopoly", "MonopolyGame", Engine.MiniGameKit);
         Set(4, 3, "WordHuntMaze", "WordHuntMazeGame", Engine.MiniGameKit);
+        Set(4, 4, "SentenceBuilder", "SentenceBuilderGame", Engine.MiniGameKit);
+        Set(4, 5, "FamilyMember", "FamilyMemberGame", Engine.MiniGameKit);
 
         // ── Category 5: Âm thanh ─────────────────────────────────────────────
         // ListenSelect / ChuCai / SoDem / Numbers: scene riêng, sinh nội dung procedurally.

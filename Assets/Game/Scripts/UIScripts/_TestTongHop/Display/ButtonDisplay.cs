@@ -11,6 +11,13 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay
     [SerializeField] ButtonItem[] leftButtons;   // 4-5 buttons phía trái màn hình
     [SerializeField] ButtonItem[] rightButtons;  // 4-5 buttons phía phải màn hình
 
+    /// <summary>Optional — fires on EVERY tap (mọi answerMode), NGAY SAU khi validator đã tính
+    /// xong result, mang theo (team, answerIndex, result). Không ảnh hưởng luồng chính
+    /// (onResult/onPlayerFailed) — để null thì không có gì thay đổi so với trước. Dùng cho hiệu
+    /// ứng phụ không cần biết ở tầng validator (vd phát âm thanh từng từ, tự vẽ UI điền chỗ trống
+    /// theo OrderedSequence — xem SentenceBuilderGameController).</summary>
+    public Action<Team, int, ClickResult> onAnswerTapped;
+
     Action<bool, Team, int[]> _onResult;
     Action<Team>              _onPlayerFailed;
     Action<Team>              _onPartialCorrect;
@@ -167,6 +174,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay
 
         var result = validator.RegisterClick(answerIndex);
         GameLogger.Current?.LogClick(team, answerIndex, result);
+        onAnswerTapped?.Invoke(team, answerIndex, result);
 
         string clickedValue = (myQuestion?.answers != null && answerIndex >= 0 && answerIndex < myQuestion.answers.Length)
             ? myQuestion.answers[answerIndex] : "?";
