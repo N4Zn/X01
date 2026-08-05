@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Jupiter
   planetNameVi: "Sao M\u1ED9c"
-  descriptionVi: "H\xE0nh tinh l\u1EDBn nh\u1EA5t h\u1EC7 m\u1EB7t tr\u1EDDi. V\u1EBFt
-    \u0111\u1ECF l\u1EDBn l\xE0 c\u01A1n b\xE3o \u0111\xE3 k\xE9o d\xE0i h\xE0ng
-    tr\u0103m n\u0103m."
+  descriptionVi: The largest planet in the solar system. The Great Red Spot is a
+    storm that has lasted for hundreds of years.
   texturePath: SolarSystem/Textures/2k_jupiter
   orbitRadius: 24
   orbitSpeed: 1.3
@@ -30,4 +29,4 @@ MonoBehaviour:
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 3.1
-  orbitInclination: 0
+  orbitInclination: 1.3

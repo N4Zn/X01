@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd313ac8e6ecba4468c8e39a5c09a2a2, type: 3}
+  m_Name: Mars
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetData
+  planetName: Mars
+  planetNameVi: "Sao H\u1ECFa"
+  descriptionVi: "H\xE0nh tinh \u0111\u1ECF \u2014 m\xE0u t\u1EEB oxit s\u1EAFt tr\xEAn
+    b\u1EC1 m\u1EB7t. C\xF3 n\xFAi l\u1EEDa cao nh\u1EA5t h\u1EC7 m\u1EB7t tr\u1EDDi:
+    Olympus Mons."
+  texturePath: SolarSystem/Textures/2k_mars
+  orbitRadius: 16
+  orbitSpeed: 2.4
+  selfRotateSpeed: 50
+  scale: 1.35
+  distanceFromSun: "227.9 tri\u1EC7u km"
+  diameter: 6,779 km
+  numberOfMoons: 2
+  surfaceTemp: "-153\xB0C \u0111\u1EBFn 20\xB0C"
+  videoPath: Mars_Vi
+  hasSaturnRings: 0
+  isSun: 0
+  axialTilt: 25.2
+  orbitInclination: 0

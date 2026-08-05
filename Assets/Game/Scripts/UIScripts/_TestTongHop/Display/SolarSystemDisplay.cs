@@ -26,9 +26,9 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
     };
 
     // Orbit radii — scaled up for better screen coverage
-    static readonly float[] OrbitR = { 258f, 320f, 406f, 492f, 593f, 686f, 730f, 780f, 0f };
+    static readonly float[] OrbitR = { 258f, 320f, 406f, 492f, 593f, 686f, 750f, 820f, 0f };
     // Mercury right; Venus/Saturn at 90° (center axis); Earth left; Neptune 100°
-    static readonly float[] IniAng = {  42f,  90f, 116f,  72f, 107f,  90f,  76f, 100f, 0f };
+    static readonly float[] IniAng = {  130f,  60f, 116f,  72f, 107f,  75f,  89f, 100f, 0f };
     // Mercury/Venus enlarged for better visibility; Sun SunDiam > Jupiter 115px
     static readonly float[] Sz = { 52f, 70f, 50f, 38f, 115f, 100f, 70f, 65f, SunDiam };
     // UV scroll ×5 for lively rotation
@@ -60,10 +60,12 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
     // Ellipse Y-scale for 3D perspective (orbit plane viewed at an angle)
     const float OrbElp     = 0.65f; // planet orbit lines
     const float MoonOrbElp = 0.42f; // Moon orbit (tighter for clarity)
-
+// NamNN Comment lại
     [Header("Hit Area")]
     [Tooltip("Mở rộng vùng click của hành tinh ra ngoài mỗi cạnh (px). Tăng lên để click dễ hơn.")]
     public float planetHitPadding = 15f;
+	public float minHitSize = 90f;
+
 
     protected virtual string[] Names => NameVi;
 
@@ -350,7 +352,17 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
             {
                 // Mở rộng vùng click ra ngoài mỗi cạnh — chỉnh planetHitPadding trong Inspector
                 float p = planetHitPadding;
-                hitImg.raycastPadding = new Vector4(-p, -p, -p, -p);
+                //hitImg.raycastPadding = new Vector4(-p, -p, -p, -p);
+				
+				float targetSize = Mathf.Max(sz, minHitSize);
+				float padding = (targetSize - sz) * 0.5f;
+
+				hitImg.raycastPadding = new Vector4(
+					-padding,
+					-padding,
+					-padding,
+					-padding
+				);
             }
 
             // Earth: Moon body rendered above Hit (in front of planet)
@@ -391,11 +403,12 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
         rt.sizeDelta = new Vector2(radius * 2f, radius * 2f * OrbElp);
         // texSz = nextPow2 >= radius → lineW = 3*texSz/(radius*2) >= 1.5px → screen width exactly 3px
         int texSz = Mathf.NextPowerOfTwo(Mathf.CeilToInt(radius));
-        float lineW = 3f * texSz / (radius * 2f);
+        float lineW = 5f * texSz / (radius * 2f);
         var img = go.AddComponent<Image>();
         img.sprite = MakeOrbitSprite(texSz, lineW);
-        img.color  = new Color(0.55f, 0.78f, 1f, 0.22f);
-        img.raycastTarget = false;
+        //img.color  = new Color(0.55f, 0.78f, 1f, 0.22f);
+        img.color  = new Color(1f, 1f, 1f, 0.22f);
+		img.raycastTarget = false;
     }
 
     // ── Moon orbit ring — split like Saturn ring ──────────────────────────────

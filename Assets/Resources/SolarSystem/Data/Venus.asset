@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Venus
   planetNameVi: Sao Kim
-  descriptionVi: "H\xE0nh tinh n\xF3ng nh\u1EA5t h\u1EC7 m\u1EB7t tr\u1EDDi d\xF9
-    kh\xF4ng g\u1EA7n M\u1EB7t Tr\u1EDDi nh\u1EA5t. B\u1EA7u kh\xED quy\u1EC3n CO\u2082
-    d\xE0y g\xE2y hi\u1EC7u \u1EE9ng nh\xE0 k\xEDnh."
+  descriptionVi: It is the hottest planet in the solar system, even though it is
+    not the closest to the Sun. Its thick CO2 atmosphere creates a greenhouse effect.
   texturePath: SolarSystem/Textures/2k_venus_atmosphere
   orbitRadius: 9
   orbitSpeed: 3.5
@@ -30,4 +29,4 @@ MonoBehaviour:
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 2.64
-  orbitInclination: 0
+  orbitInclination: 3.4

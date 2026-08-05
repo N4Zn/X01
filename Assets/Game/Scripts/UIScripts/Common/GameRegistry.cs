@@ -79,18 +79,19 @@ public static class GameRegistry
         Set(0, 13, "PlanetAlphabet", "PlanetAlphabetGame", Engine.PlanetGame);
         Set(0, 14, "Fruit", "TestTongHopGame", Engine.TongHopGame);
         Set(0, 15, "Animal", "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 16, "Things",       "TestTongHopGame",  Engine.TongHopGame);
-        Set(0, 17, "SolarSystem", "SolarSystemScene", Engine.ExploreGame);
-        Set(0, 18, "WaterAnimal", "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 19, "SolarQuizVi",  "TestTongHopGame", Engine.TongHopGame);
+		Set(0, 16, "WaterAnimal", "TestTongHopGame", Engine.TongHopGame);
+
+        Set(0, 17, "Things",       "TestTongHopGame",  Engine.TongHopGame);
+        Set(0, 18, "SolarSystem", "SolarSystemScene", Engine.ExploreGame);
+		Set(0, 19, "SolarSystemVi", "SolarSystemVi", Engine.ExploreGame);
         Set(0, 20, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 21, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 21, "SolarQuizVi",  "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 22, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame);
 
 		
 		
 		
-        Set(0, 22, "AddUp",       "AddUpGame",         Engine.MathGame);
-        Set(0, 23, "NumberAddUp",      "NumberAddUpGame", Engine.MathGame);
+
         // ── Category 1: Phân tích ─────────────────────────────────────────────
         Set(1, 0, "TrainPath",  "TrainPathGame",  Engine.TrainGame);
         Set(1, 1, "PathFinder", "PathFinderGame", Engine.PathGame);

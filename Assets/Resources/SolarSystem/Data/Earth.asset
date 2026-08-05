@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Earth
   planetNameVi: "Tr\xE1i \u0110\u1EA5t"
-  descriptionVi: "H\xE0nh tinh c\u1EE7a ch\xFAng ta \u2014 n\u01A1i duy nh\u1EA5t
-    trong h\u1EC7 m\u1EB7t tr\u1EDDi \u0111\u01B0\u1EE3c bi\u1EBFt c\xF3 s\u1EF1
-    s\u1ED1ng."
+  descriptionVi: "Our planet\u2014the only place in the solar system known to harbor
+    life."
   texturePath: SolarSystem/Textures/2k_earth_daymap
   orbitRadius: 12
   orbitSpeed: 3

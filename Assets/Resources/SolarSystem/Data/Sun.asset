@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Sun
   planetNameVi: "M\u1EB7t Tr\u1EDDi"
-  descriptionVi: "Ng\xF4i sao trung t\xE2m h\u1EC7 m\u1EB7t tr\u1EDDi, cung c\u1EA5p
-    \xE1nh s\xE1ng v\xE0 nhi\u1EC7t l\u01B0\u1EE3ng cho c\xE1c h\xE0nh tinh."
+  descriptionVi: The star at the center of the solar system, providing light and
+    heat to the planets.
   texturePath: SolarSystem/Textures/2k_sun
   orbitRadius: 0
   orbitSpeed: 0

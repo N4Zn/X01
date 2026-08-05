@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Mars
   planetNameVi: "Sao H\u1ECFa"
-  descriptionVi: "H\xE0nh tinh \u0111\u1ECF \u2014 m\xE0u t\u1EEB oxit s\u1EAFt tr\xEAn
-    b\u1EC1 m\u1EB7t. C\xF3 n\xFAi l\u1EEDa cao nh\u1EA5t h\u1EC7 m\u1EB7t tr\u1EDDi:
-    Olympus Mons."
+  descriptionVi: "The Red Planet \u2014 colored by iron oxide on its surface. It
+    is home to the tallest volcano in the solar system: Olympus Mons."
   texturePath: SolarSystem/Textures/2k_mars
   orbitRadius: 16
   orbitSpeed: 2.4
@@ -30,4 +29,4 @@ MonoBehaviour:
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 25.2
-  orbitInclination: 0
+  orbitInclination: 1.9

@@ -11,6 +11,9 @@ public class SolarSystemSpawner : MonoBehaviour
     [SerializeField] PlanetData[] planets;
     [SerializeField] Transform    sunTransform;
 
+    [Tooltip("Bật cho scene SolarSystemVi — đổi nhãn thông số (Distance/Diameter/Moons/Temp) trong panel thông tin sang tiếng Việt. Tắt = tiếng Anh (bản gốc).")]
+    [SerializeField] bool useVietnameseLabels = false;
+
     [Header("Mặt Trời")]
     [SerializeField, Range(1f, 30f)]    float sunRotateSpeed        = 12f;
     [SerializeField, Range(0.5f, 6f)]   float sunHaloSizeMultiplier = 2.5f;
@@ -412,12 +415,17 @@ public class SolarSystemSpawner : MonoBehaviour
 
         var moonData = ScriptableObject.CreateInstance<PlanetData>();
         moonData.planetName      = "Moon";
-        moonData.planetNameVi    = "Moon";
-        moonData.descriptionVi   = "Earth's only natural satellite, 384,400 km away. Its gravitational pull drives ocean tides and stabilizes Earth's axial tilt.";
-        moonData.distanceFromSun = "384,400 km";
-        moonData.diameter        = "3,474 km";
+        // Tách riêng nội dung theo useVietnameseLabels (giống nhãn thông số) — scene SolarSystemVi
+        // hiện tiếng Việt thật, scene gốc giữ nguyên tiếng Anh. Moon không có asset .asset riêng để
+        // nhân bản qua DataVi/ như 9 hành tinh kia nên phải rẽ nhánh ngay trong code.
+        moonData.planetNameVi    = useVietnameseLabels ? "Mặt Trăng" : "Moon";
+        moonData.descriptionVi   = useVietnameseLabels
+            ? "Vệ tinh tự nhiên duy nhất của Trái Đất, cách xa 384.400 km. Lực hấp dẫn của nó tạo ra thuỷ triều đại dương và giữ ổn định độ nghiêng trục quay của Trái Đất."
+            : "Earth's only natural satellite, 384,400 km away. Its gravitational pull drives ocean tides and stabilizes Earth's axial tilt.";
+        moonData.distanceFromSun = useVietnameseLabels ? "384.400 km" : "384,400 km";
+        moonData.diameter        = useVietnameseLabels ? "3.474 km" : "3,474 km";
         moonData.numberOfMoons   = 0;
-        moonData.surfaceTemp     = "-173°C to 127°C";
+        moonData.surfaceTemp     = useVietnameseLabels ? "-173°C đến 127°C" : "-173°C to 127°C";
         moonData.orbitRadius     = moonOrbitRadius;
         moonData.orbitSpeed      = moonOrbitSpeed;
         moonData.selfRotateSpeed = 0f;
@@ -688,15 +696,23 @@ public class SolarSystemSpawner : MonoBehaviour
             var sb = new System.Text.StringBuilder();
 
             if (isSun)
-                sb.AppendLine("Dist. from Milky Way:  ~26,000 light-years");
+                sb.AppendLine(useVietnameseLabels
+                    ? "Khoảng cách tới Dải Ngân Hà:  ~26.000 năm ánh sáng"
+                    : "Dist. from Milky Way:  ~26,000 light-years");
             else if (!string.IsNullOrEmpty(data.distanceFromSun))
-                sb.AppendLine(isMoon
-                    ? $"Dist. from Earth:  {data.distanceFromSun}"
-                    : $"Distance from Sun:  {data.distanceFromSun}");
+            {
+                string distLabel = useVietnameseLabels
+                    ? (isMoon ? "Khoảng cách tới Trái Đất" : "Khoảng cách tới Mặt Trời")
+                    : (isMoon ? "Dist. from Earth" : "Distance from Sun");
+                sb.AppendLine($"{distLabel}:  {data.distanceFromSun}");
+            }
 
-            if (!string.IsNullOrEmpty(data.diameter))    sb.AppendLine($"Diameter:  {data.diameter}");
-            if (!isMoon && !isSun)                       sb.AppendLine($"Moons:  {data.numberOfMoons}");
-            if (!string.IsNullOrEmpty(data.surfaceTemp)) sb.AppendLine($"Temp:  {data.surfaceTemp}");
+            if (!string.IsNullOrEmpty(data.diameter))
+                sb.AppendLine($"{(useVietnameseLabels ? "Đường kính" : "Diameter")}:  {data.diameter}");
+            if (!isMoon && !isSun)
+                sb.AppendLine($"{(useVietnameseLabels ? "Số vệ tinh" : "Moons")}:  {data.numberOfMoons}");
+            if (!string.IsNullOrEmpty(data.surfaceTemp))
+                sb.AppendLine($"{(useVietnameseLabels ? "Nhiệt độ" : "Temp")}:  {data.surfaceTemp}");
             _infoStats.text = sb.ToString().TrimEnd();
         }
 

@@ -92,5 +92,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/FamilyMemberGame/FamilyMemberGame.unity
     guid: e7031d8c97877a947ba0be7526795aa7
+  - enabled: 1
+    path: Assets/Game/Scenes/SaveTheAstronautGame/SaveTheAstronautGame.unity
+    guid: d088fff3bdc676c459ae3e3ca35e216a
+  - enabled: 1
+    path: Assets/Game/Scenes/SolarSystemVi/SolarSystemVi.unity
+    guid: 8c7b1d36ab383344083719e8c816c435
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

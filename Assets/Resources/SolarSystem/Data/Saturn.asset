@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Saturn
   planetNameVi: "Sao Th\u1ED5"
-  descriptionVi: "N\u1ED5i ti\u1EBFng v\u1EDBi h\u1EC7 th\u1ED1ng v\xE0nh \u0111ai
-    b\u0103ng v\xE0 \u0111\xE1 tuy\u1EC7t \u0111\u1EB9p. Nh\u1EB9 \u0111\u1EBFn m\u1EE9c
-    c\xF3 th\u1EC3 n\u1ED5i tr\xEAn n\u01B0\u1EDBc."
+  descriptionVi: Famous for its stunning system of ice and rock rings. So light that
+    it could float on water.
   texturePath: SolarSystem/Textures/2k_saturn
   orbitRadius: 32
   orbitSpeed: 1
@@ -30,4 +29,4 @@ MonoBehaviour:
   hasSaturnRings: 1
   isSun: 0
   axialTilt: 26.7
-  orbitInclination: 0
+  orbitInclination: 2.5

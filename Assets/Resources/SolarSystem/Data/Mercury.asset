@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Mercury
   planetNameVi: "Sao Th\u1EE7y"
-  descriptionVi: "H\xE0nh tinh nh\u1ECF nh\u1EA5t v\xE0 g\u1EA7n M\u1EB7t Tr\u1EDDi
-    nh\u1EA5t. Kh\xF4ng c\xF3 kh\xED quy\u1EC3n b\u1EA3o v\u1EC7, nhi\u1EC7t \u0111\u1ED9
-    thay \u0111\u1ED5i c\u1EF1c l\u1EDBn."
+  descriptionVi: The smallest planet and the one closest to the Sun. It lacks a protective
+    atmosphere, resulting in extreme temperature fluctuations.
   texturePath: SolarSystem/Textures/2k_mercury
   orbitRadius: 6
   orbitSpeed: 4.7
@@ -30,4 +29,4 @@ MonoBehaviour:
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 0.03
-  orbitInclination: 0
+  orbitInclination: 7

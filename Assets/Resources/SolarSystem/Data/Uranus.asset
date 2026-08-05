@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetData
   planetName: Uranus
   planetNameVi: "Sao Thi\xEAn V\u01B0\u01A1ng"
-  descriptionVi: "H\xE0nh tinh duy nh\u1EA5t t\u1EF1 quay nghi\xEAng g\u1EA7n 90\xB0.
-    B\u1EA7u kh\xED quy\u1EC3n methane cho m\xE0u xanh lam \u0111\u1EB7c tr\u01B0ng."
+  descriptionVi: "The only planet that rotates on its side at an angle of nearly
+    90\xB0. Its methane atmosphere gives it a distinctive blue color."
   texturePath: SolarSystem/Textures/2k_uranus
   orbitRadius: 40
   orbitSpeed: 0.7
@@ -29,4 +29,4 @@ MonoBehaviour:
   hasSaturnRings: 0
   isSun: 0
   axialTilt: 97.8
-  orbitInclination: 0
+  orbitInclination: 0.8

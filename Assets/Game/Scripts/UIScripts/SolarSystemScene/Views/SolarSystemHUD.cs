@@ -39,6 +39,11 @@ public class SolarSystemHUD : MonoBehaviour
     [SerializeField] Button          btnToggleScale;
     [SerializeField] TextMeshProUGUI lblScaleMode;   // "Mô phỏng" / "Tỉ lệ thật"
 
+    [Header("Video giới thiệu không gian")]
+    [SerializeField] Button btnPlaySpaceVideo;
+    [Tooltip("Tên file trong Assets/StreamingAssets/Video/ (không có .mp4) — bản gốc \"Space\", bản SolarSystemVi đổi thành \"Space_Vi\".")]
+    [SerializeField] string spaceVideoName = "Space";
+
     // ── State ─────────────────────────────────────────────────────────────────
     bool  _paused;
     float _speedAtPause = 1f;
@@ -107,6 +112,7 @@ public class SolarSystemHUD : MonoBehaviour
         Btn(btnRestart,     RestartScene);
         Btn(btnFocusEarth,  ToggleFocusEarth);
         Btn(btnToggleScale, ToggleScale);
+        Btn(btnPlaySpaceVideo, () => NativeVideoPlayer.Play(spaceVideoName));
     }
 
     // ── Logic: Pause / Speed ──────────────────────────────────────────────────
