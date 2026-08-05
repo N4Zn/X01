@@ -25,6 +25,10 @@ public class AnswerDisplayManager : MonoBehaviour
     [SerializeField] SolarSystemDisplay  solarSystemEnDisplay; // English version — auto-created if null
     [SerializeField] PlanetOrderDisplay  planetOrderDisplay;   // single-player column game
 
+    [Header("Solar System — hit area")]
+    [Tooltip("Mở rộng vùng click của mỗi hành tinh ra ngoài mỗi cạnh (px). Tăng để click dễ hơn.")]
+    [SerializeField] float solarHitPadding = 15f;
+
     [Header("Question pool")]
     [SerializeField] QuestionPool questionPool;
 
@@ -205,6 +209,7 @@ public class AnswerDisplayManager : MonoBehaviour
         rt.anchorMax = Vector2.one;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
         solarSystemDisplay = go.AddComponent<SolarSystemDisplay>();
+        solarSystemDisplay.planetHitPadding = solarHitPadding;
         go.SetActive(false);
         return solarSystemDisplay;
     }
@@ -220,6 +225,7 @@ public class AnswerDisplayManager : MonoBehaviour
         rt.anchorMax = Vector2.one;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
         solarSystemEnDisplay = go.AddComponent<SolarSystemEnDisplay>();
+        solarSystemEnDisplay.planetHitPadding = solarHitPadding;
         go.SetActive(false);
         return solarSystemEnDisplay;
     }

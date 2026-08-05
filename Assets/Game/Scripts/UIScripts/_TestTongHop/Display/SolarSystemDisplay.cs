@@ -63,7 +63,7 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
 
     [Header("Hit Area")]
     [Tooltip("Mở rộng vùng click của hành tinh ra ngoài mỗi cạnh (px). Tăng lên để click dễ hơn.")]
-    [SerializeField] protected float planetHitPadding = 15f;
+    public float planetHitPadding = 15f;
 
     protected virtual string[] Names => NameVi;
 
