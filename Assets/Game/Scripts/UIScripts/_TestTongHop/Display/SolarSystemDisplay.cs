@@ -14,7 +14,7 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
     const int SUN = 8;
 
     // Sun center well below screen bottom → only a curved sliver visible at bottom
-    static readonly Vector2 SunPos = new Vector2(0f, -270f); // raised so planets fit on screen
+    static readonly Vector2 SunPos = new Vector2(0f, -340f); // -270 trước → -340 để hiện ~1/3 mặt trời
     const float SunDiam = 210f; // reduced so Mercury/Venus orbit outside Sun disk; still > Jupiter 115px
 
     protected static readonly string[] NameEn = {
@@ -60,6 +60,10 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
     // Ellipse Y-scale for 3D perspective (orbit plane viewed at an angle)
     const float OrbElp     = 0.65f; // planet orbit lines
     const float MoonOrbElp = 0.42f; // Moon orbit (tighter for clarity)
+
+    [Header("Hit Area")]
+    [Tooltip("Mở rộng vùng click của hành tinh ra ngoài mỗi cạnh (px). Tăng lên để click dễ hơn.")]
+    [SerializeField] protected float planetHitPadding = 15f;
 
     protected virtual string[] Names => NameVi;
 
@@ -335,6 +339,19 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
             int cap = i;
             btn.onClick.AddListener(() => OnClick(cap, team));
             btnArr[i] = btn;
+
+            // Mặt Trời không phải đáp án — tắt click hoàn toàn
+            if (i == SUN)
+            {
+                hitImg.raycastTarget = false;
+                btn.interactable = false;
+            }
+            else
+            {
+                // Mở rộng vùng click ra ngoài mỗi cạnh — chỉnh planetHitPadding trong Inspector
+                float p = planetHitPadding;
+                hitImg.raycastPadding = new Vector4(-p, -p, -p, -p);
+            }
 
             // Earth: Moon body rendered above Hit (in front of planet)
             if (i == 2)

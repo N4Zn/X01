@@ -114,6 +114,8 @@ public class TestTongHopController : MonoBehaviour
         else
             MusicManager.Instance?.PlayGameplayMusic();
 
+        gameModel.PointsPerCorrect = isSolarQuiz ? 10 : 1;
+
         // Lấy tên hiển thị từ GameSessionManager — dùng cùng API với ScoreScene
         // để HUD và màn kết quả luôn hiện nhất quán (OneVsOne: tên cá nhân, Team: tên đội).
         string leftName  = "Player 1";

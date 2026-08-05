@@ -55,12 +55,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void LogRoundStart(QuestionData q) => _logger.BeginRound(_roundsPlayed, q);
 
+    /// <summary>Số điểm cộng cho mỗi câu trả lời đúng. Mặc định 1; SolarQuiz set 10.</summary>
+    public int PointsPerCorrect { get; set; } = 1;
+
     /// <summary>Ghi nhận kết quả round và cập nhật điểm.
     /// addScore=false khi điểm đã được cộng từng phần (MultiSelect PartialCorrect).</summary>
     public void RecordAnswer(QuestionData q, bool isCorrect, Team team, float responseTime, bool addScore = true)
     {
         _logger.EndRound(isCorrect, team, responseTime, q);
-        if (isCorrect && addScore) _score.AddPoint(team);
+        if (isCorrect && addScore) _score.AddPoints(team, PointsPerCorrect);
     }
 
     /// <summary>Xuất log session ra file JSON.</summary>
