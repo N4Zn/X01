@@ -24,14 +24,10 @@ public static class SaveTheAstronautContent
     public static readonly StepInfo[] Steps =
     {
         new StepInfo("Hải Vương Tinh", "Neptune"),
-        new StepInfo("Triton", "Triton"),
         new StepInfo("Thiên Vương Tinh", "Uranus"),
         new StepInfo("Thổ Tinh", "Saturn"),
-        new StepInfo("Titan", "Titan"),
         new StepInfo("Mộc Tinh", "Jupiter"),
-        new StepInfo("Europa", "Europa"),
         new StepInfo("Hoả Tinh", "Mars"),
-        new StepInfo("Phobos", "Phobos"),
         new StepInfo("Kim Tinh", "Venus"),
         new StepInfo("Thuỷ Tinh", "Mercury"),
         new StepInfo("Mặt Trăng", "Moon"),

@@ -28,6 +28,9 @@ public class PathFinderGameController : MonoBehaviour
 
     private float _feedbackDelay = 1.5f;
     private float _questionTimeout = 10f;
+    private readonly int[] _roundIndex = new int[2];
+    private readonly float[] _questionShownTime = new float[2];
+    private static readonly string[] ChoiceNames = { "Left", "Straight", "Right" };
 
     void Start()
     {
@@ -136,10 +139,37 @@ public class PathFinderGameController : MonoBehaviour
         gameView.UpdateStars(0, 0);
         gameView.UpdateStars(1, 0);
         gameView.UpdateTimer(_gameModel.GameTimer);
+        PlayerRecognitionService.Instance.BeginGameSession("PathFinderGame");
+
+        StartCoroutine(InitialStartCountdown());
+    }
+
+    /// <summary>"Start in 3,2,1" before round 1, recognizing both slots throughout so gameplay
+    /// doesn't start under stale/default names.</summary>
+    private IEnumerator InitialStartCountdown()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            gameView.ShowCountdown(0, i);
+            gameView.ShowCountdown(1, i);
+            yield return new WaitForSeconds(1f);
+        }
+        gameView.HideCountdown(0);
+        gameView.HideCountdown(1);
 
         LoadNewRound();
 
         _customFSMManager.StateMachineChange(PathFinderSceneState.Playing);
+    }
+
+    private void RefreshPlayerNames()
+    {
+        gameView.SetPlayerNames(
+            GameSessionManager.Instance.GetDisplayName1(),
+            GameSessionManager.Instance.GetDisplayName2());
     }
 
     private void LoadNewRound()
@@ -157,11 +187,16 @@ public class PathFinderGameController : MonoBehaviour
         // Display after a short delay to let layout settle
         StartCoroutine(DisplayMazesDelayed(p1, p2));
         MusicManager.Instance?.PlayQuestionSfx();
+        _questionShownTime[0] = Time.time; _roundIndex[0]++;
+        _questionShownTime[1] = Time.time; _roundIndex[1]++;
         StartQuestionTimeout(0);
         StartQuestionTimeout(1);
 
         Debug.Log($"NDL: PathFinder Round {_gameModel.CurrentRound} - P1 correct={p1.CorrectChoice} P2 correct={p2.CorrectChoice}");
     }
+
+    string DescribeQuestion(MazeGenerator.MazePuzzle puzzle)
+        => puzzle == null ? "" : $"maze junction (difficulty={puzzle.Difficulty})";
 
     private IEnumerator DisplayMazesDelayed(MazeGenerator.MazePuzzle p1, MazeGenerator.MazePuzzle p2)
     {
@@ -221,6 +256,8 @@ public class PathFinderGameController : MonoBehaviour
         if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
         MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
+        var timeoutPuzzle = playerIndex == 0 ? _gameModel.Player1Puzzle : _gameModel.Player2Puzzle;
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(timeoutPuzzle), "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
         if (playerIndex == 0)
         { if (_p1FeedbackCoroutine != null) StopCoroutine(_p1FeedbackCoroutine); _p1FeedbackCoroutine = StartCoroutine(NextRoundAfterDelay(playerIndex)); }
         else
@@ -245,6 +282,10 @@ public class PathFinderGameController : MonoBehaviour
 
         bool isCorrect = _gameModel.CheckAnswer(playerIndex);
         MazeGenerator.MazePuzzle puzzle = playerIndex == 0 ? _gameModel.Player1Puzzle : _gameModel.Player2Puzzle;
+
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(puzzle),
+            choice >= 0 && choice < ChoiceNames.Length ? ChoiceNames[choice] : choice.ToString(),
+            isCorrect, Time.time - _questionShownTime[playerIndex]);
 
         if (isCorrect)
         {
@@ -288,6 +329,8 @@ public class PathFinderGameController : MonoBehaviour
         gameView.HideFeedback(playerIndex);
         gameView.HideQuestion(playerIndex);
 
+        PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
+
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {
@@ -314,6 +357,8 @@ public class PathFinderGameController : MonoBehaviour
         MazeGenerator.MazePuzzle puzzle = _gameModel.GenerateNewPuzzle(playerIndex);
         gameView.DisplayMaze(playerIndex, puzzle);
         MusicManager.Instance?.PlayQuestionSfx();
+        _questionShownTime[playerIndex] = Time.time;
+        _roundIndex[playerIndex]++;
         StartQuestionTimeout(playerIndex);
     }
 

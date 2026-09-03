@@ -1,0 +1,10 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,answerMode,correctAnswers,displayMode
+vi001,SolarSystem,1,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Thủy,Sao Kim,Trái Đất,,,OrderedSequence,"0,1,2",Floating
+vi002,SolarSystem,1,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Mộc,Sao Thổ,Hải Vương,,,OrderedSequence,"0,1,2",Floating
+vi003,SolarSystem,1,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Trái Đất,Sao Hỏa,Sao Mộc,,,OrderedSequence,"0,1,2",Floating
+vi004,SolarSystem,2,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Thủy,Sao Kim,Trái Đất,Sao Hỏa,,OrderedSequence,"0,1,2,3",Floating
+vi005,SolarSystem,2,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Mộc,Sao Thổ,Thiên Vương,Hải Vương,,OrderedSequence,"0,1,2,3",Floating
+vi006,SolarSystem,2,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Kim,Trái Đất,Sao Hỏa,Sao Mộc,,OrderedSequence,"0,1,2,3",Floating
+vi007,SolarSystem,3,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Thủy,Sao Kim,Trái Đất,Sao Hỏa,Sao Mộc,OrderedSequence,"0,1,2,3,4",Floating
+vi008,SolarSystem,3,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Hỏa,Sao Mộc,Sao Thổ,Thiên Vương,Hải Vương,OrderedSequence,"0,1,2,3,4",Floating
+vi009,SolarSystem,3,Audio,audio/Hanh_tinh_nao_gan_mat_troi_nhat,Text,Sao Thủy,Trái Đất,Sao Mộc,Sao Thổ,Hải Vương,OrderedSequence,"0,1,2,3,4",Floating

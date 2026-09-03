@@ -31,6 +31,9 @@ public class TrainPathGameController : MonoBehaviour
 
     private float _feedbackDelay = 2.5f; // Increased for train animation
     private float _questionTimeout = 10f;
+    private readonly int[] _roundIndex = new int[2];
+    private readonly float[] _questionShownTime = new float[2];
+    private static readonly string[] OptionNames = { "Left", "Straight", "Right" };
 
     void Start()
     {
@@ -265,9 +268,36 @@ public class TrainPathGameController : MonoBehaviour
     {
         _gameModel.ResetGame();
         gameView.UpdateScores(0, 0);
+        PlayerRecognitionService.Instance.BeginGameSession("TrainPathGame");
+
+        StartCoroutine(InitialStartCountdown());
+    }
+
+    /// <summary>"Start in 3,2,1" before the first puzzle loads, recognizing both slots
+    /// throughout so gameplay doesn't start under stale/default names.</summary>
+    private IEnumerator InitialStartCountdown()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            gameView.ShowCountdown(0, i);
+            gameView.ShowCountdown(1, i);
+            yield return new WaitForSeconds(1f);
+        }
+        gameView.HideCountdown(0);
+        gameView.HideCountdown(1);
 
         LoadNewRound();
         _customFSMManager.StateMachineChange(TrainPathSceneState.Playing);
+    }
+
+    private void RefreshPlayerNames()
+    {
+        gameView.SetPlayerNames(
+            GameSessionManager.Instance.GetDisplayName1(),
+            GameSessionManager.Instance.GetDisplayName2());
     }
 
     private void LoadNewRound()
@@ -288,9 +318,14 @@ public class TrainPathGameController : MonoBehaviour
         gameView.SetPlayerOptionsInteractable(1, true);
         gameView.HideFeedbackIcons();
         MusicManager.Instance?.PlayQuestionSfx();
+        _questionShownTime[0] = Time.time; _roundIndex[0]++;
+        _questionShownTime[1] = Time.time; _roundIndex[1]++;
         StartQuestionTimeout(0);
         StartQuestionTimeout(1);
     }
+
+    string DescribeQuestion(TrainPathPuzzle puzzle)
+        => puzzle == null ? "" : $"hidden cell ({puzzle.HiddenRow},{puzzle.HiddenCol})";
 
     private void StartQuestionTimeout(int playerIndex)
     {
@@ -317,6 +352,8 @@ public class TrainPathGameController : MonoBehaviour
         MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerOptionsInteractable(playerIndex, false);
+        var timeoutPuzzle = playerIndex == 0 ? _gameModel.Player1Puzzle : _gameModel.Player2Puzzle;
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(timeoutPuzzle), "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
         if (playerIndex == 0)
         { if (_p1FeedbackCoroutine != null) StopCoroutine(_p1FeedbackCoroutine); _p1FeedbackCoroutine = StartCoroutine(LoadNextPuzzleForPlayer(playerIndex)); }
         else
@@ -351,6 +388,10 @@ public class TrainPathGameController : MonoBehaviour
 
         bool isCorrect = _gameModel.CheckAnswer(playerIndex);
         TrainPathPuzzle puzzle = playerIndex == 0 ? _gameModel.Player1Puzzle : _gameModel.Player2Puzzle;
+
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(puzzle),
+            optionIndex >= 0 && optionIndex < OptionNames.Length ? OptionNames[optionIndex] : optionIndex.ToString(),
+            isCorrect, Time.time - _questionShownTime[playerIndex]);
 
         if (isCorrect)
         {
@@ -413,6 +454,8 @@ public class TrainPathGameController : MonoBehaviour
         gameView.HideFeedbackIcon(playerIndex);
         gameView.HideQuestion(playerIndex);
 
+        PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
+
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {
@@ -435,6 +478,8 @@ public class TrainPathGameController : MonoBehaviour
         gameView.SetPlayerOptionsInteractable(playerIndex, true);
         gameView.HideFeedbackIcons();
         MusicManager.Instance?.PlayQuestionSfx();
+        _questionShownTime[playerIndex] = Time.time;
+        _roundIndex[playerIndex]++;
         StartQuestionTimeout(playerIndex);
     }
 

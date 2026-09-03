@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Chọn display phù hợp dựa trên 3 weight, tự lấy câu hỏi từ QuestionPool.
@@ -38,6 +41,40 @@ public class AnswerDisplayManager : MonoBehaviour
     IAnswerDisplay _active;
     IAnswerDisplay _independentDisplay;
 
+    // Vùng zone và trạng thái FloorZoneClearer
+    RectTransform         _canvasRoot;
+    RectTransform         _zoneLeft;
+    RectTransform         _zoneRight;
+    FloorZoneClearer      _activeZone;
+    bool                  _zoneCleared = true;
+    // Nhãn "Go to START!" hiện sớm (trước khi cả 2 trả lời) — thuần cosmetic, không có timer
+    readonly List<GameObject> _earlyLabels = new List<GameObject>();
+
+    /// <summary>true khi không có zone active hoặc người chơi đã bước ra đủ EXIT_DELAY.</summary>
+    public bool ZoneCleared => _zoneCleared;
+
+    void Awake()
+    {
+        // Phải gắn vào Canvas root để phủ đúng toàn màn hình
+        var canvas  = GetComponentInParent<Canvas>();
+        var root    = canvas != null ? canvas.GetComponent<RectTransform>()
+                                     : transform.parent as RectTransform;
+        _canvasRoot = root;
+        _zoneLeft   = MakeZoneRect(root, "ZoneLeft",  new Vector2(0f,   0f), new Vector2(0.5f, 1f));
+        _zoneRight  = MakeZoneRect(root, "ZoneRight", new Vector2(0.5f, 0f), new Vector2(1f,   1f));
+    }
+
+    static RectTransform MakeZoneRect(RectTransform parent, string name, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        var go = new GameObject(name);
+        var rt = go.AddComponent<RectTransform>();
+        rt.SetParent(parent, false);
+        rt.anchorMin = anchorMin;
+        rt.anchorMax = anchorMax;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        return rt;
+    }
+
     /// <summary>Câu hỏi đang được hiển thị — Controller đọc để log.</summary>
     public QuestionData CurrentQuestion { get; private set; }
 
@@ -52,6 +89,29 @@ public class AnswerDisplayManager : MonoBehaviour
                      Action<Team> onPartialCorrect = null)
     {
         HideAll();
+        _zoneCleared = true;
+        if (_activeZone != null) { Destroy(_activeZone.gameObject); _activeZone = null; }
+        ClearEarlyLabels();
+
+        // onResult fire ngay: ghi điểm + feedback + FSM transition
+        // Song song: hiện đáp án đúng màu xanh + bật FloorZoneClearer toàn màn hình
+        Action<bool, Team, int[]> wrappedResult = (correct, team, answers) =>
+        {
+            onResult(correct, team, answers);
+            (_active as IRevealable)?.RevealCorrectAnswer(); // highlight đáp án đúng xanh cả 2 bên
+            ClearEarlyLabels();
+            if (_canvasRoot != null)
+            {
+                _zoneCleared = false;
+                _activeZone  = FloorZoneClearer.AwaitBothSides(_canvasRoot,
+                    () => { _zoneCleared = true; _activeZone = null; });
+            }
+        };
+
+        // Khi 1 player fail sớm (trước khi cả 2 xong): hiện "Go to START!" trên nửa của họ (cosmetic)
+        Action<Team> wrappedFailed = onPlayerFailed != null
+            ? (team) => { ShowEarlyGoToStart(team); onPlayerFailed(team); }
+            : (Action<Team>)null;
 
         // 1. Chọn slot display dựa trên weight
         int slot = PickSlot();           // 0 = Floating, 1 = Button, 2 = Matching
@@ -88,7 +148,7 @@ public class AnswerDisplayManager : MonoBehaviour
         CurrentQuestion = q;
 
         (_active as MonoBehaviour)?.gameObject.SetActive(true);
-        _active.Setup(q, onResult, onPlayerFailed);
+        _active.Setup(q, wrappedResult, wrappedFailed ?? onPlayerFailed);
         (_active as FloatingDisplay)?.SetPartialCorrectCallback(onPartialCorrect);
         (_active as ButtonDisplay)?.SetPartialCorrectCallback(onPartialCorrect);
     }
@@ -124,6 +184,9 @@ public class AnswerDisplayManager : MonoBehaviour
 
     public void Cleanup()
     {
+        _zoneCleared = true;
+        if (_activeZone != null) { Destroy(_activeZone.gameObject); _activeZone = null; }
+        ClearEarlyLabels();
         _active?.Cleanup();
         if (_independentDisplay != null && _independentDisplay != _active)
             _independentDisplay.Cleanup();
@@ -133,6 +196,61 @@ public class AnswerDisplayManager : MonoBehaviour
         _active             = null;
         _independentDisplay = null;
         CurrentQuestion     = null;
+    }
+
+    // ─── Floor zone helpers ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Hiện nhãn "Go to START position!" ngay trên nửa màn hình của player fail sớm.
+    /// Thuần cosmetic — không có click detection / timer.
+    /// Sẽ bị dọn khi cả 2 xong (wrappedResult) hoặc khi Cleanup().
+    /// </summary>
+    void ShowEarlyGoToStart(Team team)
+    {
+        var zone = team == Team.Left ? _zoneLeft : _zoneRight;
+        if (zone == null) return;
+        zone.SetAsLastSibling(); // hiện lên trên game display
+        _earlyLabels.Add(CreateGoToStartLabel(zone));
+    }
+
+    void ClearEarlyLabels()
+    {
+        foreach (var lbl in _earlyLabels) if (lbl != null) Destroy(lbl);
+        _earlyLabels.Clear();
+    }
+
+    static GameObject CreateGoToStartLabel(RectTransform parent)
+    {
+        var go = new GameObject("_EarlyGoToStart");
+        var rt = go.AddComponent<RectTransform>();
+        rt.SetParent(parent, false);
+        rt.anchorMin = new Vector2(0f, 0.1f);
+        rt.anchorMax = new Vector2(1f, 0.4f);
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+        var cv = go.AddComponent<Canvas>();
+        cv.overrideSorting = true;
+        cv.sortingOrder    = 20;
+
+        var bgImg = go.AddComponent<Image>();
+        bgImg.color         = new Color(0f, 0f, 0f, 0.75f);
+        bgImg.raycastTarget = false;
+
+        var textGo = new GameObject("Text");
+        var textRt = textGo.AddComponent<RectTransform>();
+        textRt.SetParent(rt, false);
+        textRt.anchorMin = Vector2.zero;
+        textRt.anchorMax = Vector2.one;
+        textRt.offsetMin = textRt.offsetMax = Vector2.zero;
+
+        var tmp = textGo.AddComponent<TextMeshProUGUI>();
+        tmp.text          = "Go to START position!";
+        tmp.fontSize      = 48f;
+        tmp.fontStyle     = FontStyles.Bold;
+        tmp.alignment     = TextAlignmentOptions.Center;
+        tmp.color         = new Color(1f, 0.92f, 0.2f, 1f);
+        tmp.raycastTarget = false;
+        return go;
     }
 
     /// <summary>Ẩn phần đáp án của 1 player — giữ nguyên bên player kia.
@@ -246,7 +364,7 @@ public class AnswerDisplayManager : MonoBehaviour
     }
 }
 
-// ─── Interface ────────────────────────────────────────────────────────────────
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 
 public interface IAnswerDisplay
 {
@@ -258,4 +376,14 @@ public interface IAnswerDisplay
     /// <summary>Ẩn đáp án của 1 bên player sau khi họ fail — không ảnh hưởng bên kia.</summary>
     void HidePlayerAnswers(Team team);
     void Cleanup();
+}
+
+/// <summary>
+/// Optional: display có thể hiện đáp án đúng màu xanh sau khi round kết thúc.
+/// Implement trên ButtonDisplay, SolarSystemDisplay, v.v.
+/// AnswerDisplayManager gọi qua cast: (_active as IRevealable)?.RevealCorrectAnswer()
+/// </summary>
+public interface IRevealable
+{
+    void RevealCorrectAnswer();
 }

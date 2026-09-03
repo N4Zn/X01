@@ -32,6 +32,8 @@ public class AddUpGameController : MonoBehaviour
 
     private float _feedbackDelay = 1.5f;
     private float _questionTimeout = 10f;
+    private readonly float[] _questionShownTime = new float[2];
+    private readonly int[] _roundIndex = new int[2];
 
     void Start()
     {
@@ -261,9 +263,40 @@ public class AddUpGameController : MonoBehaviour
         gameView.HideGameOverPanel();
         gameView.SetQuestionText("Fill in the missing number!");
         gameView.UpdateScores(0, 0);
+        PlayerRecognitionService.Instance.BeginGameSession("AddUpGame");
+
+        StartCoroutine(InitialStartCountdown());
+    }
+
+    /// <summary>
+    /// "Start in 3,2,1" shown on both sides before the very first question loads, with
+    /// recognition running for both slots throughout — otherwise the first question would
+    /// display under whatever stale name GameSessionManager had from team select, and the
+    /// first real recognition attempt wouldn't happen until after someone answers a question.
+    /// </summary>
+    private IEnumerator InitialStartCountdown()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            gameView.ShowCountdown(0, i);
+            gameView.ShowCountdown(1, i);
+            yield return new WaitForSeconds(1f);
+        }
+        gameView.HideCountdown(0);
+        gameView.HideCountdown(1);
 
         LoadNewRound();
         _customFSMManager.StateMachineChange(AddUpSceneState.Playing);
+    }
+
+    private void RefreshPlayerNames()
+    {
+        gameView.SetPlayerNames(
+            GameSessionManager.Instance.GetDisplayName1(),
+            GameSessionManager.Instance.GetDisplayName2());
     }
 
     private void LoadNewRound()
@@ -299,7 +332,20 @@ public class AddUpGameController : MonoBehaviour
             gameView.DisplayAnswers(playerIndex, q.answer_1, q.answer_2, q.answer_3, q.image_type);
         }
         gameView.SetPlayerAnswersInteractable(playerIndex, true);
+        _questionShownTime[playerIndex] = Time.time;
+        _roundIndex[playerIndex]++;
         StartQuestionTimeout(playerIndex);
+    }
+
+    string DescribeQuestion(int playerIndex)
+    {
+        var q = playerIndex == 0 ? _gameModel.Player1Question : _gameModel.Player2Question;
+        if (q == null) return "";
+        if (_gameModel.IsLevel4[playerIndex])
+            return $"? + ? = {_gameModel.Level4Target[playerIndex]}";
+        return q.hidden_position == "a"
+            ? $"? + {q.number_b} = {_gameModel.GetSum(q)}"
+            : $"{q.number_a} + ? = {_gameModel.GetSum(q)}";
     }
 
     private void StartQuestionTimeout(int playerIndex)
@@ -327,6 +373,7 @@ public class AddUpGameController : MonoBehaviour
         MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerAnswersInteractable(playerIndex, false);
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
         ScheduleNextQuestion(playerIndex);
     }
 
@@ -362,6 +409,10 @@ public class AddUpGameController : MonoBehaviour
         }
 
         bool isCorrect = _gameModel.CheckAnswer(playerIndex, answerIndex);
+
+        var answeredQuestion = playerIndex == 0 ? _gameModel.Player1Question : _gameModel.Player2Question;
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex),
+            _gameModel.GetAnswerValue(answeredQuestion, answerIndex).ToString(), isCorrect, Time.time - _questionShownTime[playerIndex]);
 
         // Mark as answered
         if (playerIndex == 0) _p1Answered = true;
@@ -418,6 +469,10 @@ public class AddUpGameController : MonoBehaviour
             gameView.UpdateScores(_gameModel.Player1Score, _gameModel.Player2Score);
             gameView.UpdateStars(playerIndex, playerIndex == 0 ? _gameModel.Player1Score : _gameModel.Player2Score);
 
+            var q2 = playerIndex == 0 ? _gameModel.Player1Question : _gameModel.Player2Question;
+            string picks = $"{_gameModel.GetAnswerValue(q2, Level4FirstPickOf(playerIndex))},{_gameModel.GetAnswerValue(q2, answerIndex)}";
+            PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), picks, true, Time.time - _questionShownTime[playerIndex]);
+
             if (playerIndex == 0) _p1Answered = true;
             else _p2Answered = true;
             gameView.SetPlayerAnswersInteractable(playerIndex, false);
@@ -430,12 +485,18 @@ public class AddUpGameController : MonoBehaviour
             gameView.SetWrongAnswerBorder(playerIndex, answerIndex);
             gameView.ShowFeedback(playerIndex, false);
 
+            var qWrong = playerIndex == 0 ? _gameModel.Player1Question : _gameModel.Player2Question;
+            PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex),
+                _gameModel.GetAnswerValue(qWrong, answerIndex).ToString(), false, Time.time - _questionShownTime[playerIndex]);
+
             if (playerIndex == 0) _p1Answered = true;
             else _p2Answered = true;
             gameView.SetPlayerAnswersInteractable(playerIndex, false);
             ScheduleNextQuestion(playerIndex);
         }
     }
+
+    int Level4FirstPickOf(int playerIndex) => _gameModel.Level4FirstPick[playerIndex];
 
     private void ScheduleNextQuestion(int playerIndex)
     {
@@ -458,6 +519,8 @@ public class AddUpGameController : MonoBehaviour
 
         gameView.HideFeedbackIcon(playerIndex);
         gameView.HideQuestion(playerIndex);
+
+        PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)

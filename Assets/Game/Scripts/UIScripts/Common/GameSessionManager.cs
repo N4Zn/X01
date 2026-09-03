@@ -58,6 +58,12 @@ public class GameSessionManager : Singleton<GameSessionManager>
     public string SelectedGameName { get; set; }
 
     /// <summary>
+    /// Full entry từ GameRegistry — chứa bgmTrack, backgroundSprite, pointsPerCorrect.
+    /// Set cùng lúc với SelectedGameName bởi MenuSceneController.
+    /// </summary>
+    public GameRegistry.GameEntry SelectedEntry { get; set; }
+
+    /// <summary>
     /// Calculated target score based on GameSettings (1 point per 5 seconds).
     /// </summary>
     public int TargetScore

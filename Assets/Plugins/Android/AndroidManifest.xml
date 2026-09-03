@@ -3,6 +3,10 @@
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.VIBRATE" />
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <!-- FRTest: USB UVC camera + face recognition DB -->
+  <uses-permission android:name="android.permission.CAMERA" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-feature android:name="android.hardware.usb.host" android:required="false" />
   <application android:label="@string/app_name" android:icon="@mipmap/app_icon" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:hardwareAccelerated="true">
     <!--
       EduXplore 2.0 — Floor Projection App
@@ -15,6 +19,8 @@
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
+      <!-- USB_DEVICE_ATTACHED intent-filter and usb_device_filter.xml are declared
+           inside unityplugin.aar (manifest merge) to avoid the obsolete res/ folder error. -->
     </activity>
     <!-- FileProvider cho AppUpdater: chia sẻ APK với Android installer -->
     <provider android:name="androidx.core.content.FileProvider" android:authorities="com.EduXplore.X01a.fileprovider" android:exported="false" android:grantUriPermissions="true">

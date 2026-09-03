@@ -9,6 +9,17 @@ public class PlanetOrderDisplay : MonoBehaviour, IAnswerDisplay
     static readonly string[] PlanetNames = {
         "Mercury","Venus","Earth","Mars","Jupiter","Saturn","Uranus","Neptune"
     };
+    static readonly string[] PlanetNamesVi = {
+        "Sao Thủy","Sao Kim","Trái Đất","Sao Hỏa","Sao Mộc","Sao Thổ","Thiên Vương","Hải Vương"
+    };
+
+    static bool IsVietnamese =>
+        GameSessionManager.Instance?.SelectedGameName?.EndsWith("Vi") == true
+        || GameSessionManager.Instance?.SelectedGameName?.EndsWith("2") == true;
+
+    static string[] ActivePlanetNames => IsVietnamese ? PlanetNamesVi : PlanetNames;
+    static string   SunLabel          => IsVietnamese ? "MẶT TRỜI" : "SUN";
+    static string   SavedLabel(int n) => IsVietnamese ? $"Đã lưu: {n}" : $"Saved: {n}";
     static readonly Color[] PlanetColors = {
         new Color(0.60f, 0.58f, 0.55f),
         new Color(0.88f, 0.76f, 0.40f),
@@ -279,7 +290,7 @@ public class PlanetOrderDisplay : MonoBehaviour, IAnswerDisplay
         slRt.anchorMin = Vector2.zero; slRt.anchorMax = Vector2.one;
         slRt.offsetMin = slRt.offsetMax = Vector2.zero;
         var sl = sunLbl.AddComponent<TextMeshProUGUI>();
-        sl.text = "SUN"; sl.fontSize = 24f; sl.fontStyle = FontStyles.Bold;
+        sl.text = SunLabel; sl.fontSize = 24f; sl.fontStyle = FontStyles.Bold;
         sl.color = LabelCol;
         sl.alignment = TextAlignmentOptions.Center;
         sl.raycastTarget = false;
@@ -528,7 +539,7 @@ public class PlanetOrderDisplay : MonoBehaviour, IAnswerDisplay
 
             if (_lbl[col, row] != null)
             {
-                _lbl[col, row].text  = PlanetNames[planet];
+                _lbl[col, row].text  = ActivePlanetNames[planet];
                 _lbl[col, row].color = LabelCol;
             }
 
@@ -543,7 +554,7 @@ public class PlanetOrderDisplay : MonoBehaviour, IAnswerDisplay
 
         if (_flashImg)     { _flashImg.color = Color.clear; _flashImg.raycastTarget = false; }
         if (_countdownTxt)   _countdownTxt.text = "";
-        if (_successTxt)     _successTxt.text = $"Saved: {_successCount}";
+        if (_successTxt)     _successTxt.text = SavedLabel(_successCount);
 
         ResetAstronaut();
         StartBreathing();
@@ -571,7 +582,7 @@ public class PlanetOrderDisplay : MonoBehaviour, IAnswerDisplay
         if (_step >= N)
         {
             _successCount++;
-            if (_successTxt) _successTxt.text = $"Saved: {_successCount}";
+            if (_successTxt) _successTxt.text = SavedLabel(_successCount);
             StartCoroutine(WinSequence());
         }
         else

@@ -32,6 +32,8 @@ public class AddNumberGameController : MonoBehaviour
 
     private float _feedbackDelay = 1.5f;
     private float _questionTimeout = 10f;
+    private readonly int[] _roundIndex = new int[2];
+    private readonly float[] _questionShownTime = new float[2];
 
     void Start()
     {
@@ -262,9 +264,40 @@ public class AddNumberGameController : MonoBehaviour
         gameView.HideGameOverPanel();
         gameView.SetQuestionText("Fill in the missing number!");
         gameView.UpdateScores(0, 0);
+        PlayerRecognitionService.Instance.BeginGameSession("AddNumberGame");
+
+        StartCoroutine(InitialStartCountdown());
+    }
+
+    /// <summary>
+    /// "Start in 3,2,1" shown on both sides before the very first question loads, with
+    /// recognition running for both slots throughout — otherwise the first question would
+    /// display under whatever stale name GameSessionManager had from team select, and the
+    /// first real recognition attempt wouldn't happen until after someone answers a question.
+    /// </summary>
+    private IEnumerator InitialStartCountdown()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            gameView.ShowCountdown(0, i);
+            gameView.ShowCountdown(1, i);
+            yield return new WaitForSeconds(1f);
+        }
+        gameView.HideCountdown(0);
+        gameView.HideCountdown(1);
 
         LoadNewRound();
         _customFSMManager.StateMachineChange(AddNumberSceneState.Playing);
+    }
+
+    private void RefreshPlayerNames()
+    {
+        gameView.SetPlayerNames(
+            GameSessionManager.Instance.GetDisplayName1(),
+            GameSessionManager.Instance.GetDisplayName2());
     }
 
     private void LoadNewRound()
@@ -298,7 +331,21 @@ public class AddNumberGameController : MonoBehaviour
         gameView.DisplayAnswers(playerIndex, answers, q.image_type);
 
         gameView.SetPlayerAnswersInteractable(playerIndex, true);
+        _questionShownTime[playerIndex] = Time.time;
+        _roundIndex[playerIndex]++;
         // StartQuestionTimeout(playerIndex); // tạm tắt giới hạn thời gian mỗi câu
+    }
+
+    string DescribeQuestion(int playerIndex)
+    {
+        int a = _gameModel.ValA[playerIndex];
+        int b = _gameModel.ValB[playerIndex];
+        int c = _gameModel.ValC[playerIndex];
+        string hidden = _gameModel.HiddenPos[playerIndex] ?? "";
+        string sa = hidden.Contains("a") ? "?" : a.ToString();
+        string sb = hidden.Contains("b") ? "?" : b.ToString();
+        string sc = hidden.Contains("c") ? "?" : c.ToString();
+        return $"{sa} + {sb} = {sc}";
     }
 
     private void StartQuestionTimeout(int playerIndex)
@@ -326,6 +373,7 @@ public class AddNumberGameController : MonoBehaviour
         MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerAnswersInteractable(playerIndex, false);
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
         ScheduleNextQuestion(playerIndex);
     }
 
@@ -397,6 +445,12 @@ public class AddNumberGameController : MonoBehaviour
 
             gameView.ShowFeedback(playerIndex, false);
             gameView.SetPlayerAnswersInteractable(playerIndex, false);
+
+            string wrongAnswer = _gameModel.IsMultiPick[playerIndex]
+                ? string.Join(",", _gameModel.MultiPickSelectedIndices[playerIndex].ConvertAll(i => _gameModel.GetStoredAnswer(playerIndex, i).ToString()))
+                : _gameModel.GetStoredAnswer(playerIndex, answerIndex).ToString();
+            PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), wrongAnswer, false, Time.time - _questionShownTime[playerIndex]);
+
             ScheduleNextQuestion(playerIndex);
         }
         else if (result == 1) // Partial Correct / Toggle
@@ -423,6 +477,11 @@ public class AddNumberGameController : MonoBehaviour
             }
 
             gameView.ShowFeedback(playerIndex, true);
+
+            string correctAnswer = _gameModel.IsMultiPick[playerIndex]
+                ? string.Join(",", _gameModel.MultiPickSelectedIndices[playerIndex].ConvertAll(i => _gameModel.GetStoredAnswer(playerIndex, i).ToString()))
+                : _gameModel.GetStoredAnswer(playerIndex, answerIndex).ToString();
+            PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), correctAnswer, true, Time.time - _questionShownTime[playerIndex]);
 
             gameView.SetPlayerAnswersInteractable(playerIndex, false);
             ScheduleNextQuestion(playerIndex);
@@ -451,6 +510,10 @@ public class AddNumberGameController : MonoBehaviour
 
         gameView.HideFeedbackIcon(playerIndex);
         gameView.HideQuestion(playerIndex);
+
+        // Recognize whoever is now standing in this slot's camera half, then refresh the
+        // displayed name — headless (no camera preview / bounding box, just name lookup).
+        PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)

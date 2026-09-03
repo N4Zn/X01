@@ -37,6 +37,13 @@ public class StartMainController : MonoBehaviour
 
     private void Awake()
     {
+        // Warm up the face-recognition plugin (native init + USB camera permission handshake)
+        // as early as possible. Touching .Instance creates + Start()s it right away; the CSV/
+        // config loading below takes several real seconds on its own, giving the camera plenty
+        // of overlapping time to connect before any mini-game's "Start in 3,2,1" ever needs it —
+        // instead of only starting to warm up at that exact moment.
+        _ = FaceRecognitionPlugin.Instance;
+
         LoadData();
     }
 

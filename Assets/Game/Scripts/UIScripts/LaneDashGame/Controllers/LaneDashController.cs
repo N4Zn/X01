@@ -61,6 +61,8 @@ public class LaneDashController : MonoBehaviour
     float _laneCooldownRemainingRight;
     float _elapsedPlaying;
     int _currentLevel = -1; // -1 để lần đầu Update() luôn coi là "vừa đổi cấp" (áp dụng level 0 + set pitch nhạc lần đầu)
+    int _eventIndexLeft;
+    int _eventIndexRight;
 
     // ── Unity lifecycle ───────────────────────────────────────────────────────
 
@@ -149,7 +151,7 @@ public class LaneDashController : MonoBehaviour
         if (trackLeft)
         {
             trackLeft.Init(_cfg, _laneX);
-            trackLeft.OnObstacleHit      += () => HandleHit(avatarLeft);
+            trackLeft.OnObstacleHit      += () => HandleHit(Team.Left, avatarLeft);
             trackLeft.OnObstacleDodged   += () => HandleDodge(Team.Left);
             trackLeft.OnRewardCollected  += () => HandleReward(Team.Left);
             trackLeft.OnPowerUpCollected += variant => HandlePowerUp(avatarLeft, variant);
@@ -157,7 +159,7 @@ public class LaneDashController : MonoBehaviour
         if (trackRight)
         {
             trackRight.Init(_cfg, _laneX);
-            trackRight.OnObstacleHit      += () => HandleHit(avatarRight);
+            trackRight.OnObstacleHit      += () => HandleHit(Team.Right, avatarRight);
             trackRight.OnObstacleDodged   += () => HandleDodge(Team.Right);
             trackRight.OnRewardCollected  += () => HandleReward(Team.Right);
             trackRight.OnPowerUpCollected += variant => HandlePowerUp(avatarRight, variant);
@@ -188,6 +190,7 @@ public class LaneDashController : MonoBehaviour
 
         _timeRemaining = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 90f;
 
+        PlayerRecognitionService.Instance.BeginGameSession("LaneDashGame");
         yield return StartCoroutine(Countdown());
 
         _isPlaying = true;
@@ -202,6 +205,11 @@ public class LaneDashController : MonoBehaviour
     {
         if (countdownText) countdownText.gameObject.SetActive(true);
 
+        // Headless recognition (no camera preview/bounding box) running the whole countdown so
+        // both players are identified before the run starts.
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
         for (int i = _cfg.countdownSeconds; i >= 1; i--)
         {
             if (countdownText) countdownText.text = i.ToString();
@@ -214,6 +222,12 @@ public class LaneDashController : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
             countdownText.gameObject.SetActive(false);
         }
+    }
+
+    void RefreshPlayerNames()
+    {
+        if (gameHud == null || GameSessionManager.Instance == null) return;
+        gameHud.UpdatePlayerNames(GameSessionManager.Instance.GetDisplayName1(), GameSessionManager.Instance.GetDisplayName2());
     }
 
     // ── Input (thuần screen-space, không raycast 3D) ────────────────────────────
@@ -269,19 +283,34 @@ public class LaneDashController : MonoBehaviour
 
     // ── Score events ──────────────────────────────────────────────────────────
 
-    void HandleHit(LaneRunnerAvatar avatar)
+    void HandleHit(Team team, LaneRunnerAvatar avatar)
     {
         avatar?.PlayStun(_cfg.stunDuration);
         MusicManager.Instance?.PlayWrongSfx();
+        LogLaneEvent(team, "obstacle", "hit", false);
     }
 
-    void HandleDodge(Team team) => _scoreManager.AddPoints(team, _cfg.dodgePoints);
+    void HandleDodge(Team team)
+    {
+        _scoreManager.AddPoints(team, _cfg.dodgePoints);
+        LogLaneEvent(team, "obstacle", "dodge", true);
+    }
 
     void HandleReward(Team team)
     {
         _scoreManager.AddPoints(team, _cfg.rewardPoints);
         if (team == Team.Left) _rewardCountLeft++; else _rewardCountRight++;
         MusicManager.Instance?.PlayCorrectSfx();
+        LogLaneEvent(team, "reward", "collected", true);
+    }
+
+    /// <summary>LaneDash chạy liên tục (không có câu hỏi rời rạc) — mỗi sự kiện né/va/thu thập
+    /// được ghi thành 1 round-entry riêng, đánh số theo thứ tự xảy ra ở mỗi bên.</summary>
+    void LogLaneEvent(Team team, string eventName, string outcome, bool correct)
+    {
+        int slot = team == Team.Left ? 0 : 1;
+        int idx = team == Team.Left ? ++_eventIndexLeft : ++_eventIndexRight;
+        PlayerRecognitionService.Instance.LogRound(slot, idx, eventName, outcome, correct, 0f);
     }
 
     void HandlePowerUp(LaneRunnerAvatar avatar, LaneItemVariant variant)

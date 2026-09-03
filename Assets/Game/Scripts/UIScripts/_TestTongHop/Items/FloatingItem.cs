@@ -100,6 +100,14 @@ public class FloatingItem : MonoBehaviour, IPointerClickHandler
                 textSlot, textLabel,
                 imageSlot, imageHolder,
                 iconSlot, iconContainer, iconPrefab);
+
+            // Auto-size text để vừa với kích thước item (tránh tràn ra ngoài hình hành tinh)
+            if (mediaType == AnswerMediaType.Text && textLabel != null)
+            {
+                textLabel.enableAutoSizing = true;
+                textLabel.fontSizeMin      = 8f;
+                textLabel.fontSizeMax      = 28f;
+            }
         }
     }
 

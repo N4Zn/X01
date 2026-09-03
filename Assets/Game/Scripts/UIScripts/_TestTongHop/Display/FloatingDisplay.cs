@@ -10,6 +10,38 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
     [SerializeField] Sprite[]      planetSprites;
     // orbitCenterX / orbitRadius / orbitSpeed → TongHopConfig.Current (gameconfig.json)
 
+    // planetSprites[] (Inspector) là override tuỳ chọn — nếu để trống, tự load từ Resources.
+    // Thứ tự mảng phải khớp _planetTexPaths bên dưới: 0=Mercury … 7=Neptune, 8=Sun
+    static readonly System.Collections.Generic.Dictionary<string, int> _planetNameIdx =
+        new System.Collections.Generic.Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            { "Mercury",    0 }, { "Sao Thủy",   0 },
+            { "Venus",      1 }, { "Sao Kim",     1 },
+            { "Earth",      2 }, { "Trái Đất",    2 },
+            { "Mars",       3 }, { "Sao Hỏa",     3 },
+            { "Jupiter",    4 }, { "Sao Mộc",     4 },
+            { "Saturn",     5 }, { "Sao Thổ",     5 },
+            { "Uranus",     6 }, { "Thiên Vương", 6 },
+            { "Neptune",    7 }, { "Hải Vương",   7 },
+            { "Sun",        8 }, { "Mặt Trời",    8 },
+        };
+
+    static readonly string[] _planetTexPaths =
+    {
+        "SolarSystem/Mercury",
+        "SolarSystem/Venus",
+        "SolarSystem/Earth",
+        "SolarSystem/Mars",
+        "SolarSystem/Jupiter",
+        "SolarSystem/Saturn",
+        "SolarSystem/Uranus",
+        "SolarSystem/Neptune",
+        "SolarSystem/Textures/2k_sun",   // Sun chưa có sprite riêng
+    };
+
+    // Cache sprite tạo từ Texture2D để tránh tạo lại mỗi câu hỏi
+    static readonly Sprite[] _cachedPlanetSprites = new Sprite[9];
+
     // Hai nhóm item hoàn toàn độc lập
     readonly List<FloatingItem>  _leftItems  = new();
     readonly List<FloatingItem>  _rightItems = new();
@@ -150,10 +182,8 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
         _leftAngles  = new float[orbitCount];
         _rightAngles = new float[orbitCount];
 
-        int[] leftOrder    = ShuffledIndices(count);
-        int[] rightOrder   = ShuffledIndices(count);
-        var   leftPlanets  = PickRandomPlanets(count);
-        var   rightPlanets = PickRandomPlanets(count);
+        int[] leftOrder  = ShuffledIndices(count);
+        int[] rightOrder = ShuffledIndices(count);
 
         float cx = TongHopConfig.Current.orbitCenterX;
 
@@ -165,14 +195,14 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
             _rightAngles[i] = 360f * i / orbitCount;
 
             int lIdx  = validIndices[leftOrder[i]];
-            var lItem = SpawnOneItem(lIdx, leftPlanets[i], delay: i * 0.1f, Team.Left);
+            var lItem = SpawnOneItem(lIdx, GetPlanetSprite(_current.answers[lIdx]), delay: i * 0.1f, Team.Left);
             var lRt   = lItem.GetComponent<RectTransform>();
             lRt.anchoredPosition = OrbitPos(-cx, _leftAngles[i]);
             _leftItems.Add(lItem);
             _leftRts.Add(lRt);      // thêm vào RTs → sẽ xoay theo orbit
 
             int rIdx  = validIndices[rightOrder[i]];
-            var rItem = SpawnOneItem(rIdx, rightPlanets[i], delay: i * 0.1f + 0.05f, Team.Right);
+            var rItem = SpawnOneItem(rIdx, GetPlanetSprite(_current.answers[rIdx]), delay: i * 0.1f + 0.05f, Team.Right);
             var rRt   = rItem.GetComponent<RectTransform>();
             rRt.anchoredPosition = OrbitPos(cx, _rightAngles[i]);
             _rightItems.Add(rItem);
@@ -185,13 +215,13 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
             float delay = i * 0.1f;
 
             int lIdx  = validIndices[leftOrder[i]];
-            var lItem = SpawnOneItem(lIdx, leftPlanets[i], delay, Team.Left);
+            var lItem = SpawnOneItem(lIdx, GetPlanetSprite(_current.answers[lIdx]), delay, Team.Left);
             lItem.GetComponent<RectTransform>().anchoredPosition = new Vector2(-cx, 0f);
             _leftItems.Add(lItem);
             // KHÔNG thêm vào _leftRts → cố định, không xoay
 
             int rIdx  = validIndices[rightOrder[i]];
-            var rItem = SpawnOneItem(rIdx, rightPlanets[i], delay + 0.05f, Team.Right);
+            var rItem = SpawnOneItem(rIdx, GetPlanetSprite(_current.answers[rIdx]), delay + 0.05f, Team.Right);
             rItem.GetComponent<RectTransform>().anchoredPosition = new Vector2(cx, 0f);
             _rightItems.Add(rItem);
             // KHÔNG thêm vào _rightRts
@@ -228,8 +258,7 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
         float[] angles = new float[orbitCount];
         if (isLeft) _leftAngles = angles; else _rightAngles = angles;
 
-        int[]    order   = ShuffledIndices(count);
-        Sprite[] planets = PickRandomPlanets(count);
+        int[] order = ShuffledIndices(count);
 
         var items = isLeft ? _leftItems : _rightItems;
         var rts   = isLeft ? _leftRts   : _rightRts;
@@ -238,7 +267,7 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
         {
             angles[i] = 360f * i / orbitCount;
             int  idx  = validIndices[order[i]];
-            var  item = SpawnOneItemWith(q, idx, planets[i], i * 0.1f, team);
+            var  item = SpawnOneItemWith(q, idx, GetPlanetSprite(q.answers[idx]), i * 0.1f, team);
             var  rt   = item.GetComponent<RectTransform>();
             rt.anchoredPosition = OrbitPos(isLeft ? -cx : cx, angles[i]);
             items.Add(item);
@@ -247,7 +276,7 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
         for (int i = orbitCount; i < count; i++)
         {
             int idx  = validIndices[order[i]];
-            var item = SpawnOneItemWith(q, idx, planets[i], i * 0.1f, team);
+            var item = SpawnOneItemWith(q, idx, GetPlanetSprite(q.answers[idx]), i * 0.1f, team);
             item.GetComponent<RectTransform>().anchoredPosition = new Vector2(isLeft ? -cx : cx, 0f);
             items.Add(item);
         }
@@ -345,6 +374,7 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
                 {
                     picked?.SetState(ItemState.Correct);
                     picked?.Lock();
+                    MusicManager.Instance?.PlayCorrectSfx();
                 }
                 else // MultiSelect: ẩn item + +1 điểm + SFX, round tiếp tục
                 {
@@ -426,21 +456,45 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    Sprite[] PickRandomPlanets(int count)
+    /// <summary>
+    /// Trả về sprite đúng với tên hành tinh (Vi/En).
+    /// Ưu tiên: Inspector planetSprites[] → tự load Texture2D từ Resources → random fallback.
+    /// </summary>
+    Sprite GetPlanetSprite(string answerText)
     {
-        if (planetSprites == null || planetSprites.Length == 0)
-            return new Sprite[count];
-
-        var pool   = new List<Sprite>(planetSprites);
-        var result = new Sprite[count];
-        for (int i = 0; i < count; i++)
+        if (!string.IsNullOrWhiteSpace(answerText) &&
+            _planetNameIdx.TryGetValue(answerText.Trim(), out int idx))
         {
-            if (pool.Count == 0) pool = new List<Sprite>(planetSprites);
-            int pick  = UnityEngine.Random.Range(0, pool.Count);
-            result[i] = pool[pick];
-            pool.RemoveAt(pick);
+            // 1. Load sprite/texture đúng với tên hành tinh
+            if (_cachedPlanetSprites[idx] == null && idx < _planetTexPaths.Length)
+            {
+                string path = _planetTexPaths[idx];
+                // Thử Sprite trước (PNG import type Sprite 2D)
+                var spr = Resources.Load<Sprite>(path);
+                if (spr != null)
+                {
+                    _cachedPlanetSprites[idx] = spr;
+                }
+                else
+                {
+                    // Fallback: Texture2D (JPG hoặc PNG import type Default)
+                    var tex = Resources.Load<Texture2D>(path);
+                    if (tex != null)
+                        _cachedPlanetSprites[idx] = Sprite.Create(
+                            tex,
+                            new Rect(0f, 0f, tex.width, tex.height),
+                            new Vector2(0.5f, 0.5f),
+                            100f, 0, SpriteMeshType.FullRect);
+                }
+            }
+            if (_cachedPlanetSprites[idx] != null)
+                return _cachedPlanetSprites[idx];
         }
-        return result;
+
+        // Fallback: random từ Inspector (game không phải SolarOrder)
+        if (planetSprites != null && planetSprites.Length > 0)
+            return planetSprites[UnityEngine.Random.Range(0, planetSprites.Length)];
+        return null;
     }
 
     int[] ShuffledIndices(int n)

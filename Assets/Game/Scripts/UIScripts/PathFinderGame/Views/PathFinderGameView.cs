@@ -82,12 +82,19 @@ public class PathFinderGameView : MonoBehaviour
     private readonly Color _correctPathColor = new Color(0.3f, 0.9f, 0.4f, 0.7f);
     private readonly Color _wrongPathColor = new Color(0.9f, 0.3f, 0.3f, 0.5f);
 
+    /// <summary>Refreshes the two name labels — reusable after PlayerRecognitionService
+    /// recognizes someone mid-game, not just at InitView().</summary>
+    public void SetPlayerNames(string p1Name, string p2Name)
+    {
+        if (p1NameText != null) p1NameText.text = p1Name;
+        if (p2NameText != null) p2NameText.text = p2Name;
+    }
+
     public void InitView()
     {
         string p1Name = GameSessionManager.Instance.GetDisplayName1();
         string p2Name = GameSessionManager.Instance.GetDisplayName2();
-        if (p1NameText != null) p1NameText.text = p1Name;
-        if (p2NameText != null) p2NameText.text = p2Name;
+        SetPlayerNames(p1Name, p2Name);
 
         if (backButton != null) { backButton.onClick.RemoveAllListeners(); backButton.onClick.AddListener(() => OnBackClicked()); }
 

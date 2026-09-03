@@ -52,13 +52,27 @@ public class GameLogger
     {
         _currentRound = new RoundRecord
         {
-            round        = roundNumber,
-            questionId   = q.id,
-            topic        = q.topic,
-            questionType = q.questionType.ToString(),
-            answerMode   = q.answerMode.ToString(),
-            clicks       = new List<ClickRecord>()
+            round                 = roundNumber,
+            questionId            = q.id,
+            topic                 = q.topic,
+            questionType          = q.questionType.ToString(),
+            answerMode            = q.answerMode.ToString(),
+            playerLeftRecognized  = "",
+            playerRightRecognized = "",
+            clicks                = new List<ClickRecord>()
         };
+    }
+
+    /// <summary>
+    /// Cập nhật người chơi được nhận diện qua camera cho round đang chạy.
+    /// Gọi từ Controller sau BeginRound(), trong khoảng đếm ngược trước câu hỏi.
+    /// null = không nhận diện được bên đó (giữ nguyên "").
+    /// </summary>
+    public void UpdateRoundPlayers(string left, string right)
+    {
+        if (_currentRound == null) return;
+        if (left  != null) _currentRound.playerLeftRecognized  = left;
+        if (right != null) _currentRound.playerRightRecognized = right;
     }
 
     /// <summary>
@@ -224,10 +238,12 @@ public class GameLogger
         public int    round;
         public string questionId;
         public string topic;
-        public string questionType;   // "Choose" / "Matching"
-        public string answerMode;     // "Single" / "MultiSelect" / "OrderedSequence"
+        public string questionType;          // "Choose" / "Matching"
+        public string answerMode;            // "Single" / "MultiSelect" / "OrderedSequence"
+        public string playerLeftRecognized;  // tên nhận diện qua camera — "" nếu chưa nhận diện
+        public string playerRightRecognized;
         public bool   isCorrect;
-        public string winnerName;     // "" = cả 2 sai
+        public string winnerName;            // "" = cả 2 sai
         public float  responseTimeSeconds;
         public int[]  correctAnswers;
         public List<ClickRecord> clicks;

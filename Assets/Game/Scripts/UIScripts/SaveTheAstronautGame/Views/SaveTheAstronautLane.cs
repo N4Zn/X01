@@ -48,7 +48,9 @@ public class SaveTheAstronautLane : MonoBehaviour
 
     [Header("Phi hành gia — nghiêng sang bên vừa chọn")]
     [SerializeField] RectTransform astronautRect;
+    [SerializeField] UnityEngine.UI.Image astronautImage; // assign trực tiếp trong Inspector
     [SerializeField] float astronautLeanX = 90f;
+
 
     [Header("Trái Đất (đích) — hàng ảo thứ 13, cùng cơ chế trôi/to dần như 12 hàng trên")]
     [SerializeField] RectTransform earthRect;
@@ -63,6 +65,12 @@ public class SaveTheAstronautLane : MonoBehaviour
     SaveTheAstronautConfigData _cfg;
     bool[] _correctIsLeft;
     bool[] _revealedWrong;
+    CanvasGroup[] _leftGroups;
+    CanvasGroup[] _rightGroups;
+    RectTransform _startBannerContainer;
+    CanvasGroup _startBannerCg;
+    bool _startBannerDone;
+    int _lapCount;
     int _stepIndex;
     float _t;          // giây đã trôi trong chặng hiện tại (0..travelDuration)
     bool _running;
@@ -85,6 +93,45 @@ public class SaveTheAstronautLane : MonoBehaviour
             leftButtons[k].onClick.AddListener(() => OnTap(cap, true));
             rightButtons[k].onClick.AddListener(() => OnTap(cap, false));
         }
+
+        // CanvasGroup cho fade-out khi hàng trôi qua mặt trước
+        _leftGroups  = new CanvasGroup[n];
+        _rightGroups = new CanvasGroup[n];
+        for (int k = 0; k < n; k++)
+        {
+            _leftGroups[k]  = GetOrAddCanvasGroup(leftRects[k]);
+            _rightGroups[k] = GetOrAddCanvasGroup(rightRects[k]);
+        }
+
+        // Earth — tải texture, xóa tint xanh, bọc trong mask tròn
+        if (earthRect != null)
+        {
+            var raw = earthRect.GetComponent<UnityEngine.UI.RawImage>();
+            if (raw != null)
+            {
+                raw.color = Color.white;
+                if (raw.texture == null)
+                {
+                    var tex = Resources.Load<Texture2D>("SolarSystem/Textures/2k_earth_daymap");
+                    if (tex != null) { tex.wrapMode = TextureWrapMode.Repeat; raw.texture = tex; }
+                }
+            }
+            // Tìm sibling index nhỏ nhất của tile rows để đặt Earth trước chúng
+            int minTileIdx = int.MaxValue;
+            if (leftRects  != null) foreach (var r in leftRects)  if (r) minTileIdx = Mathf.Min(minTileIdx, r.GetSiblingIndex());
+            if (rightRects != null) foreach (var r in rightRects) if (r) minTileIdx = Mathf.Min(minTileIdx, r.GetSiblingIndex());
+            if (minTileIdx == int.MaxValue) minTileIdx = 0;
+            earthRect = WrapEarthInCircleMask(earthRect, minTileIdx);
+        }
+
+        // Astronaut back image
+        if (astronautImage != null)
+        {
+            var spr = Resources.Load<Sprite>("Space/AstronautBack");
+            if (spr != null) astronautImage.sprite = spr;
+        }
+
+        BuildStartBanner();
         NewPattern();
     }
 
@@ -93,10 +140,18 @@ public class SaveTheAstronautLane : MonoBehaviour
         _correctIsLeft = new bool[_cfg.stepCount];
         for (int i = 0; i < _correctIsLeft.Length; i++)
             _correctIsLeft[i] = UnityEngine.Random.value < 0.5f;
+        _lapCount = 0;
+        ResetForLap();
+    }
+
+    // Reset đầu mỗi lap (giữ nguyên _correctIsLeft và _lapCount)
+    void ResetForLap()
+    {
         _revealedWrong = new bool[_cfg.stepCount];
         _stepIndex = 0;
-        _t = 0f;
+        _t = -_cfg.travelDuration;
         _resolved = false;
+        _startBannerDone = false;
         SetupSlotDefault(0);
     }
 
@@ -106,12 +161,20 @@ public class SaveTheAstronautLane : MonoBehaviour
 
     void Update()
     {
+        // Breathing — luôn chạy để astronaut sống động ngay cả khi chờ
+        if (astronautRect != null)
+        {
+            float breathScale = 1f + Mathf.Sin(Time.time * Mathf.PI * 0.8f) * 0.03f;
+            var s = astronautRect.localScale;
+            astronautRect.localScale = new Vector3(s.x, breathScale, s.z);
+        }
+
         if (!_running || _paused) return;
 
         _t += Time.deltaTime;
         RefreshBoard();
 
-        if (_t >= _cfg.travelDuration && !_resolved)
+        if (_t >= _cfg.travelDuration && !_resolved && _stepIndex < _cfg.stepCount)
         {
             _resolved = true;
             StartCoroutine(ResolveCurrentStep(null)); // không bấm kịp — buộc phải chọn
@@ -125,6 +188,9 @@ public class SaveTheAstronautLane : MonoBehaviour
 
         for (int k = 0; k < n; k++)
         {
+            // Ẩn hàng ngoài phạm vi stepCount (scene có thể có nhiều hàng hơn config)
+            if (k >= _cfg.stepCount) { SetSlotActive(k, false); continue; }
+
             float depth = (k + 1) - s;
             // Cho depth âm ĐI QUA (PassPastSlots) trước khi ẩn hẳn — hàng vừa xong TRÔI TIẾP qua mặt
             // trước rồi mới biến mất, không pop/biến mất đột ngột ngay khi vừa đúng.
@@ -135,7 +201,13 @@ public class SaveTheAstronautLane : MonoBehaviour
             ApplyTravel(leftRects[k], depth);
             ApplyTravel(rightRects[k], depth);
 
-            bool isFront = k == _stepIndex;
+            // Fade-out tuyến tính khi hàng đã qua mặt trước (depth < 0)
+            float alpha = (k < _stepIndex && depth < 0f)
+                ? Mathf.Clamp01(1f + depth / PassPastSlots)
+                : 1f;
+            SetSlotAlpha(k, alpha);
+
+            bool isFront = k == _stepIndex && _t >= 0f; // không interactive khi đang phase Start banner
             leftButtons[k].interactable = isFront;
             rightButtons[k].interactable = isFront;
 
@@ -146,19 +218,44 @@ public class SaveTheAstronautLane : MonoBehaviour
             RefreshQueuedSlotVisual(k);
         }
 
-        float earthDepth = (n + 1) - s;
+        float earthDepth = (_cfg.stepCount + 1) - s;
         bool earthVisible = earthDepth >= -PassPastSlots && earthDepth <= visibleDepthSlots + 1f;
         if (earthRect != null)
         {
             earthRect.gameObject.SetActive(earthVisible);
             if (earthVisible) ApplyTravel(earthRect, earthDepth);
         }
+
+        // Start banner — ở depth=1 khi game mới bắt đầu (s=-1 do _t=-T), cuộn xuống player
+        // trước step 0, fade và biến mất. Chỉ hiện lúc NewPattern, không hiện lại khi chết.
+        if (_startBannerContainer != null)
+        {
+            if (!_startBannerDone)
+            {
+                float sd = -s; // sd=1 khi s=-1 (t=-T), sd=0 khi s=0, sd âm khi đã qua player
+                if (sd < -PassPastSlots)
+                {
+                    _startBannerDone = true;
+                    _startBannerContainer.gameObject.SetActive(false);
+                }
+                else
+                {
+                    _startBannerContainer.gameObject.SetActive(true);
+                    ApplyTravel(_startBannerContainer, sd);
+                    if (_startBannerCg != null)
+                        _startBannerCg.alpha = sd < 0f ? Mathf.Clamp01(1f + sd / PassPastSlots) : 1f;
+                }
+            }
+            else
+            {
+                _startBannerContainer.gameObject.SetActive(false);
+            }
+        }
     }
 
-    // Số "khoảng chặng" cho hàng vừa xong trôi tiếp qua mặt trước trước khi ẩn hẳn — CHỈ 1 phần nhỏ
-    // của travelDuration (vd 0.25 × 9s ≈ 2.3s) để "trôi qua rồi biến mất" chứ không lấn lâu sang
-    // hàng kế tiếp đang chơi.
-    const float PassPastSlots = 0.25f;
+    // Số "khoảng chặng" cho hàng vừa xong trôi tiếp qua mặt trước trước khi ẩn hẳn.
+    // 0.7 ≈ hàng trôi xuống qua đáy canvas rồi mới biến mất, đồng thời fade alpha về 0.
+    const float PassPastSlots = 0.7f;
 
     void SetSlotActive(int k, bool active)
     {
@@ -221,7 +318,6 @@ public class SaveTheAstronautLane : MonoBehaviour
 
     IEnumerator ResolveCurrentStep(bool? tappedLeft)
     {
-        _paused = true; // "đứng hình" — Update() không tick nữa, cả băng chuyền dừng cùng lúc
         int step = _stepIndex;
 
         if (leftButtons[step] != null) leftButtons[step].interactable = false;
@@ -233,6 +329,7 @@ public class SaveTheAstronautLane : MonoBehaviour
 
         if (correct)
         {
+            // Không pause — băng chuyền cuộn liên tục, hàng vừa đúng trôi tiếp rồi fade
             var info = SaveTheAstronautContent.Steps[step];
             bool isLeft = tappedLeft!.Value;
             RevealPlanet(isLeft ? leftRevealImages[step] : rightRevealImages[step], isLeft ? leftTileImages[step] : rightTileImages[step], info);
@@ -240,44 +337,50 @@ public class SaveTheAstronautLane : MonoBehaviour
             MusicManager.Instance?.PlayCorrectSfx();
             PlayNarration(info.spriteKey);
 
-            yield return new WaitForSeconds(_cfg.correctRevealSeconds);
-
             _stepIndex++;
-            _t = 0f;
+            _t -= _cfg.travelDuration; // giữ vị trí liên tục — không giật
             _resolved = false;
             if (_stepIndex >= _cfg.stepCount)
                 yield return StartCoroutine(CompleteLap());
             else
-                SetupSlotDefault(_stepIndex); // hàng vừa trở thành "hàng đang chơi" — reset về trạng thái ẩn/dấu sai cũ
+                SetupSlotDefault(_stepIndex);
         }
         else
         {
+            _paused = true; // chỉ freeze khi sai — hiện lỗi + đếm ngược retry
             bool wrongIsLeft = !correctIsLeft;
             RevealDanger(wrongIsLeft ? leftRevealImages[step] : rightRevealImages[step], wrongIsLeft ? leftTileImages[step] : rightTileImages[step], wrongIsLeft ? leftOutlines[step] : rightOutlines[step]);
             _revealedWrong[step] = true;
             MusicManager.Instance?.PlayWrongSfx();
 
             yield return new WaitForSeconds(_cfg.wrongRevealSeconds);
-            yield return StartCoroutine(CountdownMessage("Retry in"));
+            if (stepNameText != null) stepNameText.text = "";
+            yield return new WaitForSeconds(_cfg.retryDelaySeconds);
 
-            _stepIndex = 0; // "chết" — băng chuyền lùi về đầu, pattern + dấu sai GIỮ NGUYÊN
+            _stepIndex = 0;
             _t = 0f;
+            _startBannerDone = true;
             _resolved = false;
             SetupSlotDefault(0);
+            _paused = false;
         }
-
-        _paused = false;
     }
 
     IEnumerator CompleteLap()
     {
+        _paused = true; // freeze trong lúc celebrate — tránh timeout fire khi stepIndex out of bounds
+        _lapCount++;
         OnLapCompleted?.Invoke();
         if (stepNameText != null) stepNameText.text = "Trái Đất";
 
         yield return new WaitForSeconds(_cfg.earthRevealSeconds);
         yield return StartCoroutine(CountdownMessage("Start in"));
 
-        NewPattern(); // pattern mới + xoá hết dấu sai — CHỈ đổi khi đi hết trọn 1 vòng
+        if (_lapCount >= _cfg.lapsPerPattern)
+            NewPattern(); // đủ 5 lap → random lại thứ tự
+        else
+            ResetForLap(); // giữ nguyên pattern, chỉ reset vị trí + dấu sai
+        _paused = false;
     }
 
     IEnumerator CountdownMessage(string label)
@@ -334,5 +437,128 @@ public class SaveTheAstronautLane : MonoBehaviour
     {
         var clip = Resources.Load<AudioClip>("SaveTheAstronaut/" + spriteKey);
         if (clip != null) MusicManager.Instance?.PlaySfx(clip);
+    }
+
+    void SetSlotAlpha(int k, float alpha)
+    {
+        if (_leftGroups  != null && k < _leftGroups.Length  && _leftGroups[k]  != null) _leftGroups[k].alpha  = alpha;
+        if (_rightGroups != null && k < _rightGroups.Length && _rightGroups[k] != null) _rightGroups[k].alpha = alpha;
+    }
+
+    // ── Earth circle mask ─────────────────────────────────────────────────────
+
+    // Bọc RawImage EarthPlaceholder trong 1 parent có Mask hình tròn (Knob sprite).
+    // Trả về RectTransform của parent mới để earthRect trỏ vào — ApplyTravel sẽ
+    // scale/position đúng, EarthGlobeSpin vẫn trỏ thẳng vào RawImage nên không đổi.
+    RectTransform WrapEarthInCircleMask(RectTransform source, int insertBefore = 0)
+    {
+        var maskGO = new GameObject("EarthCircle");
+        var maskRT = maskGO.AddComponent<RectTransform>();
+        maskRT.SetParent(source.parent, false);
+        maskRT.SetSiblingIndex(insertBefore); // render trước tiles → ở phía sau về mặt visual
+        maskRT.anchorMin        = source.anchorMin;
+        maskRT.anchorMax        = source.anchorMax;
+        maskRT.pivot            = source.pivot;
+        maskRT.anchoredPosition = source.anchoredPosition;
+        maskRT.sizeDelta        = source.sizeDelta;
+        maskRT.localRotation    = source.localRotation;
+        maskRT.localScale       = source.localScale;
+        maskGO.SetActive(false);
+
+        var img = maskGO.AddComponent<UnityEngine.UI.Image>();
+        img.sprite = CreateCircleSprite(128);
+        img.color  = Color.white;
+
+        var mask = maskGO.AddComponent<UnityEngine.UI.Mask>();
+        mask.showMaskGraphic = false;
+
+        // Reparent RawImage vào mask, fill full; phải bật lại vì scene lưu m_IsActive: 0
+        source.SetParent(maskRT, false);
+        source.anchorMin  = Vector2.zero;
+        source.anchorMax  = Vector2.one;
+        source.offsetMin  = Vector2.zero;
+        source.offsetMax  = Vector2.zero;
+        source.localScale = Vector3.one;
+        source.gameObject.SetActive(true);
+
+        return maskRT;
+    }
+
+    static Sprite CreateCircleSprite(int res)
+    {
+        var tex = new Texture2D(res, res, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        float cx = res * 0.5f, r = res * 0.5f;
+        for (int y = 0; y < res; y++)
+        for (int x = 0; x < res; x++)
+        {
+            float dx = x - cx, dy = y - cx;
+            tex.SetPixel(x, y, dx * dx + dy * dy <= r * r ? Color.white : Color.clear);
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, res, res), Vector2.one * 0.5f);
+    }
+
+    // ── Start Banner (build tự động, không cần setup trong Inspector) ─────────
+
+    void BuildStartBanner()
+    {
+        if (leftRects == null || leftRects.Length == 0 || rightRects == null || rightRects.Length == 0) return;
+
+        var refL = leftRects[0];
+        var refR = rightRects[0];
+        var parent = refL.parent;
+
+        // Container — dùng để ApplyTravel + CanvasGroup alpha toàn banner
+        var cGO = new GameObject("StartBanner");
+        _startBannerContainer = cGO.AddComponent<RectTransform>();
+        _startBannerContainer.SetParent(parent, false);
+        _startBannerContainer.anchorMin = _startBannerContainer.anchorMax = new Vector2(0.5f, 0.5f);
+        _startBannerContainer.pivot = new Vector2(0.5f, 0.5f);
+        _startBannerContainer.sizeDelta = new Vector2(refL.sizeDelta.x + refR.sizeDelta.x, refL.sizeDelta.y);
+        _startBannerContainer.anchoredPosition = new Vector2(0f, refL.anchoredPosition.y);
+        _startBannerCg = cGO.AddComponent<CanvasGroup>();
+        _startBannerCg.interactable = false;
+        _startBannerCg.blocksRaycasts = false;
+
+        // "Start" text — trải dài toàn chiều ngang container, giữa đứng
+        var tGO = new GameObject("StartLabel");
+        tGO.transform.SetParent(cGO.transform, false);
+        var tRT = tGO.AddComponent<RectTransform>();
+        tRT.anchorMin = Vector2.zero;
+        tRT.anchorMax = Vector2.one;
+        tRT.offsetMin = tRT.offsetMax = Vector2.zero;
+        var tmp = tGO.AddComponent<TMPro.TextMeshProUGUI>();
+        tmp.text = "Start";
+        tmp.fontSize = 52;
+        tmp.fontStyle = TMPro.FontStyles.Bold;
+        tmp.alignment = TMPro.TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+
+        // Đặt vị trí ban đầu: depth=1 (s=-1 do _t=-T) — nằm trong queue ngay trước step 0
+        ApplyTravel(_startBannerContainer, 1f);
+    }
+
+    RectTransform CreateBannerHalf(Transform parent, Vector2 size, bool leftEdgeVertical)
+    {
+        var go = new GameObject(leftEdgeVertical ? "BL" : "BR");
+        var rt = go.AddComponent<RectTransform>();
+        rt.SetParent(parent, false);
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = size;
+
+        // CanvasRenderer phải có trước MaskableGraphic (TrapezoidImage)
+        go.AddComponent<CanvasRenderer>();
+        var trap = go.AddComponent<TrapezoidImage>();
+        trap.topWidthRatio = _cfg.trapezoidTopWidthRatio;
+        trap.verticalEdgeOnLeft = leftEdgeVertical;
+        trap.color = new Color(0.18f, 0.62f, 0.82f, 1f);
+        return rt;
+    }
+
+    static CanvasGroup GetOrAddCanvasGroup(RectTransform rt)
+    {
+        if (rt == null) return null;
+        return rt.GetComponent<CanvasGroup>() ?? rt.gameObject.AddComponent<CanvasGroup>();
     }
 }

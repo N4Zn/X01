@@ -356,7 +356,12 @@ public class AddNumberGameModel
     }
 
     // wrong không hợp lệ nếu: trùng đáp án đúng, trùng số đã có, hoặc (multi-pick)
-    // ghép với số đã có trong answers tạo thành tổng đúng → player không biết chọn cặp nào
+    // ghép với số đã có trong answers tạo thành tổng đúng → player không biết chọn cặp nào.
+    //
+    // Kiểm tra 3 dạng phương trình tương ứng hidden position:
+    //   "ab" ẩn (c hiện):  x + y = sum   → answers[k] + wrong == sum
+    //   "bc" ẩn (a hiện):  a + x = y     → a + wrong == answers[k] || a + answers[k] == wrong
+    //   "ac" ẩn (b hiện):  x + b = y     → b + wrong == answers[k] || b + answers[k] == wrong
     private static bool IsInvalidWrong(int wrong, int a, int b, int sum, int[] answers, bool checkPairs)
     {
         if (wrong < 1 || wrong == a || wrong == b || wrong == sum) return true;
@@ -364,7 +369,14 @@ public class AddNumberGameModel
         if (checkPairs)
         {
             for (int k = 0; k < answers.Length; k++)
-                if (answers[k] != 0 && answers[k] + wrong == sum) return true;
+            {
+                if (answers[k] == 0) continue;
+                if (answers[k] + wrong == sum) return true;          // "ab" hidden
+                if (a + wrong == answers[k]) return true;             // "bc" hidden
+                if (a + answers[k] == wrong) return true;            // "bc" hidden (reversed)
+                if (b + wrong == answers[k]) return true;             // "ac" hidden
+                if (b + answers[k] == wrong) return true;            // "ac" hidden (reversed)
+            }
         }
         return false;
     }

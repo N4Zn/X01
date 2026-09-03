@@ -269,6 +269,7 @@ public class MenuSceneController : MonoBehaviour
         // Lưu tên game (variant) để game scene biết load CSV nào
         // VD: "ChuCai", "SoDem" → QuestionPool load Resources/TongHop/{name}/
         GameSessionManager.Instance.SelectedGameName = selected.name;
+        GameSessionManager.Instance.SelectedEntry    = selected;
         GameSessionManager.Instance.LastPlayedGame = selected.sceneName;
 
         Debug.Log($"NDL: MenuScene - Starting game: {selected.sceneName} (variant: {selected.name})");

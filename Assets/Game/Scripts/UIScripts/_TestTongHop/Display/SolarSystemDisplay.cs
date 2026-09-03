@@ -8,7 +8,7 @@ using TMPro;
 /// 9 planet buttons (0=Mercury … 7=Neptune, 8=Sun).
 /// Sun at bottom-center (half visible). Planets fanned above in narrow arc.
 /// </summary>
-public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
+public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
 {
     const int N   = 9;
     const int SUN = 8;
@@ -124,6 +124,15 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
 
     public void Cleanup() { _q = null; gameObject.SetActive(false); }
 
+    public void RevealCorrectAnswer()
+    {
+        if (_q?.correctAnswers == null || _q.correctAnswers.Length == 0) return;
+        int correct = _q.correctAnswers[0];
+        if (correct < 0 || correct >= N) return;
+        if (_lOver[correct] != null) ApplyState(_lOver[correct], ItemState.Correct);
+        if (_rOver[correct] != null) ApplyState(_rOver[correct], ItemState.Correct);
+    }
+
     // ── Animation ─────────────────────────────────────────────────────────────
 
     void Update()
@@ -175,7 +184,7 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
             if (isL) _lFin = true; else _rFin = true;
             LockAll(_lTex, _lOver, _lBtn);
             LockAll(_rTex, _rOver, _rBtn);
-            if (correct >= 0)
+            if (correct >= 0 && correct < N)
             {
                 ApplyState(_lOver[correct], ItemState.Correct);
                 ApplyState(_rOver[correct], ItemState.Correct);
@@ -188,12 +197,12 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
             if (isL) { _lFin = true; _lWrong = true; }
             else     { _rFin = true; _rWrong = true; }
             LockAll(myTex, myOver, myBtn);
-            ApplyState(myOver[idx], ItemState.Wrong);
+            if (idx >= 0 && idx < N) ApplyState(myOver[idx], ItemState.Wrong);
             // Correct answer (green) is deferred until the other player also answers
             _onPlayerFailed?.Invoke(team);
             if (_lWrong && _rWrong)
             {
-                if (correct >= 0)
+                if (correct >= 0 && correct < N)
                 {
                     ApplyState(_lOver[correct], ItemState.Correct);
                     ApplyState(_rOver[correct], ItemState.Correct);
@@ -240,7 +249,7 @@ public class SolarSystemDisplay : MonoBehaviour, IAnswerDisplay
         baseGo.transform.SetParent(bgGo.transform, false);
         FullStretch(baseGo);
         var baseImg = baseGo.AddComponent<Image>();
-        baseImg.color = new Color(0.01f, 0.02f, 0.08f, 1f);
+        baseImg.color = Color.clear; // trong suốt → background phía dưới (2k_stars) hiện xuyên qua
         baseImg.raycastTarget = false;
 
         // Starfield

@@ -23,6 +23,8 @@ public class SoDemController : MonoBehaviour
 
     private float _feedbackDelay = 1.0f;
     private float _audioInterval = 4f;
+    private int   _roundIndex;
+    private float _questionShownTime;
 
     void Start()
     {
@@ -40,10 +42,7 @@ public class SoDemController : MonoBehaviour
         gameView.OnHomeClicked += () => { MusicManager.Instance?.PlayMainMusic(); SceneManager.LoadScene("MenuScene"); };
         gameView.OnRetryClicked += () => { _fsm.StateMachineChange(SoDemState.Initialize); };
 
-        gameView.SetPlayerNames(
-            GameSessionManager.Instance?.GetDisplayName1() ?? "Player 1",
-            GameSessionManager.Instance?.GetDisplayName2() ?? "Player 2"
-        );
+        RefreshPlayerNames();
 
         _fsm = gameObject.AddComponent<CustomFSMManager>();
         _fsm.Initialize(typeof(SoDemState), this.GetType(), false);
@@ -94,8 +93,36 @@ public class SoDemController : MonoBehaviour
     {
         gameView.UpdateScores(0, 0);
         _fsm.StateMachineChange(SoDemState.Playing);
-        LoadNewRound();
         MusicManager.Instance?.PlayGameplayMusic();
+        PlayerRecognitionService.Instance.BeginGameSession("SoDemGame");
+        StartCoroutine(InitialStartCountdown());
+    }
+
+    /// <summary>"Start in 3,2,1" before round 1, recognizing both players (synchronized round —
+    /// first correct answer ends it for both) so round 1 doesn't start under stale names.</summary>
+    private IEnumerator InitialStartCountdown()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            gameView.ShowCountdown(0, i);
+            gameView.ShowCountdown(1, i);
+            yield return new WaitForSeconds(1f);
+        }
+        gameView.HideCountdown(0);
+        gameView.HideCountdown(1);
+
+        LoadNewRound();
+    }
+
+    private void RefreshPlayerNames()
+    {
+        gameView.SetPlayerNames(
+            GameSessionManager.Instance?.GetDisplayName1() ?? "Player 1",
+            GameSessionManager.Instance?.GetDisplayName2() ?? "Player 2"
+        );
     }
 
     protected void StateMachineEnter_GameOver(Enum prev, Dictionary<string, object> opt)
@@ -117,6 +144,8 @@ public class SoDemController : MonoBehaviour
         if (_p2WrongIconCoroutine != null) { StopCoroutine(_p2WrongIconCoroutine); _p2WrongIconCoroutine = null; }
 
         _model.GenerateRound();
+        _roundIndex++;
+        _questionShownTime = Time.time;
         gameView.HideFeedback();
 
         gameView.ShowBoxes(0, _model.Values[0]);
@@ -158,6 +187,8 @@ public class SoDemController : MonoBehaviour
         if (GetState() != SoDemState.Playing) return;
 
         bool correct = _model.CheckTap(playerIndex, boxIndex);
+        string tappedValue = _model.Values[playerIndex][boxIndex];
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex, _model.TargetValue, tappedValue, correct, Time.time - _questionShownTime);
         if (correct)
         {
             // Stop reminder as soon as someone wins
@@ -218,6 +249,9 @@ public class SoDemController : MonoBehaviour
 
         gameView.HideFeedback();
         gameView.HideAllBoxes();
+
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
 
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)

@@ -6,7 +6,7 @@ using UnityEngine;
 /// 2-player split: leftButtons (nửa trái) và rightButtons (nửa phải).
 /// Mỗi bên có validator độc lập. Ai đúng trước → win round.
 /// </summary>
-public class ButtonDisplay : MonoBehaviour, IAnswerDisplay
+public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
 {
     [SerializeField] ButtonItem[] leftButtons;   // 4-5 buttons phía trái màn hình
     [SerializeField] ButtonItem[] rightButtons;  // 4-5 buttons phía phải màn hình
@@ -132,6 +132,27 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay
         foreach (var b in leftButtons)  b.SetState(ItemState.Normal);
         foreach (var b in rightButtons) b.SetState(ItemState.Normal);
         gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Highlight đáp án đúng màu xanh trên CẢ 2 bên — gọi sau khi round kết thúc.
+    /// Các đáp án sai/bị khoá giữ nguyên trạng thái.
+    /// </summary>
+    public void RevealCorrectAnswer()
+    {
+        if (_current?.correctAnswers == null) return;
+        HighlightCorrectOnGroup(leftButtons,  _current.correctAnswers);
+        HighlightCorrectOnGroup(rightButtons, _current.correctAnswers);
+    }
+
+    void HighlightCorrectOnGroup(ButtonItem[] group, int[] correctAnswers)
+    {
+        foreach (var b in group)
+        {
+            if (!b.gameObject.activeSelf) continue;
+            if (System.Array.IndexOf(correctAnswers, b.AnswerIndex) >= 0)
+                b.SetState(ItemState.Correct);
+        }
     }
 
     // ─── Setup group ─────────────────────────────────────────────────────────

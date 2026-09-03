@@ -72,6 +72,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     bool _useTimer;
     Coroutine _timeoutCoroutine;
     Coroutine _nextRoundCoroutine;
+    float _questionShownTime;
 
     // ── Independent mode state (playMode == Independent) ─────────────────────
     bool _independentRunning;
@@ -183,6 +184,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             return;
         }
 
+        _questionShownTime = Time.time;
         OnQuestionShown(CurrentQuestion);
         Fsm.StateMachineChange(MiniGameState.WaitAnswer);
     }
@@ -232,6 +234,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         if (_timeoutCoroutine != null) { StopCoroutine(_timeoutCoroutine); _timeoutCoroutine = null; }
         if (correct) AwardDefaultPoint(team);
         if (correct && UseDefaultFeedbackFx) PlayDefaultFeedbackFx(team, true);
+        LogRoundResult(team, CurrentQuestion, playerAnswer, correct, Time.time - _questionShownTime);
         OnRoundResult(correct, team, playerAnswer);
         Fsm.StateMachineChange(MiniGameState.Feedback,
             new Dictionary<string, object> { { "correct", correct }, { "team", team } });
@@ -317,6 +320,11 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             GameSettings.Instance != null ? GameSettings.Instance.RoundEndDelay : 2f));
         if (seconds <= 0) yield break;
 
+        // Combined/Solo rounds are synchronized (both sides transition together), so recognize
+        // both slots at once here — headless (no camera preview/bounding box).
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshHudNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshHudNames());
+
         for (int i = seconds; i >= 1; i--)
         {
             ShowTransitionCountdown(i);
@@ -325,9 +333,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         HideTransitionCountdown();
     }
 
-    void ShowTransitionCountdown(int secondsLeft)
+    void ShowTransitionCountdown(int secondsLeft, string label = "Next")
     {
-        string msg = $"Next in {secondsLeft}s";
+        string msg = $"{label} in {secondsLeft}s";
         if (leftCountdownText != null) { leftCountdownText.text = msg; leftCountdownText.gameObject.SetActive(true); }
         if (rightCountdownText != null) { rightCountdownText.text = msg; rightCountdownText.gameObject.SetActive(true); }
     }
@@ -379,6 +387,30 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         ScoreManager.Reset();
         MusicManager.Instance?.PlayGameplayMusic();
 
+        string gameName = !string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name;
+        PlayerRecognitionService.Instance.BeginGameSession(gameName);
+
+        StartCoroutine(InitialStartCountdownThenBegin());
+    }
+
+    /// <summary>
+    /// "Start in 3,2,1" shown before round 1 (or before Independent mode's per-player loops
+    /// begin), with recognition running for both slots throughout — otherwise gameplay would
+    /// start under whatever stale name GameSessionManager had from team select, and the first
+    /// real recognition attempt wouldn't happen until the first round-transition countdown.
+    /// </summary>
+    IEnumerator InitialStartCountdownThenBegin()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshHudNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshHudNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            ShowTransitionCountdown(i, "Start");
+            yield return new WaitForSeconds(1f);
+        }
+        HideTransitionCountdown();
+
         if (playMode == MiniGamePlayMode.Independent)
         {
             _independentRunning = true;
@@ -390,6 +422,48 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         {
             Fsm.StateMachineChange(MiniGameState.ShowQuestion);
         }
+    }
+
+    /// <summary>Refreshes the HUD name labels from GameSessionManager — call after a
+    /// PlayerRecognitionService.RecognizeSlot callback so a newly-recognized name shows up.</summary>
+    void RefreshHudNames()
+    {
+        if (hud == null || GameSessionManager.Instance == null) return;
+        hud.UpdatePlayerNames(GameSessionManager.Instance.GetDisplayName1(), GameSessionManager.Instance.GetDisplayName2());
+    }
+
+    // ── Gamelog — full per-round record (question/answer/correct/time), merged with whoever was
+    // last recognized for that slot by PlayerRecognitionService. One shared insertion point here
+    // covers every MiniGameKit-derived game without needing per-subclass wiring.
+
+    void LogRoundResult(Team team, QuestionData q, int[] playerAnswer, bool correct, float answerTimeSec)
+    {
+        int slot = team == Team.Left ? 0 : 1;
+        int round = playMode == MiniGamePlayMode.Independent
+            ? (team == Team.Left ? _leftRoundIndex : _rightRoundIndex)
+            : _roundIndex;
+        PlayerRecognitionService.Instance.LogRound(slot, round, DescribeQuestion(q), DescribeAnswer(q, playerAnswer), correct, answerTimeSec);
+    }
+
+    static string DescribeQuestion(QuestionData q)
+    {
+        if (q == null) return "";
+        if (q.questionType == QuestionType.Matching)
+            return $"[Matching] {string.Join("|", q.leftItems ?? new string[0])} -> {string.Join("|", q.rightItems ?? new string[0])}";
+        return q.questionMediaValue ?? "";
+    }
+
+    static string DescribeAnswer(QuestionData q, int[] playerAnswer)
+    {
+        if (playerAnswer == null || playerAnswer.Length == 0) return "";
+        if (q != null && q.questionType == QuestionType.Choose && q.answers != null)
+        {
+            var parts = new List<string>(playerAnswer.Length);
+            foreach (int idx in playerAnswer)
+                parts.Add(idx >= 0 && idx < q.answers.Length ? q.answers[idx] : idx.ToString());
+            return string.Join(",", parts);
+        }
+        return string.Join(",", playerAnswer);
     }
 
     // ── Independent mode ───────────────────────────────────────────────────────
@@ -409,17 +483,24 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
             bool done = false;
             bool correctResult = false;
+            float questionStart = Time.time;
 
             SetupIndependentDisplay(team, q, (correct, t, answer) =>
             {
                 done = true;
                 correctResult = correct;
                 if (correct) ScoreManager.AddPoint(team);
+                LogRoundResult(team, q, answer, correct, Time.time - questionStart);
                 OnRoundResult(correct, team, answer);
             });
 
             yield return new WaitUntil(() => done || !_independentRunning);
             if (!_independentRunning) yield break;
+
+            // Independent mode: each side has its own pace, so recognize only THIS team's slot —
+            // PlayerRecognitionService's per-slot reference counting keeps this safe even if the
+            // other team's own loop is mid-recognition at the same time.
+            PlayerRecognitionService.Instance.RecognizeSlot(team == Team.Left ? 0 : 1, _ => RefreshHudNames());
 
             yield return new WaitForSeconds(correctResult ? feedbackDelayCorrect : feedbackDelayWrong);
         }

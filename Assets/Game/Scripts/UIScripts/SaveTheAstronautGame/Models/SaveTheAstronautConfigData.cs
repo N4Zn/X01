@@ -6,13 +6,13 @@ using System;
 public class SaveTheAstronautConfigData
 {
     [UnityEngine.Header("Chặng")]
-    public int stepCount = 12;
+    public int stepCount = 8;
     public int pointsPerLap = 10;
     public int targetScoreForHud = 100;
 
     [UnityEngine.Header("Tốc độ cuộn")]
     [UnityEngine.Tooltip("Giây để 1 cặp nút trôi từ xa (nhỏ) tới sát người chơi (to) — không bấm kịp trong khoảng này thì tự tính sai (buộc phải chọn).")]
-    public float travelDuration = 9f;
+    public float travelDuration = 2.0f;
 
     [UnityEngine.Header("Kích thước nút hình thang lúc trôi")]
     [UnityEngine.Tooltip("Nhỏ hơn = hàng xa trông nhỏ/mỏng hơn hẳn, đỡ chồng lấn khi nhiều hàng cùng hiện (xem DecoyCount trong SceneBuilder).")]
@@ -24,7 +24,12 @@ public class SaveTheAstronautConfigData
     [UnityEngine.Header("Thời gian giữ hiệu ứng reveal")]
     public float correctRevealSeconds = 1.1f;
     public float wrongRevealSeconds = 1.3f;
+    public float retryDelaySeconds = 2f;
     public float earthRevealSeconds = 2.2f;
+
+    [UnityEngine.Header("Pattern")]
+    [UnityEngine.Tooltip("Số lần đi hết vòng trước khi re-randomize thứ tự đúng/sai.")]
+    public int lapsPerPattern = 5;
 
     [UnityEngine.Header("Countdown / kết thúc")]
     public int countdownSeconds = 3;

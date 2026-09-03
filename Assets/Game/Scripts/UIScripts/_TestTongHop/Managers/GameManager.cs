@@ -66,6 +66,13 @@ public class GameManager : MonoBehaviour
         if (isCorrect && addScore) _score.AddPoints(team, PointsPerCorrect);
     }
 
+    /// <summary>
+    /// Ghi người chơi được nhận diện qua camera cho round hiện tại.
+    /// Gọi sau LogRoundStart(). null = không nhận diện được bên đó.
+    /// </summary>
+    public void LogRoundRecognizedPlayers(string left, string right)
+        => _logger.UpdateRoundPlayers(left, right);
+
     /// <summary>Xuất log session ra file JSON.</summary>
     public void ExportLog() => _logger.Export(_score);
 

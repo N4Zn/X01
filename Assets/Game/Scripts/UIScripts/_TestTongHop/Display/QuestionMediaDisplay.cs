@@ -133,6 +133,20 @@ public class QuestionMediaDisplay : MonoBehaviour
     /// <summary>Ẩn nội dung câu hỏi — gọi từ Controller trước countdown.</summary>
     public void Hide() => HideAll();
 
+    /// <summary>Chỉ phát audio mà không hiện panel — dùng khi panel đã bị ẩn bởi display khác.</summary>
+    public void PlayAudioOnly(QuestionData q)
+    {
+        if (q.questionMediaType != QuestionMediaType.Audio) return;
+        var clip = AssetOverrideLoader.GetClip(q.questionMediaValue);
+        if (clip == null)
+        {
+            Debug.LogWarning($"[QuestionMediaDisplay] Không tìm thấy audio: {q.questionMediaValue}");
+            return;
+        }
+        if (_audioLoopCoroutine != null) StopCoroutine(_audioLoopCoroutine);
+        _audioLoopCoroutine = StartCoroutine(AudioLoopRoutine(clip));
+    }
+
     /// <summary>Dừng vòng lặp audio ngay lập tức — gọi khi người chơi trả lời đúng.</summary>
     public void StopAudio()
     {

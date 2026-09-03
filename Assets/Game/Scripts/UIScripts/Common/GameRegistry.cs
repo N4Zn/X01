@@ -11,6 +11,14 @@
 /// </summary>
 public static class GameRegistry
 {
+    // ── BgmTrack: nhạc nền của mỗi game ─────────────────────────────────────
+    public enum BgmTrack
+    {
+        Gameplay    = 0,  // mặc định — MusicManager.PlayGameplayMusic()
+        SolarSystem = 1,  // MusicManager.PlaySolarSystemMusic()
+        None        = 2,  // không phát nhạc
+    }
+
     // ── Engine enum: nhóm game theo cơ chế ──────────────────────────────────
     public enum Engine
     {
@@ -29,9 +37,15 @@ public static class GameRegistry
     // ── GameEntry: 1 struct thay cho 2 mảng song song ────────────────────────
     public struct GameEntry
     {
-        public string name;       // Tên game: dùng cho icon + CSV variant key
-        public string sceneName;  // Unity scene cần load (null = chưa implement)
-        public Engine engine;     // Nhóm cơ chế
+        public string   name;              // Tên game: dùng cho icon + CSV variant key
+        public string   sceneName;         // Unity scene cần load (null = chưa implement)
+        public Engine   engine;            // Nhóm cơ chế
+
+        // Visual / audio identity — khai báo 1 lần ở đây, không cần per-variant config.json
+        public BgmTrack bgmTrack;          // Nhạc nền (default = Gameplay)
+        public string   backgroundSprite;  // Resources path đến texture nền ("" = dùng default của prefab)
+        public int      pointsPerCorrect;  // 0 = dùng mặc định (1 điểm/câu đúng)
+        public bool     hideScoreBars;     // true → ẩn fill bar + star icon (vd: SolarQuiz)
 
         /// <summary>Game có scene đã làm xong → có thể bấm chơi.</summary>
         public bool IsImplemented => !string.IsNullOrEmpty(sceneName);
@@ -82,11 +96,11 @@ public static class GameRegistry
 		Set(0, 16, "WaterAnimal", "TestTongHopGame", Engine.TongHopGame);
 
         Set(0, 17, "Things",       "TestTongHopGame",  Engine.TongHopGame);
-        Set(0, 18, "SolarSystem", "SolarSystemScene", Engine.ExploreGame);
-		Set(0, 19, "SolarSystemVi", "SolarSystemVi", Engine.ExploreGame);
-        Set(0, 20, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 21, "SolarQuizVi",  "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 22, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 18, "SolarSystem",   "SolarSystemScene", Engine.ExploreGame, BgmTrack.SolarSystem);
+        Set(0, 19, "SolarSystemVi", "SolarSystemVi",    Engine.ExploreGame, BgmTrack.SolarSystem);
+        Set(0, 20, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
+        Set(0, 21, "SolarQuizVi", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
+        Set(0, 22, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10);
 
 		
 		
@@ -111,7 +125,16 @@ public static class GameRegistry
         Set(4, 3, "WordHuntMaze", "WordHuntMazeGame", Engine.MiniGameKit);
         Set(4, 4, "SentenceBuilder", "SentenceBuilderGame", Engine.MiniGameKit);
         Set(4, 5, "FamilyMember", "FamilyMemberGame", Engine.MiniGameKit);
-        Set(4, 6, "SaveTheAstronaut", "SaveTheAstronautGame", Engine.MiniGameKit);
+		
+        Set(4, 6, "SolarSystem",   "SolarSystemScene", Engine.ExploreGame, BgmTrack.SolarSystem);
+        Set(4, 7, "SolarSystemVi", "SolarSystemVi",    Engine.ExploreGame, BgmTrack.SolarSystem);
+        Set(4, 8, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
+        Set(4, 9, "SolarQuizVi", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
+        Set(4, 10, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10);
+		Set(4, 11, "SolarOrder2",  "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", hideScoreBars: true);
+        Set(4, 12, "SaveTheAstronaut", "SaveTheAstronautGame", Engine.MiniGameKit);
+        Set(4, 13, "FRTest",           "FRTestGame",           Engine.MiniGameKit);
+
 
         // ── Category 5: Âm thanh ─────────────────────────────────────────────
         // ListenSelect / ChuCai / SoDem / Numbers: scene riêng, sinh nội dung procedurally.
@@ -124,9 +147,21 @@ public static class GameRegistry
         Set(5, 5, "TestTongHop",  "TestTongHopGame", Engine.TongHopGame);
     }
 
-    // ── Helper ───────────────────────────────────────────────────────────────
-    static void Set(int cat, int idx, string name, string scene, Engine engine)
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    /// <summary>Đăng ký game với đầy đủ visual/audio identity.</summary>
+    static void Set(int cat, int idx, string name, string scene, Engine engine,
+                    BgmTrack bgm = BgmTrack.Gameplay, string bg = "", int pts = 0, bool hideScoreBars = false)
     {
-        Games[cat, idx] = new GameEntry { name = name, sceneName = scene, engine = engine };
+        Games[cat, idx] = new GameEntry
+        {
+            name             = name,
+            sceneName        = scene,
+            engine           = engine,
+            bgmTrack         = bgm,
+            backgroundSprite = bg,
+            pointsPerCorrect = pts,
+            hideScoreBars    = hideScoreBars,
+        };
     }
 }

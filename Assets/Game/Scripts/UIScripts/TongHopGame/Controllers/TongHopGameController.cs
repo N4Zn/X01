@@ -32,6 +32,8 @@ public class TongHopGameController : MonoBehaviour
 
     private float _feedbackDelay = 1.5f;
     private float _questionTimeout = 10f;
+    private readonly int[] _roundIndex = new int[2];
+    private readonly float[] _questionShownTime = new float[2];
 
     void Start()
     {
@@ -259,9 +261,36 @@ public class TongHopGameController : MonoBehaviour
         gameView.HideGameOverPanel();
         gameView.SetQuestionText("Fill in the missing number!");
         gameView.UpdateScores(0, 0);
+        PlayerRecognitionService.Instance.BeginGameSession("TongHopGame");
+
+        StartCoroutine(InitialStartCountdown());
+    }
+
+    /// <summary>"Start in 3,2,1" before the first question loads, recognizing both slots
+    /// throughout so gameplay doesn't start under stale/default names.</summary>
+    private IEnumerator InitialStartCountdown()
+    {
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        for (int i = 3; i >= 1; i--)
+        {
+            gameView.ShowCountdown(0, i);
+            gameView.ShowCountdown(1, i);
+            yield return new WaitForSeconds(1f);
+        }
+        gameView.HideCountdown(0);
+        gameView.HideCountdown(1);
 
         LoadNewRound();
         _customFSMManager.StateMachineChange(TongHopSceneState.Playing);
+    }
+
+    private void RefreshPlayerNames()
+    {
+        gameView.SetPlayerNames(
+            GameSessionManager.Instance.GetDisplayName1(),
+            GameSessionManager.Instance.GetDisplayName2());
     }
 
     private void LoadNewRound()
@@ -295,7 +324,21 @@ public class TongHopGameController : MonoBehaviour
         gameView.DisplayAnswers(playerIndex, answers, q.image_type);
 
         gameView.SetPlayerAnswersInteractable(playerIndex, true);
+        _questionShownTime[playerIndex] = Time.time;
+        _roundIndex[playerIndex]++;
         StartQuestionTimeout(playerIndex);
+    }
+
+    string DescribeQuestion(int playerIndex)
+    {
+        int a = _gameModel.ValA[playerIndex];
+        int b = _gameModel.ValB[playerIndex];
+        int c = _gameModel.ValC[playerIndex];
+        string hidden = _gameModel.HiddenPos[playerIndex] ?? "";
+        string sa = hidden.Contains("a") ? "?" : a.ToString();
+        string sb = hidden.Contains("b") ? "?" : b.ToString();
+        string sc = hidden.Contains("c") ? "?" : c.ToString();
+        return $"{sa} + {sb} = {sc}";
     }
 
     private void StartQuestionTimeout(int playerIndex)
@@ -323,6 +366,7 @@ public class TongHopGameController : MonoBehaviour
         MusicManager.Instance?.PlayWrongSfx();
         gameView.ShowFeedback(playerIndex, false);
         gameView.SetPlayerAnswersInteractable(playerIndex, false);
+        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
         ScheduleNextQuestion(playerIndex);
     }
 
@@ -394,6 +438,12 @@ public class TongHopGameController : MonoBehaviour
 
             gameView.ShowFeedback(playerIndex, false);
             gameView.SetPlayerAnswersInteractable(playerIndex, false);
+
+            string wrongAnswer = _gameModel.IsMultiPick[playerIndex]
+                ? string.Join(",", _gameModel.MultiPickSelectedIndices[playerIndex].ConvertAll(i => _gameModel.GetStoredAnswer(playerIndex, i).ToString()))
+                : _gameModel.GetStoredAnswer(playerIndex, answerIndex).ToString();
+            PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), wrongAnswer, false, Time.time - _questionShownTime[playerIndex]);
+
             ScheduleNextQuestion(playerIndex);
         }
         else if (result == 1) // Partial Correct / Toggle
@@ -420,6 +470,11 @@ public class TongHopGameController : MonoBehaviour
             }
 
             gameView.ShowFeedback(playerIndex, true);
+
+            string correctAnswer = _gameModel.IsMultiPick[playerIndex]
+                ? string.Join(",", _gameModel.MultiPickSelectedIndices[playerIndex].ConvertAll(i => _gameModel.GetStoredAnswer(playerIndex, i).ToString()))
+                : _gameModel.GetStoredAnswer(playerIndex, answerIndex).ToString();
+            PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), correctAnswer, true, Time.time - _questionShownTime[playerIndex]);
 
             gameView.SetPlayerAnswersInteractable(playerIndex, false);
             ScheduleNextQuestion(playerIndex);
@@ -448,6 +503,8 @@ public class TongHopGameController : MonoBehaviour
 
         gameView.HideFeedbackIcon(playerIndex);
         gameView.HideQuestion(playerIndex);
+
+        PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)

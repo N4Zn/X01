@@ -86,6 +86,14 @@ public class TongHopConfigData
     /// <summary>Giây chờ của từng player trước khi nhận câu tiếp (chỉ dùng khi independentPlay=true).</summary>
     public int nextQuestionDelayPerPlayer = 4;
 
+    // ── Round-based difficulty (SoDem-style) ──────────────────────────────────
+    /// <summary>
+    /// Tăng độ khó theo số round đã chơi (không phụ thuộc streak hay điểm số).
+    /// round &lt; 4 → difficultyMin, round &gt;= 4 → +1, round &gt;= 8 → difficultyMax.
+    /// Bật cho game có nhiều mức độ khó theo CSV (vd: SolarOrder2).
+    /// </summary>
+    public bool roundBasedDifficulty = false;
+
     // ── Game ──────────────────────────────────────────────────────────────────
     /// <summary>Độ khó hiện tại (1–10). Adaptive sẽ điều chỉnh trong phạm vi [difficultyMin, difficultyMax].</summary>
     public int difficulty    = 1;

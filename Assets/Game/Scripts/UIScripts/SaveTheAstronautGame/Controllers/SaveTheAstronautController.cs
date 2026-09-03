@@ -33,6 +33,10 @@ public class SaveTheAstronautController : MonoBehaviour
     ScoreManager _scoreManager;
     float _timeRemaining;
     bool _isPlaying;
+    int _lapIndexLeft;
+    int _lapIndexRight;
+    float _lapStartTimeLeft;
+    float _lapStartTimeRight;
 
     void Awake()
     {
@@ -70,9 +74,12 @@ public class SaveTheAstronautController : MonoBehaviour
 
         _timeRemaining = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 90f;
 
+        PlayerRecognitionService.Instance.BeginGameSession("SaveTheAstronautGame");
         yield return StartCoroutine(Countdown());
 
         _isPlaying = true;
+        _lapStartTimeLeft = Time.time;
+        _lapStartTimeRight = Time.time;
         laneLeft?.SetRunning(true);
         laneRight?.SetRunning(true);
         MusicManager.Instance?.PlayGameplayMusic();
@@ -81,6 +88,11 @@ public class SaveTheAstronautController : MonoBehaviour
     IEnumerator Countdown()
     {
         if (countdownText) countdownText.gameObject.SetActive(true);
+
+        // Headless recognition (no camera preview/bounding box) running the whole countdown so
+        // both players are identified before the run starts.
+        PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
+        PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
 
         for (int i = config.countdownSeconds; i >= 1; i--)
         {
@@ -96,7 +108,24 @@ public class SaveTheAstronautController : MonoBehaviour
         }
     }
 
-    void HandleLap(Team team) => _scoreManager.AddPoints(team, config.pointsPerLap);
+    void RefreshPlayerNames()
+    {
+        if (gameHud == null || GameSessionManager.Instance == null) return;
+        gameHud.UpdatePlayerNames(GameSessionManager.Instance.GetDisplayName1(), GameSessionManager.Instance.GetDisplayName2());
+    }
+
+    void HandleLap(Team team)
+    {
+        _scoreManager.AddPoints(team, config.pointsPerLap);
+
+        int slot = team == Team.Left ? 0 : 1;
+        float now = Time.time;
+        float elapsed = now - (team == Team.Left ? _lapStartTimeLeft : _lapStartTimeRight);
+        int idx = team == Team.Left ? ++_lapIndexLeft : ++_lapIndexRight;
+        if (team == Team.Left) _lapStartTimeLeft = now; else _lapStartTimeRight = now;
+
+        PlayerRecognitionService.Instance.LogRound(slot, idx, "lap", "completed", true, elapsed);
+    }
 
     IEnumerator TimeUp()
     {

@@ -426,6 +426,9 @@ public class SolarSystemSpawner : MonoBehaviour
         moonData.diameter        = useVietnameseLabels ? "3.474 km" : "3,474 km";
         moonData.numberOfMoons   = 0;
         moonData.surfaceTemp     = useVietnameseLabels ? "-173°C đến 127°C" : "-173°C to 127°C";
+        // Trước đây bỏ trống nên nút "Watch Video" chưa từng hiện cho Moon — đặt tên khớp đúng quy
+        // ước của 9 hành tinh kia (videoPath = tên file trong StreamingAssets/Video/, không .mp4).
+        moonData.videoPath       = useVietnameseLabels ? "Moon_Vi" : "Moon";
         moonData.orbitRadius     = moonOrbitRadius;
         moonData.orbitSpeed      = moonOrbitSpeed;
         moonData.selfRotateSpeed = 0f;

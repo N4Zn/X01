@@ -85,6 +85,19 @@ public class MusicManager : Singleton<MusicManager>
     // ===== BGM =====
 
     /// <summary>
+    /// Phát nhạc nền theo BgmTrack khai báo trong GameRegistry.GameEntry.
+    /// </summary>
+    public void PlayBgm(GameRegistry.BgmTrack track)
+    {
+        switch (track)
+        {
+            case GameRegistry.BgmTrack.SolarSystem: PlaySolarSystemMusic(); break;
+            case GameRegistry.BgmTrack.None:        StopMusic();            break;
+            default:                                PlayGameplayMusic();    break;
+        }
+    }
+
+    /// <summary>
     /// Play main/menu background music (HomeScene, TeamSelect, MenuScene).
     /// </summary>
     public void PlayMainMusic()
