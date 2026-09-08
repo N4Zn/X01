@@ -76,6 +76,16 @@ public class GameManager : MonoBehaviour
         if (isCorrect && addScore) _score.AddPoints(team, PointsPerCorrect);
     }
 
+    /// <summary>Independent play — xem GameLogger.LogIndependentRound(). Gọi từ
+    /// TestTongHopController.PlayerLoop() THAY CHO RecordAnswer(): chế độ này 2 bên tự nhịp câu
+    /// hỏi riêng, BeginRound()/EndRound() (dựa vào 1 _currentRound dùng chung) không dùng được
+    /// vì có thể chồng thời gian nhau — xem chú thích đầy đủ ở GameLogger.LogIndependentRound().</summary>
+    public void RecordIndependentAnswer(QuestionData q, bool isCorrect, Team team, int round, float responseTime)
+    {
+        _logger.LogIndependentRound(team, round, q, isCorrect, responseTime);
+        if (isCorrect) _score.AddPoints(team, PointsPerCorrect);
+    }
+
     /// <summary>
     /// Ghi người chơi được nhận diện qua camera cho round hiện tại.
     /// Gọi sau LogRoundStart(). null = không nhận diện được bên đó.

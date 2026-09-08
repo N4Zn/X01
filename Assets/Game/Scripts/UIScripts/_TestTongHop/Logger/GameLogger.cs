@@ -169,6 +169,54 @@ public class GameLogger
         _currentRound = null;
     }
 
+    /// <summary>
+    /// Independent play: mỗi bên tự nhịp câu hỏi riêng (xem TestTongHopController.PlayerLoop) —
+    /// KHÔNG dùng chung được BeginRound()/EndRound() (dựa vào 1 _currentRound duy nhất) vì 2 bên
+    /// có thể đang xử lý 2 câu hỏi chồng thời gian nhau, bên này gọi BeginRound() sẽ đè mất câu
+    /// đang dở của bên kia. Ghi trực tiếp 1 round HOÀN CHỈNH ngay lập tức, không qua _currentRound
+    /// — an toàn gọi đồng thời từ cả 2 bên. Đây là nguyên nhân log round/click bị thiếu hoàn toàn
+    /// với các game independentPlay=true (vd Counting5) trước khi có fix này.
+    /// </summary>
+    public void LogIndependentRound(Team team, int round, QuestionData q, bool isCorrect, float responseTimeSec)
+    {
+        string playerName = team == Team.Left ? _playerLeft : _playerRight;
+        float responseTimeRounded = (float)Math.Round(responseTimeSec, 2);
+        string questionId = q?.id ?? "";
+        string topic = q?.topic ?? "";
+
+        _rounds.Add(new RoundRecord
+        {
+            round                 = round,
+            questionId            = questionId,
+            topic                 = topic,
+            questionType          = q?.questionType.ToString() ?? "",
+            answerMode            = q?.answerMode.ToString() ?? "",
+            playerLeftRecognized  = team == Team.Left  ? playerName : "",
+            playerRightRecognized = team == Team.Right ? playerName : "",
+            isCorrect             = isCorrect,
+            winnerName            = isCorrect ? playerName : "",
+            responseTimeSeconds   = responseTimeRounded,
+            correctAnswers        = q?.correctAnswers,
+            clicks                = new List<ClickRecord>()
+        });
+
+        // Track E: đồng bộ Google Sheet liên tục — xem SheetsSyncManager.
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "round_end"},
+            {"gameName", _gameName},
+            {"round", round},
+            {"questionId", questionId},
+            {"topic", topic},
+            {"side", team.ToString()},
+            {"playerName", playerName},
+            {"isCorrect", isCorrect},
+            {"winnerName", isCorrect ? playerName : ""},
+            {"responseTimeSec", responseTimeRounded},
+        });
+    }
+
     // ── Export ────────────────────────────────────────────────────────────────
 
     public void Export(ScoreManager score)

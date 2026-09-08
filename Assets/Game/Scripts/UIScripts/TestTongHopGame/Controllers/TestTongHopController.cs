@@ -675,10 +675,15 @@ public class TestTongHopController : MonoBehaviour
                 GetCurrentState() == TestTongHopSceneState.GameOver);
             if (GetCurrentState() == TestTongHopSceneState.GameOver) yield break;
 
-            // 5. Ghi kết quả
+            // 5. Ghi kết quả — RecordIndependentAnswer (KHÔNG phải RecordAnswer): mỗi bên tự
+            // nhịp câu hỏi riêng ở đây, BeginRound/EndRound dùng chung 1 _currentRound sẽ bị
+            // đè lẫn nhau nếu 2 bên đang xử lý 2 câu hỏi chồng thời gian — xem
+            // GameLogger.LogIndependentRound(). Đây là fix cho log round/click bị thiếu hoàn
+            // toàn ở các game independentPlay=true (Counting5, ...).
             // [DEBUG] trace — xóa khi đã xác nhận
             Debug.Log($"[PlayerLoop] {team} answered q={q.id} → isCorrect={isCorrect}");
-            gameModel.RecordAnswer(q, isCorrect, team, Time.time - startTime);
+            int roundNum = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
+            gameModel.RecordIndependentAnswer(q, isCorrect, team, roundNum, Time.time - startTime);
             if (team == Team.Left) _leftRoundsCompleted++; else _rightRoundsCompleted++;
 
             // 6. Feedback icon
