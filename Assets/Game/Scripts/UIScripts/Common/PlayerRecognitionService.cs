@@ -123,6 +123,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
 
     void AppendRecognitionLog(int slot, string name, bool recognized, float elapsedSec)
     {
+        float roundedElapsed = (float)Math.Round(elapsedSec, 2);
         _logEntries.Add(new LogEntry
         {
             time                = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -131,7 +132,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             eventType           = "recognition",
             name                = name,
             recognized          = recognized,
-            recognizeElapsedSec = (float)Math.Round(elapsedSec, 2),
+            recognizeElapsedSec = roundedElapsed,
             round               = -1,
             question            = "",
             answer              = "",
@@ -139,6 +140,20 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             answerTimeSec       = -1f,
         });
         WriteLogNow();
+
+        // Track E: đồng bộ Google Sheet liên tục — log nhận diện khuôn mặt (ai, mất bao lâu),
+        // cùng format với log local ở trên (round=-1 cố định để phân biệt với dòng "round").
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "recognition"},
+            {"gameName", _currentGameName ?? "Unknown"},
+            {"slot", slot == 0 ? "left" : "right"},
+            {"round", -1},
+            {"playerName", name},
+            {"recognized", recognized},
+            {"recognizeElapsedSec", roundedElapsed},
+        });
     }
 
     /// <summary>

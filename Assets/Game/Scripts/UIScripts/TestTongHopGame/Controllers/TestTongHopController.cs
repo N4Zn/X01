@@ -66,15 +66,30 @@ public class TestTongHopController : MonoBehaviour
     int  _leftRoundsCompleted;
     int  _rightRoundsCompleted;
 
+    // ── Control panel (ControlActivity/GameControlBridge) — Pause/Resume + report ─────────
+    // TestTongHopController KHÔNG kế thừa MiniGameControllerBase (FSM/state hoàn toàn riêng)
+    // nên phải tự có Current/IsPaused/Pause()/Resume() y hệt pattern bên đó — nếu không,
+    // GameControlBridge.OnPauseRequested/PushReport sẽ luôn no-op cho game chính này (đã xác
+    // nhận qua test thực tế: bấm Pause không dừng timer, report không cập nhật).
+    public static TestTongHopController Current { get; private set; }
+    public bool IsPaused { get; private set; }
+    float _lastReportPushTime;
+
     // ── Unity lifecycle ───────────────────────────────────────────────────────
 
     void Update()
     {
+        if (IsPaused) { PushReportIfDue(); return; }
+
         var state = GetCurrentState();
         if (state != TestTongHopSceneState.WaitAnswer &&
-            state != TestTongHopSceneState.Feedback) return;
+            state != TestTongHopSceneState.Feedback)
+        {
+            PushReportIfDue();
+            return;
+        }
 
-        if (gameModel.IsTimeUp) return;
+        if (gameModel.IsTimeUp) { PushReportIfDue(); return; }
 
         gameModel.GameTimer -= Time.deltaTime;
         gameHud?.UpdateTimer(gameModel.GameTimer);
@@ -86,14 +101,52 @@ public class TestTongHopController : MonoBehaviour
             answerDisplayManager.Cleanup();
             _fsm.StateMachineChange(TestTongHopSceneState.GameOver);
         }
+
+        PushReportIfDue();
     }
 
     void Start()
     {
+        Current       = this;
         _fsm          = gameObject.AddComponent<CustomFSMManager>();
         _fsm.fsmName  = nameof(TestTongHopController) + "FSM";
         _fsm.Initialize(typeof(TestTongHopSceneState), GetType(), false);
         _fsm.StateMachineChange(TestTongHopSceneState.Initialize);
+    }
+
+    void OnDestroy()
+    {
+        if (Current == this) Current = null;
+    }
+
+    /// <summary>Gọi từ GameControlBridge.OnPauseRequested — chỉ đóng băng timer (giống
+    /// MiniGameControllerBase.Pause()); coroutine feedback/countdown vẫn chạy theo thời gian
+    /// thật, touch bị chặn riêng ở LidarTouchBridge nên không ai bấm được trong lúc pause.</summary>
+    public void Pause()
+    {
+        if (IsPaused) return;
+        IsPaused = true;
+        Debug.Log("[TestTongHopController] Pause");
+    }
+
+    public void Resume()
+    {
+        if (!IsPaused) return;
+        IsPaused = false;
+        Debug.Log("[TestTongHopController] Resume");
+    }
+
+    /// <summary>Đẩy report (thời gian còn lại, tổng điểm) sang ControlActivity mỗi giây —
+    /// cùng nhịp/API với MiniGameControllerBase.PushReportIfDue().</summary>
+    void PushReportIfDue()
+    {
+        if (Time.time - _lastReportPushTime < 1f) return;
+        _lastReportPushTime = Time.time;
+        int secondsLeft = Mathf.CeilToInt(Mathf.Max(0f, gameModel.GameTimer));
+        var (left, right) = gameModel.GetScore();
+        string leftName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName1() : "Trái";
+        string rightName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName2() : "Phải";
+        GameControlBridge.Instance?.PushReport(secondsLeft, leftName, left, rightName, right);
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

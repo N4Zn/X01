@@ -81,14 +81,48 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     Coroutine _leftIndependentLoop;
     Coroutine _rightIndependentLoop;
 
+    /// <summary>Instance minigame đang chạy trong scene hiện tại — dùng cho control panel
+    /// (ControlActivity/GameControlBridge) gọi Pause()/Resume() mà không cần tham chiếu
+    /// trực tiếp tới subclass cụ thể nào. Chỉ 1 minigame chạy tại 1 thời điểm nên static là
+    /// đủ, không cần danh sách.</summary>
+    public static MiniGameControllerBase Current { get; private set; }
+
+    /// <summary>True khi đang Pause (từ control panel) — Update() đóng băng timer hoàn
+    /// toàn, không tự resume. Không tự chặn input riêng ở đây: khi Pause, control panel
+    /// (GameControlBridge) đồng thời tắt LidarTouchBridge nên touch không tới được UI —
+    /// đủ cho use-case thật (nguồn touch duy nhất là Lidar).</summary>
+    public bool IsPaused { get; private set; }
+
     protected virtual void Start()
     {
+        Current = this;
         InitScoring();
         InitFsm();
     }
 
+    protected virtual void OnDestroy()
+    {
+        if (Current == this) Current = null;
+    }
+
+    public void Pause()
+    {
+        if (IsPaused) return;
+        IsPaused = true;
+        Debug.Log("[MiniGameKit] Pause");
+    }
+
+    public void Resume()
+    {
+        if (!IsPaused) return;
+        IsPaused = false;
+        Debug.Log("[MiniGameKit] Resume");
+    }
+
     protected virtual void Update()
     {
+        if (IsPaused) return;
+
         // Timer chạy liên tục trong suốt ván (WaitAnswer + ShowQuestion + Feedback)
         // để tránh timer bị dừng trong khoảng chờ feedback/chuyển câu.
         var currentState = GetCurrentState();
@@ -106,6 +140,23 @@ public abstract class MiniGameControllerBase : MonoBehaviour
                 Fsm.StateMachineChange(MiniGameState.GameOver);
             }
         }
+
+        PushReportIfDue();
+    }
+
+    float _lastReportPushTime;
+
+    /// <summary>Đẩy report (thời gian còn lại, tổng điểm) sang ControlActivity mỗi giây —
+    /// không đẩy mỗi frame để tránh gọi JNI quá dày. Xem GameControlBridge.PushReport().</summary>
+    void PushReportIfDue()
+    {
+        if (Time.time - _lastReportPushTime < 1f) return;
+        _lastReportPushTime = Time.time;
+        int secondsLeft = _useTimer ? Mathf.CeilToInt(Mathf.Max(0f, _gameTimer)) : 0;
+        string leftName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName1() : "Trái";
+        string rightName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName2() : "Phải";
+        int rightScore = playMode == MiniGamePlayMode.Solo ? 0 : ScoreManager.ScoreRight;
+        GameControlBridge.Instance?.PushReport(secondsLeft, leftName, ScoreManager.ScoreLeft, rightName, rightScore);
     }
 
     // ── Setup ────────────────────────────────────────────────────────────────
@@ -442,7 +493,32 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         int round = playMode == MiniGamePlayMode.Independent
             ? (team == Team.Left ? _leftRoundIndex : _rightRoundIndex)
             : _roundIndex;
-        PlayerRecognitionService.Instance.LogRound(slot, round, DescribeQuestion(q), DescribeAnswer(q, playerAnswer), correct, answerTimeSec);
+        string questionDesc = DescribeQuestion(q);
+        string answerDesc = DescribeAnswer(q, playerAnswer);
+        PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec);
+
+        // Track E: đồng bộ Google Sheet liên tục — điểm chèn DUY NHẤT này phủ được mọi game
+        // dựng trên MiniGameKit (không cần sửa từng subclass). Xem SheetsSyncManager.
+        // eventType + playerName: thiếu ở bản trước — mọi log khác (GameLogger, PlayerRecognitionService)
+        // đều có 2 field này, thiếu khiến cột eventType trống, không lọc/nhận biết được ai trả lời.
+        string playerName = GameSessionManager.Instance != null && GameSessionManager.Instance.Players.Count > slot
+            ? GameSessionManager.Instance.Players[slot].PlayerName
+            : (team == Team.Left ? "Player 1" : "Player 2");
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "round_end"},
+            {"gameName", string.IsNullOrEmpty(sceneNameForRegistry) ? GetType().Name : sceneNameForRegistry},
+            {"gameVariant", GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : ""},
+            {"slot", slot},
+            {"team", team.ToString()},
+            {"playerName", playerName},
+            {"round", round},
+            {"question", questionDesc},
+            {"answer", answerDesc},
+            {"correct", correct},
+            {"responseTimeSec", System.Math.Round(answerTimeSec, 2)},
+        });
     }
 
     static string DescribeQuestion(QuestionData q)

@@ -131,6 +131,19 @@ public class MusicManager : Singleton<MusicManager>
         _currentBgmName = null;
     }
 
+    /// <summary>Tạm dừng BGM (giữ nguyên vị trí phát) — gọi từ GameControlBridge.OnPauseRequested
+    /// khi bấm Pause trên control panel. Không đụng SFX (one-shot, tự hết).</summary>
+    public void PauseBgm()
+    {
+        if (_bgmSource != null && _bgmSource.isPlaying) _bgmSource.Pause();
+    }
+
+    /// <summary>Tiếp tục BGM từ vị trí đã Pause — gọi từ GameControlBridge.OnResumeRequested.</summary>
+    public void ResumeBgm()
+    {
+        if (_bgmSource != null && !_bgmSource.isPlaying) _bgmSource.UnPause();
+    }
+
     private void PlayBgm(AudioClip clip, string clipName)
     {
         if (clip == null)

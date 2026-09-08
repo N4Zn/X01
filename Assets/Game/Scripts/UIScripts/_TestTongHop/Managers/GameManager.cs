@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] QuestionPool questionPool;
 
     [Header("Settings")]
+    [Tooltip("Fallback khi chưa chọn game qua ControlActivity (vd test trực tiếp trong Editor). Lúc chạy thật luôn ưu tiên GameSessionManager.SelectedGameName (tên cụ thể của minigame, vd Counting5/AddNumber5) — KHÔNG dùng tên scene chung, vì nhiều game share 1 scene TestTongHopGame.")]
     [SerializeField] string gameName = "TestTongHop";
     ScoreManager _score;
     GameLogger   _logger;
@@ -38,8 +39,17 @@ public class GameManager : MonoBehaviour
             rightName = session.GetDisplayName2();
         }
 
+        // Tên game ghi vào log/Sheet PHẢI là tên cụ thể minigame (vd Counting5, AddNumber5) —
+        // KHÔNG phải tên field cố định ở trên, vì nhiều game share chung scene TestTongHopGame,
+        // chỉ khác CSV theo SelectedGameName (xem ControlBridge.cs). Field gameName giữ lại làm
+        // fallback khi test trực tiếp trong Editor (không qua ControlActivity nên chưa có
+        // SelectedGameName).
+        string resolvedGameName = session != null && !string.IsNullOrEmpty(session.SelectedGameName)
+            ? session.SelectedGameName
+            : gameName;
+
         _score      = new ScoreManager();
-        _logger     = new GameLogger(gameName, leftName, rightName);
+        _logger     = new GameLogger(resolvedGameName, leftName, rightName);
         MaxGameTime = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 100f;
         GameTimer   = MaxGameTime;
     }

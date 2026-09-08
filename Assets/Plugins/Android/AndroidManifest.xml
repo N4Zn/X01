@@ -14,11 +14,12 @@
       App thường (không phải launcher).
       Dùng UnityPlayerActivity (class thực tế trong build Unity 2022.3 IL2CPP).
     -->
+    <!-- Track A (EduXplore 2.0): KHÔNG còn là entry point/HOME — ControlActivity
+         (com.eduxplore.control, từ controlui-release.aar) giờ là launcher. UnityPlayerActivity
+         chỉ được khởi chạy tường minh (ControlActivity.startGame(), Intent.setClassName),
+         đẩy sang display phụ qua ActivityOptions.setLaunchDisplayId() khi có máy chiếu, hoặc
+         display 0 nếu không (xem ControlActivity.java). exported=true để việc đó gọi được. -->
     <activity android:name="com.unity3d.player.UnityPlayerActivity" android:screenOrientation="landscape" android:launchMode="singleTask" android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density" android:exported="true">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
       <!-- USB_DEVICE_ATTACHED intent-filter and usb_device_filter.xml are declared
            inside unityplugin.aar (manifest merge) to avoid the obsolete res/ folder error. -->
     </activity>

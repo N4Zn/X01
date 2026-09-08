@@ -44,6 +44,10 @@ public class StartMainController : MonoBehaviour
         // instead of only starting to warm up at that exact moment.
         _ = FaceRecognitionPlugin.Instance;
 
+        // Same reasoning for Lidar (USB permission handshake + native pipeline startup) —
+        // xem LidarTouchBridge.cs.
+        _ = LidarTouchBridge.Instance;
+
         LoadData();
     }
 

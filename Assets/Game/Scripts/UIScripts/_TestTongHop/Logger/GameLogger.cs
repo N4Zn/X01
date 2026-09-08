@@ -90,6 +90,20 @@ public class GameLogger
             answerIndex = answerIndex,
             result      = result.ToString()
         });
+
+        // Track E: đồng bộ Google Sheet liên tục — chi tiết từng click, xem SheetsSyncManager.
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "click"},
+            {"gameName", _gameName},
+            {"round", _currentRound.round},
+            {"questionId", _currentRound.questionId},
+            {"side", team.ToString()},
+            {"playerName", team == Team.Left ? _playerLeft : _playerRight},
+            {"answerIndex", answerIndex},
+            {"result", result.ToString()},
+        });
     }
 
     /// <summary>
@@ -107,6 +121,21 @@ public class GameLogger
             answerIndex = leftIndex,          // left item
             result      = correct ? $"PairCorrect→{rightIndex}" : $"PairWrong→{rightIndex}"
         });
+
+        // Track E: đồng bộ Google Sheet liên tục — xem SheetsSyncManager.
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "pair"},
+            {"gameName", _gameName},
+            {"round", _currentRound.round},
+            {"questionId", _currentRound.questionId},
+            {"side", team.ToString()},
+            {"playerName", team == Team.Left ? _playerLeft : _playerRight},
+            {"leftIndex", leftIndex},
+            {"rightIndex", rightIndex},
+            {"correct", correct},
+        });
     }
 
     /// <summary>
@@ -121,6 +150,21 @@ public class GameLogger
             : "";
         _currentRound.responseTimeSeconds = (float)Math.Round(responseTime, 2);
         _currentRound.correctAnswers      = q.correctAnswers;
+
+        // Track E: đồng bộ Google Sheet liên tục — tổng kết round, xem SheetsSyncManager.
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "round_end"},
+            {"gameName", _gameName},
+            {"round", _currentRound.round},
+            {"questionId", _currentRound.questionId},
+            {"topic", _currentRound.topic},
+            {"isCorrect", isCorrect},
+            {"winnerName", _currentRound.winnerName},
+            {"responseTimeSec", _currentRound.responseTimeSeconds},
+        });
+
         _rounds.Add(_currentRound);
         _currentRound = null;
     }
@@ -144,6 +188,20 @@ public class GameLogger
             totalRounds     = _rounds.Count,
             rounds          = _rounds
         };
+
+        // Track E: đồng bộ Google Sheet liên tục — tổng kết session, xem SheetsSyncManager.
+        SheetsSyncManager.Enqueue(new Dictionary<string, object>
+        {
+            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+            {"eventType", "session_end"},
+            {"gameName", _gameName},
+            {"playerLeft", _playerLeft},
+            {"playerRight", _playerRight},
+            {"durationSec", duration},
+            {"scoreLeft", score.ScoreLeft},
+            {"scoreRight", score.ScoreRight},
+            {"totalRounds", _rounds.Count},
+        });
 
         string json  = JsonUtility.ToJson(log, prettyPrint: true);
         string fname = $"{_gameName}_{_sessionStart:yyyy-MM-dd_HHmmss}.json";
