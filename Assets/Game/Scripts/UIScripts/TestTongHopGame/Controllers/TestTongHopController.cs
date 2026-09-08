@@ -217,7 +217,14 @@ public class TestTongHopController : MonoBehaviour
         SetupFeedbackIconOverlay();
 
         gameHud?.Initialize(gameModel.Score, leftName, rightName);
-        PlayerRecognitionService.Instance.BeginGameSession("TestTongHopGame");
+        // Tên game cụ thể (vd Counting5) — KHÔNG phải tên scene cố định "TestTongHopGame":
+        // nhiều game share chung scene này, chỉ khác CSV theo SelectedGameName (xem
+        // ControlBridge.cs) — cùng bug đã fix ở GameManager.cs, đây là chỗ thứ 2 bị sót
+        // (log "recognition" từ PlayerRecognitionService từng ghi nhầm tên scene).
+        string recognitionGameName = session != null && !string.IsNullOrEmpty(session.SelectedGameName)
+            ? session.SelectedGameName
+            : "TestTongHopGame";
+        PlayerRecognitionService.Instance.BeginGameSession(recognitionGameName);
         _fsm.StateMachineChange(TestTongHopSceneState.ShowQuestion);
     }
 
@@ -511,6 +518,11 @@ public class TestTongHopController : MonoBehaviour
 
         MusicManager.Instance?.PlayMainMusic();
         SceneManager.LoadScene("ScoreScene");
+
+        // Hết giờ tự nhiên (không phải bấm Stop) — báo ControlActivity tự quay Menu chọn
+        // game tiếp theo, coi như hết 1 round. Display máy chiếu không bị đụng, vẫn hiện
+        // ScoreScene vừa load ở trên như bình thường.
+        GameControlBridge.Instance?.PushGameEnded();
     }
 
     protected void StateMachineExit_GameOver(Enum prev, Dictionary<string, object> opts) { }

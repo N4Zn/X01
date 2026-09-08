@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Cầu nối 2 chiều giữa ControlActivity (Java, display 0 — nút Pause/Stop) và game đang
@@ -52,6 +53,92 @@ public class GameControlBridge : Singleton<GameControlBridge>
         LidarTouchBridge.Instance.SetTouchEnabled(true);
         MusicManager.Instance?.ResumeBgm();
         Debug.Log("[GameControlBridge] OnResumeRequested");
+    }
+
+    /// <summary>Gọi từ ControlActivity khi bấm Stop — KHÔNG destroy/finish UnityPlayerActivity
+    /// (khác finishUnityTask() cũ). Unity tự kill() cả process (dùng chung với ControlActivity)
+    /// khi Activity của nó bị destroy — hành vi engine, không sửa được từ code app (xem lịch sử
+    /// bug "Stop thoát cả app"). Né hẳn vấn đề bằng cách giữ UnityPlayerActivity SỐNG NGUYÊN,
+    /// chỉ dừng game + che đen display — giống hệt việc bấm Home để app chạy nền, chỉ khác là
+    /// phải tự làm thủ công vì 2 display riêng biệt không có 1 cử chỉ Home áp dụng đúng cho
+    /// riêng display máy chiếu.</summary>
+    public void OnStopRequested(string unused)
+    {
+        MiniGameControllerBase.Current?.Pause();
+        TestTongHopController.Current?.Pause();
+        LidarTouchBridge.Instance.SetTouchEnabled(false);
+        MusicManager.Instance?.PauseBgm();
+        ShowBlankOverlay(true);
+        Debug.Log("[GameControlBridge] OnStopRequested");
+    }
+
+    /// <summary>Gọi từ ControlActivity khi bấm Start LẦN 2 TRỞ ĐI — UnityPlayerActivity đã
+    /// sống sẵn từ lần chơi trước (Stop không còn destroy nó nữa), nên chỉ cần lệnh nạp game
+    /// mới qua message thay vì khởi động lại Activity (Intent extra chỉ đọc được 1 lần lúc
+    /// cold-boot — xem ControlBridge.Init()). payload: "sceneName|gameName".</summary>
+    public void OnLoadGameRequested(string payload)
+    {
+        if (string.IsNullOrEmpty(payload)) return;
+        int sep = payload.IndexOf('|');
+        string sceneName = sep >= 0 ? payload.Substring(0, sep) : payload;
+        string gameName  = sep >= 0 ? payload.Substring(sep + 1) : null;
+
+        ShowBlankOverlay(false);
+        LidarTouchBridge.Instance.SetTouchEnabled(true);
+        ControlBridge.LoadGame(sceneName, gameName);
+    }
+
+    // ── Blank overlay — che display máy chiếu lúc Stop, thay cho việc destroy Activity ──────
+
+    Canvas _blankOverlay;
+
+    void ShowBlankOverlay(bool visible)
+    {
+        if (_blankOverlay == null && visible) _blankOverlay = CreateBlankOverlay();
+        if (_blankOverlay != null) _blankOverlay.gameObject.SetActive(visible);
+    }
+
+    static Canvas CreateBlankOverlay()
+    {
+        var go = new GameObject("[GameControlBridge_BlankOverlay]");
+        Object.DontDestroyOnLoad(go);
+        var canvas = go.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 32767; // đè lên mọi UI khác, kể cả debug touch indicator
+
+        var imgGo = new GameObject("Black");
+        imgGo.transform.SetParent(go.transform, false);
+        var rt = imgGo.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        var img = imgGo.AddComponent<Image>();
+        img.color = Color.black;
+        img.raycastTarget = false; // không cần chặn touch riêng — LidarTouchBridge đã tắt touch
+
+        return canvas;
+    }
+
+    /// <summary>Báo ControlActivity game vừa TỰ kết thúc (hết giờ/hết vòng — GameOver tự
+    /// nhiên, KHÔNG phải do bấm Stop) — gọi từ StateMachineEnter_GameOver của
+    /// TestTongHopController/MiniGameControllerBase. ControlActivity tự quay Menu để chọn game
+    /// tiếp theo, coi như hết 1 round, không cần user bấm Stop thủ công. Display máy chiếu
+    /// KHÔNG bị đụng tới — Unity tự chuyển ScoreScene như bình thường, vẫn hiện kết quả.</summary>
+    public void PushGameEnded()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var controlActivityClass = new AndroidJavaClass(ControlActivityClass))
+            {
+                controlActivityClass.CallStatic("OnGameEnded");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameControlBridge] PushGameEnded lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
     }
 
     /// <summary>Đẩy report (giây còn lại, tên + điểm TỪNG BÊN trái/phải riêng) sang

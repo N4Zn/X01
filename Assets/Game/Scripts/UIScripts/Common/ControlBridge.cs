@@ -36,25 +36,9 @@ public static class ControlBridge
                 string gameName = intent.Call<string>("getStringExtra", ExtraGameName);
 
                 if (!string.IsNullOrEmpty(sceneName))
-                {
-                    Debug.Log($"[ControlBridge] Load scene từ Intent extra: name={gameName} scene={sceneName}");
-
-                    if (!string.IsNullOrEmpty(gameName) && GameSessionManager.Instance != null)
-                    {
-                        GameSessionManager.Instance.SelectedGameName = gameName;
-                        GameSessionManager.Instance.LastPlayedGame = sceneName;
-                        // SelectedEntry (GameRegistry.GameEntry đầy đủ, gồm engine/bgm/...) — tra lại
-                        // từ GameRegistry theo name, vì ControlActivity (Java, chạy trước Unity) chỉ
-                        // gửi được name+scene qua Intent extra (string), không gửi được cả struct.
-                        TryResolveSelectedEntry(gameName);
-                    }
-
-                    SceneManager.LoadScene(sceneName);
-                }
+                    LoadGame(sceneName, gameName);
                 else
-                {
                     Debug.Log("[ControlBridge] Không có Intent extra scene — giữ scene mặc định (Build Settings)");
-                }
             }
         }
         catch (System.Exception e)
@@ -62,6 +46,31 @@ public static class ControlBridge
             Debug.LogError($"[ControlBridge] Đọc Intent extra lỗi: {e}");
         }
 #endif
+    }
+
+    /// <summary>
+    /// Nạp 1 game cụ thể — dùng chung cho 2 nguồn gọi: Intent extra lúc cold-boot (Init() ở
+    /// trên) VÀ GameControlBridge.OnLoadGameRequested (khi UnityPlayerActivity đã sống sẵn từ
+    /// lần chơi trước, ControlActivity chỉ gửi lệnh nạp game mới qua UnitySendMessage thay vì
+    /// khởi động lại Activity — xem lý do đầy đủ ở GameControlBridge.cs, bug "Stop thoát cả
+    /// app" do Unity tự kill() process lúc Activity destroy).
+    /// </summary>
+    public static void LoadGame(string sceneName, string gameName)
+    {
+        if (string.IsNullOrEmpty(sceneName)) return;
+        Debug.Log($"[ControlBridge] LoadGame: name={gameName} scene={sceneName}");
+
+        if (!string.IsNullOrEmpty(gameName) && GameSessionManager.Instance != null)
+        {
+            GameSessionManager.Instance.SelectedGameName = gameName;
+            GameSessionManager.Instance.LastPlayedGame = sceneName;
+            // SelectedEntry (GameRegistry.GameEntry đầy đủ, gồm engine/bgm/...) — tra lại
+            // từ GameRegistry theo name, vì ControlActivity (Java) chỉ gửi được name+scene
+            // dạng string, không gửi được cả struct.
+            TryResolveSelectedEntry(gameName);
+        }
+
+        SceneManager.LoadScene(sceneName);
     }
 
     static void TryResolveSelectedEntry(string gameName)

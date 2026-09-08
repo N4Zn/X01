@@ -426,6 +426,11 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         }
         MusicManager.Instance?.PlayMainMusic();
         if (!string.IsNullOrEmpty(nextSceneName)) SceneManager.LoadScene(nextSceneName);
+
+        // Hết giờ tự nhiên (không phải bấm Stop) — báo ControlActivity tự quay Menu chọn
+        // game tiếp theo, coi như hết 1 round. Display máy chiếu không bị đụng, vẫn hiện
+        // ScoreScene vừa load ở trên như bình thường.
+        GameControlBridge.Instance?.PushGameEnded();
     }
 
     // ── Actions dùng chung — gọi từ UI event (nút Retry/Back) hoặc từ hook ────
@@ -438,7 +443,12 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         ScoreManager.Reset();
         MusicManager.Instance?.PlayGameplayMusic();
 
-        string gameName = !string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name;
+        // Tên game cụ thể (GameSessionManager.SelectedGameName, vd variant key trong
+        // GameRegistry) — KHÔNG phải sceneNameForRegistry (tên scene, nhiều game có thể share
+        // chung 1 scene). Cùng bug đã fix ở GameManager.cs (TestTongHop)/TestTongHopController.cs.
+        string gameName = GameSessionManager.Instance != null && !string.IsNullOrEmpty(GameSessionManager.Instance.SelectedGameName)
+            ? GameSessionManager.Instance.SelectedGameName
+            : (!string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name);
         PlayerRecognitionService.Instance.BeginGameSession(gameName);
 
         StartCoroutine(InitialStartCountdownThenBegin());
