@@ -219,12 +219,8 @@ public class TestTongHopController : MonoBehaviour
         gameHud?.Initialize(gameModel.Score, leftName, rightName);
         // Tên game cụ thể (vd Counting5) — KHÔNG phải tên scene cố định "TestTongHopGame":
         // nhiều game share chung scene này, chỉ khác CSV theo SelectedGameName (xem
-        // ControlBridge.cs) — cùng bug đã fix ở GameManager.cs, đây là chỗ thứ 2 bị sót
-        // (log "recognition" từ PlayerRecognitionService từng ghi nhầm tên scene).
-        string recognitionGameName = session != null && !string.IsNullOrEmpty(session.SelectedGameName)
-            ? session.SelectedGameName
-            : "TestTongHopGame";
-        PlayerRecognitionService.Instance.BeginGameSession(recognitionGameName);
+        // ControlBridge.cs, GameSessionManager.ResolveActiveGameName).
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("TestTongHopGame"));
         _fsm.StateMachineChange(TestTongHopSceneState.ShowQuestion);
     }
 

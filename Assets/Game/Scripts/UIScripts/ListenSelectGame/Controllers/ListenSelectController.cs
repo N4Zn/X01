@@ -94,7 +94,7 @@ public class ListenSelectController : MonoBehaviour
         gameView.UpdateScores(0, 0);
         _fsm.StateMachineChange(ListenSelectState.Playing); // Chuyá»ƒn sang Playing trÆ°á»›c
         MusicManager.Instance?.PlayGameplayMusic();
-        PlayerRecognitionService.Instance.BeginGameSession("ListenSelectGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("ListenSelectGame"));
         StartCoroutine(InitialStartCountdown());
     }
 

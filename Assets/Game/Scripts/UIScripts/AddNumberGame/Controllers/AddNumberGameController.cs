@@ -264,7 +264,7 @@ public class AddNumberGameController : MonoBehaviour
         gameView.HideGameOverPanel();
         gameView.SetQuestionText("Fill in the missing number!");
         gameView.UpdateScores(0, 0);
-        PlayerRecognitionService.Instance.BeginGameSession("AddNumberGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("AddNumberGame"));
 
         StartCoroutine(InitialStartCountdown());
     }

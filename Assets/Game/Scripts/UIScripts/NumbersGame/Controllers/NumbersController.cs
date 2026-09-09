@@ -94,7 +94,7 @@ public class NumbersController : MonoBehaviour
         gameView.UpdateScores(0, 0);
         _fsm.StateMachineChange(NumbersState.Playing);
         MusicManager.Instance?.PlayGameplayMusic();
-        PlayerRecognitionService.Instance.BeginGameSession("NumbersGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("NumbersGame"));
         StartCoroutine(InitialStartCountdown());
     }
 

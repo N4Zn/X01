@@ -133,7 +133,7 @@ public class PlanetOrderController : MonoBehaviour
         gameView.HideGameOver();
         gameView.SetQuestionText("Nhan theo thu tu tang dan!");
         gameView.UpdateScores(0, 0);
-        PlayerRecognitionService.Instance.BeginGameSession("PlanetOrderGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("PlanetOrderGame"));
         StartCoroutine(InitialStartCountdown());
     }
 

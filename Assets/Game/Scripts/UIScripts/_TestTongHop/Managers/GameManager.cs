@@ -44,9 +44,7 @@ public class GameManager : MonoBehaviour
         // chỉ khác CSV theo SelectedGameName (xem ControlBridge.cs). Field gameName giữ lại làm
         // fallback khi test trực tiếp trong Editor (không qua ControlActivity nên chưa có
         // SelectedGameName).
-        string resolvedGameName = session != null && !string.IsNullOrEmpty(session.SelectedGameName)
-            ? session.SelectedGameName
-            : gameName;
+        string resolvedGameName = GameSessionManager.ResolveActiveGameName(gameName);
 
         _score      = new ScoreManager();
         _logger     = new GameLogger(resolvedGameName, leftName, rightName);

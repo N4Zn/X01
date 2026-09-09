@@ -130,7 +130,7 @@ public class PlanetAlphabetController : MonoBehaviour
         gameView.HideGameOver();
         gameView.SetQuestionText("Nháº¥n theo thá»© tá»± báº£ng chá»¯ cÃ¡i!");
         gameView.UpdateScores(0, 0);
-        PlayerRecognitionService.Instance.BeginGameSession("PlanetAlphabetGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("PlanetAlphabetGame"));
         StartCoroutine(InitialStartCountdown());
     }
 

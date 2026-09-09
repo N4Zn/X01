@@ -94,7 +94,7 @@ public class ChuCaiController : MonoBehaviour
         gameView.UpdateScores(0, 0);
         _fsm.StateMachineChange(ChuCaiState.Playing);
         MusicManager.Instance?.PlayGameplayMusic();
-        PlayerRecognitionService.Instance.BeginGameSession("ChuCaiGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("ChuCaiGame"));
         StartCoroutine(InitialStartCountdown());
     }
 

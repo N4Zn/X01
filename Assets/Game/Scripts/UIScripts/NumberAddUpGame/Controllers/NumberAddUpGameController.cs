@@ -184,7 +184,7 @@ public class NumberAddUpGameController : MonoBehaviour
         gameView.HideGameOverPanel();
         gameView.SetQuestionText("Dien so con thieu!");
         gameView.UpdateScores(0, 0);
-        PlayerRecognitionService.Instance.BeginGameSession("NumberAddUpGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("NumberAddUpGame"));
 
         StartCoroutine(InitialStartCountdown());
     }

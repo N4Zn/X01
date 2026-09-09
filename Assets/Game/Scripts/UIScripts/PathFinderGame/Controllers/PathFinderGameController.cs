@@ -139,7 +139,7 @@ public class PathFinderGameController : MonoBehaviour
         gameView.UpdateStars(0, 0);
         gameView.UpdateStars(1, 0);
         gameView.UpdateTimer(_gameModel.GameTimer);
-        PlayerRecognitionService.Instance.BeginGameSession("PathFinderGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("PathFinderGame"));
 
         StartCoroutine(InitialStartCountdown());
     }

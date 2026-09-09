@@ -74,7 +74,7 @@ public class SaveTheAstronautController : MonoBehaviour
 
         _timeRemaining = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 90f;
 
-        PlayerRecognitionService.Instance.BeginGameSession("SaveTheAstronautGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("SaveTheAstronautGame"));
         yield return StartCoroutine(Countdown());
 
         _isPlaying = true;

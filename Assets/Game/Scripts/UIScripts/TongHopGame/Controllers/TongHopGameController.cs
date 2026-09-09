@@ -261,7 +261,7 @@ public class TongHopGameController : MonoBehaviour
         gameView.HideGameOverPanel();
         gameView.SetQuestionText("Fill in the missing number!");
         gameView.UpdateScores(0, 0);
-        PlayerRecognitionService.Instance.BeginGameSession("TongHopGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("TongHopGame"));
 
         StartCoroutine(InitialStartCountdown());
     }

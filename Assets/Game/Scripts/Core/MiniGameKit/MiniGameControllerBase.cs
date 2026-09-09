@@ -445,10 +445,10 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
         // Tên game cụ thể (GameSessionManager.SelectedGameName, vd variant key trong
         // GameRegistry) — KHÔNG phải sceneNameForRegistry (tên scene, nhiều game có thể share
-        // chung 1 scene). Cùng bug đã fix ở GameManager.cs (TestTongHop)/TestTongHopController.cs.
-        string gameName = GameSessionManager.Instance != null && !string.IsNullOrEmpty(GameSessionManager.Instance.SelectedGameName)
-            ? GameSessionManager.Instance.SelectedGameName
-            : (!string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name);
+        // chung 1 scene). Cùng bug đã fix ở GameManager.cs (TestTongHop)/TestTongHopController.cs
+        // và 13 controller khác không đi qua base class này (xem GameSessionManager.ResolveActiveGameName).
+        string gameName = GameSessionManager.ResolveActiveGameName(
+            !string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name);
         PlayerRecognitionService.Instance.BeginGameSession(gameName);
 
         StartCoroutine(InitialStartCountdownThenBegin());

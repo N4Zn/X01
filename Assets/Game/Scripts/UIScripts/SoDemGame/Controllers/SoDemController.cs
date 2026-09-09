@@ -94,7 +94,7 @@ public class SoDemController : MonoBehaviour
         gameView.UpdateScores(0, 0);
         _fsm.StateMachineChange(SoDemState.Playing);
         MusicManager.Instance?.PlayGameplayMusic();
-        PlayerRecognitionService.Instance.BeginGameSession("SoDemGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("SoDemGame"));
         StartCoroutine(InitialStartCountdown());
     }
 

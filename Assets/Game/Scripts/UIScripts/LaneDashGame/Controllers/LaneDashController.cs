@@ -190,7 +190,7 @@ public class LaneDashController : MonoBehaviour
 
         _timeRemaining = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 90f;
 
-        PlayerRecognitionService.Instance.BeginGameSession("LaneDashGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("LaneDashGame"));
         yield return StartCoroutine(Countdown());
 
         _isPlaying = true;

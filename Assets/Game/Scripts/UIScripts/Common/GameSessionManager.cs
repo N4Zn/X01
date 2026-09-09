@@ -57,6 +57,18 @@ public class GameSessionManager : Singleton<GameSessionManager>
     /// </summary>
     public string SelectedGameName { get; set; }
 
+    /// <summary>Tên game để GHI LOG/REPORT (Sheets, PlayerRecognitionService, GameControlBridge)
+    /// — ưu tiên SelectedGameName (tên variant cụ thể do ControlActivity chọn, vd "AddNumber5"),
+    /// fallback về tên cố định (thường là tên scene) khi chưa có (vd test trực tiếp trong Editor,
+    /// không qua ControlActivity). Dùng ở MỌI controller thay vì hardcode literal tên scene —
+    /// nhiều game share chung 1 scene/class, hardcode sẽ ghi sai tên khi có > 1 variant.</summary>
+    public static string ResolveActiveGameName(string fallback)
+    {
+        return Instance != null && !string.IsNullOrEmpty(Instance.SelectedGameName)
+            ? Instance.SelectedGameName
+            : fallback;
+    }
+
     /// <summary>
     /// Full entry từ GameRegistry — chứa bgmTrack, backgroundSprite, pointsPerCorrect.
     /// Set cùng lúc với SelectedGameName bởi MenuSceneController.

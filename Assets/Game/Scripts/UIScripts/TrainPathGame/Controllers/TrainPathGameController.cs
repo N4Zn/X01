@@ -268,7 +268,7 @@ public class TrainPathGameController : MonoBehaviour
     {
         _gameModel.ResetGame();
         gameView.UpdateScores(0, 0);
-        PlayerRecognitionService.Instance.BeginGameSession("TrainPathGame");
+        PlayerRecognitionService.Instance.BeginGameSession(GameSessionManager.ResolveActiveGameName("TrainPathGame"));
 
         StartCoroutine(InitialStartCountdown());
     }
