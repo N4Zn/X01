@@ -99,3 +99,11 @@ node_modules/
 
 # Standalone Gradle native-plugin modules (NativePlugins/) — local SDK path, machine-specific
 local.properties
+
+# Unity standalone build output (Linux/other platforms) — regenerate via Unity Build, not source.
+# *.apk/*.aab (Android) already covered above.
+*.x86_64
+*_Data/
+*_s.debug
+UnityPlayer.so
+libdecor-*
