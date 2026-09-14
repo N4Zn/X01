@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Dọn sạch cả 2 display khi user tắt app qua Recents — xem
+             TaskRemovedWatcherService.java (ControlActivity/UnityPlayerActivity ở 2 task
+             riêng do launch cross-display, Android chỉ tự dọn đúng 1 task khi swipe). -->
+        <service
+            android:name=".TaskRemovedWatcherService"
+            android:exported="false" />
+
+        <!-- Service rỗng trong process CHÍNH — WatchdogService (process riêng, xem dưới) bind
+             vào đây để phát hiện process chính chết bất ngờ. Xem HeartbeatService.java. -->
+        <service
+            android:name=".HeartbeatService"
+            android:exported="false" />
+
+        <!-- Chạy TÁCH RIÊNG process (":watchdog") — bind vào HeartbeatService bên trên, tự
+             khởi động lại ControlActivity ngay khi process chính chết (Unity tự kill() cả
+             process lúc UnityPlayerActivity destroy — bug "Stop thoát cả app"). KHÔNG cần
+             đăng ký app này làm Home/Launcher — chỉ 1 service theo dõi từ process khác, theo
+             đúng yêu cầu. Xem WatchdogService.java. -->
+        <service
+            android:name=".WatchdogService"
+            android:exported="false"
+            android:process=":watchdog" />
+
+        <!-- ControlActivity là entry point mới (launcher thường) — thay UnityPlayerActivity.
+             Xem Assets/Plugins/Android/AndroidManifest.xml: đã bỏ MAIN/LAUNCHER khỏi
+             UnityPlayerActivity để tránh 2 icon/2 launcher candidate cùng lúc. -->
+        <activity
+            android:name=".ControlActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|density"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

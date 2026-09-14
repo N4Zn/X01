@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#111827">
+
+    <!-- ============== MENU: chọn minigame ============== -->
+    <LinearLayout
+        android:id="@+id/menu_screen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chọn minigame"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:layout_marginBottom="24dp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/game_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <Button
+            android:id="@+id/start_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="START"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:paddingLeft="60dp"
+            android:paddingRight="60dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp"
+            android:enabled="false" />
+    </LinearLayout>
+
+    <!-- ============== CONTROL: đang chơi ============== -->
+    <LinearLayout
+        android:id="@+id/control_screen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/playing_game_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đang chơi: —"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/report_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thời gian: — · Số câu đúng: —"
+            android:textColor="#9CA3AF"
+            android:textSize="18sp"
+            android:layout_marginBottom="32dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/pause_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PAUSE"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:layout_marginEnd="16dp" />
+
+            <Button
+                android:id="@+id/stop_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="STOP"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>
