@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0C111D</color>
+    <color name="panel">#141C2E</color>
+    <color name="panel2">#1A2338</color>
+    <color name="rail">#101728</color>
+    <color name="border">#28324A</color>
+    <color name="border_soft">#1E2740</color>
+    <color name="text">#E9EDF7</color>
+    <color name="text_dim">#8B95B3</color>
+    <color name="text_faint">#5C6786</color>
+    <color name="accent">#E3A13D</color>
+    <color name="accent_dim">#5A4A2A</color>
+    <color name="good">#4FB679</color>
+    <color name="good_dim">#1E3327</color>
+    <color name="live">#5B8DEF</color>
+    <color name="live_dim">#1C2C4A</color>
+    <color name="idle">#4A5578</color>
+    <color name="idle_dim">#1C2338</color>
+    <color name="bad">#E06A63</color>
+    <color name="bad_dim">#3A2226</color>
+</resources>

@@ -2,15 +2,23 @@ package com.eduxplore.control;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
+import android.app.Presentation;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
+
+import com.eduxplore.control.ui.MockData;
+import com.eduxplore.control.ui.UiUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,69 +29,78 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Entry point mới (HOME/launcher) — thay UnityPlayerActivity.
+ * Entry point (HOME/launcher) — thay UnityPlayerActivity.
  *
- * UI dựng bằng Android View thuần qua XML layout (activity_control.xml) — KHÔNG dùng
- * WebView: đã xác nhận thực tế trên K02, Chromium không khởi tạo được GL context
- * ("FATAL: gpu::InitializeGLThreadSafe() failed"), lỗi driver GPU tầng hệ thống không sửa
- * được từ app. Android View dùng chung con đường render mà Unity đã chạy ổn định.
+ * UI dựng bằng Android View thuần (KHÔNG WebView — Chromium không init được GL context trên
+ * K02, xem ghi chú cũ). Bố cục 4 vùng cố định (top-left Môn học / top-right Lớp / action-zone
+ * trái nhỏ / report-zone phải to) x 3 tiến trình (chọn / đang chơi / hết game) — xem
+ * activity_control.xml cho khung, các hàm render* bên dưới dựng nội dung động theo state,
+ * cùng ý tưởng với bản mockup HTML đã duyệt với giáo viên.
  *
- * 2 "màn hình" (menu chọn game / control lúc đang chơi) là 2 View con trong CÙNG Activity,
- * chuyển qua lại bằng visibility — không phải 2 Activity, để giữ state đơn giản.
- *
- * Không phụ thuộc biên dịch vào class Unity nào (com.unity3d.player.*) — dùng
- * Intent.setClassName() với string thay vì class reference (module .aar này được
- * unityLibrary include, không phải ngược lại, nên không chắc thấy class đó lúc compile).
+ * Dữ liệu game/môn học lấy THẬT từ assets/game_registry.json (xuất tay từ GameRegistry.cs).
+ * Dữ liệu roster/điểm năng lực/lịch sử hiện là MOCK (MockData.java) — chưa có hệ thống lớp
+ * học + công thức tính điểm thật, xem CLAUDE.md. Luồng Start/Pause/Stop/Unity vẫn 100% thật.
  */
 public class ControlActivity extends Activity {
 
     private static final String TAG = "ControlActivity";
     private static final String UNITY_PLAYER_ACTIVITY_CLASS = "com.unity3d.player.UnityPlayerActivity";
 
-    /** Đọc ở phía Unity (ControlBridge.cs) qua Intent.getStringExtra() lúc khởi động. */
     public static final String EXTRA_SCENE_NAME = "com.eduxplore.control.SCENE_NAME";
-    /** "name" (variant key) trong GameRegistry.GameEntry — nhiều game dùng CHUNG 1 scene
-     *  nhưng khác bộ câu hỏi CSV theo key này (vd TestTongHopGame). BẮT BUỘC gửi kèm scene,
-     *  nếu không QuestionPool sẽ không biết load CSV nào — xem ControlBridge.cs. */
     public static final String EXTRA_GAME_NAME = "com.eduxplore.control.GAME_NAME";
 
     private static final String GAME_REGISTRY_ASSET = "game_registry.json";
-
-    /** name hiển thị/variant key (GameRegistry.GameEntry.name) + sceneName — đọc từ
-     *  assets/game_registry.json, xuất tay từ GameRegistry.cs (Unity/C#, nguồn sự thật).
-     *  ControlActivity chạy TRƯỚC khi Unity khởi động nên không đọc trực tiếp GameRegistry
-     *  được — file JSON này cần cập nhật lại thủ công nếu GameRegistry.cs đổi danh sách game. */
-    private static class GameItem {
-        final String name;
-        final String sceneName;
-        GameItem(String name, String sceneName) { this.name = name; this.sceneName = sceneName; }
-    }
-    private final List<GameItem> games = new ArrayList<>();
-
-    // GameObject Unity nhận lệnh Pause/Resume — xem GameControlBridge.cs (phải trùng tên).
     private static final String UNITY_GAME_OBJECT = "GameControlBridge";
 
-    // Unity gọi ngược vào đây (UpdateReport, static) để cập nhật report — cần biết instance
-    // ĐANG hiển thị vì Unity không có cách nào lấy Context/Activity của ControlActivity
-    // (khác display/task với UnityPlayerActivity, UnityPlayer.currentActivity trả về chính
-    // UnityPlayerActivity, không phải ControlActivity).
     private static ControlActivity sInstance;
 
-    private View menuScreen, controlScreen;
-    private TextView playingGameLabel, reportLabel;
-    private Button startButton, pauseButton, stopButton;
-    private String selectedScene = null;
-    private String selectedGameName = null;
-    private boolean paused = false;
+    private static class GameItem {
+        final String name, sceneName;
+        final int category;
+        GameItem(String name, String sceneName, int category) { this.name = name; this.sceneName = sceneName; this.category = category; }
+    }
 
-    // true sau lần Start ĐẦU TIÊN — UnityPlayerActivity từ đó luôn sống nguyên (Stop không
-    // còn destroy nó nữa, xem onStopClicked()), nên các lần Start SAU chỉ cần gửi lệnh nạp
-    // game mới qua UnitySendMessage thay vì startActivity() lại từ đầu (Intent extra chỉ đọc
-    // được 1 lần lúc cold-boot — xem ControlBridge.cs bên Unity).
+    private String[] categoryNames = new String[0];
+    private final Map<Integer, List<GameItem>> gamesByCategory = new LinkedHashMap<>();
+    private final List<String> allGameNames = new ArrayList<>();
+
+    // ── Views ────────────────────────────────────────────────────────────────
+    private TextView categoryTrigger, classTrigger;
+    private FrameLayout actionZone;
+    private LinearLayout reportTabs;
+    private LinearLayout panelRoster, panelCompetency, panelLive, panelSummary;
+    private View panelHistory; // ScrollView trong XML — chỉ cần setVisibility, không cần LinearLayout
+    private TextView gamePreviewStrip, notPlayedStrip;
+    private LinearLayout rosterHeader, rosterBody, compChips, compScoreList, historyBody;
+    private TextView compName, compFlags;
+    private LinearLayout liveSideLeft, liveSideRight;
+    private LinearLayout summaryCard;
+
+    // ── State ────────────────────────────────────────────────────────────────
+    private String scene = "select"; // select | playing | ended
+    private int domain = 0;
+    private String classKey;
+    private String selectedScene = null;      // sceneName Unity thật (Start dùng cái này)
+    private String selectedGameName = null;   // tên game/variant đang chọn hoặc vừa chơi
+    private int compStudentIndex = 0;
+    private String rosterSortKey = "total";
+    private int rosterSortDir = -1;
+    private boolean paused = false;
     private boolean unityStarted = false;
+
+    // Logo màn hình phụ (máy chiếu) lúc chưa chọn/chạy game — dùng Presentation (Dialog cho
+    // 1 Display cụ thể), KHÔNG phải 1 Activity riêng: nhẹ hơn nhiều (không tốn task/back-stack/
+    // khai báo manifest), API chính chủ Android dành đúng cho việc hiển thị nội dung phụ trên
+    // display thứ 2 từ trong app đang chạy. Đóng lại đúng lúc Start lần đầu để Unity chiếm chỗ.
+    private Presentation logoPresentation;
+
+    // Report trực tiếp từ Unity (GameControlBridge.PushReport) — dùng cho panel_live.
+    private volatile String liveLeftName = "—", liveRightName = "—", liveLeftScore = "0", liveRightScore = "0", liveTime = "—";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,33 +109,69 @@ public class ControlActivity extends Activity {
         setImmersive();
         setContentView(R.layout.activity_control);
 
-        menuScreen = findViewById(R.id.menu_screen);
-        controlScreen = findViewById(R.id.control_screen);
-        startButton = findViewById(R.id.start_button);
-        playingGameLabel = findViewById(R.id.playing_game_label);
-        reportLabel = findViewById(R.id.report_label);
-        pauseButton = findViewById(R.id.pause_button);
-        stopButton = findViewById(R.id.stop_button);
+        categoryTrigger = findViewById(R.id.category_trigger);
+        classTrigger = findViewById(R.id.class_trigger);
+        actionZone = findViewById(R.id.action_zone);
+        reportTabs = findViewById(R.id.report_tabs);
+        panelRoster = findViewById(R.id.panel_roster);
+        panelCompetency = findViewById(R.id.panel_competency);
+        panelHistory = findViewById(R.id.panel_history);
+        panelLive = findViewById(R.id.panel_live);
+        panelSummary = findViewById(R.id.panel_summary);
+        gamePreviewStrip = findViewById(R.id.game_preview_strip);
+        notPlayedStrip = findViewById(R.id.notplayed_strip);
+        rosterHeader = findViewById(R.id.roster_header);
+        rosterBody = findViewById(R.id.roster_body);
+        compChips = findViewById(R.id.comp_chips);
+        compName = findViewById(R.id.comp_name);
+        compFlags = findViewById(R.id.comp_flags);
+        compScoreList = findViewById(R.id.comp_score_list);
+        historyBody = findViewById(R.id.history_body);
+        liveSideLeft = findViewById(R.id.live_side_left);
+        liveSideRight = findViewById(R.id.live_side_right);
+        summaryCard = findViewById(R.id.summary_card);
 
         loadGameRegistry();
-        buildGameList();
-        startButton.setOnClickListener(v -> onStartClicked());
-        pauseButton.setOnClickListener(v -> onPauseClicked());
-        stopButton.setOnClickListener(v -> onStopClicked());
+        MockData.generate(categoryNames.length, allGameNames);
+        classKey = MockData.classDefs()[0].key;
 
-        // Xem TaskRemovedWatcherService — dọn sạch cả 2 display khi 1 trong 2 task (Control/
-        // Unity, khác display) bị user tắt qua Recents.
+        buildReportTabs();
+        buildHistoryPanel();
+        renderAll();
+        showLogoOnSecondaryDisplay();
+
         startService(new Intent(this, TaskRemovedWatcherService.class));
-
-        // WatchdogService (process riêng ":watchdog") — tự khởi động lại ControlActivity nếu
-        // process chính chết bất ngờ (vd Unity tự kill() cả process lúc UnityPlayerActivity
-        // destroy — bug "Stop thoát cả app"). TẠM TẮT theo yêu cầu user (chưa muốn auto-start
-        // lại lúc test) — bật lại bằng cách bỏ comment dòng dưới khi cần.
+        // WatchdogService — tắt theo yêu cầu user lúc test, xem CLAUDE.md Track A.
         // startService(new Intent(this, WatchdogService.class));
     }
 
-    /** Đọc assets/game_registry.json — export tay từ GameRegistry.cs (xem ghi chú ở field
-     *  games). Lỗi/rỗng → games rỗng, màn Menu không có nút nào (không crash). */
+    /** Hiện logo EduXplore full-screen trên display phụ (máy chiếu) ngay lúc mở app, trước khi
+     *  cô giáo chọn/chạy mini game nào — thay vì màn đen. Đóng lại đúng lúc Start lần đầu (xem
+     *  onStartClicked) để Unity chiếm màn hình đó. Không có display phụ → bỏ qua, không lỗi. */
+    private void showLogoOnSecondaryDisplay() {
+        Display secondary = findSecondaryDisplay();
+        if (secondary == null) return;
+        try {
+            ImageView iv = new ImageView(this);
+            iv.setImageResource(R.drawable.logo_eduxplore);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            logoPresentation = new Presentation(this, secondary);
+            logoPresentation.setContentView(iv);
+            logoPresentation.show();
+        } catch (Exception e) {
+            Log.e(TAG, "showLogoOnSecondaryDisplay lỗi: " + e.getMessage(), e);
+            logoPresentation = null;
+        }
+    }
+
+    private void dismissLogoPresentation() {
+        if (logoPresentation == null) return;
+        try { logoPresentation.dismiss(); } catch (Exception ignored) { }
+        logoPresentation = null;
+    }
+
+    // ── Đọc game_registry.json (categoryNames + games[{name,sceneName,category}]) ──────────
     private void loadGameRegistry() {
         try (InputStream is = getAssets().open(GAME_REGISTRY_ASSET)) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -126,46 +179,25 @@ public class ControlActivity extends Activity {
             String line;
             while ((line = reader.readLine()) != null) sb.append(line);
 
-            JSONArray arr = new JSONArray(sb.toString());
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject o = arr.getJSONObject(i);
-                games.add(new GameItem(o.getString("name"), o.getString("sceneName")));
+            JSONObject root = new JSONObject(sb.toString());
+            JSONArray catArr = root.getJSONArray("categoryNames");
+            categoryNames = new String[catArr.length()];
+            for (int i = 0; i < catArr.length(); i++) categoryNames[i] = catArr.getString(i);
+
+            JSONArray gamesArr = root.getJSONArray("games");
+            for (int i = 0; i < gamesArr.length(); i++) {
+                JSONObject o = gamesArr.getJSONObject(i);
+                GameItem item = new GameItem(o.getString("name"), o.getString("sceneName"), o.getInt("category"));
+                List<GameItem> bucket = gamesByCategory.get(item.category);
+                if (bucket == null) { bucket = new ArrayList<>(); gamesByCategory.put(item.category, bucket); }
+                bucket.add(item);
+                allGameNames.add(item.name);
             }
-            Log.i(TAG, "loadGameRegistry: đọc được " + games.size() + " game");
+            Log.i(TAG, "loadGameRegistry: " + categoryNames.length + " môn, " + allGameNames.size() + " game");
         } catch (Exception e) {
             Log.e(TAG, "loadGameRegistry lỗi: " + e.getMessage(), e);
+            categoryNames = new String[]{"Khác"};
         }
-    }
-
-    private void buildGameList() {
-        LinearLayout gameList = findViewById(R.id.game_list);
-        Button[] buttons = new Button[games.size()];
-        for (int i = 0; i < games.size(); i++) {
-            Button b = new Button(this);
-            b.setText(games.get(i).name);
-            b.setTextSize(18f);
-            b.setAllCaps(false);
-            b.setAlpha(0.5f);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 12;
-            b.setLayoutParams(lp);
-            final int idx = i;
-            b.setOnClickListener(v -> selectGame(idx, buttons));
-            gameList.addView(b);
-            buttons[i] = b;
-        }
-    }
-
-    private void selectGame(int idx, Button[] buttons) {
-        GameItem item = games.get(idx);
-        selectedScene = item.sceneName;
-        selectedGameName = item.name;
-        for (int i = 0; i < buttons.length; i++) {
-            buttons[i].setAlpha(i == idx ? 1f : 0.5f);
-        }
-        startButton.setEnabled(true);
-        Log.i(TAG, "selectGame: name=" + selectedGameName + " scene=" + selectedScene);
     }
 
     @Override
@@ -184,17 +216,541 @@ public class ControlActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
-    /** ControlActivity là "home" — Back không thoát, giống LauncherBehaviour bên Unity. */
     @Override
     public void onBackPressed() {
         Log.i(TAG, "onBackPressed — ignored (ControlActivity is home)");
     }
 
-    // -------------------------------------------------------------------
-    // Tìm display phụ (máy chiếu) — ưu tiên display có FLAG_PRESENTATION, không phải
-    // display mặc định (id 0). displayId KHÔNG ổn định qua các lần cắm/rút HDMI (đã xác
-    // nhận thực tế ở giai đoạn phân tích) — luôn tra cứu lại lúc cần, không cache lâu dài.
-    // -------------------------------------------------------------------
+    // =========================================================================================
+    // RENDER — cùng cấu trúc render*() như bản mockup HTML đã duyệt.
+    // =========================================================================================
+
+    private void renderAll() {
+        renderTopBar();
+        renderActionZone();
+        renderReportZone();
+    }
+
+    private void renderTopBar() {
+        categoryTrigger.setText(categoryNames.length > domain ? categoryNames[domain] : "—");
+        categoryTrigger.setOnClickListener(v -> {
+            List<String> labels = java.util.Arrays.asList(categoryNames);
+            UiUtil.showDropdown(this, categoryTrigger, labels, domain,
+                    UiUtil.ContextColor(this, R.color.accent_dim), idx -> {
+                        domain = idx; selectedGameName = null; selectedScene = null;
+                        renderAll();
+                    });
+        });
+
+        MockData.ClassDef[] classDefs = MockData.classDefs();
+        int classIdx = 0;
+        List<String> classLabels = new ArrayList<>();
+        for (int i = 0; i < classDefs.length; i++) {
+            classLabels.add(classDefs[i].label);
+            if (classDefs[i].key.equals(classKey)) classIdx = i;
+        }
+        classTrigger.setText(classDefs[classIdx].label);
+        final int fClassIdx = classIdx;
+        classTrigger.setOnClickListener(v -> UiUtil.showDropdown(this, classTrigger, classLabels, fClassIdx,
+                UiUtil.ContextColor(this, R.color.live_dim), idx -> {
+                    classKey = classDefs[idx].key; compStudentIndex = 0;
+                    renderAll();
+                }));
+    }
+
+    // ── ACTION ZONE (trái, nhỏ) — nội dung đổi theo scene ───────────────────────────────────
+    private void renderActionZone() {
+        actionZone.removeAllViews();
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        actionZone.addView(col);
+
+        if ("select".equals(scene)) {
+            LinearLayout eyebrowRow = new LinearLayout(this);
+            eyebrowRow.setOrientation(LinearLayout.HORIZONTAL);
+            eyebrowRow.addView(UiUtil.label(this, "CHỌN MINI GAME", 10f, R.color.text_faint, true));
+            col.addView(eyebrowRow);
+
+            ScrollView scroll = new ScrollView(this);
+            LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+            scrollLp.topMargin = UiUtil.dp(this, 10);
+            scrollLp.bottomMargin = UiUtil.dp(this, 10);
+            scroll.setLayoutParams(scrollLp);
+            LinearLayout list = new LinearLayout(this);
+            list.setOrientation(LinearLayout.VERTICAL);
+            scroll.addView(list);
+            col.addView(scroll);
+
+            List<GameItem> items = gamesByCategory.get(domain);
+            if (items == null || items.isEmpty()) {
+                list.addView(UiUtil.label(this, "Chưa có mini game cho môn này.", 12.5f, R.color.text_faint, false));
+            } else {
+                for (GameItem item : items) {
+                    TextView row = new TextView(this);
+                    row.setText(item.name);
+                    row.setTextSize(13f);
+                    boolean sel = item.name.equals(selectedGameName);
+                    row.setTextColor(UiUtil.ContextColor(this, sel ? R.color.text : R.color.text_dim));
+                    row.setPadding(UiUtil.dp(this, 11), UiUtil.dp(this, 9), UiUtil.dp(this, 11), UiUtil.dp(this, 9));
+                    row.setBackground(sel
+                            ? UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.accent_dim), 8, UiUtil.ContextColor(this, R.color.accent), 1, this)
+                            : UiUtil.roundedRect(android.graphics.Color.TRANSPARENT, 8, 0, 0, this));
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    lp.bottomMargin = UiUtil.dp(this, 6);
+                    row.setLayoutParams(lp);
+                    row.setOnClickListener(v -> {
+                        selectedGameName = item.name;
+                        selectedScene = item.sceneName;
+                        renderAll();
+                    });
+                    list.addView(row);
+                }
+            }
+
+            TextView startBtn = new TextView(this);
+            startBtn.setText("START");
+            startBtn.setGravity(Gravity.CENTER);
+            startBtn.setTextSize(13f);
+            startBtn.setTypeface(startBtn.getTypeface(), android.graphics.Typeface.BOLD);
+            boolean enabled = selectedGameName != null;
+            startBtn.setEnabled(enabled);
+            startBtn.setAlpha(enabled ? 1f : 0.4f);
+            startBtn.setTextColor(0xFF0B1710);
+            startBtn.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.good), 9, 0, 0, this));
+            startBtn.setPadding(0, UiUtil.dp(this, 13), 0, UiUtil.dp(this, 13));
+            startBtn.setOnClickListener(v -> { if (selectedGameName != null) onStartClicked(); });
+            col.addView(startBtn);
+        } else if ("playing".equals(scene)) {
+            col.addView(UiUtil.label(this, "ĐANG CHẠY", 10f, R.color.text_faint, true));
+
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.panel2), 10, UiUtil.ContextColor(this, R.color.border_soft), 1, this));
+            card.setPadding(UiUtil.dp(this, 13), UiUtil.dp(this, 12), UiUtil.dp(this, 13), UiUtil.dp(this, 12));
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            cardLp.topMargin = UiUtil.dp(this, 10);
+            card.setLayoutParams(cardLp);
+            card.addView(UiUtil.label(this, selectedGameName != null ? selectedGameName : "—", 16f, R.color.text, true));
+            card.addView(UiUtil.label(this, "Đang chơi", 12f, R.color.text_dim, false));
+            col.addView(card);
+
+            View spacer = new View(this);
+            spacer.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+            col.addView(spacer);
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            TextView pauseBtn = simpleButton(paused ? "PLAY" : "PAUSE", R.color.panel2, R.color.text);
+            TextView stopBtn = simpleButton("STOP", R.color.bad_dim, R.color.bad);
+            LinearLayout.LayoutParams halfLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            halfLp.rightMargin = UiUtil.dp(this, 4);
+            pauseBtn.setLayoutParams(halfLp);
+            LinearLayout.LayoutParams halfLp2 = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            halfLp2.leftMargin = UiUtil.dp(this, 4);
+            stopBtn.setLayoutParams(halfLp2);
+            pauseBtn.setOnClickListener(v -> onPauseClicked());
+            stopBtn.setOnClickListener(v -> onStopClicked());
+            row.addView(pauseBtn);
+            row.addView(stopBtn);
+            col.addView(row);
+        } else { // ended
+            col.addView(UiUtil.label(this, "VỪA XONG", 10f, R.color.text_faint, true));
+
+            LinearLayout banner = new LinearLayout(this);
+            banner.setOrientation(LinearLayout.VERTICAL);
+            banner.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.panel2), 10, UiUtil.ContextColor(this, R.color.border_soft), 1, this));
+            banner.setPadding(UiUtil.dp(this, 13), UiUtil.dp(this, 12), UiUtil.dp(this, 13), UiUtil.dp(this, 12));
+            LinearLayout.LayoutParams bannerLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            bannerLp.topMargin = UiUtil.dp(this, 10);
+            banner.setLayoutParams(bannerLp);
+            banner.addView(UiUtil.label(this, "Vừa chơi", 10f, R.color.text_faint, true));
+            banner.addView(UiUtil.label(this, selectedGameName != null ? selectedGameName : "—", 15f, R.color.text, true));
+            banner.addView(UiUtil.label(this, liveLeftName + " " + liveLeftScore + " – " + liveRightScore + " " + liveRightName, 11.5f, R.color.text_dim, false));
+            col.addView(banner);
+
+            View spacer = new View(this);
+            spacer.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+            col.addView(spacer);
+
+            TextView replayBtn = simpleButton("CHƠI LẠI", R.color.good, R.color.bg);
+            replayBtn.setTextColor(0xFF0B1710);
+            replayBtn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            replayBtn.setOnClickListener(v -> onStartClicked());
+            col.addView(replayBtn);
+
+            TextView otherBtn = simpleButton("CHỌN GAME KHÁC", R.color.panel2, R.color.text);
+            LinearLayout.LayoutParams otherLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            otherLp.topMargin = UiUtil.dp(this, 8);
+            otherBtn.setLayoutParams(otherLp);
+            otherBtn.setOnClickListener(v -> { scene = "select"; selectedGameName = null; selectedScene = null; renderAll(); });
+            col.addView(otherBtn);
+
+            TextView sumBtn = simpleButton("TỔNG KẾT", R.color.panel2, R.color.text);
+            LinearLayout.LayoutParams sumLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            sumLp.topMargin = UiUtil.dp(this, 8);
+            sumBtn.setLayoutParams(sumLp);
+            sumBtn.setOnClickListener(v -> showReportView("summary"));
+            col.addView(sumBtn);
+        }
+    }
+
+    private TextView simpleButton(String text, int bgColorRes, int textColorRes) {
+        TextView btn = new TextView(this);
+        btn.setText(text);
+        btn.setGravity(Gravity.CENTER);
+        btn.setTextSize(13f);
+        btn.setTypeface(btn.getTypeface(), android.graphics.Typeface.BOLD);
+        btn.setTextColor(UiUtil.ContextColor(this, textColorRes));
+        btn.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, bgColorRes), 9, 0, 0, this));
+        btn.setPadding(0, UiUtil.dp(this, 13), 0, UiUtil.dp(this, 13));
+        return btn;
+    }
+
+    // ── REPORT ZONE (phải, to) ───────────────────────────────────────────────────────────────
+    private String reportTab = "roster"; // roster | competency | history | summary
+
+    private void buildReportTabs() {
+        String[] tabs = {"roster:Lớp học", "competency:Năng lực", "history:Lịch sử"};
+        for (String t : tabs) {
+            String[] p = t.split(":");
+            TextView tab = new TextView(this);
+            tab.setText(p[1]);
+            tab.setTextSize(13f);
+            tab.setTypeface(tab.getTypeface(), android.graphics.Typeface.BOLD);
+            tab.setPadding(UiUtil.dp(this, 14), UiUtil.dp(this, 12), UiUtil.dp(this, 14), UiUtil.dp(this, 12));
+            tab.setTag(p[0]);
+            tab.setOnClickListener(v -> showReportView((String) v.getTag()));
+            reportTabs.addView(tab);
+        }
+    }
+
+    private void showReportView(String view) {
+        reportTab = view;
+        reportTabs.setVisibility("playing".equals(scene) ? View.GONE : View.VISIBLE);
+        for (int i = 0; i < reportTabs.getChildCount(); i++) {
+            TextView tab = (TextView) reportTabs.getChildAt(i);
+            boolean active = tab.getTag().equals(view);
+            tab.setTextColor(UiUtil.ContextColor(this, active ? R.color.text : R.color.text_faint));
+        }
+        panelRoster.setVisibility("roster".equals(view) ? View.VISIBLE : View.GONE);
+        panelCompetency.setVisibility("competency".equals(view) ? View.VISIBLE : View.GONE);
+        panelHistory.setVisibility("history".equals(view) ? View.VISIBLE : View.GONE);
+        panelLive.setVisibility("live".equals(view) ? View.VISIBLE : View.GONE);
+        panelSummary.setVisibility("summary".equals(view) ? View.VISIBLE : View.GONE);
+        if ("summary".equals(view)) renderSummary();
+    }
+
+    private void renderReportZone() {
+        if ("playing".equals(scene)) { showReportView("live"); renderLive(); return; }
+        showReportView(reportTab.equals("live") || reportTab.equals("summary") ? "roster" : reportTab);
+        renderRoster();
+        renderCompetencyChips();
+    }
+
+    // ── Tab "Lớp học": Tên + 1 cột môn đang chọn + [Lượt] + Tổng ────────────────────────────
+    private void renderRoster() {
+        MockData.ClassData cls = MockData.classData(classKey);
+        int catCount = categoryNames.length;
+
+        notPlayedStrip.setVisibility(cls.notPlayedNames.isEmpty() ? View.GONE : View.VISIBLE);
+        if (!cls.notPlayedNames.isEmpty()) {
+            notPlayedStrip.setText("Chưa chơi (" + cls.notPlayedNames.size() + "): "
+                    + android.text.TextUtils.join(", ", cls.notPlayedNames));
+        }
+
+        boolean showGameCol = "select".equals(scene) && selectedGameName != null;
+        gamePreviewStrip.setVisibility(showGameCol ? View.VISIBLE : View.GONE);
+        if (showGameCol) gamePreviewStrip.setText("Đang xem số lượt đã chơi " + selectedGameName + " — cột \"Lượt\".");
+
+        // header
+        rosterHeader.removeAllViews();
+        rosterHeader.addView(headerCell("Học sinh", "name", new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.4f)));
+        String catLabel = domain < categoryNames.length ? categoryNames[domain] : "Môn";
+        rosterHeader.addView(headerCell(catLabel, "cat", new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.3f)));
+        if (showGameCol) rosterHeader.addView(headerCell("Lượt", null, new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT)));
+        rosterHeader.addView(headerCell("Tổng", "total", new LinearLayout.LayoutParams(UiUtil.dp(this, 50), ViewGroup.LayoutParams.WRAP_CONTENT)));
+
+        List<MockData.Student> rows = new ArrayList<>(cls.playedStudents);
+        final int dir = rosterSortDir;
+        java.util.Collections.sort(rows, (a, b) -> {
+            int cmp;
+            if ("name".equals(rosterSortKey)) cmp = a.name.compareTo(b.name);
+            else if ("total".equals(rosterSortKey)) cmp = Integer.compare(a.total(catCount), b.total(catCount));
+            else cmp = Integer.compare(a.scoreOr0(domain), b.scoreOr0(domain));
+            return cmp * dir;
+        });
+
+        rosterBody.removeAllViews();
+        for (MockData.Student s : rows) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, UiUtil.dp(this, 7), 0, UiUtil.dp(this, 7));
+            row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            LinearLayout nameCell = new LinearLayout(this);
+            nameCell.setOrientation(LinearLayout.HORIZONTAL);
+            nameCell.setGravity(Gravity.CENTER_VERTICAL);
+            nameCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.4f));
+            TextView av = UiUtil.makeAvatar(this, s.avatar, 26);
+            LinearLayout.LayoutParams avLp = (LinearLayout.LayoutParams) av.getLayoutParams();
+            avLp.rightMargin = UiUtil.dp(this, 8);
+            nameCell.addView(av);
+            TextView nm = UiUtil.label(this, s.name, 13f, R.color.text, true);
+            nameCell.addView(nm);
+            row.addView(nameCell);
+
+            boolean isMin = s.weakestCategory(catCount) == domain;
+            LinearLayout catCell = UiUtil.makeBarCell(this, s.scoreOr0(domain), isMin);
+            catCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.3f));
+            row.addView(catCell);
+
+            if (showGameCol) {
+                Integer plays = s.playsByGame.get(selectedGameName);
+                TextView gameCell = UiUtil.label(this, plays != null ? String.valueOf(plays) : "—", 12f, R.color.accent, false);
+                gameCell.setGravity(Gravity.END);
+                gameCell.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT));
+                row.addView(gameCell);
+            }
+
+            TextView totalCell = UiUtil.label(this, String.valueOf(s.total(catCount)), 14f, R.color.text, true);
+            totalCell.setGravity(Gravity.END);
+            totalCell.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 50), ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.addView(totalCell);
+
+            row.setOnClickListener(v -> {
+                compStudentIndex = cls.playedStudents.indexOf(s);
+                showReportView("competency");
+                renderCompetencyChips();
+            });
+            rosterBody.addView(row);
+
+            View divider = new View(this);
+            divider.setBackgroundColor(UiUtil.ContextColor(this, R.color.border_soft));
+            divider.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 1)));
+            rosterBody.addView(divider);
+        }
+    }
+
+    private TextView headerCell(String text, String sortKey, LinearLayout.LayoutParams lp) {
+        TextView th = new TextView(this);
+        String arrow = sortKey != null && sortKey.equals(rosterSortKey) ? (rosterSortDir == 1 ? " ▴" : " ▾") : "";
+        th.setText(text + arrow);
+        th.setTextSize(10.5f);
+        th.setTypeface(th.getTypeface(), android.graphics.Typeface.BOLD);
+        th.setTextColor(UiUtil.ContextColor(this, sortKey != null && sortKey.equals(rosterSortKey) ? R.color.accent : R.color.text_faint));
+        th.setLayoutParams(lp);
+        if (sortKey != null) {
+            th.setOnClickListener(v -> {
+                if (sortKey.equals(rosterSortKey)) rosterSortDir *= -1;
+                else { rosterSortKey = sortKey; rosterSortDir = "name".equals(sortKey) ? 1 : -1; }
+                renderRoster();
+            });
+        }
+        return th;
+    }
+
+    // ── Tab "Năng lực": list điểm theo môn (không vẽ ngũ giác — nhiều môn sẽ rối) ───────────
+    private void renderCompetencyChips() {
+        MockData.ClassData cls = MockData.classData(classKey);
+        if (compStudentIndex >= cls.playedStudents.size()) compStudentIndex = 0;
+        compChips.removeAllViews();
+        for (int i = 0; i < cls.playedStudents.size(); i++) {
+            MockData.Student s = cls.playedStudents.get(i);
+            boolean sel = i == compStudentIndex;
+            LinearLayout chip = new LinearLayout(this);
+            chip.setOrientation(LinearLayout.HORIZONTAL);
+            chip.setGravity(Gravity.CENTER_VERTICAL);
+            chip.setPadding(UiUtil.dp(this, 6), UiUtil.dp(this, 6), UiUtil.dp(this, 10), UiUtil.dp(this, 6));
+            chip.setBackground(sel
+                    ? UiUtil.pill(UiUtil.ContextColor(this, R.color.accent_dim), UiUtil.ContextColor(this, R.color.accent), 1, this)
+                    : UiUtil.pill(UiUtil.ContextColor(this, R.color.panel2), 0, 0, this));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = UiUtil.dp(this, 6);
+            chip.setLayoutParams(lp);
+            TextView av = UiUtil.makeAvatar(this, s.avatar, 20);
+            LinearLayout.LayoutParams avLp = (LinearLayout.LayoutParams) av.getLayoutParams();
+            avLp.rightMargin = UiUtil.dp(this, 8);
+            chip.addView(av);
+            chip.addView(UiUtil.label(this, s.name, 12f, sel ? R.color.text : R.color.text_dim, true));
+            final int idx = i;
+            chip.setOnClickListener(v -> { compStudentIndex = idx; renderCompetencyChips(); });
+            compChips.addView(chip);
+        }
+        renderCompetency();
+    }
+
+    private void renderCompetency() {
+        MockData.ClassData cls = MockData.classData(classKey);
+        if (cls.playedStudents.isEmpty()) { compName.setText("—"); compFlags.setText(""); compScoreList.removeAllViews(); return; }
+        MockData.Student s = cls.playedStudents.get(compStudentIndex);
+        int catCount = categoryNames.length;
+        compName.setText(s.name);
+        compFlags.setText("slow-sure".equals(s.flag) ? "Chậm mà chắc" : "fast-careless".equals(s.flag) ? "Nhanh, hay ẩu" : "");
+        int weakest = s.weakestCategory(catCount);
+
+        compScoreList.removeAllViews();
+        for (int c = 0; c < catCount; c++) {
+            boolean isMin = c == weakest;
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, UiUtil.dp(this, 8), 0, UiUtil.dp(this, 8));
+
+            TextView cname = UiUtil.label(this, categoryNames[c], 12.5f, isMin ? R.color.bad : R.color.text_dim, isMin);
+            cname.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 120), ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.addView(cname);
+
+            LinearLayout barCell = UiUtil.makeBarCell(this, s.scoreOr0(c), isMin);
+            barCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            row.addView(barCell);
+
+            View divider = new View(this);
+            divider.setBackgroundColor(UiUtil.ContextColor(this, R.color.border_soft));
+            LinearLayout.LayoutParams dLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 1));
+            compScoreList.addView(row);
+            compScoreList.addView(divider, dLp);
+        }
+    }
+
+    // ── Tab "Lịch sử" — mock tĩnh, build 1 lần lúc onCreate ─────────────────────────────────
+    private void buildHistoryPanel() {
+        String[][] rows = {
+                {"10:24:41", "Minh An", "Counting5", "✓", "2.8s"},
+                {"10:24:33", "Player_2", "Counting5", "✗", "6.2s"},
+                {"10:21:07", "Bảo Ngọc", "Counting", "✓", "3.1s"},
+                {"10:18:52", "Khánh Vy", "AddNumber5", "✓", "4.0s"},
+                {"10:15:19", "Thảo My", "TestTongHop", "✗", "7.5s"},
+        };
+        for (String[] r : rows) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, UiUtil.dp(this, 8), 0, UiUtil.dp(this, 8));
+            row.addView(cellText(r[0], 70, R.color.text_faint));
+            row.addView(cellText(r[1], 0, R.color.text));
+            row.addView(cellText(r[2], 0, R.color.text_dim));
+            TextView mark = cellText(r[3], 30, "✓".equals(r[3]) ? R.color.good : R.color.bad);
+            mark.setGravity(Gravity.CENTER);
+            row.addView(mark);
+            TextView rt = cellText(r[4], 60, R.color.text_dim);
+            rt.setGravity(Gravity.END);
+            row.addView(rt);
+            historyBody.addView(row);
+            View divider = new View(this);
+            divider.setBackgroundColor(UiUtil.ContextColor(this, R.color.border_soft));
+            historyBody.addView(divider, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 1)));
+        }
+    }
+
+    private TextView cellText(String text, int widthDp, int colorRes) {
+        TextView tv = UiUtil.label(this, text, 12.5f, colorRes, false);
+        tv.setLayoutParams(widthDp > 0
+                ? new LinearLayout.LayoutParams(UiUtil.dp(this, widthDp), ViewGroup.LayoutParams.WRAP_CONTENT)
+                : new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        return tv;
+    }
+
+    // ── Scene "ended", bấm "Tổng kết": thẻ tóm tắt ván vừa xong ─────────────────────────────
+    private void renderSummary() {
+        summaryCard.removeAllViews();
+        summaryCard.addView(UiUtil.label(this, selectedGameName != null ? selectedGameName : "—", 19f, R.color.text, true));
+
+        String[][] rows = {
+                {"Thời lượng", "—"},
+                {"Điểm " + liveLeftName + " / " + liveRightName, liveLeftScore + " – " + liveRightScore},
+        };
+        for (String[] r : rows) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rowLp.topMargin = UiUtil.dp(this, 10);
+            row.setLayoutParams(rowLp);
+            TextView k = UiUtil.label(this, r[0], 13f, R.color.text_dim, false);
+            k.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView v = UiUtil.label(this, r[1], 13f, R.color.text, true);
+            row.addView(k);
+            row.addView(v);
+            summaryCard.addView(row);
+            View divider = new View(this);
+            divider.setBackgroundColor(UiUtil.ContextColor(this, R.color.border_soft));
+            LinearLayout.LayoutParams dLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 1));
+            dLp.topMargin = UiUtil.dp(this, 10);
+            summaryCard.addView(divider, dLp);
+        }
+    }
+
+    // ── Scene "playing": live team view — tên/điểm THẬT từ UpdateReport(), avatar hàng dưới
+    //    là MOCK (chưa có nguồn dữ liệu lượt-theo-từng-học-sinh thời gian thực) ──────────────
+    private void renderLive() {
+        MockData.ClassData cls = MockData.classData(classKey);
+        int half = Math.max(1, cls.playedStudents.size() / 2);
+        List<MockData.Student> left = cls.playedStudents.subList(0, Math.min(half, cls.playedStudents.size()));
+        List<MockData.Student> right = cls.playedStudents.subList(Math.min(half, cls.playedStudents.size()), cls.playedStudents.size());
+        buildLiveSide(liveSideLeft, "Team Trái", liveLeftName, liveLeftScore, left, R.color.live);
+        buildLiveSide(liveSideRight, "Team Phải", liveRightName, liveRightScore, right, R.color.bad);
+    }
+
+    private void buildLiveSide(LinearLayout side, String teamLabel, String playingName, String scoreText,
+                                List<MockData.Student> members, int accentColorRes) {
+        side.removeAllViews();
+        View topBorder = new View(this);
+        topBorder.setBackgroundColor(UiUtil.ContextColor(this, accentColorRes));
+        side.addView(topBorder, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 3)));
+
+        LinearLayout nameRow = new LinearLayout(this);
+        nameRow.setOrientation(LinearLayout.HORIZONTAL);
+        nameRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams nameRowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nameRowLp.topMargin = UiUtil.dp(this, 14);
+        TextView label = UiUtil.label(this, teamLabel + "  ·  Đang chơi: " + playingName, 14f, R.color.text, true);
+        label.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        nameRow.addView(label);
+        nameRow.setLayoutParams(nameRowLp);
+        side.addView(nameRow);
+
+        TextView score = UiUtil.label(this, scoreText, 30f, R.color.text, true);
+        LinearLayout.LayoutParams scoreLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        scoreLp.topMargin = UiUtil.dp(this, 10);
+        score.setLayoutParams(scoreLp);
+        side.addView(score);
+        TextView scoreLabel = UiUtil.label(this, "tổng điểm nhóm", 10.5f, R.color.text_faint, false);
+        side.addView(scoreLabel);
+
+        android.widget.HorizontalScrollView turnScroll = new android.widget.HorizontalScrollView(this);
+        LinearLayout.LayoutParams turnScrollLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        turnScrollLp.topMargin = UiUtil.dp(this, 14);
+        turnScroll.setLayoutParams(turnScrollLp);
+        LinearLayout turnRow = new LinearLayout(this);
+        turnRow.setOrientation(LinearLayout.HORIZONTAL);
+        turnScroll.addView(turnRow);
+        for (MockData.Student m : members) {
+            LinearLayout av = new LinearLayout(this);
+            av.setOrientation(LinearLayout.VERTICAL);
+            av.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams avLp = new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT);
+            avLp.rightMargin = UiUtil.dp(this, 8);
+            av.setLayoutParams(avLp);
+            int totalPlays = 0;
+            for (Integer v : m.playsByGame.values()) totalPlays += v;
+            TextView circle = UiUtil.makeAvatar(this, m.avatar, 38);
+            circle.setTextColor(UiUtil.ContextColor(this, R.color.text));
+            circle.setBackground(UiUtil.circle(UiUtil.ContextColor(this, R.color.panel2), UiUtil.ContextColor(this, R.color.accent), 2, this));
+            av.addView(circle);
+            TextView cnt = UiUtil.label(this, String.valueOf(totalPlays), 9f, R.color.text_faint, false);
+            av.addView(cnt);
+            TextView tname = UiUtil.label(this, m.name, 9.5f, R.color.text_dim, false);
+            tname.setGravity(Gravity.CENTER);
+            av.addView(tname);
+            turnRow.addView(av);
+        }
+        side.addView(turnScroll);
+    }
+
+    // =========================================================================================
+    // Start/Pause/Stop — logic Unity THẬT (không đổi so với trước), chỉ đổi phần cập nhật UI.
+    // =========================================================================================
     private Display findSecondaryDisplay() {
         DisplayManager dm = (DisplayManager) getSystemService(DISPLAY_SERVICE);
         if (dm == null) return null;
@@ -209,8 +765,7 @@ public class ControlActivity extends Activity {
         if (selectedScene == null) return;
 
         if (!unityStarted) {
-            // Lần Start ĐẦU TIÊN — chưa có UnityPlayerActivity nào sống, phải khởi động thật.
-            // Đọc scene/game qua Intent extra lúc cold-boot (ControlBridge.cs, chỉ đọc được 1 lần).
+            dismissLogoPresentation(); // nhường display phụ lại cho Unity
             Display secondary = findSecondaryDisplay();
             Intent intent = new Intent();
             intent.setClassName(getPackageName(), UNITY_PLAYER_ACTIVITY_CLASS);
@@ -224,8 +779,6 @@ public class ControlActivity extends Activity {
             } else {
                 try {
                     Bundle options = ActivityOptions.makeBasic().setLaunchDisplayId(secondary.getDisplayId()).toBundle();
-                    Log.i(TAG, "onStartClicked: khởi động UnityPlayerActivity lần đầu, displayId=" + secondary.getDisplayId()
-                            + " scene=" + selectedScene);
                     startActivity(intent, options);
                 } catch (SecurityException e) {
                     Log.e(TAG, "onStartClicked: SecurityException khi setLaunchDisplayId — " + e.getMessage(), e);
@@ -234,49 +787,34 @@ public class ControlActivity extends Activity {
             }
             unityStarted = true;
         } else {
-            // UnityPlayerActivity đã sống sẵn từ lần chơi trước (Stop không destroy nó nữa) —
-            // chỉ cần lệnh nạp game mới, không khởi động lại Activity. Xem
-            // GameControlBridge.OnLoadGameRequested (Unity) — payload "scene|gameName".
-            Log.i(TAG, "onStartClicked: Unity đã sống sẵn — gửi lệnh nạp game mới scene=" + selectedScene);
             sendToUnity("OnLoadGameRequested", selectedScene + "|" + (selectedGameName != null ? selectedGameName : ""));
         }
 
-        playingGameLabel.setText("Đang chơi: " + selectedGameName);
-        reportLabel.setText("Thời gian: — \n— : —đ   ·   — : —đ");
         paused = false;
-        pauseButton.setText("PAUSE");
-        menuScreen.setVisibility(View.GONE);
-        controlScreen.setVisibility(View.VISIBLE);
+        scene = "playing";
+        renderAll();
     }
 
     private void onPauseClicked() {
         paused = !paused;
-        pauseButton.setText(paused ? "PLAY" : "PAUSE");
         sendToUnity(paused ? "OnPauseRequested" : "OnResumeRequested", "");
-        Log.i(TAG, "onPauseClicked → paused=" + paused);
+        renderActionZone();
     }
 
     private void onStopClicked() {
-        // KHÔNG destroy UnityPlayerActivity nữa (khác finishUnityTask() cũ đã xoá) — Unity tự
-        // kill() cả process dùng chung khi Activity của nó bị destroy, hành vi engine không
-        // sửa được từ code app (xem lịch sử bug "Stop thoát cả app"). Chỉ báo Unity dừng game
-        // + che đen display máy chiếu — xem GameControlBridge.OnStopRequested.
-        if (paused) sendToUnity("OnResumeRequested", ""); // tránh treo IsPaused cho lần chơi sau
+        if (paused) sendToUnity("OnResumeRequested", "");
         sendToUnity("OnStopRequested", "");
         backToMenu();
     }
 
-    /** Quay lại màn Menu (chọn game) — dùng chung cho Stop (bấm tay) và OnGameEnded (game tự
-     *  hết giờ/hết vòng, gọi từ Unity — xem GameControlBridge.PushGameEnded). */
+    /** Dùng chung cho Stop (bấm tay), OnGameEnded (game tự hết giờ), và nút "Bắt Đầu" trên
+     *  ScoreScene (Unity). Tự đưa chính mình lên trước — cần cho chế độ 1 màn hình. */
     private void backToMenu() {
-        menuScreen.setVisibility(View.VISIBLE);
-        controlScreen.setVisibility(View.GONE);
+        scene = "ended";
+        renderAll();
+        startActivity(new Intent(this, ControlActivity.class));
     }
 
-    // Gọi UnityPlayer.UnitySendMessage() qua reflection — tránh phụ thuộc biên dịch trực
-    // tiếp vào com.unity3d.player.UnityPlayer (module .aar này được unityLibrary include,
-    // không phải ngược lại, nên không chắc thấy class đó lúc compile; ở runtime thì luôn
-    // có, cùng 1 ClassLoader trong APK). Giống hệt cách LidarUsbBridge.java đã làm.
     private static void sendToUnity(String method, String message) {
         try {
             Class<?> unityPlayerClass = Class.forName("com.unity3d.player.UnityPlayer");
@@ -287,28 +825,22 @@ public class ControlActivity extends Activity {
         }
     }
 
-    /** Gọi từ Unity (GameControlBridge.PushReport, qua AndroidJavaClass.CallStatic — luôn
-     *  reflection nên không có vấn đề phụ thuộc biên dịch chiều nào) để cập nhật report.
-     *  Có thể gọi từ thread không phải main thread của Unity → phải runOnUiThread.
-     *  leftName/rightName lấy từ GameSessionManager.GetDisplayName1/2 (Unity) — tên do
-     *  PlayerRecognitionService nhận diện được, cập nhật liên tục trong ván. */
+    /** Gọi từ Unity (GameControlBridge.PushReport) — cập nhật report LIVE thật cho panel_live. */
     public static void UpdateReport(String timeText, String leftName, String leftScoreText,
                                      String rightName, String rightScoreText) {
         ControlActivity activity = sInstance;
         if (activity == null) return;
+        activity.liveTime = timeText;
+        activity.liveLeftName = leftName;
+        activity.liveLeftScore = leftScoreText;
+        activity.liveRightName = rightName;
+        activity.liveRightScore = rightScoreText;
         activity.runOnUiThread(() -> {
-            if (activity.reportLabel != null) {
-                activity.reportLabel.setText("Thời gian: " + timeText + "\n"
-                        + leftName + ": " + leftScoreText + "đ   ·   "
-                        + rightName + ": " + rightScoreText + "đ");
-            }
+            if ("playing".equals(activity.scene)) activity.renderLive();
         });
     }
 
-    /** Gọi từ Unity (GameControlBridge.PushGameEnded, lúc GameOver — hết giờ/hết vòng tự
-     *  nhiên, KHÔNG phải do bấm Stop) — tự quay Menu để chọn game tiếp theo, coi như hết 1
-     *  round, không cần user bấm Stop thủ công. Màn hình máy chiếu (display phụ) KHÔNG bị
-     *  đụng tới — vẫn giữ nguyên hiển thị ScoreScene/kết quả game vừa xong bên đó, đúng ý đồ. */
+    /** Gọi từ Unity (GameControlBridge.PushGameEnded) lúc hết giờ/hết vòng tự nhiên. */
     public static void OnGameEnded() {
         ControlActivity activity = sInstance;
         if (activity == null) return;
@@ -318,6 +850,7 @@ public class ControlActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (sInstance == this) sInstance = null;
+        dismissLogoPresentation();
         super.onDestroy();
     }
 }

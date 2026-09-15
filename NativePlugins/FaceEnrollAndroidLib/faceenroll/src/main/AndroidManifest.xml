@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Màn hình "Cập nhật khuôn mặt" (enroll/quản lý học sinh cho nhận diện khuôn mặt) — cổng vào
+     thứ 2 (icon riêng) trên cùng 1 APK với ControlActivity/Unity, xem CLAUDE.md phần kiến trúc
+     3-app-1-APK. Chạy process riêng (":fa") để 1 lần Unity tự kill() process của nó (bug đã biết,
+     xem NativePlugins/ControlUiAndroidLib) không kéo theo màn này nếu lỡ đang mở song song.
+
+     Không đăng ký USB_DEVICE_ATTACHED auto-launch / BOOT_COMPLETED / watchdog-tự-mở-lại như bản
+     FaceAttendance gốc (app độc lập, luôn là kiosk chính) — theo đúng mô hình sử dụng thực tế:
+     kỹ thuật viên tự mở màn này khi cần cập nhật, không phải chạy nền/tự bật lại. Mở tự động sẽ
+     làm gián đoạn phiên Game đang chạy. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- android.hardware.usb.host đã khai ở Assets/Plugins/Android/AndroidManifest.xml (Game) —
+         không khai lại ở đây để tránh xung đột giá trị android:required lúc merge manifest. -->
+
+    <application>
+        <activity
+            android:name=".MainActivity"
+            android:process=":fa"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:label="Cập nhật khuôn mặt"
+            android:theme="@style/Theme.FaceAttendance"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- KHÔNG khai <provider android:name="androidx.core.content.FileProvider"> riêng ở đây
+             — Android chặn 2 module cùng khai class FileProvider này dù authority khác nhau
+             (lỗi "Colliding Attributes" lúc merge manifest, Unity đã có sẵn 1 cái qua
+             unityLibrary/FileProvider.androidlib). Vì vậy exportAttendanceCsv() không dùng
+             chia sẻ qua FileProvider nữa — xem MainActivity.kt. -->
+    </application>
+</manifest>

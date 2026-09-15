@@ -12,7 +12,13 @@ android {
     ndkPath "**NDKPATH**"
     ndkVersion "**NDKVERSION**"
 
-    compileSdk **APIVERSION**
+    // Cố định 34 thay vì dùng **APIVERSION** — Unity 6000.3.11f1 tự điền compileSdk=30 bất kể
+    // Target API Level đang chọn gì hay SDK platform nào đang cài (xác nhận thực tế: máy đã có
+    // sẵn android-34/35/36, Target API Level=27, nhưng exported build.gradle vẫn ra 30). Nhiều
+    // dependency AndroidX (activity, core, lifecycle, webkit, work...) cần compileSdk >= 31-33 —
+    // compileSdk KHÔNG ảnh hưởng targetSdk=27 (vẫn giữ nguyên fix bug USB camera), chỉ quyết định
+    // API nào compiler thấy được lúc build.
+    compileSdk 34
     buildToolsVersion = "**BUILDTOOLS**"
 
     compileOptions {

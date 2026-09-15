@@ -1,103 +1,309 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Bố cục 4 vùng (top-left Môn học / top-right Lớp / action-zone trái nhỏ / report-zone phải
+     to) + 3 tiến trình (chọn / đang chơi / hết game) — xem ControlActivity.java, render*().
+     Hầu hết nội dung con dựng động bằng code (giống buildGameList() cũ) vì đổi liên tục theo
+     state; XML này chỉ là khung/container rỗng có id. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#111827">
+    android:background="@color/bg">
 
-    <!-- ============== MENU: chọn minigame ============== -->
     <LinearLayout
-        android:id="@+id/menu_screen"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="32dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Chọn minigame"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
-            android:layout_marginBottom="24dp" />
-
-        <ScrollView
+        <!-- ============== TOP BAR: Môn học (trái) + Lớp (phải) ============== -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@color/rail"
+            android:baselineAligned="false">
 
             <LinearLayout
-                android:id="@+id/game_list"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </ScrollView>
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp">
 
-        <Button
-            android:id="@+id/start_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="START"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:paddingLeft="60dp"
-            android:paddingRight="60dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="24dp"
-            android:enabled="false" />
-    </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Môn học"
+                    android:textColor="@color/text_faint"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="10dp" />
 
-    <!-- ============== CONTROL: đang chơi ============== -->
-    <LinearLayout
-        android:id="@+id/control_screen"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="32dp"
-        android:visibility="gone">
+                <TextView
+                    android:id="@+id/category_trigger"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="150dp"
+                    android:padding="8dp"
+                    android:textColor="@color/text"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical" />
+            </LinearLayout>
 
-        <TextView
-            android:id="@+id/playing_game_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Đang chơi: —"
-            android:textColor="#FFFFFF"
-            android:textSize="26sp"
-            android:layout_marginBottom="16dp" />
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/border" />
 
-        <TextView
-            android:id="@+id/report_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Thời gian: — · Số câu đúng: —"
-            android:textColor="#9CA3AF"
-            android:textSize="18sp"
-            android:layout_marginBottom="32dp" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Lớp"
+                    android:textColor="@color/text_faint"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/class_trigger"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="130dp"
+                    android:padding="8dp"
+                    android:textColor="@color/text"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold"
+                    android:gravity="center_vertical" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ============== BODY: action zone (trái, nhỏ) + report zone (phải, to) ============== -->
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/pause_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="PAUSE"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:layout_marginEnd="16dp" />
+            <FrameLayout
+                android:id="@+id/action_zone"
+                android:layout_width="220dp"
+                android:layout_height="match_parent"
+                android:background="@color/rail"
+                android:padding="14dp" />
 
-            <Button
-                android:id="@+id/stop_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="STOP"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp" />
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/border" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/report_tabs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+
+                <FrameLayout
+                    android:id="@+id/panels_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+
+                    <!-- Scene select/ended: Lớp học -->
+                    <LinearLayout
+                        android:id="@+id/panel_roster"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/game_preview_strip"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="12dp"
+                            android:padding="9dp"
+                            android:textColor="@color/text"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/notplayed_strip"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:padding="10dp"
+                            android:textColor="@color/text_dim"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
+
+                        <LinearLayout
+                            android:id="@+id/roster_header"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:paddingTop="8dp"
+                            android:paddingBottom="6dp" />
+
+                        <ScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1">
+
+                            <LinearLayout
+                                android:id="@+id/roster_body"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:paddingBottom="12dp" />
+                        </ScrollView>
+                    </LinearLayout>
+
+                    <!-- Scene select/ended: Năng lực -->
+                    <LinearLayout
+                        android:id="@+id/panel_competency"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:visibility="gone">
+
+                        <ScrollView
+                            android:layout_width="150dp"
+                            android:layout_height="match_parent">
+
+                            <LinearLayout
+                                android:id="@+id/comp_chips"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical" />
+                        </ScrollView>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_marginStart="20dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/comp_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/comp_flags"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="6dp"
+                                android:textColor="@color/live"
+                                android:textSize="11sp" />
+
+                            <LinearLayout
+                                android:id="@+id/comp_score_list"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical" />
+
+                            <TextView
+                                android:id="@+id/comp_note"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:text="Tính từ kết quả buổi hôm nay: độ khó câu hỏi + đúng/sai + thời gian trả lời — công thức tạm, sẽ tinh chỉnh sau."
+                                android:textColor="@color/text_faint"
+                                android:textSize="10.5sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Scene select/ended: Lịch sử -->
+                    <ScrollView
+                        android:id="@+id/panel_history"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:id="@+id/history_body"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp" />
+                    </ScrollView>
+
+                    <!-- Scene playing: live team view (thay hẳn tabs) -->
+                    <LinearLayout
+                        android:id="@+id/panel_live"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:padding="14dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:id="@+id/live_side_left"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="7dp"
+                            android:orientation="vertical"
+                            android:background="@color/panel"
+                            android:padding="16dp" />
+
+                        <LinearLayout
+                            android:id="@+id/live_side_right"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_marginStart="7dp"
+                            android:orientation="vertical"
+                            android:background="@color/panel"
+                            android:padding="16dp" />
+                    </LinearLayout>
+
+                    <!-- Scene ended, bấm "Tổng kết" -->
+                    <LinearLayout
+                        android:id="@+id/panel_summary"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="20dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:id="@+id/summary_card"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:background="@color/panel"
+                            android:padding="22dp" />
+                    </LinearLayout>
+                </FrameLayout>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
 </FrameLayout>

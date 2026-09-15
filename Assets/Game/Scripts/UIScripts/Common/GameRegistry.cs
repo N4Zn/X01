@@ -55,18 +55,25 @@ public static class GameRegistry
     }
 
     // ── Kích thước lưới ──────────────────────────────────────────────────────
-    public const int CATEGORY_COUNT   = 6;
+    // CATEGORY_COUNT giờ là trục MÔN HỌC (trước đây là cấp lớp Mầm Non/Lớp 1-5 — trục cấp
+    // lớp bị bỏ, "chia sau" theo quyết định của user, xem CLAUDE.md Track A). Có thể tăng thêm
+    // nữa sau này — chỉ cần tăng số này + thêm dòng CategoryNames + Set() tương ứng, không cần
+    // sửa gì khác.
+    public const int CATEGORY_COUNT   = 9;
     public const int MAX_PER_CATEGORY = 24;
 
-    // ── Tên hiển thị cho từng tab category ───────────────────────────────────
+    // ── Tên hiển thị cho từng tab category (= môn học) ────────────────────────
     public static readonly string[] CategoryNames =
     {
-        "Mam Non",  // 0
-        "Lop 1",    // 1
-        "Lop 2",    // 2
-        "Lop 3",    // 3
-        "Lop 4",    // 4
-        "Lop 5",    // 5
+        "Toán",           // 0
+        "Tiếng Việt",     // 1
+        "Tiếng Anh",      // 2 — chưa có game nào, để sẵn chỗ
+        "Khoa học",       // 3
+        "Kỹ năng sống",   // 4
+        "Tư duy - Logic", // 5
+        "Trí nhớ",        // 6
+        "Vận động",       // 7
+        "Khác",           // 8
     };
 
     // ── Bảng game ────────────────────────────────────────────────────────────
@@ -76,75 +83,64 @@ public static class GameRegistry
     {
         Games = new GameEntry[CATEGORY_COUNT, MAX_PER_CATEGORY];
 
-        // ── Category 0: Mầm Non ──────────────────────────────────────────────
-        Set(0, 0, "Counting5",         "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 1, "Counting",         "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 2, "AddNumber5",        "AddNumberGame",   Engine.MathGame);
-        Set(0, 3, "AddNumber",        "AddNumberGame",   Engine.MathGame);
-        Set(0, 4, "RiverCross",       "RiverCrossGame",  Engine.ArcadeGame);
-        Set(0, 5, "SaveEnvironment",  "TestTongHopGame", Engine.TongHopGame);
-		Set(0, 6, "ListenSelect", "ListenGame",      Engine.ListenGame);
-        Set(0, 7, "ChuCai",       "ChuCaiGame",      Engine.ListenGame);
-        Set(0, 8, "SoDem",        "SoDemGame",        Engine.ListenGame);
-        Set(0, 9, "Numbers",      "NumbersGame",      Engine.ListenGame);
-        Set(0, 10, "ChuCai2",  "BalloonGame", Engine.BalloonGame);
-        Set(0, 11, "SoDem2", "BalloonGame", Engine.BalloonGame);
-        Set(0, 12, "PlanetOrder",    "PlanetOrderGame",    Engine.PlanetGame);
-        Set(0, 13, "PlanetAlphabet", "PlanetAlphabetGame", Engine.PlanetGame);
-        Set(0, 14, "Fruit", "TestTongHopGame", Engine.TongHopGame);
-        Set(0, 15, "Animal", "TestTongHopGame", Engine.TongHopGame);
-		Set(0, 16, "WaterAnimal", "TestTongHopGame", Engine.TongHopGame);
+        // ── Category 0: Toán ─────────────────────────────────────────────────
+        Set(0, 0, "Counting5",  "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 1, "Counting",   "TestTongHopGame", Engine.TongHopGame);
+        Set(0, 2, "AddNumber5", "AddNumberGame",   Engine.MathGame);
+        Set(0, 3, "AddNumber",  "AddNumberGame",   Engine.MathGame);
+        Set(0, 4, "SoDem",      "SoDemGame",       Engine.ListenGame);
+        Set(0, 5, "SoDem2",     "BalloonGame",     Engine.BalloonGame);
+        Set(0, 6, "Numbers",    "NumbersGame",     Engine.ListenGame);
 
-        Set(0, 17, "Things",       "TestTongHopGame",  Engine.TongHopGame);
-        Set(0, 18, "SolarSystem",   "SolarSystemScene", Engine.ExploreGame, BgmTrack.SolarSystem);
-        Set(0, 19, "SolarSystemVi", "SolarSystemVi",    Engine.ExploreGame, BgmTrack.SolarSystem);
-        Set(0, 20, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
-        Set(0, 21, "SolarQuizVi", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
-        Set(0, 22, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10);
+        // ── Category 1: Tiếng Việt ───────────────────────────────────────────
+        Set(1, 0, "ListenSelect",       "ListenGame",          Engine.ListenGame);
+        Set(1, 1, "ChuCai",             "ChuCaiGame",          Engine.ListenGame);
+        Set(1, 2, "ChuCai2",            "BalloonGame",         Engine.BalloonGame);
+        Set(1, 3, "FamilySpellingJump", "FamilySpellingGame",  Engine.MiniGameKit);
+        Set(1, 4, "WordHuntMaze",       "WordHuntMazeGame",    Engine.MiniGameKit);
+        Set(1, 5, "SentenceBuilder",    "SentenceBuilderGame", Engine.MiniGameKit);
 
-		
-		
-		
+        // ── Category 2: Tiếng Anh ────────────────────────────────────────────
+        // Chưa có game riêng cho tiếng Anh (SolarQuizEn chỉ là bản dịch câu hỏi khoa học,
+        // không phải nội dung dạy tiếng Anh) — để trống, thêm game vào đây khi có.
 
-        // ── Category 1: Phân tích ─────────────────────────────────────────────
-        Set(1, 0, "TrainPath",  "TrainPathGame",  Engine.TrainGame);
-        Set(1, 1, "PathFinder", "PathFinderGame", Engine.PathGame);
-        Set(1, 2, "LaneDash",   "LaneDashGame",   Engine.ArcadeGame);
+        // ── Category 3: Khoa học (khám phá tự nhiên - xã hội) ────────────────
+        Set(3, 0,  "SaveEnvironment",  "TestTongHopGame",      Engine.TongHopGame);
+        Set(3, 1,  "Fruit",            "TestTongHopGame",      Engine.TongHopGame);
+        Set(3, 2,  "Animal",           "TestTongHopGame",      Engine.TongHopGame);
+        Set(3, 3,  "WaterAnimal",      "TestTongHopGame",      Engine.TongHopGame);
+        Set(3, 4,  "Things",           "TestTongHopGame",      Engine.TongHopGame);
+        Set(3, 5,  "SolarSystem",      "SolarSystemScene",     Engine.ExploreGame, BgmTrack.SolarSystem);
+        Set(3, 6,  "SolarSystemVi",    "SolarSystemVi",        Engine.ExploreGame, BgmTrack.SolarSystem);
+        Set(3, 7,  "SolarQuizEn",      "TestTongHopGame",      Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
+        Set(3, 8,  "SolarQuizVi",      "TestTongHopGame",      Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
+        Set(3, 9,  "SolarOrder",       "TestTongHopGame",      Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10);
+        Set(3, 10, "SolarOrder2",      "TestTongHopGame",      Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", hideScoreBars: true);
+        Set(3, 11, "SaveTheAstronaut", "SaveTheAstronautGame", Engine.MiniGameKit);
 
-        // ── Category 2: Hình ảnh ── engine: PlanetGame ───────────────────────
-        Set(2, 0, "PlanetOrder",    "PlanetOrderGame",    Engine.PlanetGame);
-        Set(2, 1, "PlanetAlphabet", "PlanetAlphabetGame", Engine.PlanetGame);
+        // ── Category 4: Kỹ năng sống ──────────────────────────────────────────
+        Set(4, 0, "WhoIsIt",      "WhoIsItGame",      Engine.MiniGameKit);
+        Set(4, 1, "FamilyMember", "FamilyMemberGame", Engine.MiniGameKit);
 
-        // ── Category 3: Trí nhớ ───────────────────────────────────────────────
-        Set(3, 0, "PlanetAlphabet", "PlanetAlphabetGame", Engine.PlanetGame);
+        // ── Category 5: Tư duy - Logic ────────────────────────────────────────
+        Set(5, 0, "PathFinder", "PathFinderGame", Engine.PathGame);
+        Set(5, 1, "Monopoly",   "MonopolyGame",   Engine.MiniGameKit);
 
-        // ── Category 4: Nhận biết ─────────────────────────────────────────────
-        Set(4, 0, "WhoIsIt", "WhoIsItGame", Engine.MiniGameKit);
-        Set(4, 1, "FamilySpellingJump", "FamilySpellingGame", Engine.MiniGameKit);
-        Set(4, 2, "Monopoly", "MonopolyGame", Engine.MiniGameKit);
-        Set(4, 3, "WordHuntMaze", "WordHuntMazeGame", Engine.MiniGameKit);
-        Set(4, 4, "SentenceBuilder", "SentenceBuilderGame", Engine.MiniGameKit);
-        Set(4, 5, "FamilyMember", "FamilyMemberGame", Engine.MiniGameKit);
-		
-        Set(4, 6, "SolarSystem",   "SolarSystemScene", Engine.ExploreGame, BgmTrack.SolarSystem);
-        Set(4, 7, "SolarSystemVi", "SolarSystemVi",    Engine.ExploreGame, BgmTrack.SolarSystem);
-        Set(4, 8, "SolarQuizEn", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
-        Set(4, 9, "SolarQuizVi", "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10, hideScoreBars: true);
-        Set(4, 10, "SolarOrder",  "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", pts: 10);
-		Set(4, 11, "SolarOrder2",  "TestTongHopGame", Engine.TongHopGame, BgmTrack.SolarSystem, "SolarSystem/Textures/2k_stars", hideScoreBars: true);
-        Set(4, 12, "SaveTheAstronaut", "SaveTheAstronautGame", Engine.MiniGameKit);
-        Set(4, 13, "FRTest",           "FRTestGame",           Engine.MiniGameKit);
+        // ── Category 6: Trí nhớ ───────────────────────────────────────────────
+        Set(6, 0, "PlanetOrder",    "PlanetOrderGame",    Engine.PlanetGame);
+        Set(6, 1, "PlanetAlphabet", "PlanetAlphabetGame", Engine.PlanetGame);
+        Set(6, 2, "TrainPath",      "TrainPathGame",      Engine.TrainGame);
 
+        // ── Category 7: Vận động ──────────────────────────────────────────────
+        Set(7, 0, "RiverCross", "RiverCrossGame", Engine.ArcadeGame);
+        Set(7, 1, "LaneDash",   "LaneDashGame",   Engine.ArcadeGame);
 
-        // ── Category 5: Âm thanh ─────────────────────────────────────────────
-        // ListenSelect / ChuCai / SoDem / Numbers: scene riêng, sinh nội dung procedurally.
-        // TongHop / TestTongHop: dùng chung TestTongHopGame + CSV từ Resources/TongHop/{name}/
-        Set(5, 0, "ListenSelect", "ListenGame",      Engine.ListenGame);
-        Set(5, 1, "ChuCai",       "ChuCaiGame",      Engine.ListenGame);
-        Set(5, 2, "SoDem",        "SoDemGame",        Engine.ListenGame);
-        Set(5, 3, "Numbers",      "NumbersGame",      Engine.ListenGame);
-        Set(5, 4, "TongHop",      "TestTongHopGame", Engine.TongHopGame);
-        Set(5, 5, "TestTongHop",  "TestTongHopGame", Engine.TongHopGame);
+        // ── Category 8: Khác (giải trí / chưa rõ mục tiêu giáo dục / công cụ test) ──
+        // TongHop, TestTongHop: bộ câu hỏi CSV "tổng hợp" nhiều chủ đề — chưa thuộc hẳn 1 môn.
+        // FRTest: màn test nhận diện khuôn mặt (công cụ debug), không phải nội dung học.
+        Set(8, 0, "TongHop",     "TestTongHopGame", Engine.TongHopGame);
+        Set(8, 1, "TestTongHop", "TestTongHopGame", Engine.TongHopGame);
+        Set(8, 2, "FRTest",      "FRTestGame",      Engine.MiniGameKit);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

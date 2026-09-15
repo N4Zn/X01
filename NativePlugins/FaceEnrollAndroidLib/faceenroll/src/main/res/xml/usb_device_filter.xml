@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Used by the USB_DEVICE_ATTACHED intent-filter on MainActivity (see AndroidManifest.xml):
+  when a device matching one of these vendor/product IDs attaches, Android auto-launches
+  this app AND auto-grants USB permission for it with no dialog - needed for a kiosk board
+  where nobody's there to tap "Allow" after a power cycle. IDs are decimal (as this webcam's
+  vid/pid are read HERE - unlike the very first webcam this app supported, which had its
+  descriptors misparsed by Android's UsbManager, this one's vid=22595/pid=30852 matched what
+  Windows/lsusb see too: 0x5843/0x7884).
+-->
+<resources>
+    <!-- Previous webcam (0x5843/0x7884) -->
+    <usb-device vendor-id="22595" product-id="30852" />
+    <!-- Current webcam as reported by this ROM (Sonix 0x0c45/0x636b misparsed → 742/6733) -->
+    <usb-device vendor-id="742" product-id="6733" />
+</resources>

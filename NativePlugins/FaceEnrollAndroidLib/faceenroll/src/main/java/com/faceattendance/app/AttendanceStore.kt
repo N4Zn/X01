@@ -1,0 +1,292 @@
+package com.faceattendance.app
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import org.opencv.android.Utils
+import org.opencv.core.Mat
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/** One enrolled reference sample: an embedding plus the face-crop photo it came from
+ * (photo is null for test-gallery entries, which have no real photo). */
+data class Sample(val embedding: FloatArray, val photo: String?)
+
+data class MatchResult(val name: String?, val sim: Float, val runnerUpName: String?, val runnerUpSim: Float)
+
+data class PersonLogEntry(var first: Long, var last: Long, var count: Int, var snapshot: Bitmap?)
+
+/** Holds enrolled face sample clusters, per-person cooldown state, aggregated recent-checkin
+ * log and the attendance CSV log. */
+class AttendanceStore(private val context: Context) {
+
+    companion object {
+        // A single averaged centroid per person doesn't help separate near-identical faces
+        // (e.g. twins) - a small cluster of real samples does, at least somewhat. The first
+        // PERMANENT_SAMPLES collected are kept forever; beyond that only the ROLLING_SAMPLES
+        // most recent are kept (oldest rolling sample evicted first).
+        const val PERMANENT_SAMPLES = 3
+        const val ROLLING_SAMPLES = 5
+        const val MAX_SAMPLES_PER_PERSON = PERMANENT_SAMPLES + ROLLING_SAMPLES
+        const val RECENT_PEOPLE_SHOWN = 5
+    }
+
+    private val enrolled = LinkedHashMap<String, MutableList<Sample>>()
+    // "nam" or "nu" - picks the honorific ("anh"/"chi") used by the attendance greeting TTS.
+    private val genders = HashMap<String, String>()
+    // Names that came from importTestGallery() rather than a real enroll() - excluded from
+    // persistence so the fake 200-person test gallery never leaks into the production save file.
+    private val testGalleryNames = HashSet<String>()
+    private val lastLogged = HashMap<String, Long>()
+    private val logFile = File(context.getExternalFilesDir(null), "attendance_log.csv")
+    // Shared path: both FaceAttendance and EduXplore game read/write this file.
+    private val sharedDir = File("/sdcard/EduXplore").also { it.mkdirs() }
+    private val enrolledFile = File(sharedDir, "enrolled.json")
+    private val enrolledPhotosDir = File(context.getExternalFilesDir(null), "enrolled_photos")
+    private val snapshotDir = File(context.getExternalFilesDir(null), "snapshots")
+    private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+    private val displayTimeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
+
+    // Per-person aggregate (first/last check-in time, count, latest thumbnail) instead of a
+    // flat event list - with a 10s cooldown a busy person would otherwise add a new line every
+    // 10s forever. recentNames tracks display order, most-recent last, capped at RECENT_PEOPLE_SHOWN.
+    val personLog = LinkedHashMap<String, PersonLogEntry>()
+    val recentNames = mutableListOf<String>()
+
+    init {
+        enrolledPhotosDir.mkdirs()
+        snapshotDir.mkdirs()
+        loadPersisted()
+    }
+
+    private fun loadPersisted() {
+        if (!enrolledFile.exists()) return
+        try {
+            val arr = org.json.JSONArray(enrolledFile.readText())
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val name = obj.getString("name")
+                val samples = mutableListOf<Sample>()
+                if (obj.has("samples")) {
+                    val samplesArr = obj.getJSONArray("samples")
+                    for (j in 0 until samplesArr.length()) {
+                        val sObj = samplesArr.getJSONObject(j)
+                        val embArr = sObj.getJSONArray("embedding")
+                        val emb = FloatArray(embArr.length()) { embArr.getDouble(it).toFloat() }
+                        val photo = if (sObj.isNull("photo")) null else sObj.getString("photo")
+                        samples.add(Sample(emb, photo))
+                    }
+                } else {
+                    // backward-compat with the earlier single-embedding-per-person format
+                    val embArr = obj.getJSONArray("embedding")
+                    val emb = FloatArray(embArr.length()) { embArr.getDouble(it).toFloat() }
+                    samples.add(Sample(emb, null))
+                }
+                enrolled[name] = samples
+                genders[name] = if (obj.has("gender")) obj.getString("gender") else "nam"
+            }
+            val totalSamples = enrolled.values.sumOf { it.size }
+            android.util.Log.e("FaceAttendance", "Loaded ${enrolled.size} persisted enrollments ($totalSamples samples)")
+        } catch (e: Exception) {
+            android.util.Log.e("FaceAttendance", "Failed to load persisted enrollments", e)
+        }
+    }
+
+    private fun persist() {
+        val arr = org.json.JSONArray()
+        for ((name, samples) in enrolled) {
+            if (name in testGalleryNames) continue
+            val obj = org.json.JSONObject()
+            obj.put("name", name)
+            obj.put("gender", genders[name] ?: "nam")
+            val samplesArr = org.json.JSONArray()
+            for (s in samples) {
+                val sObj = org.json.JSONObject()
+                val embArr = org.json.JSONArray()
+                for (v in s.embedding) embArr.put(v.toDouble())
+                sObj.put("embedding", embArr)
+                sObj.put("photo", s.photo)
+                samplesArr.put(sObj)
+            }
+            obj.put("samples", samplesArr)
+            arr.put(obj)
+        }
+        val json = arr.toString()
+        try {
+            enrolledFile.parentFile?.mkdirs()
+            enrolledFile.writeText(json)
+        } catch (e: Exception) {
+            android.util.Log.e("FaceAttendance", "persist failed: ${e.message}", e)
+        }
+        // Game merged into the same APK/package (Track A) — FaceDatabase.load() in the game's
+        // runtime already checks context.getExternalFilesDir(null)/enrolled.json first, which
+        // is the SAME directory this class also writes to via context.getExternalFilesDir(null)
+        // — same UID, no cross-app mirroring needed anymore (used to write into 3 separate
+        // hardcoded game package dirs back when FA/Game were separate APKs).
+    }
+
+    /** Saves a face-crop Mat as a JPEG under enrolled_photos/<name>/ and returns its path. */
+    private fun saveSamplePhoto(name: String, faceCrop: Mat?): String? {
+        if (faceCrop == null || faceCrop.empty()) return null
+        val personDir = File(enrolledPhotosDir, name)
+        personDir.mkdirs()
+        val file = File(personDir, "${System.currentTimeMillis()}.jpg")
+        val bmp = Bitmap.createBitmap(faceCrop.cols(), faceCrop.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(faceCrop, bmp)
+        FileOutputStream(file).use { out -> bmp.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+        return file.absolutePath
+    }
+
+    private fun deleteSamplePhoto(path: String?) {
+        if (path != null) File(path).delete()
+    }
+
+    /** Adds one embedding to a person's cluster - used both for fresh/supplementary enrollment
+     * and for samples confirmed via the ambiguous-match dialog. */
+    fun addSample(name: String, embedding: FloatArray, faceCrop: Mat?) {
+        val samples = enrolled.getOrPut(name) { mutableListOf() }
+        val photo = saveSamplePhoto(name, faceCrop)
+        samples.add(Sample(embedding, photo))
+        if (samples.size > MAX_SAMPLES_PER_PERSON) {
+            val removed = samples.removeAt(PERMANENT_SAMPLES)
+            deleteSamplePhoto(removed.photo)
+        }
+        testGalleryNames.remove(name)
+        persist()
+    }
+
+    fun deleteSample(name: String, index: Int) {
+        val samples = enrolled[name] ?: return
+        if (index >= samples.size) return
+        val removed = samples.removeAt(index)
+        deleteSamplePhoto(removed.photo)
+        if (samples.isEmpty()) enrolled.remove(name)
+        persist()
+    }
+
+    fun samplesOf(name: String): List<Sample> = enrolled[name] ?: emptyList()
+
+    /** "nam" or "nu" - only meaningful the first time a name is enrolled; ignored on
+     * supplementary enrollment of an existing name (gender doesn't change). */
+    fun setGender(name: String, gender: String) {
+        if (name !in genders) {
+            genders[name] = gender
+            persist()
+        }
+    }
+
+    fun genderOf(name: String): String = genders[name] ?: "nam"
+
+    fun representativePhoto(name: String): String? = enrolled[name]?.firstOrNull { it.photo != null }?.photo
+
+    fun deleteEnrollment(name: String) {
+        val samples = enrolled.remove(name) ?: emptyList()
+        for (s in samples) deleteSamplePhoto(s.photo)
+        genders.remove(name)
+        lastLogged.remove(name)
+        persist()
+    }
+
+    fun enrolledCount() = enrolled.size
+
+    /** Real (non test-gallery) enrolled names, for a management/delete UI. */
+    fun realEnrolledNames(): List<String> = enrolled.keys.filter { it !in testGalleryNames }.sorted()
+
+    /** The attendance CSV file, for sharing/export. Null if nothing has been logged yet. */
+    fun logFileIfExists(): File? = if (logFile.exists()) logFile else null
+
+    /**
+     * Test-only helper: bulk-loads a JSON array of {"name": str, "embedding": [floats]}
+     * (see gen_test_gallery.py, which computes these with the same SFace model from real
+     * LFW photos) to stress-test matching/margin behavior at a large gallery size without
+     * needing hundreds of real people to physically enroll. Not persisted (see testGalleryNames).
+     */
+    fun importTestGallery(json: String): Int {
+        val arr = org.json.JSONArray(json)
+        var count = 0
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val name = obj.getString("name")
+            val embArr = obj.getJSONArray("embedding")
+            val embedding = FloatArray(embArr.length()) { embArr.getDouble(it).toFloat() }
+            enrolled[name] = mutableListOf(Sample(embedding, null))
+            testGalleryNames.add(name)
+            count++
+        }
+        return count
+    }
+
+    /**
+     * Each person's score is the max similarity across their whole sample cluster, not a
+     * single centroid - a cluster covering more real appearances discriminates better. Returns
+     * both the best and runner-up person's name+score so callers can apply a margin check
+     * (false-positive risk scales with gallery size) and, when the two are too close to call
+     * (e.g. identical twins), offer the runner-up as the other candidate to confirm between.
+     */
+    fun bestMatch(embedding: FloatArray, engine: FaceEngine): MatchResult {
+        if (enrolled.isEmpty()) return MatchResult(null, -1f, null, -1f)
+        var bestName: String? = null
+        var bestSim = -1f
+        var runnerName: String? = null
+        var runnerSim = -1f
+        for ((name, samples) in enrolled) {
+            var personBest = -1f
+            for (s in samples) {
+                val sim = engine.cosineSim(s.embedding, embedding)
+                if (sim > personBest) personBest = sim
+            }
+            if (personBest > bestSim) {
+                runnerName = bestName
+                runnerSim = bestSim
+                bestName = name
+                bestSim = personBest
+            } else if (personBest > runnerSim) {
+                runnerName = name
+                runnerSim = personBest
+            }
+        }
+        return MatchResult(bestName, bestSim, runnerName, runnerSim)
+    }
+
+    fun canLog(name: String, cooldownMs: Long): Boolean {
+        val last = lastLogged[name] ?: 0L
+        return System.currentTimeMillis() - last > cooldownMs
+    }
+
+    fun logAttendance(name: String, faceCrop: Mat?) {
+        val now = System.currentTimeMillis()
+        lastLogged[name] = now
+        val ts = timeFmt.format(Date(now))
+
+        val entry = personLog.getOrPut(name) { PersonLogEntry(now, now, 0, null) }
+        entry.last = now
+        entry.count++
+        if (faceCrop != null && !faceCrop.empty()) {
+            val bmp = Bitmap.createBitmap(faceCrop.cols(), faceCrop.rows(), Bitmap.Config.ARGB_8888)
+            Utils.matToBitmap(faceCrop, bmp)
+            entry.snapshot = Bitmap.createScaledBitmap(bmp, 90, 90, true)
+            val snapFile = File(snapshotDir, "${name}_${ts.replace(Regex("[ :]"), "")}.jpg")
+            FileOutputStream(snapFile).use { out -> bmp.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+        }
+
+        recentNames.remove(name)
+        recentNames.add(name)
+        while (recentNames.size > RECENT_PEOPLE_SHOWN) recentNames.removeAt(0)
+
+        val isNew = !logFile.exists()
+        FileWriter(logFile, true).use { w ->
+            if (isNew) w.append("timestamp,name\n")
+            w.append("$ts,$name\n")
+        }
+    }
+
+    fun loadPhotoBitmap(path: String?, sizePx: Int): Bitmap? {
+        if (path == null || !File(path).exists()) return null
+        val bmp = BitmapFactory.decodeFile(path) ?: return null
+        return Bitmap.createScaledBitmap(bmp, sizePx, sizePx, true)
+    }
+}

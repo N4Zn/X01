@@ -79,7 +79,11 @@ public class ScoreSceneController : MonoBehaviour
 
     private void OnClickChangeTeam()
     {
-        Debug.Log("NDL: ScoreScene - OnClickChangeTeam - Loading MenuScene");
-        SceneManager.LoadScene("MenuScene");
+        // "Bắt Đầu" — KHÔNG load MenuScene nữa (màn Menu cũ của Unity đã bị thay thế hoàn
+        // toàn bởi ControlActivity từ Track A). Tái dùng đúng cơ chế đã có cho case "hết giờ
+        // tự nhiên": báo ControlActivity tự quay Menu + tự nổi lên trước — màn chiếu vẫn giữ
+        // nguyên ScoreScene đang hiện kết quả, không cần đổi gì ở đây.
+        Debug.Log("NDL: ScoreScene - OnClickChangeTeam - PushGameEnded (về Menu trên ControlActivity)");
+        GameControlBridge.Instance?.PushGameEnded();
     }
 }
