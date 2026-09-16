@@ -89,6 +89,95 @@ luồng MenuScene/StartScene gốc.
   (không qua MenuScene). `LoadGame(sceneName, gameName)` là entry point dùng chung — cả cold-boot
   lẫn lúc Unity đã sống sẵn (xem bên dưới) đều gọi qua đây.
 
+### "Quản lý lớp" — ClassManagementActivity (2026-09-16)
+
+Entry point launcher của FA đổi từ `MainActivity` (màn camera) sang **`ClassManagementActivity`**
+(mới) — danh sách lớp → danh sách học sinh trong lớp → xem/quản lý ảnh 1 học sinh. Build 100%
+bằng code (LinearLayout lồng nhau, không RecyclerView/XML item layout), cùng phong cách
+`showManageStudentsDialog()`/`showStudentSamplesDialog()` đã có sẵn trong `MainActivity.kt`.
+`MainActivity` vẫn giữ nguyên toàn bộ pipeline camera/nhận diện/enroll — không viết lại, chỉ
+điều khiển qua Intent extras từ `ClassManagementActivity`:
+
+- `EXTRA_TARGET_CLASS` (String) — lớp đang chọn; enroll người MỚI trong phiên này sẽ tự gán
+  `className` = giá trị này (xem `showEnrollNameDialog()`'s Lưu action).
+- `EXTRA_MODE` = `MODE_VIEW_STUDENT` + `EXTRA_STUDENT_NAME` — mở thẳng
+  `showStudentSamplesDialog(name)` lúc `onCreate()` (màn "Cập nhật ảnh").
+- `EXTRA_MODE` = `MODE_BULK_PICK` — mở thẳng picker chọn NHIỀU ảnh (`GetMultipleContents`,
+  khác launcher đơn `GetContent` đã có) rồi chạy tuần tự qua đúng `enrollFromPhoto()` cho từng
+  ảnh (`enrollFromPhotosBulk()`), nối chuỗi bằng callback `onDone`/`onAllDone` mới thêm vào
+  `enrollFromPhoto()`/`enrollNextFace()` — không viết pipeline detect/embed mới.
+- Không có extra nào → mở như màn camera bình thường (hành vi cũ, không đổi).
+
+**Dữ liệu**: `enrolled.json` thêm field `"className"` (nullable, bỏ qua an toàn ở code cũ/game —
+`FaceDatabase`/`bestMatch()` chỉ đọc `name`+`samples`, không đụng field này). Danh sách lớp
+(kể cả lớp rỗng chưa ai) lưu riêng ở `/sdcard/EduXplore/classes.json`. Đổi tên lớp
+(`AttendanceStore.renameClass`) và đổi tên học sinh (`AttendanceStore.renameEnrollment`, di
+chuyển key qua mọi map: `enrolled`/`genders`/`classNames`/`lastLogged`/`personLog`/`recentNames`)
+đều có sẵn.
+
+> **Gotcha Launcher**: `MainActivity.kt` (Launcher app, `ROSTER_COMPONENT`) đã trỏ sang
+> `ClassManagementActivity` thay vì `MainActivity` của FA — nhưng key lưu trong
+> `PinnedAppsManager` là **component cụ thể** (`package/activity`), nên máy nào đã từng tick
+> chọn "Quản lý lớp" từ trước (lúc còn trỏ `MainActivity`) cần **vào lại admin bỏ tick rồi tick
+> lại** 1 lần để lưu đúng component mới — tự nó không migrate.
+
+> **Chưa áp dụng cho bản standalone**: `ClassManagementActivity` mới chỉ có ở bản merge
+> (`NativePlugins/FaceEnrollAndroidLib`) — bản gốc độc lập `D:\X_projects\FaceRecognition\android`
+> chỉ được cập nhật phần dữ liệu (`AttendanceStore.kt`: className/classes.json/rename) +
+> `MainActivity.kt` (intent extras, bulk picker) để 2 bản không lệch nhau, nhưng KHÔNG có màn
+> hình "Quản lý lớp" riêng — app đó vẫn chỉ có màn camera như cũ.
+
+### HDMI mirror lúc boot/launcher/FA — bug OEM, đã fix (2026-09-16)
+
+Yêu cầu thực tế: lúc boot / ở launcher / mở app FA → máy chiếu cần **mirror** đúng nội dung
+tablet, **full độ phân giải thật** (không phải 2 display tách biệt — đó chỉ cần khi vào game
+Unity, xem `setLaunchDisplayId()` ở trên). Thiết bị K02 chạy **MediaTek MT8168**, build
+`userdebug`/test-keys (`adb root` dùng được thẳng, có sẵn `/system/xbin/su` setuid — tự app
+cũng gọi root runtime được nếu cần).
+
+**Có 2 tầng clone HDMI độc lập, dễ nhầm là 1:**
+1. **Tầng HAL** (`persist.vendor.sys.hdmi_hidl.clone=1`) — MediaTek's HDMI HAL tự mirror display
+   chính ra HDMI, tự scale đúng theo độ phân giải thật, tự negotiate lại mỗi lần hotplug (rút/cắm
+   cáp). Tầng này **tự nhường** khi có app claim riêng display 1 (lý do Unity vẫn tách màn đúng
+   bình thường mà không cần code gì thêm để bật/tắt mirror — platform tự làm đúng cái mình cần).
+   **Không đụng vào, không cần sửa gì ở đây.**
+2. **Tầng Java OEM** (`/vendor/etc/init/mirror_hdmi.rc` → service `mirror_hdmi`, oneshot, trigger
+   đúng 1 lần lúc `sys.boot_completed=1` → `sleep 8` → chạy
+   `/data/local/tmp/mirror_hdmi.sh` → `app_process` load `/data/local/tmp/MirrorDisplay.dex` →
+   gọi `SurfaceControl.setDisplayLayerStack()`/`setDisplayProjection()` trực tiếp) — đây là
+   **nguồn gây bug**: nó hardcode `dst` rect theo giả định resolution ~1280×720, nhưng máy chiếu
+   thật negotiate 1920×1080 → đè lên kết quả ĐÚNG của tầng HAL bằng 1 vùng méo/lệch góc. Vì chạy
+   1 lần lúc boot, không re-trigger khi hotplug, nên rút/cắm lại cáp HDMI = né được override sai
+   này, quay về đúng tầng HAL (đã xác nhận thực tế: rút/cắm cáp lúc đang ở launcher → 2 màn tự
+   động sync đúng, full resolution).
+
+**Fix đã áp dụng**: neutralize `/data/local/tmp/mirror_hdmi.sh` thành no-op (`exit 0`) — không
+đụng gì tới `/vendor` (đang mount `ro` + overlay, không cần remount). File nằm trên `/data` nên
+ghi trực tiếp được, và **sống sót qua reboot** (đã test lại sau reboot: script vẫn no-op, KHÔNG
+tự phục hồi). Đã verify: sau reboot, `mirror_log.txt` (nơi `MirrorDisplay.dex` log lại mỗi lần
+chạy) không bị ghi thêm gì mới → xác nhận override không còn chạy nữa.
+
+- **Backup/restore**: bản gốc lưu tại
+  [`NativePlugins/K02DeviceConfig/mirror_hdmi.sh.orig`](NativePlugins/K02DeviceConfig/mirror_hdmi.sh.orig)
+  (bản OEM thật), bản đang deploy tại
+  [`NativePlugins/K02DeviceConfig/mirror_hdmi.sh.noop`](NativePlugins/K02DeviceConfig/mirror_hdmi.sh.noop).
+  Muốn phục hồi hành vi mirror gốc của OEM (không khuyến khích — có bug góc màn hình):
+  ```bash
+  adb root
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/mirror_hdmi.sh.orig /data/local/tmp/mirror_hdmi.sh
+  adb shell chmod 755 /data/local/tmp/mirror_hdmi.sh
+  ```
+  Muốn áp lại fix (ví dụ sau khi flash lại firmware/OTA reset `/data`):
+  ```bash
+  adb root
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/mirror_hdmi.sh.noop /data/local/tmp/mirror_hdmi.sh
+  adb shell chmod 755 /data/local/tmp/mirror_hdmi.sh
+  adb reboot
+  ```
+  > Lưu ý: đây là sửa trực tiếp trên **firmware/OS của từng thiết bị K02** (không phải code
+  > project), KHÔNG nằm trong APK/build Unity — flash lại ROM hoặc factory reset sẽ mất fix này,
+  > phải làm lại bước push script trên cho từng máy.
+
 ### Stop/Start — KHÔNG destroy UnityPlayerActivity (gotcha quan trọng)
 
 **Unity tự gọi `Process.killProcess()` cả process (dùng chung với `ControlActivity`) khi

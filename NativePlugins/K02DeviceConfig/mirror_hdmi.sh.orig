@@ -1,0 +1,4 @@
+#!/system/bin/sh
+sleep 8
+CLASSPATH=/data/local/tmp/MirrorDisplay.dex /system/bin/app_process / MirrorDisplay > /data/local/tmp/mirror_log.txt 2>&1
+echo "exit_code=0" >> /data/local/tmp/mirror_log.txt

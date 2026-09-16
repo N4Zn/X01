@@ -221,7 +221,7 @@ public class FRTestController : MonoBehaviour
 
         while (t < timeout && !(leftDone && rightDone) && _running)
         {
-            var (left, right) = _plugin != null ? _plugin.GetConfirmed() : (null, null);
+            var (left, right, _, _) = _plugin != null ? _plugin.GetConfirmed() : (null, null, -1f, -1f);
             if (left != null && !leftDone)
             {
                 _leftName = left;
@@ -258,6 +258,8 @@ public class FRTestController : MonoBehaviour
         bool  rightDone     = false;
         float leftElapsed   = -1f; // -1 = never recognized this round (timed out)
         float rightElapsed  = -1f;
+        float leftConfidence  = -1f; // -1 = never recognized this round (timed out)
+        float rightConfidence = -1f;
         float startTime     = Time.time;
         float t             = 0f;
 
@@ -265,22 +267,24 @@ public class FRTestController : MonoBehaviour
 
         while (t < timeout && !(leftDone && rightDone) && _running)
         {
-            var (left, right) = _plugin != null ? _plugin.GetConfirmed() : (null, null);
+            var (left, right, leftSim, rightSim) = _plugin != null ? _plugin.GetConfirmed() : (null, null, -1f, -1f);
             if (left != null && !leftDone)
             {
                 _leftName   = left;
                 leftDone    = true;
                 leftElapsed = Time.time - startTime;
+                leftConfidence = leftSim;
                 hud.UpdatePlayerNames(_leftName, _rightName);
-                Debug.Log($"[FRTest] Recognition DONE round={roundNum} slot=left name={left} elapsed={leftElapsed:F2}s");
+                Debug.Log($"[FRTest] Recognition DONE round={roundNum} slot=left name={left} elapsed={leftElapsed:F2}s confidence={leftSim:F3}");
             }
             if (right != null && !rightDone)
             {
                 _rightName   = right;
                 rightDone    = true;
                 rightElapsed = Time.time - startTime;
+                rightConfidence = rightSim;
                 hud.UpdatePlayerNames(_leftName, _rightName);
-                Debug.Log($"[FRTest] Recognition DONE round={roundNum} slot=right name={right} elapsed={rightElapsed:F2}s");
+                Debug.Log($"[FRTest] Recognition DONE round={roundNum} slot=right name={right} elapsed={rightElapsed:F2}s confidence={rightSim:F3}");
             }
             yield return null;
             t += Time.deltaTime;
@@ -307,6 +311,8 @@ public class FRTestController : MonoBehaviour
             recognizedRight   = rightDone ? _rightName : "",
             leftRecognizeSec  = leftDone  ? (float)Math.Round(leftElapsed, 2)  : -1f,
             rightRecognizeSec = rightDone ? (float)Math.Round(rightElapsed, 2) : -1f,
+            leftConfidence    = leftDone  ? (float)Math.Round(leftConfidence, 3)  : -1f,
+            rightConfidence   = rightDone ? (float)Math.Round(rightConfidence, 3) : -1f,
             leftPressed       = leftPressed  ?? "None",
             rightPressed      = rightPressed ?? "None",
             durationSec       = (float)Math.Round(Time.time - roundStartTime, 1),
@@ -439,6 +445,8 @@ public class FRTestController : MonoBehaviour
         public string recognizedRight;
         public float  leftRecognizeSec;  // time from recognition start to match; -1 = timed out
         public float  rightRecognizeSec; // time from recognition start to match; -1 = timed out
+        public float  leftConfidence;    // cosine sim 0..1 of the match; -1 = timed out
+        public float  rightConfidence;   // cosine sim 0..1 of the match; -1 = timed out
         public string leftPressed;
         public string rightPressed;
         public float  durationSec;

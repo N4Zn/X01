@@ -67,6 +67,15 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
     companion object {
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
+
+        // Đến từ ClassManagementActivity — lớp đang chọn (gán cho người mới enroll), và chế độ
+        // mở màn hình này: xem/quản lý ảnh 1 học sinh có sẵn, hoặc mở luôn picker chọn nhiều
+        // ảnh (bulk add). Không có extra nào thì mở như màn camera bình thường.
+        const val EXTRA_TARGET_CLASS = "target_class"
+        const val EXTRA_MODE = "mode"
+        const val EXTRA_STUDENT_NAME = "student_name"
+        const val MODE_VIEW_STUDENT = "view_student"
+        const val MODE_BULK_PICK = "bulk_pick"
     }
 
     private lateinit var previewImage: ImageView
@@ -83,6 +92,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     private lateinit var tvInfoPanel: TextView
 
     private lateinit var photoPickerLauncher: ActivityResultLauncher<String>
+    private lateinit var photoPickerMultiLauncher: ActivityResultLauncher<String>
+    // Lớp đang được gán cho bất kỳ ai mới enroll trong phiên này (null = không gán lớp),
+    // đến từ ClassManagementActivity. pendingBulkPick nhớ việc bấm "Thêm hàng loạt" đang chờ
+    // quyền READ_EXTERNAL_STORAGE, để biết bật picker đơn hay nhiều khi quyền vừa được cấp.
+    private var targetClassName: String? = null
+    private var pendingBulkPick = false
 
     private var faceEngine: FaceEngine? = null
     private lateinit var attendanceStore: AttendanceStore
@@ -150,7 +165,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     private val ambiguousWindow = 5
     private val ambiguousMinAgree = 3
 
-    private class ResolvedLock(val name: String, val sinceMs: Long)
+    private class ResolvedLock(val name: String, val sinceMs: Long, val sim: Float)
     // Confirmed-person lock per slot: once set, only show tracking (green box) without
     // running recognition again. Cleared when the slot has been absent for > lockPresenceGraceMs.
     private val resolvedLocks = arrayOfNulls<ResolvedLock>(MAX_FACES)
@@ -201,6 +216,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         photoPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             if (uri != null) enrollFromPhoto(uri)
         }
+        photoPickerMultiLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris: List<Uri> ->
+            if (uris.isNotEmpty()) enrollFromPhotosBulk(uris) else toastStatus("Chưa chọn ảnh nào")
+        }
+
+        targetClassName = intent.getStringExtra(EXTRA_TARGET_CLASS)
+        val mode = intent.getStringExtra(EXTRA_MODE)
 
         setContentView(R.layout.activity_main)
 
@@ -231,6 +252,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         btnExport.setOnClickListener { exportAttendanceCsv() }
 
         attendanceStore = AttendanceStore(this)
+        when (mode) {
+            MODE_VIEW_STUDENT -> intent.getStringExtra(EXTRA_STUDENT_NAME)?.let { showStudentSamplesDialog(it) }
+            MODE_BULK_PICK -> requestBulkPick()
+        }
         greetingTts = GreetingTts(this)
         greetingTts.startWeatherRefresh()
         loadTestGalleryIfPresent()
@@ -278,10 +303,29 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     }
                 }
                 Manifest.permission.READ_EXTERNAL_STORAGE -> {
-                    // Gallery picker was blocked waiting for this; launch it now.
-                    photoPickerLauncher.launch("image/*")
+                    // Gallery picker was blocked waiting for this; launch it now — single or
+                    // multi-select depending on which button asked for it.
+                    if (pendingBulkPick) {
+                        pendingBulkPick = false
+                        photoPickerMultiLauncher.launch("image/*")
+                    } else {
+                        photoPickerLauncher.launch("image/*")
+                    }
                 }
             }
+        }
+    }
+
+    /** "Thêm hàng loạt từ ảnh có sẵn" (từ ClassManagementActivity) — mở picker chọn nhiều ảnh
+     * cùng lúc; mỗi ảnh chạy qua đúng pipeline enrollFromPhoto() một, nối tiếp nhau. */
+    private fun requestBulkPick() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            pendingBulkPick = true
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), CAMERA_PERMISSION_REQUEST_CODE)
+        } else {
+            photoPickerMultiLauncher.launch("image/*")
         }
     }
 
@@ -306,13 +350,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
     override fun onStart() {
         super.onStart()
-        // Always reset reconnect state and re-register so onAttach() fires for every attached
-        // device. For the whitelisted camera (vid=742), permission is already granted → onConnect
-        // fires immediately with no dialog, so reconnect is nearly instant.
-        fallbackScheduled = false
-        retryPermissionScheduled = false
-        skippedDevices.clear()
-        fallbackHandler.removeCallbacksAndMessages(null)
+        // Re-register so onAttach() fires for every attached device. Permission was already
+        // granted the very first time this camera connected (persists across app restarts),
+        // so requestPermission() below just re-confirms it silently and onConnect() fires
+        // immediately — no dialog, no delay.
         if (!usbMonitorRegistered) {
             usbMonitorRegistered = true
             usbMonitor.register()
@@ -334,57 +375,34 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
     // --- USBMonitor.OnDeviceConnectListener ---
 
-    /** USB_CLASS_VIDEO (14) on any interface is the standards-based way to recognize "this is
-     * a UVC camera" without needing to know its vendor/product ID in advance - unlike device-
-     * descriptor vid/pid (which got misparsed for the very first webcam this app supported),
-     * this reads the *configuration* descriptor's per-interface class, a different, generally
-     * more reliable code path. Logged either way so a logcat capture always shows exactly
-     * what's attached and why it was/wasn't tried, even if this heuristic ever misses one.
-     */
-    // Cameras confirmed to work but that don't declare USB_CLASS_VIDEO in their Java-visible
-    // interface descriptors. Whitelisting by VID bypasses the 6-second fallback delay.
-    private val knownCameraVids = setOf(742)  // Rapoo cam (vid=742) — interfaceClasses=[]
+    // Đúng 1 camera USB cố định trên máy (không phải app tiêu dùng phải đoán giữa nhiều webcam
+    // lạ) — quyền đã cấp lần đầu thì Android tự nhớ lâu dài, requestPermission() trên device đã
+    // có quyền không hiện dialog, connect ngay. Vì vậy coi MỌI device không rõ ràng thuộc nhóm
+    // khác (hub/chuột/bàn phím/USB-serial như LiDAR) là ứng viên camera, xin quyền NGAY — không
+    // cần đợi 6s + dò 2 tầng như trước (gây cảm giác app "đứng" mỗi lần mở).
+    private val knownSerialVids = setOf(
+        0x10C4,  // Silicon Labs CP210x (LiDAR UART)
+        0x1A86,  // WinChipHead CH340/CH341
+        0x0403,  // FTDI FT232
+        0x067B,  // Prolific PL2303
+        0x0B95   // ATEN USB serial
+    )
+    private val excludedCameraClasses = setOf(
+        android.hardware.usb.UsbConstants.USB_CLASS_AUDIO,
+        android.hardware.usb.UsbConstants.USB_CLASS_COMM,
+        android.hardware.usb.UsbConstants.USB_CLASS_HID,
+        android.hardware.usb.UsbConstants.USB_CLASS_PRINTER,
+        android.hardware.usb.UsbConstants.USB_CLASS_MASS_STORAGE,
+        android.hardware.usb.UsbConstants.USB_CLASS_HUB,
+        android.hardware.usb.UsbConstants.USB_CLASS_CDC_DATA
+    )
 
     private fun looksLikeUvcCamera(device: UsbDevice): Boolean {
-        if (device.vendorId in knownCameraVids) return true
-        for (i in 0 until device.interfaceCount) {
-            val iface = device.getInterface(i)
-            if (iface.interfaceClass == android.hardware.usb.UsbConstants.USB_CLASS_VIDEO) return true
+        if (device.vendorId in knownSerialVids) return false
+        if (device.interfaceCount == 0) return true // descriptor không đọc được — vẫn thử
+        return (0 until device.interfaceCount).any { i ->
+            device.getInterface(i).interfaceClass !in excludedCameraClasses
         }
-        return false
-    }
-
-    // Devices seen but skipped (didn't look like a UVC camera) - retried as a last resort if
-    // no camera is working after fallbackDelayMs, in case looksLikeUvcCamera() ever misses a
-    // real camera whose interfaces Android's Java API doesn't report cleanly (this happened
-    // for the very first webcam this app supported, via a different symptom).
-    private val skippedDevices = mutableListOf<UsbDevice>()
-    private val fallbackHandler = Handler(Looper.getMainLooper())
-    private val fallbackDelayMs = 6000L
-    private var fallbackScheduled = false
-    // After the initial fallback fires, keep re-requesting permission for all skipped devices
-    // every retryPermissionIntervalMs until a camera connects. The first APK install after
-    // uninstall clears all USB device permissions, and on this K02 vendor ROM the permission
-    // dialog for devices whose descriptors Android can't parse (interfaceClasses=[]) is
-    // sometimes silently dropped or dismissed - periodic retry ensures the dialog reappears.
-    private val retryPermissionIntervalMs = 15_000L
-    private var retryPermissionScheduled = false
-
-    private fun schedulePermissionRetry() {
-        if (retryPermissionScheduled) return
-        retryPermissionScheduled = true
-        fallbackHandler.postDelayed(object : Runnable {
-            override fun run() {
-                if (uvcCamera != null) { retryPermissionScheduled = false; return }
-                val unpermitted = skippedDevices.filter { !usbMonitor.hasPermission(it) }
-                if (unpermitted.isNotEmpty()) {
-                    Log.e("FaceAttendance", "Camera retry: requesting permission for ${unpermitted.size} device(s) still without permission")
-                    runOnUiThread { tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | đang xin quyền camera lần nữa..." }
-                    for (d in unpermitted) usbMonitor.requestPermission(d)
-                }
-                fallbackHandler.postDelayed(this, retryPermissionIntervalMs)
-            }
-        }, retryPermissionIntervalMs)
     }
 
     override fun onAttach(device: UsbDevice) {
@@ -399,56 +417,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             Log.e("FaceAttendance", "Already have a working camera, ignoring this attach")
             return
         }
-        if (!looksLikeCamera) {
-            // Requesting permission for every attached USB device (hubs, touch controllers,
-            // etc.) wastes the permission dialog on the wrong device and confused -50
-            // ("invalid device") failures with the real camera never even being tried - only
-            // ask for devices that actually declare a Video interface, with the full list
-            // as a fallback below if that ever turns out wrong for a given camera model.
-            skippedDevices.add(device)
-            if (!fallbackScheduled) {
-                fallbackScheduled = true
-                fallbackHandler.postDelayed({
-                    if (uvcCamera == null) {
-                        // Only retry devices that could plausibly be cameras — exclude anything
-                        // whose every interface is a well-known non-camera USB class (HID,
-                        // mass-storage, hub, CDC/serial, audio, printer). This prevents popping
-                        // permission dialogs for mice, keyboards, USB dongles, serial adapters, etc.
-                        val obviouslyNotCamera = setOf(
-                            android.hardware.usb.UsbConstants.USB_CLASS_AUDIO,       // 1
-                            android.hardware.usb.UsbConstants.USB_CLASS_COMM,        // 2 CDC comm
-                            android.hardware.usb.UsbConstants.USB_CLASS_HID,         // 3
-                            android.hardware.usb.UsbConstants.USB_CLASS_PRINTER,     // 7
-                            android.hardware.usb.UsbConstants.USB_CLASS_MASS_STORAGE,// 8
-                            android.hardware.usb.UsbConstants.USB_CLASS_HUB,         // 9
-                            android.hardware.usb.UsbConstants.USB_CLASS_CDC_DATA     // 10 serial
-                        )
-                        // USB-to-serial adapters report class=255 (vendor-specific) rather than
-                        // CDC, so the interface-class filter above misses them. Blacklist by VID.
-                        val knownSerialVids = setOf(
-                            0x10C4,  // Silicon Labs CP210x (vid=4292 decimal)
-                            0x1A86,  // WinChipHead CH340/CH341 (vid=6790 decimal)
-                            0x0403,  // FTDI FT232
-                            0x067B,  // Prolific PL2303
-                            0x0B95   // ATEN USB serial (vid=2965 decimal)
-                        )
-                        val candidates = skippedDevices.filter { dev ->
-                            dev.vendorId !in knownSerialVids &&
-                            // A device with no declared interfaces (interfaceCount==0, seen on some
-                            // UVC cams that don't advertise their class in the Java API) is unknown
-                            // — treat it as a candidate rather than silently skipping it.
-                            (dev.interfaceCount == 0 || (0 until dev.interfaceCount).any { i ->
-                                dev.getInterface(i).interfaceClass !in obviouslyNotCamera
-                            })
-                        }
-                        Log.e("FaceAttendance", "No UVC camera found, fallback: ${candidates.size}/${skippedDevices.size} device(s) look plausibly camera-like")
-                        for (d in candidates) usbMonitor.requestPermission(d)
-                        if (candidates.isNotEmpty()) schedulePermissionRetry()
-                    }
-                }, fallbackDelayMs)
-            }
-            return
-        }
+        if (!looksLikeCamera) return
         runOnUiThread { tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | camera found, requesting permission..." }
         usbMonitor.requestPermission(device)
     }
@@ -669,6 +638,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             nextDetectAllowedMs = nowMs + 1000
             cachedOverlayItems = emptyList(); cachedOverlayW = width; cachedOverlayH = height
             Log.e("FacePerf", "  detect=${"%.1f".format((tDetectEnd - tDetectStart) / 1_000_000.0)}ms (no face — idle 1s)")
+            // Bug đã xác nhận: nhánh này trước đây KHÔNG cập nhật tvStatus, nên "faces in view"
+            // bị đứng ở giá trị lần cuối có người (thường là 1) mãi mãi dù người đã rời khung
+            // hình từ lâu — chỗ set text duy nhất nằm ở cuối processFrame(), không bao giờ chạy
+            // tới khi faces rỗng vì hàm return sớm ở đây.
+            runOnUiThread { tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | faces in view: 0" }
             return
         }
 
@@ -730,7 +704,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 greetedActive[lock.name] = nowMs
                 if (attendanceStore.canLog(lock.name, cooldownMs)) {
                     val crop = cropFace(bgr, face.rect)
-                    attendanceStore.logAttendance(lock.name, crop)
+                    attendanceStore.logAttendance(lock.name, crop, lock.sim)
                     crop.release()
                     runOnUiThread { refreshRecentPeoplePanel() }
                 }
@@ -783,7 +757,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     }
                     confirmed -> {
                         // Single-frame confirmation: set lock immediately, no voting needed.
-                        resolvedLocks[slot] = ResolvedLock(name!!, nowMs)
+                        resolvedLocks[slot] = ResolvedLock(name!!, nowMs, sim)
                         color = Color.GREEN
                         if (!greetedActive.containsKey(name)) {
                             justLogged.add(name to attendanceStore.genderOf(name))
@@ -791,7 +765,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                         greetedActive[name] = nowMs
                         if (attendanceStore.canLog(name, cooldownMs)) {
                             val crop = cropFace(bgr, face.rect)
-                            attendanceStore.logAttendance(name, crop)
+                            attendanceStore.logAttendance(name, crop, sim)
                             crop.release()
                             runOnUiThread { refreshRecentPeoplePanel() }
                         }
@@ -888,12 +862,39 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         )
     }
 
+    // Bug đã xác nhận (giơ tay 1 lát sau mới thấy hình): mỗi frame trước đây tự alloc 1 Bitmap
+    // MỚI (Bitmap.createBitmap) rồi post qua runOnUiThread KHÔNG có cơ chế chặn dồn — nếu main
+    // thread xử lý chậm hơn 1 nhịp, các Runnable setImageBitmap() xếp hàng lại và hiển thị chậm
+    // dần theo, đúng cảm giác "trễ". Sửa 2 chỗ: (1) tái dùng 1 Bitmap cố định qua
+    // Utils.matToBitmap(mat, bitmap) — bản OpenCV ghi thẳng vào bitmap có sẵn, không alloc mới
+    // mỗi frame (đỡ áp lực GC); (2) previewUpdatePending chặn dồn — frame mới tới khi main
+    // thread còn đang xử lý frame trước thì bỏ qua luôn (ưu tiên hình mới nhất, không xếp hàng
+    // hình cũ) thay vì hiển thị "đuổi kịp" một loạt frame trễ.
+    // 2 bitmap cố định xoay vòng (không phải 1) — viết vào buffer ĐANG KHÔNG hiển thị, main
+    // thread luôn đọc buffer ĐÃ VIẾT XONG hoàn chỉnh, không có chuyện vừa đọc vừa ghi cùng lúc
+    // trên đúng 1 bitmap (dễ rách hình nếu main thread render đúng lúc frame kế tiếp đang ghi đè).
+    private val previewBitmaps = arrayOfNulls<Bitmap>(2)
+    private var previewBitmapIndex = 0
+    @Volatile private var previewUpdatePending = false
+
     private fun updatePreviewBitmap(bgr: Mat) {
+        if (previewUpdatePending) return // main thread chưa tiêu thụ xong frame trước — bỏ frame này
         val t0 = System.nanoTime()
-        val bmp = matToBitmap(bgr)
+        val idx = previewBitmapIndex
+        var bmp = previewBitmaps[idx]
+        if (bmp == null || bmp.width != bgr.cols() || bmp.height != bgr.rows()) {
+            bmp = Bitmap.createBitmap(bgr.cols(), bgr.rows(), Bitmap.Config.ARGB_8888)
+            previewBitmaps[idx] = bmp
+        }
+        Utils.matToBitmap(bgr, bmp)
+        previewBitmapIndex = 1 - idx
         val t1 = System.nanoTime()
-        runOnUiThread { previewImage.setImageBitmap(bmp) }
-        Log.e("FacePerf", "  updatePreviewBitmap (alloc+convert)=${"%.1f".format((t1 - t0) / 1_000_000.0)}ms")
+        previewUpdatePending = true
+        runOnUiThread {
+            previewImage.setImageBitmap(bmp)
+            previewUpdatePending = false
+        }
+        Log.e("FacePerf", "  updatePreviewBitmap (convert)=${"%.1f".format((t1 - t0) / 1_000_000.0)}ms")
     }
 
     private fun onEnrollClicked() {
@@ -911,12 +912,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
      * same dialog as the live-camera path.  Runs detection on a background thread so it doesn't
      * block the UI while decoding/processing a large photo.
      */
-    private fun enrollFromPhoto(uri: Uri) {
+    private fun enrollFromPhoto(uri: Uri, onDone: () -> Unit = {}) {
         toastStatus("Đang xử lý ảnh...")
         detectionExecutor.execute {
             val engine = faceEngine
             if (engine == null) {
-                runOnUiThread { toastStatus("ENROLL TỪ ẢNH: FaceEngine chưa sẵn sàng") }
+                runOnUiThread { toastStatus("ENROLL TỪ ẢNH: FaceEngine chưa sẵn sàng"); onDone() }
                 return@execute
             }
             try {
@@ -924,7 +925,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     android.graphics.BitmapFactory.decodeStream(stream)
                 }
                 if (raw == null) {
-                    runOnUiThread { toastStatus("ENROLL TỪ ẢNH: không đọc được ảnh") }
+                    runOnUiThread { toastStatus("ENROLL TỪ ẢNH: không đọc được ảnh"); onDone() }
                     return@execute
                 }
 
@@ -965,7 +966,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 val faces = engine.detectFaces(bgr, 10)
                 if (faces.isEmpty()) {
                     bgr.release()
-                    runOnUiThread { toastStatus("ENROLL TỪ ẢNH: không phát hiện khuôn mặt nào") }
+                    runOnUiThread { toastStatus("ENROLL TỪ ẢNH: không phát hiện khuôn mặt nào"); onDone() }
                 } else {
                     val faceData = faces.map { face ->
                         val aligned = engine.alignFace(bgr, face)
@@ -974,26 +975,40 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                         emb to cropFace(bgr, face.rect)
                     }
                     bgr.release()
-                    runOnUiThread { enrollNextFace(faceData, 0) }
+                    runOnUiThread { enrollNextFace(faceData, 0, onDone) }
                 }
             } catch (e: Exception) {
                 Log.e("FaceAttendance", "enrollFromPhoto error", e)
-                runOnUiThread { toastStatus("ENROLL TỪ ẢNH: lỗi — ${e.message}") }
+                runOnUiThread { toastStatus("ENROLL TỪ ẢNH: lỗi — ${e.message}"); onDone() }
             }
         }
     }
 
+    /** "Thêm hàng loạt từ ảnh có sẵn" — chạy từng ảnh đã chọn qua đúng pipeline enrollFromPhoto()
+     * một, nối tiếp nhau (không xử lý song song, để 2 dialog đặt tên không đè lên nhau khi
+     * nhiều ảnh cùng có mặt). */
+    private fun enrollFromPhotosBulk(uris: List<Uri>, index: Int = 0) {
+        if (index >= uris.size) {
+            toastStatus("Đã xử lý xong ${uris.size} ảnh")
+            return
+        }
+        enrollFromPhoto(uris[index]) { enrollFromPhotosBulk(uris, index + 1) }
+    }
+
     /** Sequential multi-person enrollment: shows a dialog for each unrecognized face in order.
-     *  Called with index=0 from processFrame's snapshot handler and recurses until done. */
-    private fun enrollNextFace(faces: List<Pair<FloatArray, Mat>>, index: Int) {
+     *  Called with index=0 from processFrame's snapshot handler and recurses until done.
+     *  onAllDone fires once every face in this batch has been named or skipped — used by the
+     *  bulk-from-gallery flow to chain on to the next picked photo. */
+    private fun enrollNextFace(faces: List<Pair<FloatArray, Mat>>, index: Int, onAllDone: () -> Unit = {}) {
         if (index >= faces.size) {
+            onAllDone()
             return
         }
         showEnrollNameDialog(
             samples = listOf(faces[index]),
             personIndex = index,
             totalPersons = faces.size,
-            onComplete = { enrollNextFace(faces, index + 1) }
+            onComplete = { enrollNextFace(faces, index + 1, onAllDone) }
         )
     }
 
@@ -1064,6 +1079,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 if (name.isNotEmpty()) {
                     val gender = if (genderGroup.checkedRadioButtonId == 1002) "nu" else "nam"
                     attendanceStore.setGender(name, gender)
+                    targetClassName?.let { attendanceStore.setClassName(name, it) }
                     for ((emb, c) in samples) {
                         attendanceStore.addSample(name, emb, c)
                         c.release()
@@ -1166,11 +1182,41 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             .show()
     }
 
-    private fun showStudentSamplesDialog(name: String) {
+    private fun showStudentSamplesDialog(nameArg: String) {
+        var name = nameArg
         val container = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(16, 16, 16, 16) }
         val grid = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val scroll = HorizontalScrollView(this).apply { addView(grid) }
-        container.addView(TextView(this).apply { text = "$name - ${attendanceStore.samplesOf(name).size} sample(s)"; textSize = 14f })
+        val headerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        val headerText = TextView(this).apply {
+            text = "$name - ${attendanceStore.samplesOf(name).size} sample(s)"
+            textSize = 14f
+            layoutParams = LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        headerRow.addView(headerText)
+        headerRow.addView(TextView(this).apply {
+            text = "Đổi tên"
+            setPadding(24, 8, 8, 8)
+            setOnClickListener {
+                val input = EditText(this@MainActivity).apply { setText(name); setSelection(name.length) }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Đổi tên học sinh")
+                    .setView(input)
+                    .setPositiveButton("Lưu") { _, _ ->
+                        val newName = input.text.toString().trim()
+                        if (attendanceStore.renameEnrollment(name, newName)) {
+                            name = newName
+                            headerText.text = "$name - ${attendanceStore.samplesOf(name).size} sample(s)"
+                            toastStatus("Đã đổi tên thành $name")
+                        } else if (newName.isNotEmpty()) {
+                            toastStatus("Không đổi được tên — trùng với người khác?")
+                        }
+                    }
+                    .setNegativeButton("Hủy", null)
+                    .show()
+            }
+        })
+        container.addView(headerRow)
         container.addView(scroll)
 
         lateinit var dialog: AlertDialog
@@ -1334,7 +1380,6 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         super.onDestroy()
         healthLogHandler.removeCallbacksAndMessages(null)
         infoPanelHandler.removeCallbacksAndMessages(null)
-        fallbackHandler.removeCallbacksAndMessages(null) // also cancels schedulePermissionRetry
         uvcCamera?.setFrameCallback(null, 0)
         uvcCamera?.stopPreview()
         uvcCamera?.close()

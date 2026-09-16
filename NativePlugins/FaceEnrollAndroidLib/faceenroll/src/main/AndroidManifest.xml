@@ -17,6 +17,23 @@
          không khai lại ở đây để tránh xung đột giá trị android:required lúc merge manifest. -->
 
     <application>
+        <!-- Entry point thật của "Quản lý lớp" giờ là màn danh sách lớp/học sinh — MainActivity
+             (màn camera) chỉ còn mở qua Intent tường minh từ đây (thêm học sinh mới/từ camera/
+             hàng loạt, hoặc xem ảnh 1 học sinh), không còn icon launcher riêng nữa. -->
+        <activity
+            android:name=".ClassManagementActivity"
+            android:process=":fa"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:label="Quản lý lớp"
+            android:theme="@style/Theme.FaceAttendance">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".MainActivity"
             android:process=":fa"
@@ -25,12 +42,7 @@
             android:screenOrientation="landscape"
             android:label="Cập nhật khuôn mặt"
             android:theme="@style/Theme.FaceAttendance"
-            android:configChanges="orientation|screenSize|keyboardHidden">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:configChanges="orientation|screenSize|keyboardHidden" />
 
         <!-- KHÔNG khai <provider android:name="androidx.core.content.FileProvider"> riêng ở đây
              — Android chặn 2 module cùng khai class FileProvider này dù authority khác nhau

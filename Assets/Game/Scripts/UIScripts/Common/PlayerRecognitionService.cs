@@ -81,12 +81,13 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         float startTime  = Time.time;
         float t          = 0f;
         string result    = null;
+        float confidence = -1f;
 
         while (t < timeout)
         {
-            var (left, right) = plugin != null ? plugin.GetConfirmed() : (null, null);
+            var (left, right, leftSim, rightSim) = plugin != null ? plugin.GetConfirmed() : (null, null, -1f, -1f);
             string candidate = slot == 0 ? left : right;
-            if (candidate != null) { result = candidate; break; }
+            if (candidate != null) { result = candidate; confidence = slot == 0 ? leftSim : rightSim; break; }
             yield return null;
             t += Time.deltaTime;
         }
@@ -106,7 +107,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         _lastName[slot] = result;
         _lastRecognized[slot] = recognized;
 
-        AppendRecognitionLog(slot, result, recognized, elapsed);
+        AppendRecognitionLog(slot, result, recognized, elapsed, confidence);
         onDone?.Invoke(result);
 
         // Disable only this slot — the other slot (if it has its own request still running)
@@ -121,9 +122,12 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     // entries (who was detected, how long it took) and "round" entries (question/answer/correct,
     // stamped with whoever was most recently recognized for that slot at LogRound() time).
 
-    void AppendRecognitionLog(int slot, string name, bool recognized, float elapsedSec)
+    void AppendRecognitionLog(int slot, string name, bool recognized, float elapsedSec, float confidence)
     {
         float roundedElapsed = (float)Math.Round(elapsedSec, 2);
+        // Làm tròn 3 chữ số (không phải 2 như thời gian) — cosine sim đủ nhạy để cần độ chính
+        // xác cao hơn khi so sánh các lần nhận diện gần ngưỡng match.
+        float roundedConfidence = confidence >= 0f ? (float)Math.Round(confidence, 3) : -1f;
         _logEntries.Add(new LogEntry
         {
             time                = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -133,6 +137,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             name                = name,
             recognized          = recognized,
             recognizeElapsedSec = roundedElapsed,
+            recognizeConfidence = roundedConfidence, // -1 = không nhận diện được (dùng tên mặc định)
             round               = -1,
             question            = "",
             answer              = "",
@@ -153,6 +158,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             {"playerName", name},
             {"recognized", recognized},
             {"recognizeElapsedSec", roundedElapsed},
+            {"recognizeConfidence", roundedConfidence},
         });
     }
 
@@ -182,6 +188,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             name                = name,
             recognized          = recognized,
             recognizeElapsedSec = -1f,
+            recognizeConfidence = -1f,
             round               = round,
             question            = question ?? "",
             answer              = answer ?? "",
@@ -232,6 +239,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         public string name;
         public bool   recognized;
         public float  recognizeElapsedSec; // -1 for "round" entries
+        public float  recognizeConfidence; // cosine sim 0..1; -1 for "round" entries or no match
         public int    round;               // -1 for "recognition" entries
         public string question;
         public string answer;

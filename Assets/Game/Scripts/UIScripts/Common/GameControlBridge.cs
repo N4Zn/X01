@@ -98,6 +98,11 @@ public class GameControlBridge : Singleton<GameControlBridge>
         if (_blankOverlay != null) _blankOverlay.gameObject.SetActive(visible);
     }
 
+    // Nền màn hình che display máy chiếu lúc Stop — cùng ảnh logo dùng cho lúc mới mở app
+    // (ControlActivity.showLogoOnSecondaryDisplay(), NativePlugins/ControlUiAndroidLib) để
+    // đồng nhất: Stop trông giống "quay lại màn chờ", không phải màn đen như tắt máy.
+    const string LogoResourcePath = "ui/splash/Logo_Full";
+
     static Canvas CreateBlankOverlay()
     {
         var go = new GameObject("[GameControlBridge_BlankOverlay]");
@@ -106,15 +111,39 @@ public class GameControlBridge : Singleton<GameControlBridge>
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 32767; // đè lên mọi UI khác, kể cả debug touch indicator
 
-        var imgGo = new GameObject("Black");
-        imgGo.transform.SetParent(go.transform, false);
-        var rt = imgGo.AddComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        rt.offsetMin = rt.offsetMax = Vector2.zero;
-        var img = imgGo.AddComponent<Image>();
-        img.color = Color.black;
-        img.raycastTarget = false; // không cần chặn touch riêng — LidarTouchBridge đã tắt touch
+        var bgGo = new GameObject("Background");
+        bgGo.transform.SetParent(go.transform, false);
+        var bgRt = bgGo.AddComponent<RectTransform>();
+        bgRt.anchorMin = Vector2.zero;
+        bgRt.anchorMax = Vector2.one;
+        bgRt.offsetMin = bgRt.offsetMax = Vector2.zero;
+        var bgImg = bgGo.AddComponent<Image>();
+        // Khớp màu nền trong ảnh logo (navy) thay vì đen thui — logo có viền cùng tông nên
+        // không bị "khung" lệch màu nếu tỉ lệ khung hình không khớp đúng ảnh.
+        bgImg.color = new Color32(0x0C, 0x11, 0x1D, 0xFF);
+        bgImg.raycastTarget = false; // không cần chặn touch riêng — LidarTouchBridge đã tắt touch
+
+        var logoSprite = Resources.Load<Sprite>(LogoResourcePath);
+        if (logoSprite != null)
+        {
+            var logoGo = new GameObject("Logo");
+            logoGo.transform.SetParent(go.transform, false);
+            var logoRt = logoGo.AddComponent<RectTransform>();
+            // Neo theo tỉ lệ % màn hình (không dùng sizeDelta cố định theo pixel) — canvas này
+            // không có CanvasScaler nên px cố định sẽ to/nhỏ khác nhau tuỳ độ phân giải máy
+            // chiếu thật; preserveAspect co ảnh vừa khít khung 50% mà không méo.
+            logoRt.anchorMin = new Vector2(0.25f, 0.3f);
+            logoRt.anchorMax = new Vector2(0.75f, 0.7f);
+            logoRt.offsetMin = logoRt.offsetMax = Vector2.zero;
+            var logoImg = logoGo.AddComponent<Image>();
+            logoImg.sprite = logoSprite;
+            logoImg.preserveAspect = true;
+            logoImg.raycastTarget = false;
+        }
+        else
+        {
+            Debug.LogWarning($"[GameControlBridge] Không load được logo tại Resources/{LogoResourcePath} — chỉ hiện nền màu.");
+        }
 
         return canvas;
     }

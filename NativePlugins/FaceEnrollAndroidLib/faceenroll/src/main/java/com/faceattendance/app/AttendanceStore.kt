@@ -38,6 +38,13 @@ class AttendanceStore(private val context: Context) {
     private val enrolled = LinkedHashMap<String, MutableList<Sample>>()
     // "nam" or "nu" - picks the honorific ("anh"/"chi") used by the attendance greeting TTS.
     private val genders = HashMap<String, String>()
+    // Which "lớp" (class) each enrolled person belongs to - null until assigned via the
+    // class-management UI. Independent of enrolled.json's Sample/embedding data, so adding
+    // this never touches the recognition path (FaceDatabase/bestMatch only reads name+samples).
+    private val classNames = HashMap<String, String>()
+    // Known class names, including ones with zero students yet (created via "Thêm lớp mới") -
+    // a plain list separate from classNames' values so an empty class still shows up.
+    private val knownClasses = LinkedHashSet<String>()
     // Names that came from importTestGallery() rather than a real enroll() - excluded from
     // persistence so the fake 200-person test gallery never leaks into the production save file.
     private val testGalleryNames = HashSet<String>()
@@ -46,6 +53,7 @@ class AttendanceStore(private val context: Context) {
     // Shared path: both FaceAttendance and EduXplore game read/write this file.
     private val sharedDir = File("/sdcard/EduXplore").also { it.mkdirs() }
     private val enrolledFile = File(sharedDir, "enrolled.json")
+    private val classesFile = File(sharedDir, "classes.json")
     private val enrolledPhotosDir = File(context.getExternalFilesDir(null), "enrolled_photos")
     private val snapshotDir = File(context.getExternalFilesDir(null), "snapshots")
     private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
@@ -88,11 +96,24 @@ class AttendanceStore(private val context: Context) {
                 }
                 enrolled[name] = samples
                 genders[name] = if (obj.has("gender")) obj.getString("gender") else "nam"
+                if (obj.has("className") && !obj.isNull("className")) {
+                    val cls = obj.getString("className")
+                    classNames[name] = cls
+                    knownClasses.add(cls)
+                }
             }
             val totalSamples = enrolled.values.sumOf { it.size }
             android.util.Log.e("FaceAttendance", "Loaded ${enrolled.size} persisted enrollments ($totalSamples samples)")
         } catch (e: Exception) {
             android.util.Log.e("FaceAttendance", "Failed to load persisted enrollments", e)
+        }
+        if (classesFile.exists()) {
+            try {
+                val arr = org.json.JSONArray(classesFile.readText())
+                for (i in 0 until arr.length()) knownClasses.add(arr.getString(i))
+            } catch (e: Exception) {
+                android.util.Log.e("FaceAttendance", "Failed to load classes.json", e)
+            }
         }
     }
 
@@ -103,6 +124,7 @@ class AttendanceStore(private val context: Context) {
             val obj = org.json.JSONObject()
             obj.put("name", name)
             obj.put("gender", genders[name] ?: "nam")
+            obj.put("className", classNames[name])
             val samplesArr = org.json.JSONArray()
             for (s in samples) {
                 val sObj = org.json.JSONObject()
@@ -127,6 +149,69 @@ class AttendanceStore(private val context: Context) {
         // is the SAME directory this class also writes to via context.getExternalFilesDir(null)
         // — same UID, no cross-app mirroring needed anymore (used to write into 3 separate
         // hardcoded game package dirs back when FA/Game were separate APKs).
+    }
+
+    private fun persistClasses() {
+        val arr = org.json.JSONArray()
+        for (c in knownClasses) arr.put(c)
+        try {
+            classesFile.parentFile?.mkdirs()
+            classesFile.writeText(arr.toString())
+        } catch (e: Exception) {
+            android.util.Log.e("FaceAttendance", "persistClasses failed: ${e.message}", e)
+        }
+    }
+
+    // ──────────────────────────  Lớp (class) management  ─────────────────────────
+
+    fun classNameOf(name: String): String? = classNames[name]
+
+    /** Known class names in the order they were first seen/created - includes classes with
+     * zero students (created via addClass but nobody enrolled into them yet). */
+    fun allClassNames(): List<String> = knownClasses.toList()
+
+    fun addClass(name: String) {
+        if (knownClasses.add(name)) persistClasses()
+    }
+
+    fun renameClass(oldName: String, newName: String) {
+        if (oldName == newName || newName.isBlank()) return
+        if (knownClasses.remove(oldName)) knownClasses.add(newName)
+        var changed = false
+        for (person in classNames.keys.toList()) {
+            if (classNames[person] == oldName) { classNames[person] = newName; changed = true }
+        }
+        persistClasses()
+        if (changed) persist()
+    }
+
+    fun setClassName(name: String, className: String) {
+        classNames[name] = className
+        knownClasses.add(className)
+        persist()
+        persistClasses()
+    }
+
+    /** Real enrolled students belonging to one class, name-sorted. */
+    fun studentsInClass(className: String): List<String> =
+        realEnrolledNames().filter { classNames[it] == className }
+
+    /** Renames an enrolled person across every map keyed by name. Returns false (no-op) if
+     * newName is blank, unchanged, or already taken by someone else. */
+    fun renameEnrollment(oldName: String, newName: String): Boolean {
+        val trimmed = newName.trim()
+        if (trimmed.isEmpty() || trimmed == oldName) return false
+        if (trimmed in enrolled) return false
+        val samples = enrolled.remove(oldName) ?: return false
+        enrolled[trimmed] = samples
+        genders[trimmed] = genders.remove(oldName) ?: "nam"
+        classNames.remove(oldName)?.let { classNames[trimmed] = it }
+        lastLogged.remove(oldName)?.let { lastLogged[trimmed] = it }
+        personLog.remove(oldName)?.let { personLog[trimmed] = it }
+        val idx = recentNames.indexOf(oldName)
+        if (idx >= 0) recentNames[idx] = trimmed
+        persist()
+        return true
     }
 
     /** Saves a face-crop Mat as a JPEG under enrolled_photos/<name>/ and returns its path. */
@@ -257,7 +342,7 @@ class AttendanceStore(private val context: Context) {
         return System.currentTimeMillis() - last > cooldownMs
     }
 
-    fun logAttendance(name: String, faceCrop: Mat?) {
+    fun logAttendance(name: String, faceCrop: Mat?, confidence: Float) {
         val now = System.currentTimeMillis()
         lastLogged[name] = now
         val ts = timeFmt.format(Date(now))
@@ -279,8 +364,8 @@ class AttendanceStore(private val context: Context) {
 
         val isNew = !logFile.exists()
         FileWriter(logFile, true).use { w ->
-            if (isNew) w.append("timestamp,name\n")
-            w.append("$ts,$name\n")
+            if (isNew) w.append("timestamp,name,confidence\n")
+            w.append("$ts,$name,${"%.3f".format(confidence)}\n")
         }
     }
 

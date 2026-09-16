@@ -15,7 +15,7 @@ using UnityEngine.UI;
 ///   FaceRecognitionPlugin.Instance.CameraTexture  — assign to RawImage.texture (FRTest only)
 ///   FaceRecognitionPlugin.Instance.StartRound()   — clear votes, enable recognition
 ///   FaceRecognitionPlugin.Instance.StopRound()    — disable recognition (save CPU)
-///   FaceRecognitionPlugin.Instance.GetConfirmed() — (leftName, rightName), null = not confirmed
+///   FaceRecognitionPlugin.Instance.GetConfirmed() — (leftName, rightName, leftSim, rightSim), null name = not confirmed
 /// </summary>
 public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
 {
@@ -220,21 +220,21 @@ public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
     }
 
     /// <summary>
-    /// Returns the confirmed (left, right) player names.
-    /// Either can be null if not yet confirmed this round.
+    /// Returns the confirmed (left, right) player names + confidence (cosine sim, 0..1, -1 if
+    /// that slot isn't confirmed yet). Name can be null if not yet confirmed this round.
     /// </summary>
-    public (string left, string right) GetConfirmed()
+    public (string left, string right, float leftSim, float rightSim) GetConfirmed()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
-        if (!_initialized) return (null, null);
+        if (!_initialized) return (null, null, -1f, -1f);
         try
         {
             string json = _bridge.CallStatic<string>("getConfirmedNames");
             return ParseConfirmedJson(json);
         }
-        catch { return (null, null); }
+        catch { return (null, null, -1f, -1f); }
 #else
-        return (null, null);
+        return (null, null, -1f, -1f);
 #endif
     }
 
@@ -272,13 +272,15 @@ public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
 #endif
     }
 
-    // Minimal JSON parse: {"left":"Name","right":null}
-    static (string, string) ParseConfirmedJson(string json)
+    // Minimal JSON parse: {"left":"Name","leftSim":0.412,"right":null,"rightSim":-1}
+    static (string, string, float, float) ParseConfirmedJson(string json)
     {
-        if (string.IsNullOrEmpty(json)) return (null, null);
-        string left  = ExtractField(json, "left");
-        string right = ExtractField(json, "right");
-        return (left, right);
+        if (string.IsNullOrEmpty(json)) return (null, null, -1f, -1f);
+        string left    = ExtractField(json, "left");
+        string right   = ExtractField(json, "right");
+        float  leftSim  = ExtractFloatField(json, "leftSim");
+        float  rightSim = ExtractFloatField(json, "rightSim");
+        return (left, right, leftSim, rightSim);
     }
 
     static string ExtractField(string json, string key)
@@ -296,6 +298,21 @@ public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
             return end > start ? json.Substring(start + 1, end - start - 1) : null;
         }
         return null;
+    }
+
+    // Numeric fields (leftSim/rightSim) are never null/quoted — just a bare float like -1 or 0.412.
+    static float ExtractFloatField(string json, string key)
+    {
+        string search = $"\"{key}\":";
+        int start = json.IndexOf(search, StringComparison.Ordinal);
+        if (start < 0) return -1f;
+        start += search.Length;
+        int end = start;
+        while (end < json.Length && (char.IsDigit(json[end]) || json[end] == '-' || json[end] == '.'
+               || json[end] == 'E' || json[end] == 'e' || json[end] == '+')) end++;
+        string num = json.Substring(start, end - start);
+        return float.TryParse(num, System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out float v) ? v : -1f;
     }
 
     // Release the USB camera when X01 goes to background so FA (or any other app)
