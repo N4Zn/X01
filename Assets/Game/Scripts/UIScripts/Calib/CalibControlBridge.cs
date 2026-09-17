@@ -37,6 +37,25 @@ public class CalibControlBridge : Singleton<CalibControlBridge>
         CalibSceneController.Current?.BeginCapture();
     }
 
+    /// <summary>Chế độ tuần tự (1 trụ) — bắt đầu phiên đo từng điểm 1, TH giáo viên chỉ có 1 trụ.</summary>
+    public void OnStartSequentialRequested(string unused)
+    {
+        Debug.Log("[CalibControlBridge] OnStartSequentialRequested");
+        CalibSceneController.Current?.BeginSequential();
+    }
+
+    public void OnCaptureStepRequested(string unused)
+    {
+        Debug.Log("[CalibControlBridge] OnCaptureStepRequested");
+        CalibSceneController.Current?.CaptureSequentialStep();
+    }
+
+    public void OnStepBackRequested(string unused)
+    {
+        Debug.Log("[CalibControlBridge] OnStepBackRequested");
+        CalibSceneController.Current?.StepBackSequential();
+    }
+
     public void OnSaveRequested(string unused)
     {
         Debug.Log("[CalibControlBridge] OnSaveRequested");
@@ -79,6 +98,40 @@ public class CalibControlBridge : Singleton<CalibControlBridge>
         catch (System.Exception e)
         {
             Debug.LogWarning($"[CalibControlBridge] PushResult lỗi (CalibActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
+    }
+
+    /// <summary>Báo đã chuyển sang điểm thứ mấy trong phiên tuần tự (1 trụ) — tablet hiện
+    /// "Điểm X/5: Góc ..." + đổi tên nút hành động chính.</summary>
+    public void PushSequentialStep(int index, int total, string role, string roleLabel)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var cls = new AndroidJavaClass(CalibActivityClass))
+                cls.CallStatic("OnSequentialStep", index, total, role, roleLabel);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[CalibControlBridge] PushSequentialStep lỗi (CalibActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
+    }
+
+    /// <summary>Báo kết quả đo 1 điểm ĐƠN trong phiên tuần tự (khác PushResult — đó là kết quả
+    /// CUỐI của cả phiên sau khi đã giải affine xong).</summary>
+    public void PushSequentialStepResult(bool success, string failReason)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var cls = new AndroidJavaClass(CalibActivityClass))
+                cls.CallStatic("OnSequentialStepResult", success, failReason ?? "");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[CalibControlBridge] PushSequentialStepResult lỗi (CalibActivity có thể chưa chạy/khác display): {e.Message}");
         }
 #endif
     }

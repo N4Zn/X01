@@ -26,8 +26,13 @@ import java.lang.reflect.Method;
  * Unity trên display phụ" — nhưng KHÔNG dùng chung code/Activity với ControlActivity để tránh
  * đụng vào luồng Start/Pause/Stop đã test kỹ trên máy thật (xem CalibControlBridge.cs cho lý do
  * đầy đủ). Unity chạy scene "CalibScene" (Assets/Game/Scripts/UIScripts/Calib/), toàn bộ UI vẽ
- * mục tiêu/xác nhận nằm bên đó — Activity này chỉ có 3 nút: Bắt đầu calib / Lưu / Thoát + 1 dòng
- * trạng thái, vì giáo viên đang đứng CẠNH TABLET lúc bấm (đã đặt xong 5 trụ trên sàn, quay lại).
+ * mục tiêu/xác nhận nằm bên đó.
+ *
+ * 2 CHẾ ĐỘ — giáo viên chọn tuỳ số trụ xốp sẵn có:
+ * - "5 trụ (nhanh)": đặt đủ 5 trụ cùng lúc rồi đo 1 lần (CalibSceneController.BeginCapture).
+ * - "1 trụ (từng điểm)": chỉ có 1 trụ — di chuyển trụ tuần tự qua từng vị trí, mỗi lần bấm
+ *   "Đo điểm này" chỉ đo ĐÚNG 1 điểm rồi tự chuyển sang điểm kế tiếp
+ *   (CalibSceneController.BeginSequential/CaptureSequentialStep).
  */
 public class CalibActivity extends Activity {
 
@@ -36,11 +41,16 @@ public class CalibActivity extends Activity {
     private static final String CALIB_SCENE_NAME = "CalibScene";
     private static final String UNITY_GAME_OBJECT = "CalibControlBridge";
 
+    private enum Mode { NONE, BATCH, SEQUENTIAL }
+
     private static CalibActivity sInstance;
 
     private TextView statusText;
-    private Button startBtn, saveBtn;
+    private Button modeBatchBtn, modeSequentialBtn, actionBtn, backBtn, saveBtn;
     private CountDownTimer countdownTimer;
+
+    private Mode mode = Mode.NONE;
+    private boolean sequentialDone = false; // đã đo đủ 5/5 điểm của phiên tuần tự (chờ Lưu hoặc làm lại từ đầu)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,9 +131,10 @@ public class CalibActivity extends Activity {
         root.addView(UiUtil.label(this, "Hiệu chỉnh vùng tương tác", 24f, R.color.text, true));
 
         TextView instructions = UiUtil.label(this,
-                "Bước 1: Đặt 5 trụ xốp tròn vào đúng 5 vòng tròn vàng đang chiếu trên sàn (4 góc + giữa).\n" +
-                "Bước 2: Quay lại đây, bấm \"Bắt đầu calib\" — giữ nguyên trụ, không di chuyển trong lúc đo.\n" +
-                "Bước 3: Xem kết quả trên máy chiếu — chấm đỏ trùng vòng vàng là tốt, bấm \"Lưu\".",
+                "Có 5 trụ: chọn \"Calib 5 trụ (nhanh)\" — đặt cả 5 vào 4 góc + giữa rồi đo 1 lần.\n" +
+                "Chỉ có 1 trụ: chọn \"Calib từng điểm\" — di chuyển trụ lần lượt qua từng vòng tròn, " +
+                "mỗi lần đặt xong quay lại bấm \"Đo điểm này\".\n" +
+                "Xem kết quả trên máy chiếu — chấm đỏ trùng vòng vàng là tốt, bấm \"Lưu\".",
                 15f, R.color.text_dim, false);
         LinearLayout.LayoutParams instrLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         instrLp.topMargin = UiUtil.dp(this, 12);
@@ -136,26 +147,61 @@ public class CalibActivity extends Activity {
         statusCard.setPadding(UiUtil.dp(this, 16), UiUtil.dp(this, 16), UiUtil.dp(this, 16), UiUtil.dp(this, 16));
         statusCard.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.panel), 12,
                 UiUtil.ContextColor(this, R.color.border), 1, this));
-        statusText = UiUtil.label(this, "Sẵn sàng — bấm \"Bắt đầu calib\" khi đã đặt xong 5 trụ.", 16f, R.color.text, false);
+        statusText = UiUtil.label(this, "Sẵn sàng — chọn chế độ calib bên dưới.", 16f, R.color.text, false);
         statusCard.addView(statusText);
         LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         statusLp.bottomMargin = UiUtil.dp(this, 20);
         statusCard.setLayoutParams(statusLp);
         root.addView(statusCard);
 
+        // Hàng 1: chọn chế độ — ẩn đi sau khi đã chọn 1 trong 2.
+        LinearLayout modeRow = new LinearLayout(this);
+        modeRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams modeRowLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        modeRowLp.bottomMargin = UiUtil.dp(this, 12);
+        modeRow.setLayoutParams(modeRowLp);
+
+        modeBatchBtn = makeButton("Calib 5 trụ (nhanh)", R.color.accent);
+        modeBatchBtn.setOnClickListener(v -> onModeBatchClicked());
+        modeRow.addView(modeBatchBtn, buttonLp());
+
+        modeSequentialBtn = makeButton("Calib từng điểm (1 trụ)", R.color.live);
+        modeSequentialBtn.setOnClickListener(v -> onModeSequentialClicked());
+        LinearLayout.LayoutParams seqLp = buttonLp();
+        seqLp.leftMargin = UiUtil.dp(this, 12);
+        modeRow.addView(modeSequentialBtn, seqLp);
+
+        root.addView(modeRow);
+
+        // Hàng 2: hành động trong lúc đang calib — ẩn cho tới khi đã chọn chế độ.
+        LinearLayout actionRow = new LinearLayout(this);
+        actionRow.setOrientation(LinearLayout.HORIZONTAL);
+        actionRow.setVisibility(View.GONE);
+
+        actionBtn = makeButton("", R.color.accent);
+        actionBtn.setOnClickListener(v -> onActionClicked());
+        actionRow.addView(actionBtn, buttonLp());
+
+        backBtn = makeButton("Lùi lại", R.color.idle);
+        backBtn.setVisibility(View.GONE); // chỉ hiện ở chế độ tuần tự
+        backBtn.setOnClickListener(v -> sendToUnity("OnStepBackRequested", ""));
+        LinearLayout.LayoutParams backLp = buttonLp();
+        backLp.leftMargin = UiUtil.dp(this, 12);
+        actionRow.addView(backBtn, backLp);
+
+        this.actionRow = actionRow;
+        root.addView(actionRow);
+
         LinearLayout btnRow = new LinearLayout(this);
         btnRow.setOrientation(LinearLayout.HORIZONTAL);
-
-        startBtn = makeButton("Bắt đầu calib", R.color.accent);
-        startBtn.setOnClickListener(v -> onStartClicked());
-        btnRow.addView(startBtn, buttonLp());
+        LinearLayout.LayoutParams btnRowLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        btnRowLp.topMargin = UiUtil.dp(this, 12);
+        btnRow.setLayoutParams(btnRowLp);
 
         saveBtn = makeButton("Lưu", R.color.good);
         saveBtn.setEnabled(false);
         saveBtn.setOnClickListener(v -> onSaveClicked());
-        LinearLayout.LayoutParams saveLp = buttonLp();
-        saveLp.leftMargin = UiUtil.dp(this, 12);
-        btnRow.addView(saveBtn, saveLp);
+        btnRow.addView(saveBtn, buttonLp());
 
         Button exitBtn = makeButton("Thoát", R.color.idle);
         exitBtn.setOnClickListener(v -> onExitClicked());
@@ -169,6 +215,8 @@ public class CalibActivity extends Activity {
         scroll.addView(root);
         setContentView(scroll);
     }
+
+    private LinearLayout actionRow;
 
     private Button makeButton(String text, int colorRes) {
         Button b = new Button(this);
@@ -187,11 +235,59 @@ public class CalibActivity extends Activity {
 
     // ── Nút bấm — gửi lệnh sang Unity qua CalibControlBridge (xem javadoc đầu file) ──────────
 
-    private void onStartClicked() {
-        startBtn.setEnabled(false);
+    private void onModeBatchClicked() {
+        mode = Mode.BATCH;
+        modeRowVisible(false);
+        actionRow.setVisibility(View.VISIBLE);
+        backBtn.setVisibility(View.GONE);
+        actionBtn.setText("Bắt đầu calib");
+        actionBtn.setEnabled(true);
         saveBtn.setEnabled(false);
         statusText.setText("Đang đo...");
         sendToUnity("OnStartCalibRequested", "");
+    }
+
+    private void onModeSequentialClicked() {
+        mode = Mode.SEQUENTIAL;
+        sequentialDone = false;
+        modeRowVisible(false);
+        actionRow.setVisibility(View.VISIBLE);
+        backBtn.setVisibility(View.VISIBLE);
+        backBtn.setEnabled(false);
+        actionBtn.setText("Đo điểm này");
+        actionBtn.setEnabled(false); // bật lại khi Unity báo đã sẵn sàng ở điểm đầu tiên (OnSequentialStep)
+        saveBtn.setEnabled(false);
+        statusText.setText("Đang chuẩn bị...");
+        sendToUnity("OnStartSequentialRequested", "");
+    }
+
+    private void modeRowVisible(boolean visible) {
+        int v = visible ? View.VISIBLE : View.GONE;
+        modeBatchBtn.setVisibility(v);
+        modeSequentialBtn.setVisibility(v);
+    }
+
+    private void onActionClicked() {
+        if (mode == Mode.BATCH) {
+            actionBtn.setEnabled(false);
+            saveBtn.setEnabled(false);
+            statusText.setText("Đang đo...");
+            sendToUnity("OnStartCalibRequested", "");
+        } else if (mode == Mode.SEQUENTIAL) {
+            if (sequentialDone) {
+                // "Làm lại từ đầu" — huỷ kết quả cũ, bắt đầu lại phiên tuần tự từ điểm 1.
+                sequentialDone = false;
+                backBtn.setEnabled(false);
+                saveBtn.setEnabled(false);
+                actionBtn.setEnabled(false);
+                statusText.setText("Đang chuẩn bị...");
+                sendToUnity("OnStartSequentialRequested", "");
+            } else {
+                actionBtn.setEnabled(false);
+                backBtn.setEnabled(false);
+                sendToUnity("OnCaptureStepRequested", "");
+            }
+        }
     }
 
     private void onSaveClicked() {
@@ -225,12 +321,19 @@ public class CalibActivity extends Activity {
         a.runOnUiThread(() -> a.startCountdown(durationMs));
     }
 
+    /// Kết quả CUỐI của cả phiên (sau khi đã giải affine xong) — dùng chung cho cả 2 chế độ.
     public static void OnCalibResult(boolean success, int found, int expected, float maxResidualPx, String failReason) {
         CalibActivity a = sInstance;
         if (a == null) return;
         a.runOnUiThread(() -> {
-            a.startBtn.setEnabled(true);
-            a.startBtn.setText("Bắt đầu calib lại");
+            if (a.mode == Mode.SEQUENTIAL) {
+                a.sequentialDone = true;
+                a.backBtn.setVisibility(View.GONE);
+                a.actionBtn.setText("Làm lại từ đầu");
+            } else {
+                a.actionBtn.setText("Bắt đầu calib lại");
+            }
+            a.actionBtn.setEnabled(true);
             if (success) {
                 a.saveBtn.setEnabled(true);
                 a.statusText.setText("Đã đo xong (" + found + "/" + expected + " điểm, sai số tối đa " +
@@ -239,6 +342,34 @@ public class CalibActivity extends Activity {
                 a.saveBtn.setEnabled(false);
                 a.statusText.setText("Chưa đạt (" + found + "/" + expected + " điểm): " + failReason);
             }
+        });
+    }
+
+    /// Chỉ dùng ở chế độ tuần tự — Unity vừa chuyển sang chờ đo điểm thứ index (0-based).
+    public static void OnSequentialStep(int index, int total, String role, String roleLabel) {
+        CalibActivity a = sInstance;
+        if (a == null) return;
+        a.runOnUiThread(() -> {
+            a.actionBtn.setText("Đo điểm " + (index + 1) + "/" + total);
+            a.actionBtn.setEnabled(true);
+            a.backBtn.setEnabled(index > 0);
+            a.statusText.setText("Điểm " + (index + 1) + "/" + total + ": " + roleLabel +
+                    " — đặt trụ vào vòng tròn đang chiếu, giữ nguyên rồi bấm \"" + a.actionBtn.getText() + "\".");
+        });
+    }
+
+    /// Kết quả đo 1 ĐIỂM ĐƠN trong phiên tuần tự — khác OnCalibResult (kết quả CUỐI cả phiên).
+    public static void OnSequentialStepResult(boolean success, String failReason) {
+        CalibActivity a = sInstance;
+        if (a == null) return;
+        a.runOnUiThread(() -> {
+            if (!success) {
+                a.actionBtn.setEnabled(true); // cho bấm lại đúng điểm đang đo
+                a.backBtn.setEnabled(true);
+                a.statusText.setText("Chưa đạt: " + failReason + " — bấm lại để đo lại điểm này.");
+            }
+            // success=true: chờ OnSequentialStep tiếp theo (hoặc OnCalibResult nếu vừa xong điểm cuối)
+            // tự cập nhật UI — không cần làm gì thêm ở đây.
         });
     }
 

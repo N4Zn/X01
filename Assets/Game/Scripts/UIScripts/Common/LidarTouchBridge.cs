@@ -520,11 +520,107 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
             return result;
         }
 
+        return FinalizeFromAssignedPoints(assigned, targets.Length);
+    }
+
+    // ── Chế độ tuần tự (1 trụ) — TH chỉ có 1 trụ tròn: đo từng điểm 1, mỗi lần "Đo điểm này"
+    // chỉ mong đợi ĐÚNG 1 cụm trong vùng quét (không cần gán vai trò bằng hình học như
+    // AssignRoles(), vì CalibSceneController đã BIẾT TRƯỚC đang đo điểm nào — nó chỉ định giáo
+    // viên đứng ở đâu). Tích luỹ đủ N điểm (mỗi lần AddSequentialPoint) rồi mới giải affine 1
+    // lần duy nhất ở FinishSequentialCalibration(), dùng CHUNG code giải affine với chế độ
+    // 5-trụ-cùng-lúc (FinalizeFromAssignedPoints). ────────────────────────────────────────────
+
+    /// <summary>Kết quả 1 lần đo ĐÚNG 1 điểm — CalibSceneController dùng cho chế độ tuần tự.</summary>
+    public struct SinglePointCaptureResult
+    {
+        public bool success;
+        public string failReason;
+        public Vector2 raw;
+        public int sampleCount;
+    }
+
+    /// <summary>Mở 1 cửa sổ lắng nghe ngắn, mong đợi ĐÚNG 1 trụ trong vùng quét (khác
+    /// StartCalibrationCapture() mong đợi đủ N trụ cùng lúc). Fail nếu 0 hoặc >1 cụm.</summary>
+    public void StartSinglePointCapture(float durationSeconds, Action<SinglePointCaptureResult> onDone)
+    {
+        if (_captureCoroutine != null) StopCoroutine(_captureCoroutine);
+        _capturing = false;
+        _captureCoroutine = StartCoroutine(SinglePointCaptureRoutine(durationSeconds, onDone));
+    }
+
+    private IEnumerator SinglePointCaptureRoutine(float durationSeconds, Action<SinglePointCaptureResult> onDone)
+    {
+        _captureBuffer = new List<Vector2>();
+        _capturing = true;
+        yield return new WaitForSecondsRealtime(durationSeconds);
+        _capturing = false;
+
+        var clusters = ClusterPoints(_captureBuffer, ClusterMergeRadiusPx);
+        clusters.RemoveAll(c => c.count < MinSamplesPerCluster);
+
+        var result = new SinglePointCaptureResult();
+        if (clusters.Count == 0)
+        {
+            result.success = false;
+            result.failReason = "Không phát hiện được trụ nào — kiểm tra đã đặt đúng vị trí, đứng vững, không bị che khuất, rồi bấm lại.";
+        }
+        else if (clusters.Count > 1)
+        {
+            result.success = false;
+            result.failReason = $"Phát hiện {clusters.Count} vật trong vùng quét — dọn sạch sàn, chỉ để đúng 1 trụ, rồi bấm lại.";
+        }
+        else
+        {
+            result.success = true;
+            result.raw = clusters[0].centroid;
+            result.sampleCount = clusters[0].count;
+        }
+        onDone?.Invoke(result);
+    }
+
+    private List<(string role, Vector2 raw, Vector2 target)> _sequentialPoints;
+
+    /// <summary>Bắt đầu 1 phiên đo tuần tự mới — xoá sạch điểm đã đo trước đó (nếu có).</summary>
+    public void BeginSequentialCalibration()
+    {
+        _sequentialPoints = new List<(string, Vector2, Vector2)>();
+    }
+
+    /// <summary>Ghi nhận 1 điểm vừa đo được trong phiên tuần tự. Gọi lại với CÙNG role sẽ GHI ĐÈ
+    /// (cho phép "đo lại" 1 điểm mà không cần huỷ cả phiên) — xem StepBackSequential() phía
+    /// CalibSceneController.</summary>
+    public void AddSequentialPoint(string role, Vector2 raw, Vector2 target)
+    {
+        if (_sequentialPoints == null) _sequentialPoints = new List<(string, Vector2, Vector2)>();
+        _sequentialPoints.RemoveAll(p => p.role == role);
+        _sequentialPoints.Add((role, raw, target));
+    }
+
+    /// <summary>Đã đo đủ N điểm của phiên tuần tự chưa — giải affine luôn bằng đúng code dùng
+    /// chung với chế độ 5-trụ-cùng-lúc.</summary>
+    public CalibCaptureResult FinishSequentialCalibration(int expectedPoints)
+    {
+        return FinalizeFromAssignedPoints(_sequentialPoints ?? new List<(string, Vector2, Vector2)>(), expectedPoints);
+    }
+
+    // ── Dùng chung cho cả 2 chế độ: nhận N cặp (vai trò, toạ độ thô, toạ độ mục tiêu) đã biết
+    // rõ ràng (không còn mơ hồ vai trò nào ứng với cụm nào) → giải affine + tính sai số. ───────
+    private CalibCaptureResult FinalizeFromAssignedPoints(List<(string role, Vector2 raw, Vector2 target)> assigned, int expectedPoints)
+    {
+        var result = new CalibCaptureResult { expectedPoints = expectedPoints, foundClusters = assigned.Count };
+
+        if (assigned.Count != expectedPoints)
+        {
+            result.success = false;
+            result.failReason = $"Mới đo được {assigned.Count}/{expectedPoints} điểm — chưa đủ để tính toán.";
+            return result;
+        }
+
         // Giải affine tối thiểu bình phương: target = M * raw, từ N cặp điểm (N = 5).
         if (!SolveAffine(assigned, out var m))
         {
             result.success = false;
-            result.failReason = "5 điểm đặt quá gần/thẳng hàng, không đủ để tính toán — dàn rộng trụ ra 4 góc thật của vùng chiếu rồi bấm lại.";
+            result.failReason = "Các điểm đặt quá gần/thẳng hàng, không đủ để tính toán — dàn rộng ra đúng 4 góc + tâm rồi làm lại.";
             return result;
         }
 

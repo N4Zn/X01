@@ -32,6 +32,19 @@ public class CalibSceneController : MonoBehaviour
     };
 
     private const float CaptureDurationSeconds = 2.5f;
+    private const float SinglePointCaptureDurationSeconds = 1.8f;
+
+    private static readonly Dictionary<string, string> RoleLabelVi = new Dictionary<string, string>
+    {
+        ["TopLeft"] = "Góc trên-trái", ["TopRight"] = "Góc trên-phải",
+        ["BottomLeft"] = "Góc dưới-trái", ["BottomRight"] = "Góc dưới-phải",
+        ["Center"] = "Chính giữa",
+    };
+    private static string RoleLabel(string role) => RoleLabelVi.TryGetValue(role, out var v) ? v : role;
+
+    private static readonly string IdleMessage =
+        "Đặt 5 trụ vào đúng 5 vòng tròn (4 góc + giữa), rồi quay lại bấm \"Bắt đầu calib\" trên máy tính bảng " +
+        "— hoặc chọn \"Calib từng điểm\" nếu chỉ có 1 trụ.";
 
     private Canvas _canvas;
     private Text _statusText;
@@ -39,6 +52,9 @@ public class CalibSceneController : MonoBehaviour
     private readonly List<GameObject> _confirmDots = new List<GameObject>();
     private Sprite _ringSprite;
     private bool _capturing;
+
+    // -1 = không ở chế độ tuần tự (1 trụ). 0..4 = đang chờ đo điểm thứ mấy trong TargetFractions.
+    private int _sequentialIndex = -1;
 
     void Awake()
     {
@@ -53,26 +69,125 @@ public class CalibSceneController : MonoBehaviour
 
     void Start()
     {
-        ShowIdleState("Đặt 5 trụ vào đúng 5 vòng tròn (4 góc + giữa), rồi quay lại bấm \"Bắt đầu calib\" trên máy tính bảng.");
+        ShowIdleState(IdleMessage);
+    }
+
+    // Screen.width/height của display phụ (máy chiếu, setLaunchDisplayId) có thể CHƯA ổn định
+    // ngay khung hình đầu — tính vị trí 1 lần trong Awake()/BuildUi() có thể ra sai nếu lúc đó
+    // Unity chưa nhận đúng kích thước thật. Tính lại liên tục (rẻ, chỉ vài phép gán Vector2 cho
+    // tối đa 5 UI element) để tự sửa đúng ngay khi Screen.width/height ổn định, không phụ thuộc
+    // thời điểm gọi nữa — không cần đợi giáo viên bấm nút mới thấy đúng vị trí.
+    void Update()
+    {
+        if (!_capturing) RepositionTargets();
     }
 
     // ═════════════════════════════════════════════════════════════════════
     // API gọi từ CalibControlBridge (lệnh từ CalibActivity trên tablet)
     // ═════════════════════════════════════════════════════════════════════
 
+    /// <summary>Chế độ 5 trụ cùng lúc (nhanh) — giữ nguyên hành vi cũ.</summary>
     public void BeginCapture()
     {
         if (_capturing) return; // đang đo dở — bỏ qua bấm trùng, tránh 2 cửa sổ capture chồng nhau
-        _capturing = true;
+        _sequentialIndex = -1; // đảm bảo không lẫn với chế độ tuần tự nếu đang dở dang
 
         ClearConfirmDots();
         SetTargetsVisible(true);
+        _capturing = true;
         ShowIdleState("Đang đo... giữ nguyên 5 trụ tại chỗ.");
 
         var targets = BuildTargets();
         CalibControlBridge.Instance.PushListening(CaptureDurationSeconds);
         LidarTouchBridge.Instance.StartCalibrationCapture(CaptureDurationSeconds, targets, OnCaptureDone);
     }
+
+    private void OnCaptureDone(LidarTouchBridge.CalibCaptureResult result)
+    {
+        _capturing = false;
+        HandleFinalResult(result);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // Chế độ tuần tự (1 trụ) — đo từng điểm 1, TH chỉ có 1 trụ tròn: giáo viên đặt trụ vào
+    // ĐÚNG 1 vòng tròn đang hiện, quay lại bấm "Đo điểm này", hệ thống tự chuyển sang điểm kế
+    // tiếp. Dùng lại nguyên bộ máy gom cụm/giải affine — chỉ khác chỗ vai trò (role) của điểm
+    // đang đo đã BIẾT TRƯỚC (mình đang chỉ định giáo viên đứng ở đâu), nên không cần đoán bằng
+    // hình học như AssignRoles() của chế độ 5-trụ-cùng-lúc.
+    // ═════════════════════════════════════════════════════════════════════
+
+    public void BeginSequential()
+    {
+        if (_capturing) return;
+        ClearConfirmDots();
+        LidarTouchBridge.Instance.BeginSequentialCalibration();
+        _sequentialIndex = 0;
+        ShowSequentialStepUi();
+    }
+
+    public void CaptureSequentialStep()
+    {
+        if (_capturing) return;
+        if (_sequentialIndex < 0 || _sequentialIndex >= TargetFractions.Length) return;
+
+        _capturing = true;
+        var (role, _, _) = TargetFractions[_sequentialIndex];
+        ShowIdleState($"Đang đo điểm {_sequentialIndex + 1}/{TargetFractions.Length} ({RoleLabel(role)})... giữ nguyên trụ.");
+        CalibControlBridge.Instance.PushListening(SinglePointCaptureDurationSeconds);
+        LidarTouchBridge.Instance.StartSinglePointCapture(SinglePointCaptureDurationSeconds, OnSequentialStepCaptured);
+    }
+
+    /// <summary>Lùi lại 1 điểm để đo lại (vd giáo viên nghi ngờ điểm trước đặt lệch) — không cần
+    /// làm lại từ đầu, vì LidarTouchBridge.AddSequentialPoint() cho phép ghi đè theo role.</summary>
+    public void StepBackSequential()
+    {
+        if (_capturing) return;
+        if (_sequentialIndex <= 0) return;
+        _sequentialIndex--;
+        ShowSequentialStepUi();
+    }
+
+    private void OnSequentialStepCaptured(LidarTouchBridge.SinglePointCaptureResult stepResult)
+    {
+        _capturing = false;
+
+        if (!stepResult.success)
+        {
+            ShowIdleState($"Điểm {_sequentialIndex + 1}/{TargetFractions.Length} chưa đạt: {stepResult.failReason}");
+            CalibControlBridge.Instance.PushSequentialStepResult(false, stepResult.failReason);
+            return; // giữ nguyên _sequentialIndex — giáo viên bấm "Đo điểm này" lại cho đúng điểm này
+        }
+
+        var (role, fx, fy) = TargetFractions[_sequentialIndex];
+        Vector2 target = new Vector2(fx * Screen.width, fy * Screen.height);
+        LidarTouchBridge.Instance.AddSequentialPoint(role, stepResult.raw, target);
+        CalibControlBridge.Instance.PushSequentialStepResult(true, null);
+
+        _sequentialIndex++;
+        if (_sequentialIndex < TargetFractions.Length) ShowSequentialStepUi();
+        else FinishSequential();
+    }
+
+    private void ShowSequentialStepUi()
+    {
+        var (role, _, _) = TargetFractions[_sequentialIndex];
+        SetTargetsVisible(false); // ẩn hết rồi chỉ bật đúng 1 mốc đang cần đo — đỡ rối, giáo viên biết chính xác đứng đâu
+        if (_targetMarkers.TryGetValue(role, out var rt)) rt.gameObject.SetActive(true);
+
+        string label = RoleLabel(role);
+        ShowIdleState($"Điểm {_sequentialIndex + 1}/{TargetFractions.Length}: đặt trụ vào vòng tròn ({label}), " +
+                       "quay lại bấm \"Đo điểm này\" trên máy tính bảng.");
+        CalibControlBridge.Instance.PushSequentialStep(_sequentialIndex, TargetFractions.Length, role, label);
+    }
+
+    private void FinishSequential()
+    {
+        var result = LidarTouchBridge.Instance.FinishSequentialCalibration(TargetFractions.Length);
+        _sequentialIndex = -1;
+        HandleFinalResult(result);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
 
     public void SavePending()
     {
@@ -91,9 +206,10 @@ public class CalibSceneController : MonoBehaviour
     public void CancelAndReset()
     {
         _capturing = false;
+        _sequentialIndex = -1;
         ClearConfirmDots();
         SetTargetsVisible(true);
-        ShowIdleState("Đặt 5 trụ vào đúng 5 vòng tròn (4 góc + giữa), rồi quay lại bấm \"Bắt đầu calib\" trên máy tính bảng.");
+        ShowIdleState(IdleMessage);
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -110,10 +226,10 @@ public class CalibSceneController : MonoBehaviour
         return targets;
     }
 
-    private void OnCaptureDone(LidarTouchBridge.CalibCaptureResult result)
+    /// <summary>Dùng chung cho cả 2 chế độ (5-trụ-cùng-lúc VÀ tuần tự-1-trụ) — cả 2 đều kết
+    /// thúc bằng 1 CalibCaptureResult giống hệt nhau (đã giải affine xong hay chưa).</summary>
+    private void HandleFinalResult(LidarTouchBridge.CalibCaptureResult result)
     {
-        _capturing = false;
-
         if (!result.success)
         {
             ShowIdleState($"Chưa đạt: {result.failReason}");
@@ -126,7 +242,7 @@ public class CalibSceneController : MonoBehaviour
 
         string quality = result.maxResidualPx < 15f ? "Tốt" : result.maxResidualPx < 30f ? "Khá — có thể lưu" : "Lệch nhiều — nên làm lại";
         ShowIdleState($"Kết quả: {quality} (sai số tối đa {result.maxResidualPx:F0}px). " +
-                       "Xem chấm đỏ có trùng vòng tròn không rồi bấm \"Lưu\" trên máy tính bảng, hoặc bấm \"Bắt đầu calib\" lại để làm lại.");
+                       "Xem chấm đỏ có trùng vòng tròn không rồi bấm \"Lưu\" trên máy tính bảng, hoặc bắt đầu lại để làm lại.");
 
         CalibControlBridge.Instance.PushResult(true, result.foundClusters, result.expectedPoints, result.maxResidualPx, null);
     }
