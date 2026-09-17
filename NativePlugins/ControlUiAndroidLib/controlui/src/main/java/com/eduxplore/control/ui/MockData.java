@@ -49,10 +49,12 @@ public final class MockData {
         public ClassData(String label) { this.label = label; }
     }
 
+    // Tên lớp đồng bộ với danh sách lớp thật/demo của ClassManagementActivity ("Quản lý lớp") —
+    // mẫu giáo Mầm/Chồi/Lá, không phải khối lớp phổ thông 1A/1B/2A.
     private static final ClassDef[] CLASS_DEFS = {
-        new ClassDef("c1a", "Lớp 1A", new String[]{"Minh An","Bảo Châu","Gia Hân","Khánh Vy","Đức Anh","Thảo My","Nam Khang","Bảo Ngọc","Tuấn Kiệt","Hà Vi"}),
-        new ClassDef("c1b", "Lớp 1B", new String[]{"Quang Huy","Ngọc Linh","Anh Thư","Bảo Long","Chí Bảo","Diệu Linh","Gia Bảo","Hải Đăng","Hoài An","Khôi Nguyên"}),
-        new ClassDef("c2a", "Lớp 2A", new String[]{"Lan Anh","Minh Khang","Ngọc Ánh","Phương Anh","Quốc Bảo","Thanh Trúc","Thiên Ân","Tuệ Lâm","Việt Hoàng","Xuân Mai"}),
+        new ClassDef("mam", "Lớp Mầm", new String[]{"Minh An","Bảo Châu","Gia Hân","Khánh Vy","Đức Anh","Thảo My","Nam Khang","Bảo Ngọc","Tuấn Kiệt","Hà Vi"}),
+        new ClassDef("choi", "Lớp Chồi", new String[]{"Quang Huy","Ngọc Linh","Anh Thư","Bảo Long","Chí Bảo","Diệu Linh","Gia Bảo","Hải Đăng","Hoài An","Khôi Nguyên"}),
+        new ClassDef("la", "Lớp Lá", new String[]{"Lan Anh","Minh Khang","Ngọc Ánh","Phương Anh","Quốc Bảo","Thanh Trúc","Thiên Ân","Tuệ Lâm","Việt Hoàng","Xuân Mai"}),
     };
 
     public static ClassDef[] classDefs() { return CLASS_DEFS; }

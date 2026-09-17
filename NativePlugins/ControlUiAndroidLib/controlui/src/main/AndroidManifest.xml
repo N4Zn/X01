@@ -41,5 +41,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- CalibActivity — icon "Calib" RIÊNG (ô lưới "Calib khi có" trong Launcher thật của
+             K02, xem CLAUDE.md), KHÔNG lồng trong menu chọn game của ControlActivity. MAIN/
+             LAUNCHER thường (giống ControlActivity) — không HOME/DEFAULT, Launcher trỏ tới bằng
+             ComponentName cụ thể. -->
+        <activity
+            android:name=".CalibActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|density"
+            android:label="EduXplore Calib"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

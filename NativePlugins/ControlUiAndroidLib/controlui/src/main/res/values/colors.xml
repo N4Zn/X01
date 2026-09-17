@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#0C111D</color>
-    <color name="panel">#141C2E</color>
-    <color name="panel2">#1A2338</color>
-    <color name="rail">#101728</color>
-    <color name="border">#28324A</color>
-    <color name="border_soft">#1E2740</color>
-    <color name="text">#E9EDF7</color>
-    <color name="text_dim">#8B95B3</color>
-    <color name="text_faint">#5C6786</color>
-    <color name="accent">#E3A13D</color>
-    <color name="accent_dim">#5A4A2A</color>
-    <color name="good">#4FB679</color>
-    <color name="good_dim">#1E3327</color>
-    <color name="live">#5B8DEF</color>
-    <color name="live_dim">#1C2C4A</color>
-    <color name="idle">#4A5578</color>
-    <color name="idle_dim">#1C2338</color>
-    <color name="bad">#E06A63</color>
-    <color name="bad_dim">#3A2226</color>
+    <!-- Nền sáng — đồng bộ bảng màu với Launcher (D:\X_projects\Launcher, xem colors.xml của
+         app đó): text tối trên nền ấm sáng, accent tím, thay vì navy tối như trước. -->
+    <color name="bg">#F5F1E8</color>
+    <color name="panel">#FFFFFF</color>
+    <color name="panel2">#F3EEFB</color>
+    <color name="rail">#F8F5EC</color>
+    <color name="border">#E5DFD0</color>
+    <color name="border_soft">#EDE8DC</color>
+    <color name="text">#2A2338</color>
+    <color name="text_dim">#6E6580</color>
+    <color name="text_faint">#9990A8</color>
+    <color name="accent">#5B3F9E</color>
+    <color name="accent_dim">#EFE9FB</color>
+    <color name="good">#2F9E6E</color>
+    <color name="good_dim">#E2F5EF</color>
+    <color name="live">#3E7FD1</color>
+    <color name="live_dim">#E3EEFD</color>
+    <color name="idle">#9990A8</color>
+    <color name="idle_dim">#F0EEF5</color>
+    <color name="bad">#D9577B</color>
+    <color name="bad_dim">#FBEAF0</color>
 </resources>

@@ -15,46 +15,120 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.Space
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.text.Collator
+import java.util.Locale
 
 /**
  * "Quản lý lớp" — entry point mới, thay MainActivity (màn camera) làm icon launcher chính của
- * FA. 2 màn hình (danh sách lớp / danh sách học sinh trong 1 lớp), chuyển bằng cách build lại
- * nội dung của `scroll` — không dùng Fragment/RecyclerView, theo đúng phong cách build-View-
- * bằng-code đã có sẵn trong MainActivity.kt (showManageStudentsDialog/showStudentSamplesDialog).
+ * FA. Bố cục 2 cột kiểu master-detail (giống ControlActivity: rail trái cố định + nội dung phải)
+ * — cột trái là danh sách lớp (cuộn được nếu dài), bấm 1 lớp thì cột phải hiện danh sách học
+ * sinh của đúng lớp đó, không chuyển hẳn sang màn khác. Dựng 100% bằng code (LinearLayout lồng
+ * nhau, không RecyclerView/XML), cùng phong cách `showManageStudentsDialog()`/
+ * `showStudentSamplesDialog()` đã có sẵn trong MainActivity.kt.
  *
  * Các thao tác thật (chụp camera, chọn ảnh từ thư viện, xem/xoá từng mẫu ảnh) đều giao lại cho
  * MainActivity qua Intent tường minh — không viết lại pipeline nhận diện/enroll ở đây.
+ *
+ * Bảng màu: nền sáng, đồng bộ với Launcher (D:\X_projects\Launcher) — xem hằng số màu bên dưới.
  */
 class ClassManagementActivity : AppCompatActivity() {
 
     private lateinit var attendanceStore: AttendanceStore
 
-    private lateinit var backBtn: TextView
-    private lateinit var titleText: TextView
-    private lateinit var renameBtn: TextView
     private lateinit var addClassBtn: TextView
-    private lateinit var actionBar: LinearLayout
+    private lateinit var classRailList: LinearLayout
+    private lateinit var rightHeader: LinearLayout
+    private lateinit var rightHeaderTitle: TextView
+    private lateinit var renameBtn: TextView
+    private lateinit var actionButtonsRow: LinearLayout
+    private lateinit var dupWarningBadge: TextView
+    private lateinit var viewModeBtn: TextView
+    private lateinit var sortAliasBtn: TextView
+    private lateinit var sortRealBtn: TextView
     private lateinit var scroll: ScrollView
 
-    /** null = đang ở màn "Danh sách lớp"; khác null = đang ở màn danh sách học sinh của lớp đó. */
+    /** Lớp đang chọn ở cột trái — null nếu chưa có lớp nào (hoặc chưa tạo lớp nào cả). */
     private var currentClass: String? = null
+
+    /** "grid" (lưới ảnh, mặc định) hoặc "list" (danh sách hàng ngang, tên thường gọi/tên thật
+     * tách cột) — xem nút viewModeBtn. */
+    private var viewMode: String = "grid"
+    /** "alias" (tên thường gọi) hoặc "real" (tên thật) — quyết định sortedRoster() sắp theo cột
+     * nào, và cột nào được hiện thành tên chính (in đậm) ở cả 2 chế độ xem. */
+    private var sortMode: String = "alias"
+    /** true = A→Z, false = Z→A — bấm lại đúng nút đang active (sortAliasBtn/sortRealBtn) thì đảo
+     * chiều; bấm sang nút còn lại thì luôn reset về A→Z. */
+    private var sortAscending: Boolean = true
+
+    /** Nhóm học sinh (theo tên thật) bị trùng tên thường gọi trong lớp đang xem — set lại mỗi
+     * lần renderRightPanel(), đọc lại khi bấm dupWarningBadge để hiện dialog đề xuất đổi tên. */
+    private var currentDupGroups: List<List<String>> = emptyList()
+
+    // Vietnamese-locale, accent/case-insensitive collator — dùng để sắp xếp theo TÊN (âm tiết
+    // cuối), không phải theo cả chuỗi, vì tên đệm/họ đứng trước không quyết định thứ tự alphabet
+    // theo cách gọi tên quen thuộc (vd "Khánh Vy" xếp theo "Vy", không phải "Khánh").
+    private val vnCollator: Collator = Collator.getInstance(Locale.forLanguageTag("vi")).apply {
+        strength = Collator.PRIMARY
+    }
+    /** Tách thành list từ cuối lên đầu: "Nguyễn Văn An" -> ["An", "Văn", "Nguyễn"]. So khớp danh
+     * sách đã đảo này theo từng vị trí (âm tiết TÊN trước, rồi tới đệm, rồi tới họ) là cách sắp
+     * xếp tên Việt Nam đúng chuẩn — so y hệt kiểu 1 chuỗi cắt lấy âm tiết cuối sẽ SAI khi 2 tên
+     * trùng âm tiết cuối nhưng khác đệm (vd "Vũ Minh An" và "Nguyễn Văn An" đều tận cùng "An" —
+     * cắt 1 âm tiết sẽ coi 2 tên này ngang hàng rồi phá hoà bằng cả chuỗi, tức sắp theo HỌ thay vì
+     * theo TÊN/đệm, kết quả "...Văn An" nhảy lên trước "Minh An" một cách vô lý). */
+    private fun reversedWords(s: String): List<String> =
+        s.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.asReversed()
+
+    /** Sắp theo tên thường gọi hoặc tên thật (tuỳ sortMode), chiều A→Z hoặc Z→A (tuỳ
+     * sortAscending) — xem reversedWords() ở trên cho lý do so theo từng âm tiết từ cuối lên. */
+    private fun sortedRoster(names: List<String>): List<String> {
+        val keyOf: (String) -> String = if (sortMode == "real") { n -> n } else { n -> attendanceStore.aliasOf(n) }
+        val cmp = Comparator<String> { a, b ->
+            val wa = reversedWords(keyOf(a))
+            val wb = reversedWords(keyOf(b))
+            var result = 0
+            for (i in 0 until minOf(wa.size, wb.size)) {
+                result = vnCollator.compare(wa[i], wb[i])
+                if (result != 0) break
+            }
+            if (result == 0) result = wa.size - wb.size
+            if (sortAscending) result else -result
+        }
+        return names.sortedWith(cmp)
+    }
+
+    /** Nhóm các học sinh (theo tên thật) có tên thường gọi trùng nhau trong cùng danh sách. */
+    private fun findDuplicateAliasGroups(names: List<String>): List<List<String>> =
+        names.groupBy { attendanceStore.aliasOf(it) }.values.filter { it.size > 1 }
+
+    /** Đề xuất tên thường gọi phân biệt khi trùng: Họ + Tên (bỏ tên đệm ở giữa), ví dụ
+     * "Nguyễn Văn An" / "Lê Văn An" cùng có tên thường gọi mặc định "Văn An" -> đề xuất
+     * "Nguyễn An" / "Lê An". */
+    private fun suggestedAlias(realName: String): String {
+        val parts = realName.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        return if (parts.size >= 2) "${parts.first()} ${parts.last()}" else realName
+    }
 
     private val dp get() = resources.displayMetrics.density
     private fun px(v: Int) = (v * dp).toInt()
 
-    private val palette = listOf(
-        0xFF5B3F9E.toInt(), 0xFF1CA184.toInt(), 0xFFC98A1F.toInt(), 0xFFD9577B.toInt(),
-        0xFF3E7FD1.toInt(), 0xFF3D9A56.toInt(), 0xFFB15FD1.toInt(), 0xFFC4552B.toInt()
-    )
-    private fun colorFor(name: String): Int {
-        var h = 0
-        for (c in name) h = (h * 31 + c.code) % palette.size
-        if (h < 0) h += palette.size
-        return palette[h]
-    }
+    // ── Bảng màu sáng, cùng token với Launcher/ControlActivity ─────────────────────────────
+    private val cBg        = Color.parseColor("#F5F1E8")
+    private val cRail       = Color.parseColor("#F8F5EC")
+    private val cCard       = Color.parseColor("#FFFFFF")
+    private val cCardLine   = Color.parseColor("#E5DFD0")
+    private val cText       = Color.parseColor("#2A2338")
+    private val cTextDim    = Color.parseColor("#6E6580")
+    private val cTextFaint  = Color.parseColor("#9990A8")
+    private val cAccent     = Color.parseColor("#5B3F9E")
+    private val cAccentDim  = Color.parseColor("#EFE9FB")
+    private val cWarn       = Color.parseColor("#C98A1F")
+
+    private val cMale   = 0xFF3E7FD1.toInt() // xanh blue — nam
+    private val cFemale = 0xFFB15FD1.toInt() // tím nhạt/hồng — nữ
+    private fun colorFor(gender: String): Int = if (gender == "nu") cFemale else cMale
     private fun initialOf(name: String): String =
         name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
 
@@ -62,20 +136,24 @@ class ClassManagementActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         attendanceStore = AttendanceStore(this)
         setContentView(buildRoot())
-        showClassList()
+        refreshAll()
     }
 
     override fun onResume() {
         super.onResume()
         // Quay lại từ MainActivity (vừa enroll/xoá/đổi tên...) — đọc lại dữ liệu từ đĩa và vẽ
-        // lại đúng màn đang đứng.
+        // lại toàn bộ (rail + nội dung lớp đang chọn).
         attendanceStore = AttendanceStore(this)
-        if (currentClass == null) showClassList() else showRoster(currentClass!!)
+        refreshAll()
     }
 
-    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-    override fun onBackPressed() {
-        if (currentClass != null) showClassList() else super.onBackPressed()
+    /** Vẽ lại rail (danh sách lớp) + panel phải (học sinh của lớp đang chọn), giữ nguyên lựa
+     * chọn hiện tại nếu lớp đó vẫn còn tồn tại; nếu không thì tự chọn lớp đầu tiên. */
+    private fun refreshAll() {
+        val classes = attendanceStore.allClassNames()
+        if (currentClass !in classes) currentClass = classes.firstOrNull()
+        renderClassRail(classes)
+        renderRightPanel()
     }
 
     // ─────────────────────────────────────────────────────────────────────────  layout
@@ -83,69 +161,209 @@ class ClassManagementActivity : AppCompatActivity() {
     private fun buildRoot(): View {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#121212"))
+            setBackgroundColor(cBg)
         }
 
+        // Chữ "Quản lý lớp" đẩy kịch lề trái (không còn căn theo bề rộng rail bên dưới nữa) +
+        // nút "+ Thêm lớp" ngay cạnh nó — logo đẩy hẳn sang phải, đồng bộ bố cục với top bar của
+        // ControlActivity (logo luôn ở góc phải), tránh logo to đè lên chữ tiêu đề.
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(px(20), px(18), px(20), px(14))
+            setPadding(px(20), px(16), px(16), px(14))
         }
-        backBtn = TextView(this).apply {
-            text = "←"
-            textSize = 22f
-            setTextColor(Color.WHITE)
-            setPadding(px(4), px(4), px(20), px(4))
-            visibility = View.GONE
-            setOnClickListener { showClassList() }
-        }
-        header.addView(backBtn)
-        titleText = TextView(this).apply {
-            text = "Danh sách lớp"
+        header.addView(TextView(this).apply {
+            text = "Quản lý lớp"
             textSize = 22f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        header.addView(titleText)
-        renameBtn = pillButton("✏ Đổi tên") { currentClass?.let { promptRenameClass(it) } }
-        renameBtn.visibility = View.GONE
-        header.addView(renameBtn)
+            setTextColor(cText)
+        })
         addClassBtn = pillButton("+ Thêm lớp") { promptAddClass() }
+        addClassBtn.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).also { it.marginStart = px(8) }
         header.addView(addClassBtn)
+        header.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(0, 0, 1f) // đẩy logo sát lề phải
+        })
+        header.addView(ImageView(this).apply {
+            setImageResource(R.drawable.logo_eduxplore)
+            adjustViewBounds = true
+            scaleType = ImageView.ScaleType.FIT_END
+            layoutParams = LinearLayout.LayoutParams(px(120), px(46))
+        })
         root.addView(header)
 
-        actionBar = LinearLayout(this).apply {
+        val body = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(px(20), 0, px(20), px(14))
-            visibility = View.GONE
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
         }
-        actionBar.addView(actionButton("+ Học sinh mới") { onAddStudentClicked() })
-        actionBar.addView(actionButton("Thêm từ camera") { onAddStudentClicked() })
-        actionBar.addView(actionButton("Thêm hàng loạt") { onBulkAddClicked() })
-        root.addView(actionBar)
+        root.addView(body)
+
+        // Cột trái: danh sách lớp — cố định bề rộng, cuộn được nếu dài (giống rail của
+        // ControlActivity, xem activity_control.xml action_zone).
+        val classRailScroll = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(px(220), ViewGroup.LayoutParams.MATCH_PARENT)
+            setBackgroundColor(cRail)
+        }
+        classRailList = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(px(12), px(12), px(12), px(12))
+        }
+        classRailScroll.addView(classRailList)
+        body.addView(classRailScroll)
+
+        body.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(px(1), ViewGroup.LayoutParams.MATCH_PARENT)
+            setBackgroundColor(cCardLine)
+        })
+
+        // Cột phải: học sinh của lớp đang chọn.
+        val rightCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+        }
+        body.addView(rightCol)
+
+        // Tất cả trên 1 hàng: tên lớp (bấm để đổi tên) + icon bút chì, để dành không gian cho tên
+        // lớp dài — 3 nút phụ + cảnh báo trùng tên dồn hẳn sát lề phải cạnh nhau bằng spacer.
+        rightHeader = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(px(20), px(14), px(20), px(14))
+        }
+        rightHeaderTitle = TextView(this).apply {
+            textSize = 20f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(cText)
+            isClickable = true
+            isFocusable = true
+            setPadding(px(4), px(4), px(4), px(4))
+            setOnClickListener { currentClass?.let { promptRenameClass(it) } }
+        }
+        rightHeader.addView(rightHeaderTitle)
+        renameBtn = TextView(this).apply {
+            text = "✏"
+            textSize = 15f
+            setTextColor(cAccent)
+            setPadding(px(6), px(6), px(6), px(6))
+            rotation = 135f // glyph render nằm ngang trên font máy — xoay chéo cho giống bút chì thật (135, không phải -45, vì -45 làm đầu bút lộn ngược)
+            setOnClickListener { currentClass?.let { promptRenameClass(it) } }
+        }
+        rightHeader.addView(renameBtn)
+        rightHeader.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(0, 0, 1f) // đẩy 3 nút phụ + cảnh báo sát lề phải
+        })
+        actionButtonsRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        actionButtonsRow.addView(smallActionButton("+ Học sinh mới") { onAddStudentClicked() })
+        actionButtonsRow.addView(smallActionButton("Thêm từ camera") { onAddStudentClicked() })
+        actionButtonsRow.addView(smallActionButton("Thêm từ ảnh") { onBulkAddClicked() })
+        rightHeader.addView(actionButtonsRow)
+        // Cảnh báo trùng tên thường gọi trong lớp — ngay cạnh 3 nút phụ, sát góc trên-phải, ẩn khi
+        // không có trùng. Bấm vào hiện dialog đề xuất đổi tên phân biệt (xem showDuplicateAliasDialog).
+        dupWarningBadge = TextView(this).apply {
+            text = "⚠"
+            textSize = 18f
+            setTextColor(cWarn)
+            setPadding(px(8), px(6), 0, px(6))
+            visibility = View.GONE
+            setOnClickListener { showDuplicateAliasDialog() }
+        }
+        rightHeader.addView(dupWarningBadge)
+        rightCol.addView(rightHeader)
+
+        // Hàng công cụ phụ: chuyển lưới/danh sách + chọn cột sắp xếp — tách riêng khỏi rightHeader
+        // (đã khá đầy) thành 1 hàng mỏng ngay trên vùng cuộn danh sách học sinh.
+        val listControlsRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(px(20), 0, px(20), px(10))
+        }
+        viewModeBtn = pillButton("☰ Xem dạng danh sách") { toggleViewMode() }
+        listControlsRow.addView(viewModeBtn)
+        listControlsRow.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(px(18), ViewGroup.LayoutParams.WRAP_CONTENT)
+        })
+        listControlsRow.addView(TextView(this).apply {
+            text = "Sắp xếp:"
+            textSize = 12f
+            setTextColor(cTextFaint)
+            setPadding(0, 0, px(8), 0)
+        })
+        sortAliasBtn = sortToggleButton("Tên thường gọi") { setSortMode("alias") }
+        sortRealBtn = sortToggleButton("Tên thật") { setSortMode("real") }
+        listControlsRow.addView(sortAliasBtn)
+        listControlsRow.addView(sortRealBtn)
+        rightCol.addView(listControlsRow)
 
         scroll = ScrollView(this).apply {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
         }
-        root.addView(scroll)
+        rightCol.addView(scroll)
         return root
     }
 
     private fun pillButton(label: String, onClick: () -> Unit): TextView = TextView(this).apply {
         text = label
-        setTextColor(Color.parseColor("#90CAF9"))
+        setTextColor(cAccent)
         textSize = 14f
+        setTypeface(typeface, Typeface.BOLD)
         setPadding(px(12), px(8), px(12), px(8))
         setOnClickListener { onClick() }
     }
 
-    private fun actionButton(label: String, onClick: () -> Unit): Button = Button(this).apply {
+    /** Nút dạng segmented-control (2 lựa chọn cạnh nhau, 1 cái luôn "active") — dùng cho chọn cột
+     * sắp xếp. Trạng thái active/inactive được set lại mỗi renderRightPanel() qua styleSortToggle(). */
+    private fun sortToggleButton(label: String, onClick: () -> Unit): TextView = TextView(this).apply {
         text = label
-        isAllCaps = false
-        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).also {
-            it.marginEnd = px(8)
+        textSize = 11.5f
+        setTypeface(typeface, Typeface.BOLD)
+        setPadding(px(10), px(6), px(10), px(6))
+        layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).also { it.marginEnd = px(6) }
+        setOnClickListener { onClick() }
+    }
+
+    private fun styleSortToggle(v: TextView, active: Boolean) {
+        v.setTextColor(if (active) Color.WHITE else cAccent)
+        v.background = GradientDrawable().apply {
+            setColor(if (active) cAccent else Color.TRANSPARENT)
+            setStroke(px(1), cAccent)
+            cornerRadius = px(8).toFloat()
         }
+    }
+
+    private fun toggleViewMode() {
+        viewMode = if (viewMode == "grid") "list" else "grid"
+        renderRightPanel()
+    }
+
+    private fun setSortMode(mode: String) {
+        if (sortMode == mode) {
+            sortAscending = !sortAscending // bấm lại đúng cột đang sort -> đảo chiều A-Z/Z-A
+        } else {
+            sortMode = mode
+            sortAscending = true // đổi sang cột khác -> luôn bắt đầu lại từ A-Z
+        }
+        renderRightPanel()
+    }
+
+    /** Nút nhỏ, gọn cho chức năng phụ (thêm học sinh/từ camera/từ ảnh) — không stretch full-width
+     * như Button mặc định, chỉ vừa đủ chữ, xếp cạnh nhau ở cuối hàng tiêu đề lớp. */
+    private fun smallActionButton(label: String, onClick: () -> Unit): TextView = TextView(this).apply {
+        text = label
+        textSize = 13.5f
+        setTypeface(typeface, Typeface.BOLD)
+        setTextColor(Color.WHITE)
+        background = GradientDrawable().apply {
+            setColor(cAccent)
+            cornerRadius = px(8).toFloat()
+        }
+        setPadding(px(12), px(8), px(12), px(8))
+        layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).also { it.marginStart = px(6) }
         setOnClickListener { onClick() }
     }
 
@@ -167,7 +385,16 @@ class ClassManagementActivity : AppCompatActivity() {
                         if (c < columns - 1) it.marginEnd = px(10)
                     }
                 }
-                if (i < items.size) { cell.addView(items[i]); i++ }
+                if (i < items.size) {
+                    // Card phải fill hết bề rộng cell (MATCH_PARENT) — nếu không, FrameLayout mặc
+                    // định wrap_content theo nội dung riêng của từng card (tên dài/ngắn khác nhau),
+                    // khiến các card trong cùng 1 hàng to nhỏ lệch nhau dù cell đã đều nhau.
+                    items[i].layoutParams = FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                    cell.addView(items[i])
+                    i++
+                }
                 row.addView(cell)
             }
             container.addView(row)
@@ -177,7 +404,7 @@ class ClassManagementActivity : AppCompatActivity() {
 
     private fun emptyState(msg: String): View = TextView(this).apply {
         text = msg
-        setTextColor(Color.parseColor("#888888"))
+        setTextColor(cTextFaint)
         textSize = 14f
         gravity = Gravity.CENTER
         setPadding(px(40), px(60), px(40), px(60))
@@ -187,9 +414,11 @@ class ClassManagementActivity : AppCompatActivity() {
         orientation = LinearLayout.VERTICAL
         setPadding(px(14), px(14), px(14), px(14))
         background = GradientDrawable().apply {
-            setColor(Color.parseColor("#1E1E1E"))
+            setColor(cCard)
+            setStroke(px(1), cCardLine)
             cornerRadius = px(14).toFloat()
         }
+        elevation = px(2).toFloat()
         isClickable = true
         isFocusable = true
         setOnClickListener { onClick() }
@@ -198,7 +427,7 @@ class ClassManagementActivity : AppCompatActivity() {
     /** Circular avatar: the student's representative sample photo if one exists, otherwise a
      * colored circle with their name's initial (same "no photo yet" look the roster/photo grids
      * use to flag someone as needing a picture). */
-    private fun avatarWithInitial(name: String, sizeDp: Int, photoPath: String?): View {
+    private fun avatarWithInitial(name: String, sizeDp: Int, photoPath: String?, gender: String): View {
         val sizePx = px(sizeDp)
         val bmp = photoPath?.let { attendanceStore.loadPhotoBitmap(it, sizePx) }
         val frame = FrameLayout(this).apply {
@@ -209,7 +438,7 @@ class ClassManagementActivity : AppCompatActivity() {
             scaleType = ImageView.ScaleType.CENTER_CROP
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(if (bmp != null) Color.parseColor("#1E1E1E") else colorFor(name))
+                setColor(if (bmp != null) cCardLine else colorFor(gender))
             }
             clipToOutline = true
             if (bmp != null) setImageBitmap(bmp)
@@ -227,90 +456,218 @@ class ClassManagementActivity : AppCompatActivity() {
         return frame
     }
 
-    // ─────────────────────────────────────────────────────────────────────────  screens
+    // ─────────────────────────────────────────────────────────────────────────  render
 
-    private fun showClassList() {
-        currentClass = null
-        titleText.text = "Danh sách lớp"
-        backBtn.visibility = View.GONE
-        renameBtn.visibility = View.GONE
-        addClassBtn.visibility = View.VISIBLE
-        actionBar.visibility = View.GONE
-
-        val classes = attendanceStore.allClassNames()
-        scroll.removeAllViews()
-        scroll.addView(
-            if (classes.isEmpty()) {
-                emptyState("Chưa có lớp nào.\nBấm \"+ Thêm lớp\" ở trên để tạo lớp đầu tiên.")
-            } else {
-                buildGrid(classes.mapIndexed { i, c -> classCardView(c, i) }, 3)
+    private fun renderClassRail(classes: List<String>) {
+        classRailList.removeAllViews()
+        if (classes.isEmpty()) {
+            classRailList.addView(TextView(this).apply {
+                text = "Chưa có lớp nào.\nBấm \"+ Thêm lớp\" ở trên."
+                setTextColor(cTextFaint)
+                textSize = 12.5f
+                setPadding(px(6), px(10), px(6), px(10))
+            })
+            return
+        }
+        classes.forEachIndexed { i, className ->
+            val students = attendanceStore.studentsInClass(className)
+            val needing = students.count { attendanceStore.samplesOf(it).isEmpty() }
+            val selected = className == currentClass
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(px(12), px(10), px(12), px(10))
+                background = GradientDrawable().apply {
+                    setColor(if (selected) cAccentDim else Color.TRANSPARENT)
+                    cornerRadius = px(10).toFloat()
+                }
+                isClickable = true
+                isFocusable = true
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).also { it.bottomMargin = px(4) }
+                setOnClickListener {
+                    currentClass = className
+                    renderClassRail(classes)
+                    renderRightPanel()
+                }
             }
-        )
-    }
-
-    private fun classCardView(className: String, index: Int): View {
-        val students = attendanceStore.studentsInClass(className)
-        val needing = students.count { attendanceStore.samplesOf(it).isEmpty() }
-        return card { showRoster(className) }.apply {
-            addView(TextView(this@ClassManagementActivity).apply {
-                text = "${index + 1}. $className"
-                setTextColor(Color.WHITE)
-                textSize = 16f
+            row.addView(TextView(this).apply {
+                text = "${i + 1}. $className"
+                setTextColor(if (selected) cAccent else cText)
+                textSize = 14f
                 setTypeface(typeface, Typeface.BOLD)
+                maxLines = 1
             })
-            addView(TextView(this@ClassManagementActivity).apply {
+            row.addView(TextView(this).apply {
                 text = "${students.size} học sinh" + if (needing > 0) " · $needing cần ảnh" else ""
-                setTextColor(if (needing > 0) Color.parseColor("#FFB74D") else Color.parseColor("#AAAAAA"))
-                textSize = 12f
-                setPadding(0, px(4), 0, 0)
+                setTextColor(if (needing > 0) cWarn else cTextDim)
+                textSize = 11.5f
+                setPadding(0, px(2), 0, 0)
             })
+            classRailList.addView(row)
         }
     }
 
-    private fun showRoster(className: String) {
-        currentClass = className
-        titleText.text = className
-        backBtn.visibility = View.VISIBLE
-        renameBtn.visibility = View.VISIBLE
-        addClassBtn.visibility = View.GONE
-        actionBar.visibility = View.VISIBLE
+    private fun renderRightPanel() {
+        val className = currentClass
+        if (className == null) {
+            rightHeaderTitle.text = "Chưa có lớp nào"
+            renameBtn.visibility = View.GONE
+            actionButtonsRow.visibility = View.GONE
+            scroll.removeAllViews()
+            scroll.addView(emptyState("Bấm \"+ Thêm lớp\" ở góc trên để tạo lớp đầu tiên."))
+            return
+        }
 
-        val students = attendanceStore.studentsInClass(className)
+        rightHeaderTitle.text = className
+        renameBtn.visibility = View.VISIBLE
+        actionButtonsRow.visibility = View.VISIBLE
+
+        viewModeBtn.text = if (viewMode == "grid") "☰ Xem dạng danh sách" else "▦ Xem dạng lưới"
+        val dirArrow = if (sortAscending) " A→Z" else " Z→A"
+        sortAliasBtn.text = "Tên thường gọi" + if (sortMode == "alias") dirArrow else ""
+        sortRealBtn.text = "Tên thật" + if (sortMode == "real") dirArrow else ""
+        styleSortToggle(sortAliasBtn, sortMode == "alias")
+        styleSortToggle(sortRealBtn, sortMode == "real")
+
+        val students = sortedRoster(attendanceStore.studentsInClass(className))
+        currentDupGroups = findDuplicateAliasGroups(students)
+        dupWarningBadge.visibility = if (currentDupGroups.isNotEmpty()) View.VISIBLE else View.GONE
         scroll.removeAllViews()
         scroll.addView(
-            if (students.isEmpty()) {
-                emptyState("Lớp \"$className\" chưa có học sinh nào.\nDùng các nút bên trên để thêm.")
-            } else {
-                buildGrid(students.mapIndexed { i, s -> studentCardView(s, i) }, 3)
+            when {
+                students.isEmpty() -> emptyState("Lớp \"$className\" chưa có học sinh nào.\nDùng các nút bên trên để thêm.")
+                viewMode == "list" -> buildListView(students)
+                else -> buildGrid(students.mapIndexed { i, s -> studentCardView(s, i) }, 5)
             }
         )
+    }
+
+    /** Danh sách hàng ngang, 1 học sinh/hàng: STT, tên thường gọi, tên thật, ghi chú ảnh mẫu —
+     * dành cho lớp đông (mục tiêu 30 học sinh), dễ rà soát/đối chiếu hơn lưới ảnh. */
+    private fun buildListView(students: List<String>): View {
+        val emphasizeReal = sortMode == "real" // cột nào đang là "tên chính" (in đậm) - xem sortedRoster()/setSortMode()
+        val container = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        container.addView(listRow("STT", "Tên thường gọi", "Tên thật", "Ảnh mẫu", header = true, emphasizeReal = emphasizeReal))
+        students.forEachIndexed { i, name ->
+            val samples = attendanceStore.samplesOf(name)
+            val needsUpdate = samples.isEmpty()
+            val alias = attendanceStore.aliasOf(name)
+            container.addView(
+                listRow(
+                    "${i + 1}", alias, if (alias != name) name else "—",
+                    if (needsUpdate) "Cần thêm ảnh" else "${samples.size} ảnh",
+                    warn = needsUpdate,
+                    onClick = { openStudent(name) },
+                    zebra = i % 2 == 0,
+                    emphasizeReal = emphasizeReal
+                )
+            )
+        }
+        return container
+    }
+
+    private fun listCell(text: String, weight: Float, bold: Boolean, color: Int, sizeSp: Float): TextView =
+        TextView(this).apply {
+            this.text = text
+            setTextColor(color)
+            textSize = sizeSp
+            if (bold) setTypeface(typeface, Typeface.BOLD)
+            maxLines = 1
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, weight)
+        }
+
+    /** emphasizeReal quyết định cột nào là "tên chính" (in đậm, màu chữ chính) — mặc định tên
+     * thường gọi là chính; bấm nút sort "Tên thật" thì đảo lại, tên thật thành chính (xem
+     * "click vào tên thường gọi/tên thật thì hiện thành tên chính" trong yêu cầu). */
+    private fun listRow(
+        stt: String, alias: String, realName: String, note: String,
+        header: Boolean = false, warn: Boolean = false, zebra: Boolean = false,
+        emphasizeReal: Boolean = false, onClick: (() -> Unit)? = null
+    ): View = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(px(10), if (header) px(4) else px(9), px(10), if (header) px(6) else px(9))
+        if (!header) {
+            background = GradientDrawable().apply {
+                setColor(if (zebra) cCard else Color.TRANSPARENT)
+                cornerRadius = px(8).toFloat()
+            }
+        }
+        if (onClick != null) { isClickable = true; isFocusable = true; setOnClickListener { onClick() } }
+        val dimColor = if (header) cTextFaint else cTextDim
+        val mainColor = if (header) cTextFaint else cText
+        val aliasBold = header || !emphasizeReal
+        val realBold = !header && emphasizeReal
+        val aliasColor = if (!header && emphasizeReal) dimColor else mainColor
+        val realColor = if (!header && emphasizeReal) mainColor else dimColor
+        addView(listCell(stt, 0.6f, header, dimColor, if (header) 11.5f else 13f))
+        addView(listCell(alias, 2f, aliasBold, aliasColor, if (header) 11.5f else 13.5f))
+        addView(listCell(realName, 2f, realBold, realColor, if (header) 11.5f else 13.5f))
+        addView(listCell(note, 1.4f, header, if (warn) cWarn else dimColor, if (header) 11.5f else 12f))
+    }
+
+    /** Hiện dialog liệt kê từng nhóm trùng tên thường gọi + đề xuất đổi tên phân biệt (Họ + Tên,
+     * bỏ tên đệm), cho phép áp dụng hàng loạt luôn. */
+    private fun showDuplicateAliasDialog() {
+        val groups = currentDupGroups
+        if (groups.isEmpty()) return
+        val msg = StringBuilder()
+        for (group in groups) {
+            val alias = attendanceStore.aliasOf(group.first())
+            msg.append("\"$alias\" trùng giữa: ${group.joinToString(", ")}\n")
+            msg.append("Đề xuất: ${group.joinToString(" · ") { suggestedAlias(it) }}\n\n")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Tên thường gọi bị trùng")
+            .setMessage(msg.toString().trim())
+            .setPositiveButton("Áp dụng đề xuất") { _, _ ->
+                for (group in groups) {
+                    for (realName in group) attendanceStore.setAlias(realName, suggestedAlias(realName))
+                }
+                renderRightPanel()
+            }
+            .setNegativeButton("Để sau", null)
+            .show()
     }
 
     private fun studentCardView(name: String, index: Int): View {
         val samples = attendanceStore.samplesOf(name)
         val needsUpdate = samples.isEmpty()
+        val alias = attendanceStore.aliasOf(name)
+        // Tên chính hiện trên card đổi theo sortMode — bấm nút sort "Tên thật" thì tên thật lên
+        // thành tên chính thay vì tên thường gọi (đồng bộ với buildListView()'s emphasizeReal).
+        val primaryName = if (sortMode == "real") name else alias
         return card { openStudent(name) }.apply {
             gravity = Gravity.CENTER_HORIZONTAL
             addView(TextView(this@ClassManagementActivity).apply {
                 text = "${index + 1}"
-                setTextColor(Color.parseColor("#777777"))
-                textSize = 10f
+                setTextColor(cTextDim)
+                textSize = 15f
+                setTypeface(typeface, Typeface.BOLD)
             })
-            addView(avatarWithInitial(name, 60, attendanceStore.representativePhoto(name)).also {
+            addView(avatarWithInitial(primaryName, 60, attendanceStore.representativePhoto(name), attendanceStore.genderOf(name)).also {
                 (it.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin = px(4)
                 it.setPadding(0, px(4), 0, px(8))
             })
             addView(TextView(this@ClassManagementActivity).apply {
-                text = name
-                setTextColor(Color.WHITE)
-                textSize = 14f
+                text = primaryName
+                setTextColor(cText)
+                textSize = 13.5f
                 setTypeface(typeface, Typeface.BOLD)
                 gravity = Gravity.CENTER
-                maxLines = 1
+                // Tên thật dài hơn tên thường gọi nhiều (vd "Nguyễn Khánh Vy" so với "Khánh Vy") —
+                // 1 dòng bị cắt cụt mất nửa tên. Cho phép 2 dòng, NHƯNG minLines=2 luôn giữ đúng 2
+                // dòng dù tên ngắn chỉ cần 1 dòng — để mọi card cùng hàng cao đều nhau, tránh lệch
+                // trục Y như trước (xem buildGrid()'s MATCH_PARENT fix).
+                maxLines = 2
+                minLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                setLineSpacing(0f, 1f)
             })
             addView(TextView(this@ClassManagementActivity).apply {
                 text = if (needsUpdate) "Cần cập nhật ảnh" else "${samples.size} mẫu ảnh"
-                setTextColor(if (needsUpdate) Color.parseColor("#FFB74D") else Color.parseColor("#AAAAAA"))
+                setTextColor(if (needsUpdate) cWarn else cTextDim)
                 textSize = 11f
                 gravity = Gravity.CENTER
                 setPadding(0, px(4), 0, 0)
@@ -352,7 +709,8 @@ class ClassManagementActivity : AppCompatActivity() {
                 val name = input.text.toString().trim()
                 if (name.isNotEmpty()) {
                     attendanceStore.addClass(name)
-                    showClassList()
+                    currentClass = name
+                    refreshAll()
                 }
             }
             .setNegativeButton("Hủy", null)
@@ -368,7 +726,8 @@ class ClassManagementActivity : AppCompatActivity() {
                 val newName = input.text.toString().trim()
                 if (newName.isNotEmpty() && newName != oldName) {
                     attendanceStore.renameClass(oldName, newName)
-                    if (currentClass == oldName) showRoster(newName) else showClassList()
+                    if (currentClass == oldName) currentClass = newName
+                    refreshAll()
                 }
             }
             .setNegativeButton("Hủy", null)

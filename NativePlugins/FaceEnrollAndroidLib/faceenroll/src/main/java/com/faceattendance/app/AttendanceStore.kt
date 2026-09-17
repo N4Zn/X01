@@ -42,6 +42,12 @@ class AttendanceStore(private val context: Context) {
     // class-management UI. Independent of enrolled.json's Sample/embedding data, so adding
     // this never touches the recognition path (FaceDatabase/bestMatch only reads name+samples).
     private val classNames = HashMap<String, String>()
+    // Nickname ("tên thường gọi") shown in the class roster UI - mầm non students mostly go by
+    // a home name, not their full legal name. Independent of the enrollment key (which stays the
+    // real/legal name everywhere else - recognition, CSV log, file paths) so nothing downstream
+    // needs to change; defaults to the real name's last 2 syllables (see defaultAliasFor) but the
+    // teacher can override it freely.
+    private val aliasNames = HashMap<String, String>()
     // Known class names, including ones with zero students yet (created via "Thêm lớp mới") -
     // a plain list separate from classNames' values so an empty class still shows up.
     private val knownClasses = LinkedHashSet<String>()
@@ -101,6 +107,9 @@ class AttendanceStore(private val context: Context) {
                     classNames[name] = cls
                     knownClasses.add(cls)
                 }
+                if (obj.has("alias") && !obj.isNull("alias")) {
+                    aliasNames[name] = obj.getString("alias")
+                }
             }
             val totalSamples = enrolled.values.sumOf { it.size }
             android.util.Log.e("FaceAttendance", "Loaded ${enrolled.size} persisted enrollments ($totalSamples samples)")
@@ -125,6 +134,7 @@ class AttendanceStore(private val context: Context) {
             obj.put("name", name)
             obj.put("gender", genders[name] ?: "nam")
             obj.put("className", classNames[name])
+            obj.put("alias", aliasNames[name])
             val samplesArr = org.json.JSONArray()
             for (s in samples) {
                 val sObj = org.json.JSONObject()
@@ -196,6 +206,25 @@ class AttendanceStore(private val context: Context) {
     fun studentsInClass(className: String): List<String> =
         realEnrolledNames().filter { classNames[it] == className }
 
+    // ──────────────────────────  Tên thường gọi (alias)  ──────────────────────────
+
+    /** Nickname shown in the roster UI. Falls back to the real (enrollment) name if no alias
+     * was ever set - so callers can always just display aliasOf(name) unconditionally. */
+    fun aliasOf(name: String): String = aliasNames[name]?.takeIf { it.isNotBlank() } ?: name
+
+    fun setAlias(name: String, alias: String) {
+        val trimmed = alias.trim()
+        if (trimmed.isEmpty() || trimmed == name) aliasNames.remove(name) else aliasNames[name] = trimmed
+        persist()
+    }
+
+    /** Default nickname suggestion when a teacher enters the real name: the last 2 syllables
+     * (e.g. "Nguyễn Khánh Vy" -> "Khánh Vy"), or the whole name if it's 1-2 syllables already. */
+    fun defaultAliasFor(realName: String): String {
+        val parts = realName.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        return if (parts.size <= 2) parts.joinToString(" ") else parts.takeLast(2).joinToString(" ")
+    }
+
     /** Renames an enrolled person across every map keyed by name. Returns false (no-op) if
      * newName is blank, unchanged, or already taken by someone else. */
     fun renameEnrollment(oldName: String, newName: String): Boolean {
@@ -206,6 +235,7 @@ class AttendanceStore(private val context: Context) {
         enrolled[trimmed] = samples
         genders[trimmed] = genders.remove(oldName) ?: "nam"
         classNames.remove(oldName)?.let { classNames[trimmed] = it }
+        aliasNames.remove(oldName)?.let { aliasNames[trimmed] = it }
         lastLogged.remove(oldName)?.let { lastLogged[trimmed] = it }
         personLog.remove(oldName)?.let { personLog[trimmed] = it }
         val idx = recentNames.indexOf(oldName)
@@ -272,6 +302,7 @@ class AttendanceStore(private val context: Context) {
         val samples = enrolled.remove(name) ?: emptyList()
         for (s in samples) deleteSamplePhoto(s.photo)
         genders.remove(name)
+        aliasNames.remove(name)
         lastLogged.remove(name)
         persist()
     }

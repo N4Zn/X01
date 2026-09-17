@@ -101,5 +101,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/FRTest/FRTestGame.unity
     guid: 27a0d94463bd5f74aaaaed55f480c7d4
+  - enabled: 1
+    path: Assets/Game/Scenes/CalibScene/CalibScene.unity
+    guid: bd1651721c4b028ca34e6630aadd9301
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

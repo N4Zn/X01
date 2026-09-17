@@ -12,8 +12,12 @@ Unity 2022.3.62f1 · IL2CPP · Android primary target.
 - App là **Android HOME launcher** — không thoát được bằng Back button
   > **K02 dual-display (Track A, xem section riêng bên dưới)**: `ControlActivity` (entry point
   > mới trên K02) hiện là launcher thường (`MAIN`/`LAUNCHER`), **KHÔNG** đăng ký `HOME`/`DEFAULT`
-  > — chủ động tắt theo yêu cầu lúc test. Bật lại khi cần: thêm `HOME`+`DEFAULT` category vào
-  > intent-filter của `ControlActivity` trong `NativePlugins/ControlUiAndroidLib/controlui/src/main/AndroidManifest.xml`.
+  > — chủ động tắt theo yêu cầu lúc test. Vai trò HOME thật của K02 giờ do 1 **app Launcher riêng**
+  > đảm nhiệm (`D:\X_projects\Launcher`, ngoài repo này — xem section "Launcher — Home launcher
+  > thật của K02" bên dưới), gọi `ControlActivity` qua 1 trong 2 "hero card" của nó chứ không tự
+  > đăng ký HOME. Muốn quay lại cách cũ (chính `ControlActivity` tự làm HOME): thêm `HOME`+
+  > `DEFAULT` category vào intent-filter của nó trong
+  > `NativePlugins/ControlUiAndroidLib/controlui/src/main/AndroidManifest.xml`.
 
 ## Điểm khác so với v1
 
@@ -89,6 +93,69 @@ luồng MenuScene/StartScene gốc.
   (không qua MenuScene). `LoadGame(sceneName, gameName)` là entry point dùng chung — cả cold-boot
   lẫn lúc Unity đã sống sẵn (xem bên dưới) đều gọi qua đây.
 
+**Giao diện `ControlActivity` (2026-09-17)** — nền **sáng**, đồng bộ bảng màu với Launcher (xem
+section riêng bên dưới) — toàn bộ màu đi qua token trong `res/values/colors.xml` của
+`ControlUiAndroidLib` (`bg/panel/text/accent/good/live/bad/...`), đổi giá trị token là đổi hết cả
+UI, không hardcode hex rải rác trong Java (2 chỗ hardcode còn lại — `0xFF0B1710`, chữ đen trên nút
+START/Chơi lại nền xanh `good` — không cần đổi, không phụ thuộc theme sáng/tối). Có logo EduXplore
+góc trên-trái top bar (`@drawable/logo_eduxplore_transparent` — bản NỀN TRONG SUỐT, khác
+`@drawable/logo_eduxplore` bản NỀN ĐẶC/navy dùng full-bleed cho `showLogoOnSecondaryDisplay()` ở
+máy chiếu — **đừng nhầm 2 file, dùng sai bản sẽ dính khung màu**). Chữ "Môn học"/"Lớp" và giá trị
+đang chọn phóng to (21sp, trước là 12.5sp) vì đây là tiêu đề chính của màn hình.
+
+**Tên game hiển thị ≠ định danh nội bộ** — `GameRegistry.cs`'s `GameEntry` giờ có 2 field tách
+biệt: `name` (định danh nội bộ ổn định — khoá tra icon `Assets/Resources/GameIcons/`, khoá CSV
+variant, giá trị gửi Unity qua `EXTRA_GAME_NAME`/`OnLoadGameRequested` — **không đổi khi sửa câu
+chữ**) và `displayName` (tiếng Việt, hiện lên UI). Mirror `game_registry.json`
+(`NativePlugins/ControlUiAndroidLib/controlui/src/main/assets/`) đã thêm field `displayName`
+tương ứng — sửa tên hiển thị thì sửa Ở CẢ 2 FILE (C# + JSON) để không lệch. `ControlActivity.java`
+dùng `item.displayName` để vẽ danh sách chọn game, nhưng vẫn giữ `selectedGameName`/`item.name`
+(định danh nội bộ) cho toàn bộ logic chọn/gửi Unity — chỗ hiển thị tên game ở nơi khác
+(pause card, banner, summary...) tra ngược qua `displayNameOf(selectedGameName)`.
+
+### Launcher — Home launcher thật của K02 (`D:\X_projects\Launcher`, 2026-09-16/17)
+
+**Project RIÊNG, KHÔNG nằm trong `eduXploreGame2.0`** — 1 app Android launcher (Kotlin, không
+Unity) đăng ký `HOME`+`DEFAULT`, dự định là launcher mặc định thật của tablet K02 (khác
+`ControlActivity`, chỉ là `MAIN`/`LAUNCHER` thường — xem ghi chú đầu file). Màn hình chính: 2
+"hero card" lớn (Game, Quản lý lớp) + lưới icon nhỏ (Files, Cài đặt luôn hiện mặc định, Calib khi
+có). Nền sáng (gradient xanh dương-cam-xanh lá), logo EduXplore, admin ẩn (nhấn góc trên-phải 5
+lần → PIN `0000` → chọn app nào hiện/ẩn) — PIN hiện đang hardcode, đổi được ở
+`MainActivity.ADMIN_PIN`.
+
+- **2 hero card KHÔNG phải app riêng** — trỏ thẳng vào 2 Activity cụ thể **bằng ComponentName**
+  trong CÙNG package `com.EduXplore.X01a` (kiến trúc 3-app-1-APK): Game → `ControlActivity`
+  (label manifest đã đổi thành `"EduGame"`), Quản lý lớp → `ClassManagementActivity` (xem section
+  trên). Hardcode ở `MainActivity.kt`'s `GAME_COMPONENT`/`ROSTER_COMPONENT` — **đổi Activity nào
+  đó thành entry point mới (như đã làm với FA) thì PHẢI sửa 2 hằng số này + build lại + cài lại
+  Launcher, không tự động theo**.
+- **Pin lưu theo ComponentName cụ thể (`package/activity`), không phải theo package** —
+  `PinnedAppsManager`/`AdminActivity` cố ý làm vậy vì 2 Activity khác nhau (Game, Quản lý lớp)
+  chung 1 package, chỉ lưu theo package sẽ đè lẫn nhau. Hệ quả: **đổi `ROSTER_COMPONENT`/
+  `GAME_COMPONENT` sang Activity khác → key cũ trong `pinned_components` (SharedPreferences)
+  không tự migrate** — máy nào đã tick từ trước phải vào lại admin, **bỏ tick rồi tick lại 1
+  lần**. Đã xảy ra thật 1 lần (2026-09-16): đổi `ROSTER_COMPONENT` xong quên cài lại Launcher +
+  quên re-tick, hero card 2 vẫn mở nhầm Activity cũ.
+- **Gotcha admin picker "kẹt pin không gỡ được"** (đã fix) — `AdminActivity.loadAllApps()` liệt
+  kê app bằng `queryIntentActivities(MAIN+LAUNCHER)`, chỉ thấy Activity nào ĐANG có launcher
+  intent-filter. Nếu 1 Activity đã pin từ trước bị gỡ intent-filter (như `MainActivity` của FA
+  khi chuyển launcher-icon sang `ClassManagementActivity`) thì nó biến mất khỏi danh sách admin —
+  **không có cách bỏ tick qua UI, kẹt vĩnh viễn**. Đã sửa: `loadAllApps()` giờ liệt kê thêm cả
+  component đã pin nhưng không còn launcher-activity (đánh dấu `"(ẩn)"`, tra label qua
+  `pm.getActivityInfo()`, fallback icon `pm.defaultActivityIcon` nếu app đã gỡ hẳn) — **bất kỳ
+  Activity nào sau này bị đổi/gỡ launcher-icon đều vẫn gỡ pin được bình thường, không cần sửa gì
+  thêm**.
+- **Test bằng bản debug** (`com.launcher.eduxplore.debug`, package suffix riêng, không đụng
+  launcher thật nếu có) — set làm Home để test: `adb shell cmd role add-role-holder
+  android.app.role.HOME com.launcher.eduxplore.debug`. Kiểm tra Home hiện tại:
+  `adb shell cmd package resolve-activity -a android.intent.action.MAIN -c
+  android.intent.category.HOME --brief`.
+- **Logo dùng chung**: `logo_eduxplore.png` bản NỀN TRONG SUỐT (tách nền từ
+  `Assets/Game/Resources/ui/splash/Logo_Full.png` bằng color-key vì nền gốc phẳng 1 màu) — đã copy
+  sang cả `ControlUiAndroidLib` (`logo_eduxplore_transparent.png`, xem trên) và
+  `FaceEnrollAndroidLib` (`logo_eduxplore.png`, ghi đè tên trùng bản navy đặc cũ — module này
+  KHÔNG có nhu cầu full-bleed navy nên ghi đè thẳng, khác `ControlUiAndroidLib` phải giữ 2 bản).
+
 ### "Quản lý lớp" — ClassManagementActivity (2026-09-16)
 
 Entry point launcher của FA đổi từ `MainActivity` (màn camera) sang **`ClassManagementActivity`**
@@ -96,7 +163,11 @@ Entry point launcher của FA đổi từ `MainActivity` (màn camera) sang **`C
 bằng code (LinearLayout lồng nhau, không RecyclerView/XML item layout), cùng phong cách
 `showManageStudentsDialog()`/`showStudentSamplesDialog()` đã có sẵn trong `MainActivity.kt`.
 `MainActivity` vẫn giữ nguyên toàn bộ pipeline camera/nhận diện/enroll — không viết lại, chỉ
-điều khiển qua Intent extras từ `ClassManagementActivity`:
+điều khiển qua Intent extras từ `ClassManagementActivity`. Giao diện nền **sáng** (đồng bộ Launcher/
+ControlActivity, 2026-09-17) + logo EduXplore góc trên-trái — màu hardcode trực tiếp trong Kotlin
+(`cBg/cCard/cText/cAccent/...` khai ở đầu class), không qua `colors.xml` như `ControlUiAndroidLib`
+(toàn bộ UI của Activity này vốn dựng 100% bằng code, không XML, nên không có chỗ để đặt token).
+`MainActivity` (màn camera) vẫn giữ nguyên theme tối cũ — chưa đồng bộ, chưa ai yêu cầu.
 
 - `EXTRA_TARGET_CLASS` (String) — lớp đang chọn; enroll người MỚI trong phiên này sẽ tự gán
   `className` = giá trị này (xem `showEnrollNameDialog()`'s Lưu action).
@@ -228,6 +299,68 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
   `LidarTouchBridge.SetTouchEnabled()` — dùng CHUNG cờ với nút cứng, nên nút cứng có thể ghi đè
   trạng thái Pause của control panel nếu bấm không đúng lúc (biết trước, chưa fix — hỏi trước
   khi đụng nếu cần tách riêng 2 cờ).
+
+### Calib "vùng tương tác" — icon riêng bằng 5 trụ xốp (2026-09-17)
+
+Icon "Calib" RIÊNG trong APK tổng — khớp ô lưới "Calib khi có" đã để sẵn trong Launcher thật của
+K02 (xem đầu file), **KHÔNG** lồng trong menu chọn game của `ControlActivity`. Bù lệch/xoay/co
+giãn do máy chiếu lắp đặt từng phòng khác nhau — giáo viên tự làm lại bất cứ lúc nào, không cần
+hiểu gì về hình học cảm biến. Tách bạch 2 tầng calib:
+- **Tầng vật lý cảm biến** (`lidar_config.json` — `half_x/hight_floor/offset_angle/...`, xem mục
+  LiDAR touch phía trên) — kỹ thuật viên chỉnh 1 lần lúc lắp, KHÔNG đụng ở đây.
+- **Tầng "vùng tương tác"** (mới, file riêng `interaction_area_calib.json`) — 1 phép affine áp
+  SAU khi đã có toạ độ màn hình thô, giáo viên tự làm.
+
+**UX**: giáo viên đặt **5 trụ xốp tròn tĩnh** (Ø~5cm, cao ~5cm — cao hơn vùng quét LiDAR) vào
+4 góc + tâm vùng chiếu (theo 5 vòng tròn vàng CalibScene chiếu lên sàn), quay lại tablet bấm
+**"Bắt đầu calib"** — không đứng lại lên từng điểm (khác bản nháp đầu, đứng 2 chân cho toạ độ
+không chính xác). Trụ tĩnh hợp với bộ lọc ổn định của native (ưu tiên vật thể đứng yên, xem
+`LidarProcessor.cpp`/`native-lib.cpp`) hơn hẳn chân người, và `find_toe_points()`
+(`liblidar.cpp`) vốn đã trả về 1 sự kiện cho MỖI cụm đạt `min_cluster_size` (hardcode = 3, xem
+`native-lib.cpp:355` — **giữ nguyên 3**, chưa hạ xuống 2; nếu 1 trụ ở góc xa không đủ 3 điểm ổn
+định thì đây là chỗ cần hạ, đợi user báo lại trước khi sửa) — không cần sửa gì ở tầng native để
+nhận cùng lúc 5 vị trí.
+
+**Kiến trúc — 3 phần, TÁCH RIÊNG khỏi ControlActivity/GameControlBridge** (không đụng luồng
+Start/Pause/Stop đã test kỹ trên máy thật):
+- `CalibActivity.java` (`NativePlugins/ControlUiAndroidLib/controlui/.../CalibActivity.java`) —
+  entry point riêng (display 0, MAIN/LAUNCHER thường, không HOME/DEFAULT), tự khởi động
+  `UnityPlayerActivity` vào scene `CalibScene` trên display phụ ngay lúc mở (khác
+  `ControlActivity` phải chờ chọn game). UI 100% code (giống `ClassManagementActivity`): 3 nút
+  Bắt đầu calib / Lưu / Thoát + 1 dòng trạng thái — không dựng lại `findSecondaryDisplay()`/
+  Unity-launch logic dùng chung với `ControlActivity` (chấp nhận trùng lặp nhỏ để tránh rủi ro
+  đụng code đã test).
+- `LidarTouchBridge.cs` (phần cuối file) — API capture: `StartCalibrationCapture()` mở cửa sổ
+  lắng nghe 2.5s, gom điểm thô thành cụm (`ClusterPoints`), gán 5 cụm → 5 vai trò bằng vị trí
+  tương đối so với trọng tâm chung (`AssignRoles` — KHÔNG dựa vào calib cũ, tránh gán sai khi máy
+  chiếu đang lệch nặng), giải affine tối thiểu bình phương (`SolveAffine`, Cramer's rule thuần
+  C#, không cần thư viện ngoài) rồi lưu vào `interaction_area_calib.json`
+  (`CommitPendingCalibration()` — chưa lưu ngay lúc capture xong, chờ giáo viên xem bước xác
+  nhận trực quan rồi mới bấm Lưu).
+- `CalibSceneController.cs` + `CalibControlBridge.cs`
+  (`Assets/Game/Scripts/UIScripts/Calib/`) — scene `CalibScene` (Unity, display máy chiếu),
+  toàn bộ UI (Canvas, 5 vòng tròn mục tiêu, chấm xác nhận) dựng bằng code lúc runtime — GIỐNG
+  `GameControlBridge.CreateBlankOverlay()` — nên file `.unity` chỉ cần đúng 1 GameObject gắn
+  script, không cần dựng UI tay trong Editor. `CalibControlBridge` là bridge 2 chiều RIÊNG với
+  `GameControlBridge` (GameObject tên `"CalibControlBridge"`, gọi ngược
+  `AndroidJavaClass("com.eduxplore.control.CalibActivity")`) — cố ý KHÔNG tổng quát hoá
+  `GameControlBridge.PushReport/PushGameEnded` (đang hardcode gọi `ControlActivity`) để dùng
+  chung, vì đụng vào đó là đụng luồng Start/Pause/Stop đã test kỹ.
+
+**Chưa làm/cần làm tiếp**:
+- Wiring Launcher thật (`D:\X_projects\Launcher`, ngoài repo) — thêm hằng số
+  `CALIB_COMPONENT` trỏ `CalibActivity`, gán vào ô lưới "Calib khi có", build lại + cài lại
+  Launcher (chưa làm trong phiên này, project riêng ngoài repo).
+- Scene `CalibScene.unity` được viết tay (không qua Unity Editor — không có quyền chạy Editor
+  lúc code) dựa theo đúng format 1 scene tối giản có thật trong repo (`Assets/_Test/Animated.unity`
+  cho phần boilerplate OcclusionCulling/RenderSettings/LightmapSettings/NavMeshSettings, và
+  `TestTongHopGame.unity` cho format block MonoBehaviour) — **cần mở Unity Editor 1 lần để xác
+  nhận scene load sạch, không lỗi Console**, trước khi build thật.
+- Build `controlui-release.aar` đã chạy lại (`gradlew :controlui:assembleRelease`) và copy đè
+  `Assets/Plugins/Android/controlui-release.aar` — nhưng CHƯA build/test APK tổng thật trên máy
+  K02.
+- Việc verify trên máy thật: 1 trụ Ø5cm ở góc xa ROI có đủ tạo ≥3 điểm LiDAR ổn định không (xem
+  `min_cluster_size` ở trên); cửa sổ lắng nghe 2.5s đủ dài chưa.
 
 ### Report + Google Sheets sync (Track E)
 

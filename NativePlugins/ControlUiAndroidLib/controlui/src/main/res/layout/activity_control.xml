@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- ============== TOP BAR: Môn học (trái) + Lớp (phải) ============== -->
+        <!-- ============== TOP BAR: Môn học (trái) + Lớp (phải) + logo (ngoài cùng phải) ====== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -26,29 +26,28 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="10dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Môn học"
-                    android:textColor="@color/text_faint"
-                    android:textSize="9.5sp"
-                    android:textStyle="bold"
-                    android:layout_marginEnd="10dp" />
+                android:gravity="end|center_vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp">
 
                 <TextView
                     android:id="@+id/category_trigger"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:minWidth="150dp"
-                    android:padding="8dp"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp"
                     android:textColor="@color/text"
-                    android:textSize="12.5sp"
+                    android:textSize="17sp"
                     android:textStyle="bold"
-                    android:drawablePadding="8dp"
                     android:gravity="center_vertical" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="▾"
+                    android:textColor="@color/text_dim"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <View
@@ -61,29 +60,51 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="10dp">
+                android:gravity="start|center_vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Lớp"
                     android:textColor="@color/text_faint"
-                    android:textSize="9.5sp"
+                    android:textSize="12sp"
                     android:textStyle="bold"
-                    android:layout_marginEnd="10dp" />
+                    android:layout_marginEnd="12dp" />
 
                 <TextView
                     android:id="@+id/class_trigger"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:minWidth="130dp"
-                    android:padding="8dp"
+                    android:minWidth="90dp"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp"
                     android:textColor="@color/text"
-                    android:textSize="12.5sp"
+                    android:textSize="17sp"
                     android:textStyle="bold"
                     android:gravity="center_vertical" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="▾"
+                    android:textColor="@color/text_dim"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
             </LinearLayout>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="64dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginVertical="2dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitEnd"
+                android:maxWidth="176dp"
+                android:src="@drawable/logo_eduxplore_transparent" />
         </LinearLayout>
 
         <!-- ============== BODY: action zone (trái, nhỏ) + report zone (phải, to) ============== -->

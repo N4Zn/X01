@@ -1054,12 +1054,40 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }
 
         val input = EditText(this).apply {
-            hint = "Tên..."
+            hint = "Tên thật..."
+        }
+        rightCol.addView(input)
+
+        // Nickname ("tên thường gọi") - mầm non students mostly go by a home name. Auto-fills
+        // from the real name's last 2 syllables as the teacher types it, but only until the
+        // teacher edits this field directly - after that their own text always wins, even if
+        // they then go back and change the real name (aliasManuallyEdited latch below).
+        val aliasInput = EditText(this).apply {
+            hint = "Tên thường gọi..."
             // Dismiss keyboard when the user taps Done/Enter
             imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
             setOnEditorActionListener { _, _, _ -> clearFocus(); false }
         }
-        rightCol.addView(input)
+        var aliasManuallyEdited = false
+        var lastAutoAlias = ""
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (aliasManuallyEdited) return
+                lastAutoAlias = attendanceStore.defaultAliasFor(s?.toString() ?: "")
+                aliasInput.setText(lastAutoAlias)
+                aliasInput.setSelection(aliasInput.text.length)
+            }
+        })
+        aliasInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (s?.toString() != lastAutoAlias) aliasManuallyEdited = true
+            }
+        })
+        rightCol.addView(aliasInput)
 
         val genderGroup = RadioGroup(this).apply { orientation = RadioGroup.HORIZONTAL }
         val rbMale = RadioButton(this).apply { text = "Nam"; isChecked = true; id = 1001 }
@@ -1079,6 +1107,8 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 if (name.isNotEmpty()) {
                     val gender = if (genderGroup.checkedRadioButtonId == 1002) "nu" else "nam"
                     attendanceStore.setGender(name, gender)
+                    val alias = aliasInput.text.toString().trim()
+                    attendanceStore.setAlias(name, alias.ifEmpty { attendanceStore.defaultAliasFor(name) })
                     targetClassName?.let { attendanceStore.setClassName(name, it) }
                     for ((emb, c) in samples) {
                         attendanceStore.addSample(name, emb, c)
@@ -1189,24 +1219,48 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         val scroll = HorizontalScrollView(this).apply { addView(grid) }
         val headerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val headerText = TextView(this).apply {
-            text = "$name - ${attendanceStore.samplesOf(name).size} sample(s)"
             textSize = 14f
             layoutParams = LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
+        fun refreshHeaderText() {
+            val alias = attendanceStore.aliasOf(name)
+            val realLine = if (alias != name) "\nTên thật: $name" else ""
+            headerText.text = "$alias$realLine\n${attendanceStore.samplesOf(name).size} mẫu"
+        }
+        refreshHeaderText()
         headerRow.addView(headerText)
         headerRow.addView(TextView(this).apply {
-            text = "Đổi tên"
-            setPadding(24, 8, 8, 8)
+            text = "Đổi tên gọi"
+            setPadding(16, 8, 8, 8)
+            setOnClickListener {
+                val input = EditText(this@MainActivity).apply {
+                    val alias = attendanceStore.aliasOf(name)
+                    setText(alias); setSelection(alias.length)
+                }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Đổi tên thường gọi")
+                    .setView(input)
+                    .setPositiveButton("Lưu") { _, _ ->
+                        attendanceStore.setAlias(name, input.text.toString())
+                        refreshHeaderText()
+                    }
+                    .setNegativeButton("Hủy", null)
+                    .show()
+            }
+        })
+        headerRow.addView(TextView(this).apply {
+            text = "Đổi tên thật"
+            setPadding(16, 8, 8, 8)
             setOnClickListener {
                 val input = EditText(this@MainActivity).apply { setText(name); setSelection(name.length) }
                 AlertDialog.Builder(this@MainActivity)
-                    .setTitle("Đổi tên học sinh")
+                    .setTitle("Đổi tên thật học sinh")
                     .setView(input)
                     .setPositiveButton("Lưu") { _, _ ->
                         val newName = input.text.toString().trim()
                         if (attendanceStore.renameEnrollment(name, newName)) {
                             name = newName
-                            headerText.text = "$name - ${attendanceStore.samplesOf(name).size} sample(s)"
+                            refreshHeaderText()
                             toastStatus("Đã đổi tên thành $name")
                         } else if (newName.isNotEmpty()) {
                             toastStatus("Không đổi được tên — trùng với người khác?")

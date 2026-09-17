@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -68,6 +69,76 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     private const string ConfigFileName = "lidar_config.json";
     private LidarConfigJson _config = new LidarConfigJson();
 
+    // ── Calib "vùng tương tác" — hiệu chỉnh phần mềm, TÁCH RIÊNG khỏi lidar_config.json ────────
+    // lidar_config.json (half_x/hight_floor/offset_angle/...) là hình học vật lý của cảm biến,
+    // do kỹ thuật viên chỉnh 1 lần lúc lắp — KHÔNG đụng vào đây. Calib bên dưới là 1 phép biến
+    // đổi affine áp SAU khi đã có toạ độ màn hình thô (RawRefToScreen), bù lệch/xoay/co giãn do
+    // máy chiếu lắp đặt từng phòng khác nhau — giáo viên tự làm lại bất cứ lúc nào, không cần
+    // hiểu gì về cảm biến. Xem CalibSceneController (Assets/Game/Scripts/UIScripts/Calib) cho
+    // luồng UX: đặt 5 trụ xốp vào 4 góc + tâm vùng chiếu, bấm 1 nút, hệ thống tự nhận diện.
+    [Serializable]
+    private class CalibConfigJson
+    {
+        public bool calibrated = false;
+        // corrected = M * raw (toạ độ MÀN HÌNH thô, không phải ref 1024x600) — identity mặc định.
+        public float m00 = 1f, m01 = 0f, m02 = 0f;
+        public float m10 = 0f, m11 = 1f, m12 = 0f;
+    }
+
+    private const string CalibFileName = "interaction_area_calib.json";
+    private CalibConfigJson _calib = new CalibConfigJson();
+    private string CalibFilePath => Path.Combine(Application.persistentDataPath, CalibFileName);
+
+    private void LoadCalib()
+    {
+        try
+        {
+            if (!File.Exists(CalibFilePath))
+            {
+                Debug.Log("[LidarTouchBridge] LoadCalib: chưa calib lần nào — dùng identity (không hiệu chỉnh)");
+                return;
+            }
+            _calib = JsonUtility.FromJson<CalibConfigJson>(File.ReadAllText(CalibFilePath));
+            Debug.Log($"[LidarTouchBridge] LoadCalib: calibrated={_calib.calibrated} " +
+                      $"m=[{_calib.m00:F4},{_calib.m01:F4},{_calib.m02:F1} / {_calib.m10:F4},{_calib.m11:F4},{_calib.m12:F1}]");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[LidarTouchBridge] LoadCalib lỗi: {e.Message} — dùng identity");
+            _calib = new CalibConfigJson();
+        }
+    }
+
+    private void SaveCalib()
+    {
+        try
+        {
+            File.WriteAllText(CalibFilePath, JsonUtility.ToJson(_calib, true));
+            Debug.Log($"[LidarTouchBridge] SaveCalib: đã lưu {CalibFilePath}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[LidarTouchBridge] SaveCalib lỗi: {e.Message}");
+        }
+    }
+
+    /// <summary>Bỏ calib hiện tại, quay về identity (raw, không hiệu chỉnh) — dùng khi kết quả
+    /// calib mới tệ hơn hoặc muốn làm lại từ đầu.</summary>
+    public void ClearCalibration()
+    {
+        _calib = new CalibConfigJson();
+        SaveCalib();
+    }
+
+    public bool HasCalibration => _calib.calibrated;
+
+    private Vector2 ApplyCalib(Vector2 rawScreenPos)
+    {
+        return new Vector2(
+            _calib.m00 * rawScreenPos.x + _calib.m01 * rawScreenPos.y + _calib.m02,
+            _calib.m10 * rawScreenPos.x + _calib.m11 * rawScreenPos.y + _calib.m12);
+    }
+
     [Header("Nút cứng bật/tắt Lidar — van an toàn (Lidar có thể bắn touch rất nhanh/nhiều)")]
     [Tooltip("Đã xác nhận trên K02 thật (09/2026): nút cứng KEY_SELECT bắn ra cả JoystickButton0 " +
              "và Joystick1Button0 cùng lúc (Android map odm:gpio_key thành joystick-like device, " +
@@ -106,6 +177,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     {
         gameObject.name = "LidarTouchBridge"; // Singleton<T> đặt "(singleton) ..." — UnitySendMessage cần đúng tên này
         LoadConfig();
+        LoadCalib();
     }
 
     private string ConfigFilePath => Path.Combine(Application.persistentDataPath, ConfigFileName);
@@ -202,7 +274,16 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         // Rút hết điểm đang chờ mỗi frame (queue tối đa 32 điểm — xem native-lib.cpp).
         while (Lidar_PollTouch(out int refX, out int refY) != 0)
         {
-            Vector2 screenPos = RefToScreen(refX, refY);
+            // Chế độ calib đang lắng nghe (StartCalibrationCapture) — gom điểm THÔ (chưa hiệu
+            // chỉnh) vào buffer riêng, KHÔNG dispatch thành tap UI/hiện vòng tròn đỏ bình
+            // thường, để không vô tình bấm trúng nút trên CalibScene trong lúc đang đo.
+            if (_capturing)
+            {
+                _captureBuffer.Add(RawRefToScreen(refX, refY));
+                continue;
+            }
+
+            Vector2 screenPos = ApplyCalib(RawRefToScreen(refX, refY));
             Debug.Log($"[LidarTouchBridge] Poll: ref=({refX},{refY}) → screen=({screenPos.x:F0},{screenPos.y:F0}) Screen=({Screen.width}x{Screen.height})");
             if (showTouchIndicator)
             {
@@ -228,7 +309,10 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         SetTouchEnabled(!_touchEnabled);
     }
 
-    private static Vector2 RefToScreen(int refX, int refY)
+    /// <summary>Quy đổi toạ độ ref (1024x600) của native sang pixel màn hình THÔ — CHƯA áp
+    /// calib "vùng tương tác" (xem ApplyCalib). Dùng trực tiếp cho capture buffer lúc calib
+    /// (cần toạ độ thô để giải ma trận hiệu chỉnh, không phải toạ độ đã hiệu chỉnh).</summary>
+    private static Vector2 RawRefToScreen(int refX, int refY)
     {
         float sx = (float)refX / RefWidth * Screen.width;
         float sy = (float)refY / RefHeight * Screen.height;
@@ -345,4 +429,279 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
         return _circleSprite;
     }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // CALIB — capture window + gom cụm + gán vai trò + giải affine.
+    //
+    // Luồng: giáo viên đặt 5 trụ xốp tĩnh (4 góc + tâm) vào đúng 5 điểm mốc CalibSceneController
+    // chiếu lên máy chiếu, quay lại tablet bấm 1 nút. StartCalibrationCapture() mở 1 cửa sổ
+    // lắng nghe raw touch (~2-3s) — mỗi trụ tĩnh sẽ được native báo lặp lại nhiều lần (bộ lọc
+    // ổn định của native ưu tiên vật thể đứng yên, xem CLAUDE.md). Sau khi đóng cửa sổ: gom các
+    // điểm thô thành cụm theo khoảng cách, kỳ vọng đúng 5 cụm, gán mỗi cụm vào 1 vai trò (4 góc +
+    // tâm) bằng vị trí tương đối so với trọng tâm chung — KHÔNG dựa vào calib cũ (có thể đang
+    // sai) — rồi giải 1 phép affine tối thiểu bình phương từ 5 cặp (thô ↔ mục tiêu).
+    // ═════════════════════════════════════════════════════════════════════
+
+    /// <summary>1 điểm mốc calib: vai trò (để hiển thị/log) + vị trí mục tiêu trên màn hình
+    /// (pixel, hệ toạ độ Screen thật — gốc dưới-trái, khớp RawRefToScreen).</summary>
+    public struct CalibTarget
+    {
+        public string role;
+        public Vector2 targetScreenPos;
+        public CalibTarget(string role, Vector2 targetScreenPos) { this.role = role; this.targetScreenPos = targetScreenPos; }
+    }
+
+    /// <summary>Kết quả sau 1 lần capture — CalibSceneController dùng để hiện xác nhận trực
+    /// quan (vòng tròn đỏ tại vị trí đã hiệu chỉnh) + quyết định cho Lưu hay bắt làm lại.</summary>
+    public class CalibCaptureResult
+    {
+        public bool success;
+        public string failReason;          // lý do fail, tiếng Việt, hiện thẳng lên UI được
+        public int expectedPoints;
+        public int foundClusters;
+        public List<(string role, Vector2 raw, Vector2 target, float residualPx)> points
+            = new List<(string, Vector2, Vector2, float)>();
+        public float maxResidualPx;
+    }
+
+    private bool _capturing;
+    private List<Vector2> _captureBuffer;
+    private Coroutine _captureCoroutine;
+
+    // Cụm cách nhau dưới ngưỡng này (px màn hình) bị gộp làm 1 — chọn nhỏ hơn nhiều so với
+    // khoảng cách thực tế giữa 2 trụ kề nhau (thường > 1/4 bề rộng vùng chiếu) để không gộp
+    // nhầm 2 trụ khác nhau, nhưng đủ lớn để gom hết rung/nhiễu của cùng 1 trụ.
+    private const float ClusterMergeRadiusPx = 70f;
+    private const int MinSamplesPerCluster = 4; // cụm ít điểm hơn = nhiễu thoáng qua, không phải trụ thật
+
+    /// <summary>Bắt đầu 1 cửa sổ lắng nghe calib — xem region header phía trên. An toàn gọi lại
+    /// (huỷ lần đang chạy dở nếu có). onDone luôn được gọi đúng 1 lần, kể cả khi fail.</summary>
+    public void StartCalibrationCapture(float durationSeconds, CalibTarget[] targets, Action<CalibCaptureResult> onDone)
+    {
+        // Chỉ huỷ capture cũ (nếu đang dở dang) — KHÔNG dùng StopAllCoroutines(), tránh giết
+        // luôn coroutine FadeAndDestroy() của vòng tròn debug touch đang chạy song song.
+        if (_captureCoroutine != null) StopCoroutine(_captureCoroutine);
+        _capturing = false; // StopCoroutine không chạy nốt phần code sau yield — tự reset cờ
+        _captureCoroutine = StartCoroutine(CaptureRoutine(durationSeconds, targets, onDone));
+    }
+
+    private IEnumerator CaptureRoutine(float durationSeconds, CalibTarget[] targets, Action<CalibCaptureResult> onDone)
+    {
+        _captureBuffer = new List<Vector2>();
+        _capturing = true;
+        yield return new WaitForSecondsRealtime(durationSeconds);
+        _capturing = false;
+
+        var result = ProcessCapture(_captureBuffer, targets);
+        onDone?.Invoke(result);
+    }
+
+    private CalibCaptureResult ProcessCapture(List<Vector2> rawPoints, CalibTarget[] targets)
+    {
+        var result = new CalibCaptureResult { expectedPoints = targets.Length };
+
+        var clusters = ClusterPoints(rawPoints, ClusterMergeRadiusPx);
+        clusters.RemoveAll(c => c.count < MinSamplesPerCluster);
+        result.foundClusters = clusters.Count;
+
+        if (clusters.Count != targets.Length)
+        {
+            result.success = false;
+            result.failReason = clusters.Count < targets.Length
+                ? $"Chỉ nhận diện được {clusters.Count}/{targets.Length} điểm — kiểm tra lại trụ có đứng vững, đúng vị trí, không bị che khuất, rồi bấm lại."
+                : $"Phát hiện {clusters.Count} điểm (nhiều hơn {targets.Length} mốc) — có vật lạ trong vùng quét, dọn sạch sàn rồi bấm lại.";
+            return result;
+        }
+
+        if (!AssignRoles(clusters, targets, out var assigned))
+        {
+            result.success = false;
+            result.failReason = "Vị trí 5 trụ chưa đúng hình 4 góc + tâm (bị lệch/xô), đặt lại theo đúng vòng tròn trên máy chiếu rồi bấm lại.";
+            return result;
+        }
+
+        // Giải affine tối thiểu bình phương: target = M * raw, từ N cặp điểm (N = 5).
+        if (!SolveAffine(assigned, out var m))
+        {
+            result.success = false;
+            result.failReason = "5 điểm đặt quá gần/thẳng hàng, không đủ để tính toán — dàn rộng trụ ra 4 góc thật của vùng chiếu rồi bấm lại.";
+            return result;
+        }
+
+        float maxResidual = 0f;
+        foreach (var (role, raw, target) in assigned)
+        {
+            Vector2 predicted = new Vector2(
+                m.m00 * raw.x + m.m01 * raw.y + m.m02,
+                m.m10 * raw.x + m.m11 * raw.y + m.m12);
+            float residual = Vector2.Distance(predicted, target);
+            maxResidual = Mathf.Max(maxResidual, residual);
+            result.points.Add((role, raw, target, residual));
+        }
+        result.maxResidualPx = maxResidual;
+        result.success = true;
+
+        _pendingCalib = m; // chưa lưu — chờ CalibSceneController gọi CommitPendingCalibration() sau bước xác nhận
+        return result;
+    }
+
+    private CalibConfigJson _pendingCalib;
+
+    /// <summary>Áp dụng + lưu kết quả calib vừa tính (ProcessCapture đã thành công) — gọi sau
+    /// khi giáo viên xem bước xác nhận trực quan và bấm "Lưu". Không tự động lưu ngay lúc
+    /// capture xong để còn cơ hội "Làm lại" nếu overlay xác nhận lệch.</summary>
+    public bool CommitPendingCalibration()
+    {
+        if (_pendingCalib == null) return false;
+        _pendingCalib.calibrated = true;
+        _calib = _pendingCalib;
+        _pendingCalib = null;
+        SaveCalib();
+        return true;
+    }
+
+    /// <summary>Xem trước kết quả calib vừa tính (chưa lưu) — CalibSceneController dùng để vẽ
+    /// vòng tròn xác nhận đúng bằng transform MỚI trước khi giáo viên bấm Lưu.</summary>
+    public Vector2 PreviewApplyPendingCalib(Vector2 rawScreenPos)
+    {
+        var m = _pendingCalib ?? _calib;
+        return new Vector2(
+            m.m00 * rawScreenPos.x + m.m01 * rawScreenPos.y + m.m02,
+            m.m10 * rawScreenPos.x + m.m11 * rawScreenPos.y + m.m12);
+    }
+
+    // ── Gom cụm theo khoảng cách (online, centroid chạy) ────────────────────────────────────
+    private static List<(Vector2 centroid, int count)> ClusterPoints(List<Vector2> points, float mergeRadius)
+    {
+        var sums = new List<Vector2>();   // tổng dồn từng cụm (để tính centroid chính xác)
+        var counts = new List<int>();
+
+        foreach (var p in points)
+        {
+            int best = -1;
+            float bestDist = mergeRadius;
+            for (int i = 0; i < counts.Count; i++)
+            {
+                Vector2 centroid = sums[i] / counts[i];
+                float d = Vector2.Distance(centroid, p);
+                if (d <= bestDist) { bestDist = d; best = i; }
+            }
+
+            if (best >= 0) { sums[best] += p; counts[best]++; }
+            else { sums.Add(p); counts.Add(1); }
+        }
+
+        var result = new List<(Vector2, int)>();
+        for (int i = 0; i < counts.Count; i++) result.Add((sums[i] / counts[i], counts[i]));
+        return result;
+    }
+
+    // ── Gán 5 cụm → 5 vai trò bằng vị trí tương đối so với trọng tâm chung — KHÔNG phụ thuộc
+    // calib cũ (có thể đang sai nặng), chỉ dựa vào hình dạng "4 góc quanh 1 tâm" tự nó. ──────
+    private static bool AssignRoles(List<(Vector2 centroid, int count)> clusters, CalibTarget[] targets,
+        out List<(string role, Vector2 raw, Vector2 target)> assigned)
+    {
+        assigned = new List<(string, Vector2, Vector2)>();
+        if (clusters.Count != 5 || targets.Length != 5) return false;
+
+        Vector2 center = Vector2.zero;
+        foreach (var c in clusters) center += c.centroid;
+        center /= clusters.Count;
+
+        // Cụm gần trọng tâm nhất = "Center". 4 cụm còn lại phân vào 4 góc phần tư quanh trọng
+        // tâm — mỗi góc phần tư phải có ĐÚNG 1 cụm, nếu không (trụ đặt lệch méo) → fail rõ ràng
+        // thay vì đoán bừa.
+        int centerIdx = 0;
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < clusters.Count; i++)
+        {
+            float d = Vector2.Distance(clusters[i].centroid, center);
+            if (d < bestDist) { bestDist = d; centerIdx = i; }
+        }
+
+        var remaining = new List<Vector2>();
+        for (int i = 0; i < clusters.Count; i++) if (i != centerIdx) remaining.Add(clusters[i].centroid);
+
+        // (dx<0,dy>0)=TopLeft (dx>0,dy>0)=TopRight (dx<0,dy<0)=BottomLeft (dx>0,dy<0)=BottomRight
+        // — khớp quy ước targets đặt tên trong CalibSceneController (Screen space, Y-up).
+        var quadrantOf = new Dictionary<string, Vector2?>
+        {
+            ["TopLeft"] = null, ["TopRight"] = null, ["BottomLeft"] = null, ["BottomRight"] = null,
+        };
+        foreach (var p in remaining)
+        {
+            Vector2 d = p - center;
+            string q = d.x < 0
+                ? (d.y >= 0 ? "TopLeft" : "BottomLeft")
+                : (d.y >= 0 ? "TopRight" : "BottomRight");
+            if (quadrantOf[q] != null) return false; // 2 cụm cùng 1 góc phần tư — đặt lệch méo
+            quadrantOf[q] = p;
+        }
+        if (quadrantOf["TopLeft"] == null || quadrantOf["TopRight"] == null ||
+            quadrantOf["BottomLeft"] == null || quadrantOf["BottomRight"] == null) return false;
+
+        var rawByRole = new Dictionary<string, Vector2>
+        {
+            ["Center"] = clusters[centerIdx].centroid,
+            ["TopLeft"] = quadrantOf["TopLeft"].Value,
+            ["TopRight"] = quadrantOf["TopRight"].Value,
+            ["BottomLeft"] = quadrantOf["BottomLeft"].Value,
+            ["BottomRight"] = quadrantOf["BottomRight"].Value,
+        };
+
+        foreach (var t in targets)
+        {
+            if (!rawByRole.TryGetValue(t.role, out Vector2 raw)) return false; // role lạ, không khớp 5 tên chuẩn
+            assigned.Add((t.role, raw, t.targetScreenPos));
+        }
+        return true;
+    }
+
+    // ── Affine tối thiểu bình phương: [tx,ty] = M * [rawX,rawY,1] — giải qua 2 hệ 3x3 độc lập
+    // (Cramer's rule), dùng chung 1 ma trận thiết kế A cho cả tx và ty. ─────────────────────
+    private static bool SolveAffine(List<(string role, Vector2 raw, Vector2 target)> pairs, out CalibConfigJson m)
+    {
+        m = null;
+        int n = pairs.Count;
+        if (n < 3) return false;
+
+        // Normal equations: (AᵀA) x = Aᵀb, với hàng A = [rawX, rawY, 1]
+        double sxx = 0, sxy = 0, sx = 0, syy = 0, sy = 0, s1 = n;
+        double sxtx = 0, sytx = 0, stx = 0;
+        double sxty = 0, syty = 0, sty = 0;
+
+        foreach (var (_, raw, target) in pairs)
+        {
+            double x = raw.x, y = raw.y, tx = target.x, ty = target.y;
+            sxx += x * x; sxy += x * y; sx += x;
+            syy += y * y; sy += y;
+            sxtx += x * tx; sytx += y * tx; stx += tx;
+            sxty += x * ty; syty += y * ty; sty += ty;
+        }
+
+        // Ma trận đối xứng 3x3 dùng chung cho cả 2 hệ (tx và ty):
+        //  | sxx sxy sx | |a|   |sxtx|      | sxx sxy sx | |d|   |sxty|
+        //  | sxy syy sy | |b| = |sytx|  và  | sxy syy sy | |e| = |syty|
+        //  | sx  sy  s1 | |c|   |stx |      | sx  sy  s1 | |f|   |sty |
+        double det = Det3(sxx, sxy, sx, sxy, syy, sy, sx, sy, s1);
+        if (Math.Abs(det) < 1e-6) return false; // 5 điểm gần thẳng hàng — không giải được
+
+        double a = Det3(sxtx, sxy, sx, sytx, syy, sy, stx, sy, s1) / det;
+        double b = Det3(sxx, sxtx, sx, sxy, sytx, sy, sx, stx, s1) / det;
+        double c = Det3(sxx, sxy, sxtx, sxy, syy, sytx, sx, sy, stx) / det;
+
+        double d = Det3(sxty, sxy, sx, syty, syy, sy, sty, sy, s1) / det;
+        double e = Det3(sxx, sxty, sx, sxy, syty, sy, sx, sty, s1) / det;
+        double f = Det3(sxx, sxy, sxty, sxy, syy, syty, sx, sy, sty) / det;
+
+        m = new CalibConfigJson
+        {
+            m00 = (float)a, m01 = (float)b, m02 = (float)c,
+            m10 = (float)d, m11 = (float)e, m12 = (float)f,
+        };
+        return true;
+    }
+
+    private static double Det3(double a, double b, double c, double d, double e, double f, double g, double h, double i)
+        => a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
 }
