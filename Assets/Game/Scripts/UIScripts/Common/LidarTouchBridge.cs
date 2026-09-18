@@ -322,6 +322,57 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         return new Vector2(sx, sy);
     }
 
+    /// <summary>Mô phỏng LẠI ĐÚNG công thức convert_to_1024x600() của native (liblidar.cpp) bằng
+    /// C#, dùng _config (half_x/hight_floor/ymax/shift_x_floor/shift_x/shift_y) đang áp dụng —
+    /// để biết "nếu có 1 điểm thật ở toạ độ (mmX,mmY) theo hệ trục LiDAR thì nó sẽ hiện ra ở đâu
+    /// trên màn hình thô (chưa hiệu chỉnh calib)". Dùng cho bộ lọc gợi ý vị trí (xem
+    /// FilterNearHints) — KHÔNG dùng để tính calib trực tiếp, vì bản thân _config có thể đang
+    /// lệch (đó chính là lý do cần calib) — chỉ dùng để KHOANH VÙNG lọc nhiễu xa (vd tường).</summary>
+    private Vector2 MmToRawScreen(float mmX, float mmY)
+    {
+        float xmin = -_config.half_x + _config.shift_x_floor;
+        float widthFloor = 2f * _config.half_x;
+        float ymin = _config.ymax - _config.hight_floor;
+
+        float p100x = (mmX - (xmin + _config.shift_x_floor)) / widthFloor * RefWidth + _config.shift_x;
+        float p100y = RefHeight - (mmY - ymin) / _config.hight_floor * RefHeight + _config.shift_y;
+
+        return RawRefToScreen(Mathf.RoundToInt(p100x), Mathf.RoundToInt(p100y));
+    }
+
+    /// <summary>Lọc bớt điểm thô ở QUÁ XA mọi gợi ý vị trí (targets có expectedRawMm) trước khi
+    /// gom cụm — tránh nhiễu ở xa (tường, vật cản khác trong phòng nhỏ) bị coi là "cụm ổn định"
+    /// thay vì trụ thật. Target nào chưa có expectedRawMm (chưa đo) thì KHÔNG góp phần lọc —
+    /// nếu KHÔNG target nào có gợi ý, trả về nguyên vẹn danh sách (giữ hành vi cũ, không lọc).</summary>
+    private List<Vector2> FilterNearHints(List<Vector2> rawPoints, IEnumerable<Vector2?> hintsMm, float windowRadiusMm)
+    {
+        var windows = new List<(float minX, float maxX, float minY, float maxY)>();
+        foreach (var hint in hintsMm)
+        {
+            if (hint == null) continue;
+            Vector2 c1 = MmToRawScreen(hint.Value.x - windowRadiusMm, hint.Value.y - windowRadiusMm);
+            Vector2 c2 = MmToRawScreen(hint.Value.x + windowRadiusMm, hint.Value.y + windowRadiusMm);
+            var win = (Mathf.Min(c1.x, c2.x), Mathf.Max(c1.x, c2.x), Mathf.Min(c1.y, c2.y), Mathf.Max(c1.y, c2.y));
+            windows.Add(win);
+            Debug.Log($"[LidarTouchBridge] FilterNearHints: gợi ý mm({hint.Value.x:F0},{hint.Value.y:F0}) → cửa sổ màn hình thô " +
+                      $"x=[{win.Item1:F0},{win.Item2:F0}] y=[{win.Item3:F0},{win.Item4:F0}]");
+        }
+        if (windows.Count == 0) return rawPoints; // chưa target nào đo mm — giữ hành vi cũ
+
+        var result = new List<Vector2>();
+        foreach (var p in rawPoints)
+        {
+            foreach (var w in windows)
+            {
+                if (p.x >= w.minX && p.x <= w.maxX && p.y >= w.minY && p.y <= w.maxY) { result.Add(p); break; }
+            }
+        }
+        return result;
+    }
+
+    // Sai lệch cho phép quanh toạ độ mm dự kiến — theo đề xuất thực tế (200-300mm), lấy giữa.
+    private const float HintWindowRadiusMm = 250f;
+
     // Down + Up ngay lập tức tại vị trí Lidar phát hiện — chỉ touch điểm rời rạc, không có
     // drag/swipe (độ phân giải Lidar hiện tại không đủ cho việc đó, đã thống nhất bỏ qua).
     private static void DispatchTap(Vector2 screenPosition)
@@ -443,12 +494,22 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     // ═════════════════════════════════════════════════════════════════════
 
     /// <summary>1 điểm mốc calib: vai trò (để hiển thị/log) + vị trí mục tiêu trên màn hình
-    /// (pixel, hệ toạ độ Screen thật — gốc dưới-trái, khớp RawRefToScreen).</summary>
+    /// (pixel, hệ toạ độ Screen thật — gốc dưới-trái, khớp RawRefToScreen) + GỢI Ý toạ độ thô
+    /// (mm, theo hệ trục LiDAR — đo thật ngoài đời, KHÔNG phải suy từ lidar_config.json vì
+    /// chính config đó có thể đang lệch, xem CLAUDE.md) để lọc bớt nhiễu xa (vd tường) trước
+    /// khi gom cụm. null = chưa đo, bỏ qua bộ lọc này cho điểm đó (vẫn hoạt động như trước).</summary>
     public struct CalibTarget
     {
         public string role;
         public Vector2 targetScreenPos;
-        public CalibTarget(string role, Vector2 targetScreenPos) { this.role = role; this.targetScreenPos = targetScreenPos; }
+        public Vector2? expectedRawMm;
+
+        public CalibTarget(string role, Vector2 targetScreenPos, Vector2? expectedRawMm = null)
+        {
+            this.role = role;
+            this.targetScreenPos = targetScreenPos;
+            this.expectedRawMm = expectedRawMm;
+        }
     }
 
     /// <summary>Kết quả sau 1 lần capture — CalibSceneController dùng để hiện xác nhận trực
@@ -472,7 +533,13 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     // khoảng cách thực tế giữa 2 trụ kề nhau (thường > 1/4 bề rộng vùng chiếu) để không gộp
     // nhầm 2 trụ khác nhau, nhưng đủ lớn để gom hết rung/nhiễu của cùng 1 trụ.
     private const float ClusterMergeRadiusPx = 70f;
-    private const int MinSamplesPerCluster = 4; // cụm ít điểm hơn = nhiễu thoáng qua, không phải trụ thật
+    // Dùng ở cả 2 chế độ để loại noise vụn (cụm 1-2 điểm rời rạc, không đáng tin) trước khi gom
+    // thành danh sách ứng viên — KHÔNG còn dùng để tự "đoán" cụm nào là trụ (chế độ tuần tự đã
+    // bỏ việc tự chọn, đẩy quyết định cuối cho giáo viên, xem javadoc StartSinglePointCapture).
+    // Hạ từ 4 xuống 3 theo yêu cầu thật (2026-09-17) — khớp luôn với min_cluster_size=3 hardcode
+    // ở tầng native (find_toe_points(clusters,3), native-lib.cpp), tránh bỏ sót cụm trụ thật có
+    // ít điểm hơn do throttle 150ms native chia sẻ giữa nhiều vật cùng lúc trong vùng quét.
+    private const int MinSamplesPerCluster = 3;
 
     /// <summary>Bắt đầu 1 cửa sổ lắng nghe calib — xem region header phía trên. An toàn gọi lại
     /// (huỷ lần đang chạy dở nếu có). onDone luôn được gọi đúng 1 lần, kể cả khi fail.</summary>
@@ -500,16 +567,36 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     {
         var result = new CalibCaptureResult { expectedPoints = targets.Length };
 
+        // expectedRawMm CHỈ dùng để log so sánh — KHÔNG dùng để loại điểm nữa (xem javadoc
+        // StartSinglePointCapture cho lịch sử bug: MmToRawScreen dựa vào chính hình học
+        // lidar_config.json đang lệch, lọc cứng theo đó có thể loại nhầm cụm đúng).
+        if (System.Array.Exists(targets, t => t.expectedRawMm != null))
+        {
+            var hints = new Vector2?[targets.Length];
+            for (int i = 0; i < targets.Length; i++) hints[i] = targets[i].expectedRawMm;
+            FilterNearHints(rawPoints, hints, HintWindowRadiusMm);
+        }
+
         var clusters = ClusterPoints(rawPoints, ClusterMergeRadiusPx);
+        Debug.Log($"[LidarTouchBridge] ProcessCapture: {rawPoints.Count} điểm thô → {clusters.Count} cụm " +
+                  $"[{string.Join(", ", clusters.ConvertAll(c => $"({c.centroid.x:F0},{c.centroid.y:F0})x{c.count}"))}] " +
+                  $"(ngưỡng tối thiểu {MinSamplesPerCluster} điểm/cụm)");
         clusters.RemoveAll(c => c.count < MinSamplesPerCluster);
         result.foundClusters = clusters.Count;
+
+        if (clusters.Count > targets.Length)
+        {
+            // Nhiều hơn cần thiết (nhiễu xa như tường) → giữ lại đúng N cụm NHIỀU ĐIỂM NHẤT,
+            // loại các cụm nhỏ/thoáng qua còn lại — không fail ngay chỉ vì có nhiễu phụ.
+            clusters.Sort((a, b) => b.count.CompareTo(a.count));
+            clusters.RemoveRange(targets.Length, clusters.Count - targets.Length);
+            result.foundClusters = clusters.Count;
+        }
 
         if (clusters.Count != targets.Length)
         {
             result.success = false;
-            result.failReason = clusters.Count < targets.Length
-                ? $"Chỉ nhận diện được {clusters.Count}/{targets.Length} điểm — kiểm tra lại trụ có đứng vững, đúng vị trí, không bị che khuất, rồi bấm lại."
-                : $"Phát hiện {clusters.Count} điểm (nhiều hơn {targets.Length} mốc) — có vật lạ trong vùng quét, dọn sạch sàn rồi bấm lại.";
+            result.failReason = $"Chỉ nhận diện được {clusters.Count}/{targets.Length} điểm — kiểm tra lại trụ có đứng vững, đúng vị trí, không bị che khuất, rồi bấm lại.";
             return result;
         }
 
@@ -530,50 +617,105 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     // lần duy nhất ở FinishSequentialCalibration(), dùng CHUNG code giải affine với chế độ
     // 5-trụ-cùng-lúc (FinalizeFromAssignedPoints). ────────────────────────────────────────────
 
-    /// <summary>Kết quả 1 lần đo ĐÚNG 1 điểm — CalibSceneController dùng cho chế độ tuần tự.</summary>
+    /// <summary>Kết quả 1 lần đo — CalibSceneController dùng cho chế độ tuần tự. KHÔNG tự quyết
+    /// định cụm nào là trụ nữa (xem lịch sử bug bên dưới) — trả về TOÀN BỘ cụm tìm được (sắp
+    /// theo số điểm giảm dần) để giáo viên tự chọn bằng mắt (số đánh trên máy chiếu).</summary>
     public struct SinglePointCaptureResult
     {
-        public bool success;
+        public bool anyDetected;
         public string failReason;
-        public Vector2 raw;
-        public int sampleCount;
+        public List<(Vector2 centroid, int count)> candidates; // rỗng nếu !anyDetected
     }
 
-    /// <summary>Mở 1 cửa sổ lắng nghe ngắn, mong đợi ĐÚNG 1 trụ trong vùng quét (khác
-    /// StartCalibrationCapture() mong đợi đủ N trụ cùng lúc). Fail nếu 0 hoặc >1 cụm.</summary>
-    public void StartSinglePointCapture(float durationSeconds, Action<SinglePointCaptureResult> onDone)
+    // Trần số ứng viên hiện lên UI — nhiều hơn nữa chỉ là nhiễu vụn, không cần hiện hết.
+    private const int MaxCandidates = 6;
+
+    /// <summary>Mở 1 cửa sổ lắng nghe ngắn cho chế độ tuần tự (1 trụ). Vẫn gom cụm + lọc theo
+    /// MinSamplesPerCluster như cũ (loại noise vụn) — nhưng KHÔNG tự đoán cụm nào là trụ nữa,
+    /// trả về HẾT các cụm ĐẠT ngưỡng (sau khi lọc bớt cụm rõ ràng sai góc phần tư màn hình), để
+    /// CalibSceneController hiện lên máy chiếu (đánh số) cho giáo viên tự chọn đúng vị trí trụ.
+    ///
+    /// Lịch sử 2 lần sửa hỏng trước khi tới bản này (test thật trên K02, 2026-09-17):
+    /// 1) Lọc cứng theo expectedMm (CalibTarget.expectedRawMm) qua MmToRawScreen — SAI, vì phép
+    ///    quy đổi mm→màn hình dùng CHÍNH hình học lidar_config.json đang lệch (đó LÀ lý do cần
+    ///    calib), lọc cứng theo 1 phép quy đổi đã biết sai → loại nhầm sạch cả cụm đúng.
+    /// 2) Tự chọn "cụm nhiều điểm nhất" — CŨNG SAI: phòng nhỏ có vật tĩnh (tường/góc phòng)
+    ///    phản xạ mạnh/liên tục hơn 1 trụ nhỏ, luôn thắng "nhiều điểm nhất" dù không phải trụ —
+    ///    xác nhận thật: 4/5 điểm đo ra cùng 1 vị trí bất kể trụ đặt ở đâu, vòng đỏ debug hiện
+    ///    sai chỗ. Không có cách tự động phân biệt "trụ" với "vật tĩnh" từ phía thuật toán —
+    ///    CHỈ người đứng đó mới biết trụ đang ở đâu, nên đẩy quyết định cho con người.
+    ///
+    /// role: "TopLeft"/"TopRight"/"BottomLeft"/"BottomRight"/"Center" — dùng để loại bớt ứng
+    /// viên rõ ràng SAI PHÍA màn hình (vd đang đo góc trên-trái mà ra ứng viên ở góc dưới-phải).
+    /// Đây CHỈ là lọc thô theo 1/4 màn hình (so với tâm), KHÔNG dùng toạ độ mm/hình học đã chứng
+    /// minh không đáng tin — xem lịch sử bug trong SinglePointCaptureRoutine). Quyết định CUỐI
+    /// vẫn luôn là con người (đánh số lên máy chiếu, giáo viên tự chọn) — lọc góc chỉ đỡ rối
+    /// màn hình chọn, không tự ý quyết định thay.</summary>
+    public void StartSinglePointCapture(float durationSeconds, string role, Action<SinglePointCaptureResult> onDone)
     {
         if (_captureCoroutine != null) StopCoroutine(_captureCoroutine);
         _capturing = false;
-        _captureCoroutine = StartCoroutine(SinglePointCaptureRoutine(durationSeconds, onDone));
+        _captureCoroutine = StartCoroutine(SinglePointCaptureRoutine(durationSeconds, role, onDone));
     }
 
-    private IEnumerator SinglePointCaptureRoutine(float durationSeconds, Action<SinglePointCaptureResult> onDone)
+    /// <summary>Ứng viên có nằm ĐÚNG 1/4 màn hình ứng với role đang đo không — so với TÂM màn
+    /// hình thô (Screen.width/2, Screen.height/2), hệ Y-up (khớp RawRefToScreen). Chỉ áp dụng
+    /// cho 4 góc — "Center" không lọc (có thể ở bất kỳ đâu gần giữa).</summary>
+    private static bool InExpectedQuadrant(Vector2 rawScreenPos, string role)
+    {
+        float cx = Screen.width / 2f, cy = Screen.height / 2f;
+        switch (role)
+        {
+            case "TopLeft":     return rawScreenPos.x < cx && rawScreenPos.y > cy;
+            case "TopRight":    return rawScreenPos.x > cx && rawScreenPos.y > cy;
+            case "BottomLeft":  return rawScreenPos.x < cx && rawScreenPos.y < cy;
+            case "BottomRight": return rawScreenPos.x > cx && rawScreenPos.y < cy;
+            default: return true; // Center hoặc role lạ — không lọc
+        }
+    }
+
+    private IEnumerator SinglePointCaptureRoutine(float durationSeconds, string role, Action<SinglePointCaptureResult> onDone)
     {
         _captureBuffer = new List<Vector2>();
         _capturing = true;
         yield return new WaitForSecondsRealtime(durationSeconds);
         _capturing = false;
 
+        Debug.Log($"[LidarTouchBridge] SinglePointCapture: điểm thô = [{string.Join(", ", _captureBuffer.ConvertAll(p => $"({p.x:F0},{p.y:F0})"))}]");
+
+        // Vẫn gom cụm + lọc theo MinSamplesPerCluster như cũ (loại noise vụn 1-2 điểm rời rạc)
+        // — chỉ khác chỗ KHÔNG tự chọn "cụm nhiều điểm nhất" nữa (đã xác nhận sai, xem javadoc
+        // trên), mà giữ lại HẾT các cụm ĐẠT ngưỡng làm ứng viên cho người dùng tự chọn.
         var clusters = ClusterPoints(_captureBuffer, ClusterMergeRadiusPx);
+        clusters.Sort((a, b) => b.count.CompareTo(a.count));
+        Debug.Log($"[LidarTouchBridge] SinglePointCapture: {_captureBuffer.Count} điểm thô → {clusters.Count} cụm " +
+                  $"[{string.Join(", ", clusters.ConvertAll(c => $"({c.centroid.x:F0},{c.centroid.y:F0})x{c.count}"))}] " +
+                  $"(ngưỡng tối thiểu {MinSamplesPerCluster} điểm/cụm)");
         clusters.RemoveAll(c => c.count < MinSamplesPerCluster);
 
-        var result = new SinglePointCaptureResult();
+        // Lọc thô theo 1/4 màn hình — CÓ dự phòng: nếu lọc xong rỗng (lỡ mọi ứng viên đều "sai
+        // phía" — có thể do trụ thật cũng bị lệch phía do hình học quá tệ), KHÔNG chặn cứng,
+        // quay lại danh sách đầy đủ trước lọc kèm cảnh báo trong log, để không bỏ sót trụ thật.
+        var beforeQuadrantFilter = new List<(Vector2 centroid, int count)>(clusters);
+        clusters.RemoveAll(c => !InExpectedQuadrant(c.centroid, role));
+        if (clusters.Count == 0 && beforeQuadrantFilter.Count > 0)
+        {
+            Debug.LogWarning($"[LidarTouchBridge] SinglePointCapture: lọc góc phần tư ({role}) loại hết {beforeQuadrantFilter.Count} cụm " +
+                              "— có thể hình học đang lệch nặng, giữ nguyên danh sách đầy đủ thay vì báo 0 kết quả.");
+            clusters = beforeQuadrantFilter;
+        }
+
+        if (clusters.Count > MaxCandidates) clusters.RemoveRange(MaxCandidates, clusters.Count - MaxCandidates);
+
+        var result = new SinglePointCaptureResult { candidates = clusters };
         if (clusters.Count == 0)
         {
-            result.success = false;
-            result.failReason = "Không phát hiện được trụ nào — kiểm tra đã đặt đúng vị trí, đứng vững, không bị che khuất, rồi bấm lại.";
-        }
-        else if (clusters.Count > 1)
-        {
-            result.success = false;
-            result.failReason = $"Phát hiện {clusters.Count} vật trong vùng quét — dọn sạch sàn, chỉ để đúng 1 trụ, rồi bấm lại.";
+            result.anyDetected = false;
+            result.failReason = "Không phát hiện được vật gì trong vùng quét — kiểm tra trụ có đặt đúng vị trí, đứng vững, không bị che khuất, rồi bấm lại.";
         }
         else
         {
-            result.success = true;
-            result.raw = clusters[0].centroid;
-            result.sampleCount = clusters[0].count;
+            result.anyDetected = true;
         }
         onDone?.Invoke(result);
     }

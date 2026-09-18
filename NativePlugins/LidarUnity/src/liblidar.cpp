@@ -8,6 +8,8 @@
 #include <cmath>
 #include <thread>
 #include <atomic>
+#include <vector>
+#include <algorithm>
 #include "liblidar.h"
 
 #include <fcntl.h>
@@ -27,9 +29,20 @@ extern std::atomic<bool> g_touch_enabled;
 // Defined in native-lib.cpp — nhận điểm touch đã tính toạ độ, đẩy vào queue cho Unity poll.
 extern void PushTouchPoint(int x, int y);
 
-// C++-level throttle timestamp — tránh đẩy vào queue quá dày (giữ nguyên nhịp gốc).
-static std::atomic<int64_t> g_last_touch_call_ms{0};
+// C++-level throttle — tránh đẩy CÙNG 1 touch vào queue quá dày (giữ nguyên nhịp gốc: 1 vị trí
+// không báo lại nhanh hơn 150ms/lần, tránh dội SurfaceFlinger). ĐÃ SỬA (2026-09-17, xác nhận bug
+// thật trên K02): bản gốc dùng 1 mốc thời gian TOÀN CỤC — nghĩa là báo xong 1 điểm thì KHOÁ luôn
+// 150ms tiếp theo cho MỌI điểm khác, kể cả điểm ở vị trí hoàn toàn khác (vd 2 người chạm cùng lúc
+// 2 chỗ, hoặc 1 vật tĩnh lớn — như tường trong phòng nhỏ — liên tục thắng suất báo, khiến vật nhỏ
+// hơn/xa hơn (như trụ calib) gần như không bao giờ có cơ hội được đẩy sang Unity). Giờ mỗi vị trí
+// (gộp theo bán kính SAME_TOUCH_MERGE_RADIUS) có mốc thời gian RIÊNG — các touch KHÁC nhau không
+// còn tranh giành 1 suất chung nữa, chỉ CÙNG 1 touch mới bị giãn cách 150ms như cũ.
 static constexpr int64_t TOUCH_MIN_INTERVAL_MS = 150;
+static constexpr float SAME_TOUCH_MERGE_RADIUS = 100.0f; // px (ref 1024x600) — 2 điểm trong bán kính này coi là CÙNG 1 touch
+
+struct RecentSend { int x, y; int64_t ts; };
+static std::vector<RecentSend> g_recent_sends;
+static std::mutex g_recent_sends_mutex;
 
 static int64_t nowMs() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -530,14 +543,29 @@ void touch_point_disapear_pthID_fnc() {
 void sendTouchRelease() {}   // no-op — kept for linker (called from native-lib.cpp)
 
 // Đẩy thẳng vào queue cho Unity C# poll mỗi frame — không còn evdev/JNI injection nào.
+// Throttle theo TỪNG vị trí (xem giải thích ở khai báo g_recent_sends phía trên) — không còn
+// dùng 1 mốc thời gian chung cho mọi điểm nữa.
 void sendTouch(int x, int y) {
     if (!g_touch_enabled.load()) return;
 
     int64_t now = nowMs();
-    int64_t last = g_last_touch_call_ms.load(std::memory_order_relaxed);
-    if (now - last < TOUCH_MIN_INTERVAL_MS) return;
-    g_last_touch_call_ms.store(now, std::memory_order_relaxed);
+    std::lock_guard<std::mutex> lock(g_recent_sends_mutex);
 
+    // Dọn các bản ghi đã quá hạn (>=150ms) — không cần nhớ nữa.
+    g_recent_sends.erase(
+        std::remove_if(g_recent_sends.begin(), g_recent_sends.end(),
+            [now](const RecentSend& r) { return now - r.ts >= TOUCH_MIN_INTERVAL_MS; }),
+        g_recent_sends.end());
+
+    // Có bản ghi nào GẦN (x,y) vừa gửi trong 150ms qua không — nếu có, đây là CÙNG 1 touch vừa
+    // báo rồi, bỏ qua lần này (đúng mục đích gốc: tránh dội SurfaceFlinger).
+    for (const auto& r : g_recent_sends) {
+        float dx = static_cast<float>(r.x - x);
+        float dy = static_cast<float>(r.y - y);
+        if (dx * dx + dy * dy <= SAME_TOUCH_MERGE_RADIUS * SAME_TOUCH_MERGE_RADIUS) return;
+    }
+
+    g_recent_sends.push_back({x, y, now});
     PushTouchPoint(x, y);
     LOGI(TAG, "Tap (%d,%d) → queue", x, y);
 }

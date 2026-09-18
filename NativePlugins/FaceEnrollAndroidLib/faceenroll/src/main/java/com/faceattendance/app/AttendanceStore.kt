@@ -244,6 +244,16 @@ class AttendanceStore(private val context: Context) {
         return true
     }
 
+    /** Creates a name-only "chưa có ảnh" placeholder enrollment (zero samples) if it doesn't
+     * already exist - lets a teacher pre-register a class roster by name before anyone has
+     * actually been photographed yet (shows up as "Cần ảnh" like any other unphotographed
+     * student), and is also how seeded/demo rosters get created. No-op if already enrolled. */
+    fun ensurePlaceholder(name: String) {
+        if (name in enrolled) return
+        enrolled[name] = mutableListOf()
+        persist()
+    }
+
     /** Saves a face-crop Mat as a JPEG under enrolled_photos/<name>/ and returns its path. */
     private fun saveSamplePhoto(name: String, faceCrop: Mat?): String? {
         if (faceCrop == null || faceCrop.empty()) return null

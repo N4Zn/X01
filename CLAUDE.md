@@ -292,13 +292,49 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
   màu đỏ, x1.5 kích thước gốc.
 - **Config calib** (`half_x`, `hight_floor`, `ymax`, `shift_x/y`, `offset_angle`, ...) — file JSON
   editable trên máy KHÔNG cần rebuild: `Application.persistentDataPath/lidar_config.json`, gọi
-  `LidarTouchBridge.Instance.ReloadConfig()` hoặc restart app để áp dụng. Giá trị calib thật đã
-  xác nhận hoạt động: `{half_x:1130, hight_floor:1350, ymax:-600, shift_x_floor:1, shift_y:1,
-  shift_x:1, offset_angle:-5, nums_point_report:2}`.
+  `LidarTouchBridge.Instance.ReloadConfig()` hoặc restart app để áp dụng.
+  - **Máy chiếu #1** (đã xác nhận hoạt động trước 2026-09-17): `{half_x:1130,
+    hight_floor:1350, ymax:-600, shift_x_floor:1, shift_y:1, shift_x:1, offset_angle:-5,
+    nums_point_report:2}`.
+  - **Máy chiếu #2 (đang dùng hiện tại, 2026-09-18, tune bằng `MyNativeApp_v3` — xem section
+    riêng bên dưới)**: `{half_x:1190, hight_floor:1380, ymax:-800, shift_x_floor:-110,
+    shift_y:-15, shift_x:-35, offset_angle:-5, nums_point_report:2}`. Khớp đúng backup mới nhất
+    `lidar_config.json.new_20260918_v2` — không có gì mới hơn chưa ghi lại.
+  - Backup cả 2 bộ (+ mọi lần đổi khác, gồm cả 1 bộ nháp `new_20260917_projector_2340x1400`
+    không dùng) lưu tại `NativePlugins/K02DeviceConfig/backups/`.
 - `GameControlBridge.OnPauseRequested/OnResumeRequested`/`OnStopRequested` đều gọi
   `LidarTouchBridge.SetTouchEnabled()` — dùng CHUNG cờ với nút cứng, nên nút cứng có thể ghi đè
   trạng thái Pause của control panel nếu bấm không đúng lúc (biết trước, chưa fix — hỏi trước
   khi đụng nếu cần tách riêng 2 cờ).
+
+### Công cụ tune `lidar_config.json` — `MyNativeApp_v3` (2026-09-18)
+
+**Project RIÊNG, NGOÀI repo này** — `D:\X_projects\DangLHb\MyNativeApp_v3` (Android Studio,
+Gradle, KHÔNG phải Unity — tiền thân của `NativePlugins/LidarUnity` trong chính repo này, package
+`com.example.mynativeapp_v1`, cài song song trên K02 không đụng gì tới app EduXplore chính).
+Dùng để **tune nhanh** `half_x/hight_floor/ymax/shift_x_floor/shift_y/shift_x/offset_angle/
+nums_point_report` bằng mắt — nhập số → Lưu → áp dụng NGAY (không cần khởi động lại) → sang màn
+hình xem chấm hiện trực tiếp theo cảm biến — rồi báo số liệu để ghi vào `lidar_config.json` thật
+của app chính (2 nơi lưu HOÀN TOÀN TÁCH BIỆT, không tự đồng bộ).
+
+- `MainActivity` — form nhập tay 8 tham số, nút "Lưu" gọi thẳng `sendLidarConfig()` (native, áp
+  dụng sống) + lưu `SharedPreferences`. Chọn cổng UART + "Connect" → mở `ThirdActivity`.
+- `ThirdActivity` + `DotView` — màn hình full-screen vẽ chấm tại vị trí LiDAR phát hiện.
+- **3 lần sửa thật trên K02 (2026-09-18)**, xem code + comment tiếng Việt tại chỗ để biết chi tiết:
+  1. **Tắt hẳn vuốt** (`sendSwipe()` → no-op tuyệt đối, `liblidar.cpp`) — LiDAR bắt chuyển động
+     lúc di chuyển đặt trụ bị phân tích nhầm thành vuốt, tiêm cả chuỗi MOVE thật vào
+     `/dev/input/event3`, gây thao tác/lỗi giao diện ngoài ý muốn.
+  2. **Chế độ CHỈ HIỂN THỊ** (mặc định BẬT, `g_display_only_mode`) — `sendTouch()` không còn ghi
+     `/dev/input/event3` (không tạo touch OS thật nữa, tránh nhiễu hệ thống) — thay bằng
+     `ThirdActivity` POLL native định kỳ (`nativeGetAllPoints()`, 60fps) để tự vẽ.
+  3. **Tốc độ + vẽ đồng thời**: `CLUSTER_ANALYSIS_INTERVAL` 100ms→20ms (nghẽn cổ chai chính —
+     tầng đọc UART/parse KHÔNG có delay nhân tạo, cửa sổ tích luỹ điểm `MAX_POINT_LIFE_SEC` 300ms
+     giữ nguyên nên không mất điểm). Thêm hàng đợi lịch sử hiển thị RIÊNG (`g_touch_history`,
+     tách biệt bộ đệm gom cụm) — tối đa 600 điểm, đầy thì tự xoá điểm CŨ NHẤT (FIFO), vẽ HẾT
+     đồng thời mỗi khung hình thay vì 1 chấm nhảy giữa các vị trí. Chấm cũng chỉnh nhỏ lại 3 lần
+     (`DOT_RADIUS` 10→3.3).
+- **Kết quả tune 2026-09-18** (máy chiếu mới) đã ghi vào `lidar_config.json` thật — xem mục
+  "Config calib" phía trên.
 
 ### Calib "vùng tương tác" — icon riêng bằng 5 trụ xốp (2026-09-17)
 
@@ -361,6 +397,67 @@ Start/Pause/Stop đã test kỹ trên máy thật):
   K02.
 - Việc verify trên máy thật: 1 trụ Ø5cm ở góc xa ROI có đủ tạo ≥3 điểm LiDAR ổn định không (xem
   `min_cluster_size` ở trên); cửa sổ lắng nghe 2.5s đủ dài chưa.
+
+**2 bug thật đã tìm + sửa qua debug logcat trực tiếp trên K02 (2026-09-17)**:
+- **LiDAR touch không tự bật khi vào Calib** — mặc định OFF lúc khởi động app (van an toàn, nút
+  cứng `JoystickButton0`), giáo viên vào Calib không biết phải bật nút đó trước → 0 điểm, luôn
+  báo "chưa đạt" dù đặt đúng trụ. Đã fix: `CalibSceneController.BeginCapture()`/
+  `CaptureSequentialStep()` tự gọi `LidarTouchBridge.SetTouchEnabled(true)` ngay trước khi đo,
+  tắt lại (`false`) ngay sau khi đo xong/huỷ — giáo viên không cần biết cơ chế ẩn này.
+- **Phòng nhỏ → quét dính tường** — log thật cho thấy toạ độ "ổn định" ghim gần biên xa ROI, Y
+  nhảy khắp dải (đặc trưng quét trúng 1 mặt phẳng lớn/tường, không phải 1 trụ nhỏ). Vùng quét
+  (`half_x`/`hight_floor`/`ymax` trong `lidar_config.json`) đang rộng hơn kích thước phòng thật.
+  **Fix (theo đề xuất user)**: mỗi `CalibTarget` giờ có thêm `expectedRawMm` (Vector2? — toạ độ
+  MM thật, đo trực tiếp ngoài đời bằng thước/laser theo hệ trục LiDAR, KHÔNG suy từ
+  `lidar_config.json` vì chính config đó có thể đang lệch) — `LidarTouchBridge.FilterNearHints()`
+  chỉ giữ điểm thô trong bán kính `HintWindowRadiusMm` (250mm) quanh gợi ý đó trước khi gom cụm,
+  loại thẳng nhiễu ở xa (tường) mà không cần chỉnh lại `lidar_config.json` (chỉnh config đó sẽ
+  ảnh hưởng CẢ game bình thường, không riêng calib). `MmToRawScreen()` mô phỏng lại đúng công
+  thức `convert_to_1024x600()` của native bằng C# để quy đổi gợi ý mm → toạ độ màn hình thô,
+  dùng `_config` (half_x/hight_floor/ymax/shift_x/shift_y) đang áp dụng — CHỈ dùng để khoanh
+  vùng lọc, không dùng để tính calib (tính calib vẫn dựa 100% vào điểm LiDAR đo được thật).
+  Target nào chưa có `expectedRawMm` (chưa đo) thì bỏ qua bộ lọc cho điểm đó, không lỗi.
+  **Trạng thái đo** (`CalibSceneController.TargetHintsMm`) — ĐỦ 5/5, đo thật 2026-09-17:
+  TopLeft(-1200,-1100), TopRight(900,-1100), BottomLeft(-1200,-2100), BottomRight(900,-2100),
+  Center(-150,-1600) (= trung điểm 4 góc, không đo riêng). X trải rộng 2100mm, Y trải sâu
+  1000mm — hình chữ nhật khá đều. Đo lại/chỉnh trực tiếp trong dictionary đó nếu sau này lắp
+  lại máy chiếu/phòng khác. **Không còn dùng để lọc cứng** (xem 2 mục dưới) — chỉ còn tác dụng
+  log so sánh ở chế độ 5-trụ-cùng-lúc.
+
+### Calib — 3 bug thật tìm thêm qua debug logcat trực tiếp (2026-09-17, sau phiên đầu)
+
+Sau khi build bản có `TargetHintsMm` đủ 5/5, test thật trên K02 vẫn "chưa đạt" — debug tiếp qua
+logcat trực tiếp (không đoán) phát hiện 3 lớp vấn đề chồng lên nhau:
+
+1. **Lọc cứng theo mm SAI hoàn toàn** — `MmToRawScreen()` dùng CHÍNH hình học `lidar_config.json`
+   (đang lệch, đó LÀ lý do cần calib) để đoán "điểm mm này sẽ hiện ở đâu trên màn hình" — vòng
+   lặp logic: dùng cái đang sai để lọc, ra cửa sổ lọc sai theo, loại nhầm sạch cụm đúng (xác nhận
+   thật: lệch tới ~1900px). **Đã bỏ lọc cứng theo mm hoàn toàn.**
+2. **"Chọn cụm nhiều điểm nhất" cũng sai** — phòng nhỏ, tường/vật tĩnh trong tầm quét phản xạ
+   MẠNH và ỔN ĐỊNH hơn hẳn 1 trụ nhỏ, luôn thắng "nhiều điểm nhất" dù không phải trụ (xác nhận
+   thật: 4/5 điểm đo ra cùng 1 vị trí bất kể trụ đặt đâu). **Đã bỏ tự chọn** — thay bằng đưa HẾT
+   các cụm đạt ngưỡng (`MinSamplesPerCluster`, hạ từ 4→3 theo yêu cầu thật) lên máy chiếu **đánh
+   số** (`CalibSceneController.DrawCandidateMarkers`, màu xanh dương), giáo viên tự chọn đúng số
+   trên tablet (`CalibActivity.showCandidatePicker` → `OnCandidateChosen`) — không có thuật toán
+   nào phân biệt "trụ" với "vật tĩnh" đáng tin, chỉ người đứng đó mới biết. Thêm lọc thô **góc
+   phần tư màn hình** (`LidarTouchBridge.InExpectedQuadrant` — so với tâm màn hình, KHÔNG dùng
+   mm) để loại bớt ứng viên rõ ràng sai phía trước khi đưa lên chọn, có dự phòng: nếu lọc rỗng
+   hết thì bỏ qua bộ lọc (không chặn cứng lỡ hình học lệch nặng tới mức cả trụ thật cũng "sai
+   phía"). `StartSinglePointCapture()` đổi tham số từ `Vector2? expectedMm` sang `string role`.
+3. **Bug gốc rễ thật, ở NATIVE** — `sendTouch()` ([liblidar.cpp](NativePlugins/LidarUnity/src/liblidar.cpp))
+   dùng **1 mốc thời gian throttle TOÀN CỤC** (`g_last_touch_call_ms`) cho mọi điểm — nghĩa là hễ
+   đẩy xong 1 điểm thì KHOÁ 150ms tiếp theo cho MỌI vị trí khác luôn, không riêng vị trí vừa đẩy.
+   Xác nhận qua log thật: 1 vật tĩnh (tường) ra tín hiệu ~400 lần/6s trong khi trụ chỉ ~40
+   lần/6s (native VẪN "nhìn thấy" trụ ở tầng gom cụm, chỉ là không bao giờ thắng nổi suất đẩy 1
+   lần/150ms khi phải cạnh tranh với tường). **Đã sửa**: đổi sang throttle theo TỪNG vị trí
+   (`g_recent_sends`, gộp trong bán kính `SAME_TOUCH_MERGE_RADIUS=100px`) — các touch KHÁC NHAU
+   không còn tranh giành 1 suất chung, chỉ CÙNG 1 vị trí mới bị giãn cách 150ms như thiết kế gốc
+   (mục đích ban đầu: tránh dội SurfaceFlinger, KHÔNG phải để loại bớt điểm). Đây là sửa ảnh
+   hưởng **CẢ game bình thường** (multi-touch 2 người chạm đồng thời), không riêng calib — đã
+   rebuild `liblidar_unity.so` (`ninja` trong `NativePlugins/LidarUnity/build/arm64-v8a/`, NDK
+   27.0.12077973 + CMake 3.22.1 có sẵn trên máy) và copy đè
+   `Assets/Plugins/Android/libs/arm64-v8a/liblidar_unity.so` — **cần test lại cả touch thường
+   (2 người chạm cùng lúc) lẫn calib** sau khi cài bản mới.
 
 ### Report + Google Sheets sync (Track E)
 

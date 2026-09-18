@@ -34,6 +34,24 @@ public class CalibSceneController : MonoBehaviour
     private const float CaptureDurationSeconds = 2.5f;
     private const float SinglePointCaptureDurationSeconds = 1.8f;
 
+    // Toạ độ THẬT (mm, theo hệ trục LiDAR — đo trực tiếp ngoài đời bằng thước/laser, KHÔNG suy
+    // từ lidar_config.json vì chính config đó có thể đang lệch) của từng mốc — dùng để lọc bớt
+    // nhiễu ở xa (vd tường, trong phòng nhỏ) trước khi gom cụm. null = CHƯA đo, bỏ qua bộ lọc
+    // cho điểm đó (không lỗi, chỉ là kém chính xác hơn — xem LidarTouchBridge.FilterNearHints).
+    // Đo thêm điểm nào thì điền vào đây, không cần sửa gì khác.
+    // 4 góc đo thật (2026-09-17): X trải -1200..900mm (rộng 2100mm), Y trải -1100..-2100mm
+    // (sâu 1000mm) — hình chữ nhật khá đều, "trên" (TopLeft/TopRight) = gần sensor (y=-1100),
+    // "dưới" (BottomLeft/BottomRight) = xa sensor (y=-2100). Center = trung điểm 4 góc, KHÔNG
+    // đo riêng — nếu đo thật lệch nhiều so với trung điểm hình học thì báo lại để sửa.
+    private static readonly Dictionary<string, Vector2?> TargetHintsMm = new Dictionary<string, Vector2?>
+    {
+        ["TopLeft"] = new Vector2(-1200f, -1100f),
+        ["TopRight"] = new Vector2(900f, -1100f),
+        ["BottomLeft"] = new Vector2(-1200f, -2100f),
+        ["BottomRight"] = new Vector2(900f, -2100f),
+        ["Center"] = new Vector2(-150f, -1600f), // = trung điểm 4 góc trên
+    };
+
     private static readonly Dictionary<string, string> RoleLabelVi = new Dictionary<string, string>
     {
         ["TopLeft"] = "Góc trên-trái", ["TopRight"] = "Góc trên-phải",
@@ -97,6 +115,13 @@ public class CalibSceneController : MonoBehaviour
         _capturing = true;
         ShowIdleState("Đang đo... giữ nguyên 5 trụ tại chỗ.");
 
+        // LiDAR touch mặc định OFF lúc khởi động app (van an toàn, bật bằng nút cứng —
+        // KeyCode.JoystickButton0) — giáo viên vào Calib không có lý do gì biết trước phải bật
+        // nút đó, nên TỰ bật ở đây (giống hệt cách GameControlBridge.OnLoadGameRequested đã làm
+        // cho game bình thường). Thiếu bước này = 0 điểm lúc nào cũng "chưa đạt" dù đặt đúng
+        // trụ (đã xác nhận qua log thật trên K02 — sendTouch() native chặn cứng khi touch OFF).
+        LidarTouchBridge.Instance.SetTouchEnabled(true);
+
         var targets = BuildTargets();
         CalibControlBridge.Instance.PushListening(CaptureDurationSeconds);
         LidarTouchBridge.Instance.StartCalibrationCapture(CaptureDurationSeconds, targets, OnCaptureDone);
@@ -105,6 +130,7 @@ public class CalibSceneController : MonoBehaviour
     private void OnCaptureDone(LidarTouchBridge.CalibCaptureResult result)
     {
         _capturing = false;
+        LidarTouchBridge.Instance.SetTouchEnabled(false); // tắt lại — không cần touch ngoài lúc đang đo
         HandleFinalResult(result);
     }
 
@@ -133,8 +159,12 @@ public class CalibSceneController : MonoBehaviour
         _capturing = true;
         var (role, _, _) = TargetFractions[_sequentialIndex];
         ShowIdleState($"Đang đo điểm {_sequentialIndex + 1}/{TargetFractions.Length} ({RoleLabel(role)})... giữ nguyên trụ.");
+
+        // Xem lý do đầy đủ trong BeginCapture() — cùng 1 lỗ hổng, cùng 1 cách sửa.
+        LidarTouchBridge.Instance.SetTouchEnabled(true);
+
         CalibControlBridge.Instance.PushListening(SinglePointCaptureDurationSeconds);
-        LidarTouchBridge.Instance.StartSinglePointCapture(SinglePointCaptureDurationSeconds, OnSequentialStepCaptured);
+        LidarTouchBridge.Instance.StartSinglePointCapture(SinglePointCaptureDurationSeconds, role, OnSequentialStepCaptured);
     }
 
     /// <summary>Lùi lại 1 điểm để đo lại (vd giáo viên nghi ngờ điểm trước đặt lệch) — không cần
@@ -147,25 +177,67 @@ public class CalibSceneController : MonoBehaviour
         ShowSequentialStepUi();
     }
 
+    /// <summary>Nhiều vật trong vùng quét (vd tường + trụ) → không có cách tự động phân biệt
+    /// đáng tin (đã xác nhận thất bại thật trên K02, xem javadoc StartSinglePointCapture) —
+    /// giữ danh sách chờ giáo viên tự chọn qua ChooseCandidate().</summary>
+    private List<(Vector2 centroid, int count)> _pendingCandidates;
+
     private void OnSequentialStepCaptured(LidarTouchBridge.SinglePointCaptureResult stepResult)
     {
         _capturing = false;
+        LidarTouchBridge.Instance.SetTouchEnabled(false); // tắt lại giữa 2 lần đo — giáo viên đang đi lại, không cần touch
 
-        if (!stepResult.success)
+        if (!stepResult.anyDetected)
         {
             ShowIdleState($"Điểm {_sequentialIndex + 1}/{TargetFractions.Length} chưa đạt: {stepResult.failReason}");
             CalibControlBridge.Instance.PushSequentialStepResult(false, stepResult.failReason);
             return; // giữ nguyên _sequentialIndex — giáo viên bấm "Đo điểm này" lại cho đúng điểm này
         }
 
+        if (stepResult.candidates.Count == 1)
+        {
+            AcceptCandidate(stepResult.candidates[0].centroid);
+            return;
+        }
+
+        // Nhiều ứng viên — đánh số lên máy chiếu, chờ giáo viên chọn đúng số của trụ trên tablet.
+        _pendingCandidates = stepResult.candidates;
+        DrawCandidateMarkers(_pendingCandidates);
+        ShowIdleState($"Phát hiện {_pendingCandidates.Count} vật trong vùng quét — xem số hiện trên sàn, " +
+                       "chọn ĐÚNG số của trụ trên máy tính bảng (không phải trụ thì đó là nhiễu, bỏ qua).");
+        CalibControlBridge.Instance.PushCandidates(EncodeCandidates(_pendingCandidates));
+    }
+
+    /// <summary>Giáo viên vừa chọn đúng số ứng viên nào trên tablet (index 0-based, khớp thứ tự
+    /// đã gửi qua PushCandidates) — gọi từ CalibControlBridge.OnCandidateChosen.</summary>
+    public void ChooseCandidate(int index)
+    {
+        if (_pendingCandidates == null || index < 0 || index >= _pendingCandidates.Count) return;
+        Vector2 chosen = _pendingCandidates[index].centroid;
+        ClearCandidateMarkers();
+        _pendingCandidates = null;
+        AcceptCandidate(chosen);
+    }
+
+    private void AcceptCandidate(Vector2 raw)
+    {
         var (role, fx, fy) = TargetFractions[_sequentialIndex];
         Vector2 target = new Vector2(fx * Screen.width, fy * Screen.height);
-        LidarTouchBridge.Instance.AddSequentialPoint(role, stepResult.raw, target);
+        LidarTouchBridge.Instance.AddSequentialPoint(role, raw, target);
         CalibControlBridge.Instance.PushSequentialStepResult(true, null);
 
         _sequentialIndex++;
         if (_sequentialIndex < TargetFractions.Length) ShowSequentialStepUi();
         else FinishSequential();
+    }
+
+    private string EncodeCandidates(List<(Vector2 centroid, int count)> candidates)
+    {
+        // "n1;n2;n3;..." — chỉ cần số điểm/cụm để tablet hiện nhãn "Số i (n điểm)"; vị trí đã
+        // vẽ trực tiếp lên máy chiếu (DrawCandidateMarkers), tablet không cần toạ độ.
+        var parts = new List<string>();
+        foreach (var c in candidates) parts.Add(c.count.ToString());
+        return string.Join(";", parts);
     }
 
     private void ShowSequentialStepUi()
@@ -207,9 +279,57 @@ public class CalibSceneController : MonoBehaviour
     {
         _capturing = false;
         _sequentialIndex = -1;
+        _pendingCandidates = null;
+        LidarTouchBridge.Instance.SetTouchEnabled(false);
         ClearConfirmDots();
+        ClearCandidateMarkers();
         SetTargetsVisible(true);
         ShowIdleState(IdleMessage);
+    }
+
+    // ── Đánh số ứng viên lên máy chiếu — giáo viên tự chọn đúng số của trụ trên tablet ────────
+
+    private readonly List<GameObject> _candidateMarkers = new List<GameObject>();
+
+    private void DrawCandidateMarkers(List<(Vector2 centroid, int count)> candidates)
+    {
+        ClearCandidateMarkers();
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var (centroid, count) = candidates[i];
+
+            var dotGo = new GameObject($"Candidate_{i + 1}", typeof(RectTransform), typeof(Image));
+            var rt = (RectTransform)dotGo.transform;
+            rt.SetParent(_canvas.transform, false);
+            rt.sizeDelta = new Vector2(80, 80);
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.zero;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = centroid;
+            var img = dotGo.GetComponent<Image>();
+            img.sprite = GetRingSprite();
+            img.color = new Color(0.3f, 0.6f, 1f, 0.9f); // xanh dương — khác màu vàng (target) và đỏ (confirm)
+            img.raycastTarget = false;
+            _candidateMarkers.Add(dotGo);
+
+            var labelGo = new GameObject($"CandidateLabel_{i + 1}", typeof(RectTransform));
+            var labelRt = (RectTransform)labelGo.transform;
+            labelRt.SetParent(dotGo.transform, false);
+            labelRt.anchorMin = Vector2.zero; labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+            var labelText = labelGo.AddComponent<Text>();
+            labelText.text = $"{i + 1}\n({count})";
+            labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            labelText.fontSize = 22;
+            labelText.alignment = TextAnchor.MiddleCenter;
+            labelText.color = Color.white;
+            labelText.raycastTarget = false;
+        }
+    }
+
+    private void ClearCandidateMarkers()
+    {
+        foreach (var go in _candidateMarkers) if (go != null) Destroy(go);
+        _candidateMarkers.Clear();
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -221,7 +341,8 @@ public class CalibSceneController : MonoBehaviour
         {
             var (role, fx, fy) = TargetFractions[i];
             Vector2 pos = new Vector2(fx * Screen.width, fy * Screen.height);
-            targets[i] = new LidarTouchBridge.CalibTarget(role, pos);
+            Vector2? hintMm = TargetHintsMm.TryGetValue(role, out var h) ? h : null;
+            targets[i] = new LidarTouchBridge.CalibTarget(role, pos, hintMm);
         }
         return targets;
     }

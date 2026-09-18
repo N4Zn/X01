@@ -192,6 +192,16 @@ public class CalibActivity extends Activity {
         this.actionRow = actionRow;
         root.addView(actionRow);
 
+        // Hàng ứng viên — dựng động khi Unity báo phát hiện NHIỀU vật cùng lúc (vd tường + trụ),
+        // 1 nút cho mỗi số đã đánh trên máy chiếu. Ẩn hoàn toàn lúc bình thường.
+        candidateRow = new LinearLayout(this);
+        candidateRow.setOrientation(LinearLayout.HORIZONTAL);
+        candidateRow.setVisibility(View.GONE);
+        LinearLayout.LayoutParams candidateRowLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        candidateRowLp.topMargin = UiUtil.dp(this, 8);
+        candidateRow.setLayoutParams(candidateRowLp);
+        root.addView(candidateRow);
+
         LinearLayout btnRow = new LinearLayout(this);
         btnRow.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams btnRowLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -217,6 +227,7 @@ public class CalibActivity extends Activity {
     }
 
     private LinearLayout actionRow;
+    private LinearLayout candidateRow;
 
     private Button makeButton(String text, int colorRes) {
         Button b = new Button(this);
@@ -371,6 +382,40 @@ public class CalibActivity extends Activity {
             // success=true: chờ OnSequentialStep tiếp theo (hoặc OnCalibResult nếu vừa xong điểm cuối)
             // tự cập nhật UI — không cần làm gì thêm ở đây.
         });
+    }
+
+    /// Phát hiện NHIỀU vật cùng lúc trong vùng quét (vd tường + trụ) — không có cách tự động
+    /// phân biệt đáng tin (xem lịch sử bug ở LidarTouchBridge.StartSinglePointCapture), chuyển
+    /// cho giáo viên tự chọn. encodedCounts: "n1;n2;n3;..." — số điểm/cụm từng ứng viên, thứ tự
+    /// khớp đúng số đã đánh trên máy chiếu (DrawCandidateMarkers). Dựng 1 nút cho mỗi ứng viên.
+    public static void OnCandidatesFound(String encodedCounts) {
+        CalibActivity a = sInstance;
+        if (a == null) return;
+        a.runOnUiThread(() -> a.showCandidatePicker(encodedCounts));
+    }
+
+    private void showCandidatePicker(String encodedCounts) {
+        actionRow.setVisibility(View.GONE);
+        candidateRow.removeAllViews();
+
+        String[] counts = encodedCounts.split(";");
+        for (int i = 0; i < counts.length; i++) {
+            final int index = i;
+            Button btn = makeButton("Số " + (i + 1) + " (" + counts[i] + " điểm)", R.color.live);
+            btn.setOnClickListener(v -> onCandidateChosen(index));
+            LinearLayout.LayoutParams lp = buttonLp();
+            if (i > 0) lp.leftMargin = UiUtil.dp(this, 8);
+            candidateRow.addView(btn, lp);
+        }
+        candidateRow.setVisibility(View.VISIBLE);
+        statusText.setText("Phát hiện " + counts.length + " vật trong vùng quét — xem số hiện trên sàn (máy chiếu), " +
+                "chọn ĐÚNG số của trụ.");
+    }
+
+    private void onCandidateChosen(int index) {
+        candidateRow.setVisibility(View.GONE);
+        actionRow.setVisibility(View.VISIBLE);
+        sendToUnity("OnCandidateChosen", String.valueOf(index));
     }
 
     public static void OnCalibSaved() {

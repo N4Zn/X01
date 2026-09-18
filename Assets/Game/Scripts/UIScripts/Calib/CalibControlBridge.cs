@@ -56,6 +56,14 @@ public class CalibControlBridge : Singleton<CalibControlBridge>
         CalibSceneController.Current?.StepBackSequential();
     }
 
+    /// <summary>Giáo viên vừa chọn đúng số ứng viên nào (0-based) sau khi thấy nhiều vật cùng
+    /// lúc trong vùng quét (vd tường + trụ) — xem PushCandidates/DrawCandidateMarkers.</summary>
+    public void OnCandidateChosen(string indexStr)
+    {
+        Debug.Log($"[CalibControlBridge] OnCandidateChosen: {indexStr}");
+        if (int.TryParse(indexStr, out int index)) CalibSceneController.Current?.ChooseCandidate(index);
+    }
+
     public void OnSaveRequested(string unused)
     {
         Debug.Log("[CalibControlBridge] OnSaveRequested");
@@ -132,6 +140,25 @@ public class CalibControlBridge : Singleton<CalibControlBridge>
         catch (System.Exception e)
         {
             Debug.LogWarning($"[CalibControlBridge] PushSequentialStepResult lỗi (CalibActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
+    }
+
+    /// <summary>Phát hiện NHIỀU vật cùng lúc trong vùng quét (vd tường + trụ) — không có cách
+    /// tự động phân biệt đáng tin, chuyển cho giáo viên tự chọn. encodedCounts: "n1;n2;n3;..."
+    /// (số điểm/cụm của từng ứng viên, thứ tự khớp đúng với số đã đánh trên máy chiếu —
+    /// DrawCandidateMarkers). Tablet dựng nút "Số i (ni điểm)" cho từng ứng viên.</summary>
+    public void PushCandidates(string encodedCounts)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var cls = new AndroidJavaClass(CalibActivityClass))
+                cls.CallStatic("OnCandidatesFound", encodedCounts);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[CalibControlBridge] PushCandidates lỗi (CalibActivity có thể chưa chạy/khác display): {e.Message}");
         }
 #endif
     }

@@ -135,8 +135,59 @@ class ClassManagementActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         attendanceStore = AttendanceStore(this)
+        seedDemoDataIfEmpty()
         setContentView(buildRoot())
         refreshAll()
+    }
+
+    /** Nhúng sẵn 1 danh sách lớp/học sinh giả định (Mầm/Chồi/Lá) để màn "Quản lý lớp" có nội
+     * dung xem ngay, không cần chụp ảnh tay từng bạn trước. Kiểm tra bằng 1 học sinh mốc (thay vì
+     * "chưa có lớp nào") — máy nào đã từng test tạo lớp/học sinh thật trước đó trong phiên này
+     * vẫn được nhúng thêm danh sách giả định, không bị guard chặn im lặng chỉ vì đã có SẴN dữ
+     * liệu khác. Mọi thao tác bên trong đều idempotent (ensurePlaceholder/setGender/setAlias/
+     * setClassName ghi đè cùng giá trị nếu gọi lại) nên an toàn khi hàm này chạy lại nhiều lần —
+     * guard ở đây chỉ để tránh ghi đĩa lãng phí mỗi lần mở màn hình, không phải để đảm bảo đúng.
+     * Học sinh giả định = 0 mẫu ảnh (hiện "Cần ảnh" như bình thường) vì không có ảnh thật để gán.
+     * TODO: cân nhắc bỏ/tắt hàm này trước khi build bản triển khai thật cho trường. */
+    private fun seedDemoDataIfEmpty() {
+        if (attendanceStore.classNameOf("Nguyễn Khánh Vy") != null) return
+        data class Seed(val real: String, val alias: String, val gender: String)
+        val mam = listOf(
+            Seed("Nguyễn Bảo An", "Bảo An", "nam"),
+            Seed("Trần Gia Hân", "Gia Hân", "nu"),
+        )
+        val choi = listOf(
+            Seed("Lê Minh Khôi", "Minh Khôi", "nam"),
+            Seed("Phạm Yến Nhi", "Yến Nhi", "nu"),
+            Seed("Vũ Đăng Khoa", "Đăng Khoa", "nam"),
+        )
+        // Danh sách lớp Lá — đồng bộ đúng bộ tên ví dụ đã dùng ở bản xem trước "Giao Diện K02".
+        val la = listOf(
+            Seed("Nguyễn Khánh Vy", "Khánh Vy", "nu"), Seed("Trần Nam Khang", "Nam Khang", "nam"),
+            Seed("Lê Bảo Châu", "Bảo Châu", "nu"), Seed("Phạm Tuấn Kiệt", "Tuấn Kiệt", "nam"),
+            Seed("Đỗ Thảo My", "Thảo My", "nu"), Seed("Vũ Minh An", "Minh An", "nam"),
+            Seed("Hoàng Gia Hân", "Gia Hân", "nu"), Seed("Bùi Bảo Ngọc", "Bảo Ngọc", "nu"),
+            Seed("Ngô Hoàng Long", "Hoàng Long", "nam"), Seed("Dương Thanh Trúc", "Thanh Trúc", "nu"),
+            Seed("Nguyễn Văn An", "Văn An", "nam"), Seed("Lê Văn An", "Văn An", "nam"),
+            Seed("Trần Ngọc Hà", "Ngọc Hà", "nu"), Seed("Phạm Quang Huy", "Quang Huy", "nam"),
+            Seed("Vũ Bảo Trâm", "Bảo Trâm", "nu"), Seed("Hoàng Minh Thư", "Minh Thư", "nu"),
+            Seed("Đặng Gia Bảo", "Gia Bảo", "nam"), Seed("Lý Khôi Nguyên", "Khôi Nguyên", "nam"),
+            Seed("Ngô Yến Nhi", "Yến Nhi", "nu"), Seed("Nguyễn Anh Thư", "Anh Thư", "nu"),
+            Seed("Trần Hải Đăng", "Hải Đăng", "nam"), Seed("Lê Tường Vy", "Tường Vy", "nu"),
+            Seed("Bùi Đăng Khoa", "Đăng Khoa", "nam"), Seed("Dương Phương Linh", "Phương Linh", "nu"),
+            Seed("Phạm Nhật Minh", "Nhật Minh", "nam"), Seed("Vũ Kim Ngân", "Kim Ngân", "nu"),
+            Seed("Đặng Quốc Bảo", "Quốc Bảo", "nam"), Seed("Hoàng Diệu Anh", "Diệu Anh", "nu"),
+            Seed("Lý Thiên Ân", "Thiên Ân", "nam"), Seed("Ngô Mai Chi", "Mai Chi", "nu"),
+        )
+        for ((className, roster) in listOf("Lớp Mầm" to mam, "Lớp Chồi" to choi, "Lớp Lá" to la)) {
+            attendanceStore.addClass(className)
+            for (s in roster) {
+                attendanceStore.ensurePlaceholder(s.real)
+                attendanceStore.setGender(s.real, s.gender)
+                attendanceStore.setAlias(s.real, s.alias)
+                attendanceStore.setClassName(s.real, className)
+            }
+        }
     }
 
     override fun onResume() {
@@ -258,6 +309,7 @@ class ClassManagementActivity : AppCompatActivity() {
         actionButtonsRow.addView(smallActionButton("+ Học sinh mới") { onAddStudentClicked() })
         actionButtonsRow.addView(smallActionButton("Thêm từ camera") { onAddStudentClicked() })
         actionButtonsRow.addView(smallActionButton("Thêm từ ảnh") { onBulkAddClicked() })
+        actionButtonsRow.addView(smallActionButton("Từ DS đã có") { onAssignExistingClicked() })
         rightHeader.addView(actionButtonsRow)
         // Cảnh báo trùng tên thường gọi trong lớp — ngay cạnh 3 nút phụ, sát góc trên-phải, ẩn khi
         // không có trùng. Bấm vào hiện dialog đề xuất đổi tên phân biệt (xem showDuplicateAliasDialog).
@@ -690,6 +742,38 @@ class ClassManagementActivity : AppCompatActivity() {
             putExtra(MainActivity.EXTRA_TARGET_CLASS, cls)
             putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_BULK_PICK)
         })
+    }
+
+    /** Học sinh đã có ảnh/embedding thật (enroll qua camera trước đó — kể cả từ lúc app còn
+     * chưa có "Quản lý lớp") nhưng chưa gán lớp nào thì không hiện ở bất kỳ lớp nào cả, dù đã
+     * "có trong db" (enrolled.json). Nút này cho giáo viên chọn thẳng từ danh sách đó, gán vào
+     * lớp đang xem — không phải enroll lại, không đụng ảnh/embedding đã có sẵn. */
+    private fun onAssignExistingClicked() {
+        val cls = currentClass ?: return
+        val unassigned = attendanceStore.realEnrolledNames()
+            .filter { attendanceStore.classNameOf(it) == null }
+        if (unassigned.isEmpty()) {
+            android.widget.Toast.makeText(this, "Không có học sinh nào đã enroll mà chưa gán lớp.", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = unassigned.map { n ->
+            val alias = attendanceStore.aliasOf(n)
+            val samples = attendanceStore.samplesOf(n).size
+            val nameLabel = if (alias != n) "$alias ($n)" else n
+            "$nameLabel — $samples ảnh"
+        }.toTypedArray()
+        val checked = BooleanArray(unassigned.size)
+        AlertDialog.Builder(this)
+            .setTitle("Thêm học sinh đã có sẵn vào \"$cls\"")
+            .setMultiChoiceItems(labels, checked) { _, which, isChecked -> checked[which] = isChecked }
+            .setPositiveButton("Gán vào lớp") { _, _ ->
+                var count = 0
+                unassigned.forEachIndexed { i, name -> if (checked[i]) { attendanceStore.setClassName(name, cls); count++ } }
+                if (count > 0) android.widget.Toast.makeText(this, "Đã thêm $count học sinh vào \"$cls\"", android.widget.Toast.LENGTH_SHORT).show()
+                refreshAll()
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
     }
 
     private fun openStudent(name: String) {
