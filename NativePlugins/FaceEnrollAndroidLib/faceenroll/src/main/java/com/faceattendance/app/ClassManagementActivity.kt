@@ -9,13 +9,16 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.text.Collator
 import java.util.Locale
@@ -46,6 +49,7 @@ class ClassManagementActivity : AppCompatActivity() {
     private lateinit var dupWarningBadge: TextView
     private lateinit var viewModeBtn: TextView
     private lateinit var sortAliasBtn: TextView
+    private lateinit var studentArea: FrameLayout
     private lateinit var sortRealBtn: TextView
     private lateinit var scroll: ScrollView
 
@@ -125,12 +129,19 @@ class ClassManagementActivity : AppCompatActivity() {
     private val cAccent     = Color.parseColor("#5B3F9E")
     private val cAccentDim  = Color.parseColor("#EFE9FB")
     private val cWarn       = Color.parseColor("#C98A1F")
+    private val cGood       = Color.parseColor("#2F9E6E")
 
     private val cMale   = 0xFF3E7FD1.toInt() // xanh blue — nam
-    private val cFemale = 0xFFB15FD1.toInt() // tím nhạt/hồng — nữ
+    private val cFemale = 0xFFD6336C.toInt() // hồng đậm — nữ (trước dùng tím nhạt, hơi trung tính)
     private fun colorFor(gender: String): Int = if (gender == "nu") cFemale else cMale
-    private fun initialOf(name: String): String =
-        name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+    /** Chữ đầu tên đầu + chữ đầu tên cuối, vd "Vũ Minh An" -> "VA" (giống bản xem trước HTML) —
+     * chỉ 1 chữ nếu tên có đúng 1 âm tiết. */
+    private fun initialOf(name: String): String {
+        val parts = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val first = parts.firstOrNull()?.firstOrNull()?.uppercaseChar() ?: return "?"
+        val last = if (parts.size > 1) parts.last().firstOrNull()?.uppercaseChar() else null
+        return if (last != null) "$first$last" else first.toString()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -270,11 +281,35 @@ class ClassManagementActivity : AppCompatActivity() {
         })
 
         // Cột phải: học sinh của lớp đang chọn.
+        // 1 ScrollView DUY NHẤT chứa TẤT CẢ (header + thanh công cụ + vùng học sinh) — 2 lần sửa
+        // trước (LinearLayout+weight, rồi RelativeLayout với vùng cuộn riêng neo dưới header) đều
+        // KHÔNG fix được — dump lại trên máy K02 thật (2026-09-18) vẫn thấy y hệt hiện tượng cũ
+        // dù đổi hẳn cơ chế định vị, nên nguyên nhân gốc không phải do weight/RelativeLayout như
+        // đoán ban đầu. Chuyển hẳn sang cấu trúc đơn giản nhất có thể - 1 LinearLayout dọc
+        // (scrollContent) trong 1 ScrollView, không còn "vùng cố định + vùng cuộn riêng" nữa -
+        // để loại trừ hoàn toàn khả năng lỗi đo layout dạng 2-vùng. Đánh đổi: header/thanh công
+        // cụ giờ cuộn theo luôn thay vì dính cố định trên đỉnh.
         val rightCol = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
         }
         body.addView(rightCol)
+
+        scroll = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+        rightCol.addView(scroll)
+
+        val scrollContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        scroll.addView(scrollContent)
+        val topBlock = scrollContent
 
         // Tất cả trên 1 hàng: tên lớp (bấm để đổi tên) + icon bút chì, để dành không gian cho tên
         // lớp dài — 3 nút phụ + cảnh báo trùng tên dồn hẳn sát lề phải cạnh nhau bằng spacer.
@@ -315,14 +350,14 @@ class ClassManagementActivity : AppCompatActivity() {
         // không có trùng. Bấm vào hiện dialog đề xuất đổi tên phân biệt (xem showDuplicateAliasDialog).
         dupWarningBadge = TextView(this).apply {
             text = "⚠"
-            textSize = 18f
+            textSize = 26f // to hơn cho dễ bấm — trước 18f hơi nhỏ so với vùng chạm
             setTextColor(cWarn)
-            setPadding(px(8), px(6), 0, px(6))
+            setPadding(px(12), px(8), px(12), px(8))
             visibility = View.GONE
             setOnClickListener { showDuplicateAliasDialog() }
         }
         rightHeader.addView(dupWarningBadge)
-        rightCol.addView(rightHeader)
+        topBlock.addView(rightHeader)
 
         // Hàng công cụ phụ: chuyển lưới/danh sách + chọn cột sắp xếp — tách riêng khỏi rightHeader
         // (đã khá đầy) thành 1 hàng mỏng ngay trên vùng cuộn danh sách học sinh.
@@ -346,12 +381,14 @@ class ClassManagementActivity : AppCompatActivity() {
         sortRealBtn = sortToggleButton("Tên thật") { setSortMode("real") }
         listControlsRow.addView(sortAliasBtn)
         listControlsRow.addView(sortRealBtn)
-        rightCol.addView(listControlsRow)
+        topBlock.addView(listControlsRow)
 
-        scroll = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
+        studentArea = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
-        rightCol.addView(scroll)
+        scrollContent.addView(studentArea)
         return root
     }
 
@@ -566,8 +603,8 @@ class ClassManagementActivity : AppCompatActivity() {
             rightHeaderTitle.text = "Chưa có lớp nào"
             renameBtn.visibility = View.GONE
             actionButtonsRow.visibility = View.GONE
-            scroll.removeAllViews()
-            scroll.addView(emptyState("Bấm \"+ Thêm lớp\" ở góc trên để tạo lớp đầu tiên."))
+            studentArea.removeAllViews()
+            studentArea.addView(emptyState("Bấm \"+ Thêm lớp\" ở góc trên để tạo lớp đầu tiên."))
             return
         }
 
@@ -585,8 +622,8 @@ class ClassManagementActivity : AppCompatActivity() {
         val students = sortedRoster(attendanceStore.studentsInClass(className))
         currentDupGroups = findDuplicateAliasGroups(students)
         dupWarningBadge.visibility = if (currentDupGroups.isNotEmpty()) View.VISIBLE else View.GONE
-        scroll.removeAllViews()
-        scroll.addView(
+        studentArea.removeAllViews()
+        studentArea.addView(
             when {
                 students.isEmpty() -> emptyState("Lớp \"$className\" chưa có học sinh nào.\nDùng các nút bên trên để thêm.")
                 viewMode == "list" -> buildListView(students)
@@ -777,11 +814,285 @@ class ClassManagementActivity : AppCompatActivity() {
     }
 
     private fun openStudent(name: String) {
-        startActivity(Intent(this, MainActivity::class.java).apply {
-            putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_VIEW_STUDENT)
-            putExtra(MainActivity.EXTRA_STUDENT_NAME, name)
-            currentClass?.let { putExtra(MainActivity.EXTRA_TARGET_CLASS, it) }
+        showStudentDetailPanel(name)
+    }
+
+    private fun panelActionButton(label: String, bgColor: Int, onClick: () -> Unit): TextView = TextView(this).apply {
+        text = label
+        setTextColor(Color.WHITE)
+        textSize = 13f
+        setTypeface(typeface, Typeface.BOLD)
+        gravity = Gravity.CENTER
+        background = GradientDrawable().apply { setColor(bgColor); cornerRadius = px(10).toFloat() }
+        setPadding(0, px(12), 0, px(12))
+        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        setOnClickListener { onClick() }
+    }
+
+    private fun panelGhostButton(label: String, onClick: () -> Unit): TextView = TextView(this).apply {
+        text = label
+        setTextColor(cTextDim)
+        textSize = 13f
+        setTypeface(typeface, Typeface.BOLD)
+        gravity = Gravity.CENTER
+        background = GradientDrawable().apply { setColor(Color.TRANSPARENT); setStroke(px(1), cCardLine); cornerRadius = px(10).toFloat() }
+        setPadding(0, px(12), 0, px(12))
+        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        setOnClickListener { onClick() }
+    }
+
+    private fun hGap(dp: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(px(dp), 0) }
+
+    private fun photoThumbnail(name: String, index: Int, sample: Sample, onDeleted: () -> Unit): View {
+        val size = px(64)
+        val frame = FrameLayout(this).apply { layoutParams = LinearLayout.LayoutParams(size, size) }
+        val bmp = attendanceStore.loadPhotoBitmap(sample.photo, size)
+        frame.addView(ImageView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(size, size)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            background = GradientDrawable().apply { setColor(cCardLine); cornerRadius = px(8).toFloat() }
+            clipToOutline = true
+            if (bmp != null) setImageBitmap(bmp)
         })
+        frame.addView(TextView(this).apply {
+            text = "✕"
+            setTextColor(Color.WHITE)
+            textSize = 10f
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0xCC2A2338.toInt()) }
+            layoutParams = FrameLayout.LayoutParams(px(18), px(18)).also { it.gravity = Gravity.TOP or Gravity.END }
+            setOnClickListener {
+                attendanceStore.deleteSample(name, index)
+                onDeleted()
+            }
+        })
+        return frame
+    }
+
+    /** Panel xem/sửa 1 học sinh — dựng NGAY trong ClassManagementActivity, KHÔNG mở MainActivity
+     * (không bật camera chỉ để xem thông tin). Sửa được tên gọi/tên thật/giới tính/lớp/ngày sinh,
+     * xem + xoá từng ảnh mẫu. Camera chỉ bật lên khi bấm 1 trong 2 nút "Chụp ảnh mới"/"Từ ảnh có
+     * sẵn" ở cuối panel (MODE_ADD_SAMPLES_CAMERA/GALLERY mới thêm ở MainActivity — bỏ qua hộp
+     * thoại đặt tên vì đã biết tên rồi, add thẳng mẫu vào đúng học sinh này). */
+    private fun showStudentDetailPanel(nameArg: String) {
+        var currentName = nameArg
+        var selectedGender = attendanceStore.genderOf(currentName)
+        var selectedBirthdateIso: String? = attendanceStore.birthdateOf(currentName)
+
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        // Rộng + chia 2 cột (thay vì 1 cột dọc dài trước đây) — máy tính bảng nằm ngang, bàn
+        // phím ảo chiếm gần nửa chiều cao màn hình, panel càng THẤP càng ít bị che khi gõ.
+        val scroll = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(px(760), ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(px(20), px(18), px(20), px(4))
+        }
+        scroll.addView(body)
+        root.addView(scroll)
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, px(14))
+        }
+        val avatarHolder = FrameLayout(this)
+        fun refreshAvatar() {
+            avatarHolder.removeAllViews()
+            avatarHolder.addView(avatarWithInitial(
+                attendanceStore.aliasOf(currentName), 52, attendanceStore.representativePhoto(currentName), selectedGender
+            ))
+        }
+        refreshAvatar()
+        header.addView(avatarHolder)
+        val headerAlias = TextView(this).apply { textSize = 17f; setTypeface(typeface, Typeface.BOLD); setTextColor(cText) }
+        val headerReal = TextView(this).apply { textSize = 12f; setTextColor(cTextDim); setPadding(0, px(2), 0, 0) }
+        header.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(px(12), 0, 0, 0)
+            addView(headerAlias)
+            addView(headerReal)
+        })
+        body.addView(header)
+        fun refreshHeaderText() {
+            headerAlias.text = attendanceStore.aliasOf(currentName)
+            headerReal.text = currentName
+        }
+        refreshHeaderText()
+
+        fun fieldLabel(text: String): TextView = TextView(this).apply {
+            this.text = text
+            textSize = 11.5f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(cTextFaint)
+            setPadding(0, px(10), 0, px(5))
+        }
+
+        // Chia 2 cột (trái: thông tin sửa được, phải: năng lực + ảnh) — panel thấp hơn hẳn so
+        // với xếp dọc 1 cột, ít bị bàn phím ảo (chiếm ~nửa màn hình khi gõ) che mất nội dung.
+        val columns = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val leftCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val rightCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(px(16), 0, 0, 0)
+        }
+        columns.addView(leftCol)
+        columns.addView(rightCol)
+        body.addView(columns)
+
+        leftCol.addView(fieldLabel("TÊN THƯỜNG GỌI"))
+        val aliasInput = EditText(this).apply { setText(attendanceStore.aliasOf(currentName)) }
+        leftCol.addView(aliasInput)
+
+        leftCol.addView(fieldLabel("TÊN THẬT"))
+        val realInput = EditText(this).apply { setText(currentName) }
+        leftCol.addView(realInput)
+
+        leftCol.addView(fieldLabel("GIỚI TÍNH"))
+        val btnNam = TextView(this).apply {
+            text = "Nam"; textSize = 13f; gravity = Gravity.CENTER; setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, px(9), 0, px(9))
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val btnNu = TextView(this).apply {
+            text = "Nữ"; textSize = 13f; gravity = Gravity.CENTER; setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, px(9), 0, px(9))
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        fun refreshGenderButtons() {
+            btnNam.setTextColor(if (selectedGender == "nam") Color.WHITE else cTextDim)
+            btnNam.background = GradientDrawable().apply {
+                cornerRadius = px(8).toFloat()
+                if (selectedGender == "nam") setColor(cMale) else { setColor(Color.TRANSPARENT); setStroke(px(1), cCardLine) }
+            }
+            btnNu.setTextColor(if (selectedGender == "nu") Color.WHITE else cTextDim)
+            btnNu.background = GradientDrawable().apply {
+                cornerRadius = px(8).toFloat()
+                if (selectedGender == "nu") setColor(cFemale) else { setColor(Color.TRANSPARENT); setStroke(px(1), cCardLine) }
+            }
+        }
+        btnNam.setOnClickListener { selectedGender = "nam"; refreshGenderButtons(); refreshAvatar() }
+        btnNu.setOnClickListener { selectedGender = "nu"; refreshGenderButtons(); refreshAvatar() }
+        refreshGenderButtons()
+        leftCol.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(btnNam); addView(hGap(8)); addView(btnNu)
+        })
+
+        leftCol.addView(fieldLabel("LỚP"))
+        val classNamesList = attendanceStore.allClassNames()
+        val classSpinner = Spinner(this).apply {
+            adapter = ArrayAdapter(this@ClassManagementActivity, android.R.layout.simple_spinner_dropdown_item, classNamesList)
+            val idx = classNamesList.indexOf(attendanceStore.classNameOf(currentName)).let { if (it < 0) 0 else it }
+            setSelection(idx)
+        }
+        leftCol.addView(classSpinner)
+
+        leftCol.addView(fieldLabel("NGÀY SINH"))
+        fun isoToDisplay(iso: String): String {
+            val p = iso.split("-")
+            return "${p[2]}/${p[1]}/${p[0]}"
+        }
+        val birthdateInput = EditText(this).apply {
+            isFocusable = false
+            isFocusableInTouchMode = false
+            hint = "Chưa đặt — bấm để chọn"
+            selectedBirthdateIso?.let { setText(isoToDisplay(it)) }
+        }
+        birthdateInput.setOnClickListener {
+            val cal = java.util.Calendar.getInstance()
+            selectedBirthdateIso?.let {
+                val p = it.split("-")
+                cal.set(p[0].toInt(), p[1].toInt() - 1, p[2].toInt())
+            }
+            // Style R.style.SpinnerDatePickerDialog — cuộn 3 cột ngày/tháng/năm thay vì lịch
+            // lưới mặc định, dễ chọn hơn cho cô giáo (xem themes.xml để biết lý do).
+            android.app.DatePickerDialog(this, R.style.SpinnerDatePickerDialog, { _, y, m, d ->
+                selectedBirthdateIso = "%04d-%02d-%02d".format(y, m + 1, d)
+                birthdateInput.setText("%02d/%02d/%04d".format(d, m + 1, y))
+            }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)).show()
+        }
+        leftCol.addView(birthdateInput)
+
+        rightCol.addView(fieldLabel("ẢNH ĐÃ LƯU"))
+        val photosContainer = FrameLayout(this)
+        fun refreshPhotos() {
+            photosContainer.removeAllViews()
+            val samples = attendanceStore.samplesOf(currentName)
+            photosContainer.addView(
+                if (samples.isEmpty()) emptyState("Chưa có ảnh nào — bấm \"Chụp ảnh mới\"/\"Từ ảnh có sẵn\" bên dưới.")
+                else buildGrid(samples.mapIndexed { i, s -> photoThumbnail(currentName, i, s) { refreshPhotos() } }, 4)
+            )
+        }
+        refreshPhotos()
+        rightCol.addView(photosContainer)
+        body.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(0, px(6)) })
+
+        lateinit var dialog: AlertDialog
+
+        val footer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(px(20), px(10), px(20), px(16))
+        }
+        footer.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(panelActionButton("📷 Chụp ảnh mới", cGood) {
+                startActivity(Intent(this@ClassManagementActivity, MainActivity::class.java).apply {
+                    putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_ADD_SAMPLES_CAMERA)
+                    putExtra(MainActivity.EXTRA_STUDENT_NAME, currentName)
+                })
+                dialog.dismiss()
+            })
+            addView(hGap(10))
+            addView(panelActionButton("🖼 Từ ảnh có sẵn", cGood) {
+                startActivity(Intent(this@ClassManagementActivity, MainActivity::class.java).apply {
+                    putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_ADD_SAMPLES_GALLERY)
+                    putExtra(MainActivity.EXTRA_STUDENT_NAME, currentName)
+                })
+                dialog.dismiss()
+            })
+        })
+        footer.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, px(8), 0, 0)
+            addView(panelGhostButton("Đóng") { dialog.dismiss() })
+            addView(hGap(10))
+            addView(panelActionButton("Lưu thay đổi", cAccent) {
+                val newAlias = aliasInput.text.toString()
+                val newReal = realInput.text.toString().trim()
+                if (newReal.isNotEmpty() && newReal != currentName) {
+                    if (attendanceStore.renameEnrollment(currentName, newReal)) {
+                        currentName = newReal
+                    } else {
+                        Toast.makeText(this@ClassManagementActivity, "Không đổi được tên thật — trùng người khác?", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                attendanceStore.setAlias(currentName, newAlias)
+                attendanceStore.updateGender(currentName, selectedGender)
+                (classSpinner.selectedItem as? String)?.let { attendanceStore.setClassName(currentName, it) }
+                selectedBirthdateIso?.let { attendanceStore.setBirthdate(currentName, it) }
+                dialog.dismiss()
+                refreshAll()
+            })
+        })
+        root.addView(footer)
+
+        dialog = AlertDialog.Builder(this).setView(root).create()
+        // Mặc định Android tự focus vào EditText ĐẦU TIÊN trong dialog rồi tự bật bàn phím theo
+        // — đúng bug "mở ra để xem mà bàn phím tự bật, che hết nội dung" bạn báo. STATE_HIDDEN
+        // chặn hẳn việc tự bật đó; bàn phím giờ CHỈ hiện khi cô bấm thẳng vào 1 ô để sửa.
+        // ADJUST_RESIZE (thay vì PAN mặc định) để panel tự co lại gọn trong phần còn trống phía
+        // trên bàn phím lúc đó, thay vì đẩy/che nội dung.
+        dialog.window?.setSoftInputMode(
+            android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN or
+            android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+        dialog.show()
     }
 
     private fun promptAddClass() {

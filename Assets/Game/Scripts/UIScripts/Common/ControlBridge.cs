@@ -70,7 +70,9 @@ public static class ControlBridge
             TryResolveSelectedEntry(gameName);
         }
 
+        Debug.Log($"[ControlBridge][DEBUG] Sắp gọi SceneManager.LoadScene('{sceneName}')... currentScene={SceneManager.GetActiveScene().name}");
         SceneManager.LoadScene(sceneName);
+        Debug.Log($"[ControlBridge][DEBUG] SceneManager.LoadScene('{sceneName}') ĐÃ RETURN. activeScene ngay sau đó={SceneManager.GetActiveScene().name}");
     }
 
     static void TryResolveSelectedEntry(string gameName)

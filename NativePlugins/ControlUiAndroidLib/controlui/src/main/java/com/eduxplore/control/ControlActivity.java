@@ -121,6 +121,28 @@ public class ControlActivity extends Activity {
     // Report trực tiếp từ Unity (GameControlBridge.PushReport) — dùng cho panel_live.
     private volatile String liveLeftName = "—", liveRightName = "—", liveLeftScore = "0", liveRightScore = "0", liveTime = "—";
 
+    // Breakdown từng người chơi THẬT trong ván đang chạy (GameControlBridge.PushPlayerBreakdown,
+    // cùng nhịp 1s với PushReport) — thay cho roster MockData.classData(...).playedStudents cũ
+    // vốn là danh sách CẢ LỚP với số liệu random, không liên quan ván đang chơi.
+    private volatile List<LivePlayer> liveLeftPlayers = new ArrayList<>();
+    private volatile List<LivePlayer> liveRightPlayers = new ArrayList<>();
+
+    private static class LivePlayer {
+        String name = "?";
+        int correct, answered;
+        float avgTime, avgCorrectTime;
+    }
+
+    // 2026-09-21: ĐÃ REVERT toàn bộ "xin quyền Camera+Lidar ngay lúc mở app" — thử thêm
+    // requestPermissions(CAMERA) làm dòng ĐẦU TIÊN trong onCreate() (trước setContentView())
+    // gây màn hình đen hoàn toàn ở CẢ 2 display, xác nhận qua phép thử A/B thực tế (cài lại bản
+    // cũ không có đoạn này → hết đen, cài bản có đoạn này → đen lại, cùng 1 máy vừa reboot).
+    // Chưa rõ cơ chế chính xác (nghi vấn: request permission quá sớm — trước setContentView(),
+    // trước khi window/Presentation display phụ kịp dựng — làm hỏng luồng khởi tạo màn hình kép
+    // tuỳ biến của K02), nhưng bằng chứng đủ rõ để revert ngay, không cần hiểu hết nguyên nhân
+    // mới được phép an toàn trở lại. Camera vẫn được xin bình thường ở MainActivity
+    // (FaceEnrollAndroidLib) như thiết kế gốc — chỉ mất phần "xin sớm ngay lúc mở app".
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -172,7 +194,16 @@ public class ControlActivity extends Activity {
         if (secondary == null) return;
         try {
             ImageView iv = new ImageView(this);
-            iv.setImageResource(R.drawable.logo_eduxplore);
+            // logo_eduxplore_splash (KHÔNG phải logo_eduxplore) — đổi tên có chủ đích: trước đó
+            // trùng tên với FaceEnrollAndroidLib's logo_eduxplore.png (bản NỀN TRONG SUỐT, dùng
+            // cho mục đích khác trong module đó), 2 module cùng khai báo 1 resource name → lúc
+            // Unity gộp hết các Android library module vào 1 app cuối cùng, symbol
+            // R.drawable.logo_eduxplore bị TRÙNG, module nào merge sau thắng — hoá ra không phải
+            // bản navy của ControlUiAndroidLib, mà là bản trong suốt của FaceEnrollAndroidLib,
+            // khiến sửa file bao nhiêu lần cũng không thấy hiệu lực trên máy thật (đã xác nhận
+            // qua test K02: sửa file/xoá alpha ở ĐÂY không đổi gì cả, vì app đang render file
+            // KHÁC). Đổi tên để không còn đụng độ resource với module khác nữa.
+            iv.setImageResource(R.drawable.logo_eduxplore_splash);
             iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
             iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             logoPresentation = new Presentation(this, secondary);
@@ -400,7 +431,10 @@ public class ControlActivity extends Activity {
             banner.setLayoutParams(bannerLp);
             banner.addView(UiUtil.label(this, "Vừa chơi", 10f, R.color.text_faint, true));
             banner.addView(UiUtil.label(this, selectedGameName != null ? displayNameOf(selectedGameName) : "—", 15f, R.color.text, true));
-            banner.addView(UiUtil.label(this, liveLeftName + " " + liveLeftScore + " – " + liveRightScore + " " + liveRightName, 11.5f, R.color.text_dim, false));
+            // "Đội trái/phải" chứ không phải liveLeftName/liveRightName — đó là tên NGƯỜI CUỐI
+            // CÙNG được nhận diện, không đại diện được cho cả đội (đã sửa cùng lý do ở
+            // renderSummary() — xem breakdown đầy đủ từng người ở nút "TỔNG KẾT" bên dưới).
+            banner.addView(UiUtil.label(this, "Đội trái " + liveLeftScore + " – " + liveRightScore + " Đội phải", 11.5f, R.color.text_dim, false));
             col.addView(banner);
 
             View spacer = new View(this);
@@ -732,13 +766,22 @@ public class ControlActivity extends Activity {
     }
 
     // ── Scene "ended", bấm "Tổng kết": thẻ tóm tắt ván vừa xong ─────────────────────────────
+    /** Tab "TỔNG KẾT" (nút riêng ở sidebar lúc "ended") — điểm TỔNG theo bên + breakdown từng
+     *  người chơi thật. Trước đây dùng liveLeftName/liveRightName làm nhãn "Điểm X/Y" — SAI logic
+     *  đã xác nhận qua báo cáo thực tế: đó là tên NGƯỜI CUỐI CÙNG được nhận diện ở mỗi bên, không
+     *  đại diện được cho cả đội (1 bên có thể nhiều bạn thay phiên chơi). Đổi nhãn thành "Đội
+     *  trái/phải" trung lập + thêm breakdown thật từng người (liveLeftPlayers/liveRightPlayers,
+     *  cùng data với panel_live lúc đang chơi, UpdateLivePlayers() từ Unity) — đây cũng là nơi
+     *  DUY NHẤT hiện breakdown chi tiết giờ, thay cho panel tương tự trước đặt nhầm bên màn chiếu
+     *  (display phụ, Unity ScoreScene) — đã bỏ bên đó, kéo hết về tablet (display 0) theo đúng
+     *  yêu cầu: giáo viên xem chi tiết trên tablet, màn chiếu chỉ cần tổng điểm cho học sinh. */
     private void renderSummary() {
         summaryCard.removeAllViews();
         summaryCard.addView(UiUtil.label(this, selectedGameName != null ? displayNameOf(selectedGameName) : "—", 19f, R.color.text, true));
 
         String[][] rows = {
                 {"Thời lượng", "—"},
-                {"Điểm " + liveLeftName + " / " + liveRightName, liveLeftScore + " – " + liveRightScore},
+                {"Điểm Đội trái / Đội phải", liveLeftScore + " – " + liveRightScore},
         };
         for (String[] r : rows) {
             LinearLayout row = new LinearLayout(this);
@@ -758,21 +801,58 @@ public class ControlActivity extends Activity {
             dLp.topMargin = UiUtil.dp(this, 10);
             summaryCard.addView(divider, dLp);
         }
+
+        LinearLayout breakdownRow = new LinearLayout(this);
+        breakdownRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams breakdownLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        breakdownLp.topMargin = UiUtil.dp(this, 4);
+        breakdownRow.setLayoutParams(breakdownLp);
+        breakdownRow.addView(buildSummaryPlayerColumn("Đội trái", liveLeftPlayers, R.color.live));
+        View colGap = new View(this);
+        colGap.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 16), 1));
+        breakdownRow.addView(colGap);
+        breakdownRow.addView(buildSummaryPlayerColumn("Đội phải", liveRightPlayers, R.color.bad));
+        summaryCard.addView(breakdownRow);
     }
 
-    // ── Scene "playing": live team view — tên/điểm THẬT từ UpdateReport(), avatar hàng dưới
-    //    là MOCK (chưa có nguồn dữ liệu lượt-theo-từng-học-sinh thời gian thực) ──────────────
+    private LinearLayout buildSummaryPlayerColumn(String label, List<LivePlayer> players, int accentColorRes) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView header = UiUtil.label(this, label, 12.5f, accentColorRes, true);
+        LinearLayout.LayoutParams headerLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        headerLp.bottomMargin = UiUtil.dp(this, 6);
+        header.setLayoutParams(headerLp);
+        col.addView(header);
+
+        if (players == null || players.isEmpty()) {
+            col.addView(UiUtil.label(this, "(chưa nhận diện được ai)", 11.5f, R.color.text_faint, false));
+            return col;
+        }
+        for (int i = 0; i < players.size(); i++) {
+            LivePlayer p = players.get(i);
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rowLp.topMargin = UiUtil.dp(this, i == 0 ? 0 : 8);
+            row.setLayoutParams(rowLp);
+            row.addView(UiUtil.label(this, (i + 1) + ". " + p.name + " — " + p.correct + " điểm", 12.5f, R.color.text, true));
+            row.addView(UiUtil.label(this, p.answered + " câu · " + p.correct + " đúng · TB " + String.format(java.util.Locale.US, "%.1f", p.avgTime) + "s", 10.5f, R.color.text_faint, false));
+            col.addView(row);
+        }
+        return col;
+    }
+
+    // ── Scene "playing": live team view — tên/điểm/breakdown từng người ĐỀU THẬT, từ
+    //    UpdateReport()/UpdateLivePlayers() (GameControlBridge bên Unity, cùng nhịp 1s) ────────
     private void renderLive() {
-        MockData.ClassData cls = MockData.classData(classKey);
-        int half = Math.max(1, cls.playedStudents.size() / 2);
-        List<MockData.Student> left = cls.playedStudents.subList(0, Math.min(half, cls.playedStudents.size()));
-        List<MockData.Student> right = cls.playedStudents.subList(Math.min(half, cls.playedStudents.size()), cls.playedStudents.size());
-        buildLiveSide(liveSideLeft, "Team Trái", liveLeftName, liveLeftScore, left, R.color.live);
-        buildLiveSide(liveSideRight, "Team Phải", liveRightName, liveRightScore, right, R.color.bad);
+        buildLiveSide(liveSideLeft, "Team Trái", liveLeftName, liveLeftScore, liveLeftPlayers, R.color.live);
+        buildLiveSide(liveSideRight, "Team Phải", liveRightName, liveRightScore, liveRightPlayers, R.color.bad);
     }
 
     private void buildLiveSide(LinearLayout side, String teamLabel, String playingName, String scoreText,
-                                List<MockData.Student> members, int accentColorRes) {
+                                List<LivePlayer> members, int accentColorRes) {
         side.removeAllViews();
         View topBorder = new View(this);
         topBorder.setBackgroundColor(UiUtil.ContextColor(this, accentColorRes));
@@ -804,20 +884,23 @@ public class ControlActivity extends Activity {
         LinearLayout turnRow = new LinearLayout(this);
         turnRow.setOrientation(LinearLayout.HORIZONTAL);
         turnScroll.addView(turnRow);
-        for (MockData.Student m : members) {
+        if (members.isEmpty()) {
+            turnRow.addView(UiUtil.label(this, "(chưa nhận diện được ai)", 10.5f, R.color.text_faint, false));
+        }
+        for (LivePlayer m : members) {
             LinearLayout av = new LinearLayout(this);
             av.setOrientation(LinearLayout.VERTICAL);
             av.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams avLp = new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT);
             avLp.rightMargin = UiUtil.dp(this, 8);
             av.setLayoutParams(avLp);
-            int totalPlays = 0;
-            for (Integer v : m.playsByGame.values()) totalPlays += v;
-            TextView circle = UiUtil.makeAvatar(this, m.avatar, 38);
+            TextView circle = UiUtil.makeAvatar(this, initialsOf(m.name), 38);
             circle.setTextColor(UiUtil.ContextColor(this, R.color.text));
             circle.setBackground(UiUtil.circle(UiUtil.ContextColor(this, R.color.panel2), UiUtil.ContextColor(this, R.color.accent), 2, this));
             av.addView(circle);
-            TextView cnt = UiUtil.label(this, String.valueOf(totalPlays), 9f, R.color.text_faint, false);
+            // "3đ · 5c" = 3 điểm / 5 câu đã trả lời — số liệu THẬT từ PlayerRecognitionService,
+            // không phải tổng lượt chơi mock cả lớp như trước.
+            TextView cnt = UiUtil.label(this, m.correct + "đ · " + m.answered + "c", 9f, R.color.text_faint, false);
             av.addView(cnt);
             TextView tname = UiUtil.label(this, m.name, 9.5f, R.color.text_dim, false);
             tname.setGravity(Gravity.CENTER);
@@ -825,6 +908,19 @@ public class ControlActivity extends Activity {
             turnRow.addView(av);
         }
         side.addView(turnScroll);
+    }
+
+    /** 2 chữ cái đầu tên + họ, cùng quy ước với ClassManagementActivity.initialOf() (Kotlin) —
+     *  viết riêng ở đây vì 2 file khác module/ngôn ngữ, không share trực tiếp được. */
+    private static String initialsOf(String name) {
+        if (name == null) return "?";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 0 || parts[0].isEmpty()) return "?";
+        String first = parts[0].substring(0, 1).toUpperCase();
+        if (parts.length > 1 && !parts[parts.length - 1].isEmpty()) {
+            return first + parts[parts.length - 1].substring(0, 1).toUpperCase();
+        }
+        return first;
     }
 
     // =========================================================================================
@@ -887,11 +983,18 @@ public class ControlActivity extends Activity {
     }
 
     /** Dùng chung cho Stop (bấm tay), OnGameEnded (game tự hết giờ), và nút "Bắt Đầu" trên
-     *  ScoreScene (Unity). Tự đưa chính mình lên trước — cần cho chế độ 1 màn hình. */
+     *  ScoreScene (Unity). */
     private void backToMenu() {
+        // ĐÃ BỎ startActivity(new Intent(this, ControlActivity.class)) từng có ở đây — comment
+        // cũ ghi "cần cho chế độ 1 màn hình", tức từ TRƯỚC kiến trúc 2 display hiện tại.
+        // ControlActivity (display 0) không bao giờ mất focus khi Unity (display 1) đổi trạng
+        // thái, nên tự relaunch chính mình là thừa — nghi vấn cao nhất khiến "CHƠI LẠI" không
+        // hiện ra được: lệnh này chen ngay giữa lúc renderAll() vừa vẽ xong màn "ended", làm
+        // gián đoạn trước khi người dùng kịp thấy (đã xác nhận qua báo cáo thực tế trên K02:
+        // hết game tự nhiên không hề thấy nút Chơi lại).
         scene = "ended";
+        Log.i(TAG, "backToMenu: scene=ended, renderAll()");
         renderAll();
-        startActivity(new Intent(this, ControlActivity.class));
     }
 
     private static void sendToUnity(String method, String message) {
@@ -917,6 +1020,43 @@ public class ControlActivity extends Activity {
         activity.runOnUiThread(() -> {
             if ("playing".equals(activity.scene)) activity.renderLive();
         });
+    }
+
+    /** Gọi từ Unity (GameControlBridge.PushPlayerBreakdown, cùng nhịp 1s với UpdateReport) —
+     *  điểm/số liệu THẬT từng người chơi đã nhận diện được (PlayerRecognitionService), thay cho
+     *  roster mock cũ. JSON dạng {"players":[{"name","correct","answered","avgTime",
+     *  "avgCorrectTime"}, ...]} — xem GameControlBridge.PushPlayerBreakdown() phía Unity. */
+    public static void UpdateLivePlayers(String leftJson, String rightJson) {
+        ControlActivity activity = sInstance;
+        if (activity == null) return;
+        activity.liveLeftPlayers = parseLivePlayers(leftJson);
+        activity.liveRightPlayers = parseLivePlayers(rightJson);
+        activity.runOnUiThread(() -> {
+            if ("playing".equals(activity.scene)) activity.renderLive();
+        });
+    }
+
+    private static List<LivePlayer> parseLivePlayers(String json) {
+        List<LivePlayer> out = new ArrayList<>();
+        if (json == null || json.isEmpty()) return out;
+        try {
+            JSONArray arr = new JSONObject(json).optJSONArray("players");
+            if (arr != null) {
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject p = arr.getJSONObject(i);
+                    LivePlayer lp = new LivePlayer();
+                    lp.name = p.optString("name", "?");
+                    lp.correct = p.optInt("correct", 0);
+                    lp.answered = p.optInt("answered", 0);
+                    lp.avgTime = (float) p.optDouble("avgTime", 0);
+                    lp.avgCorrectTime = (float) p.optDouble("avgCorrectTime", 0);
+                    out.add(lp);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "parseLivePlayers failed: " + e);
+        }
+        return out;
     }
 
     /** Gọi từ Unity (GameControlBridge.PushGameEnded) lúc hết giờ/hết vòng tự nhiên. */

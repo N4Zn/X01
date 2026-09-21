@@ -121,16 +121,21 @@ public static class GameRegistry
         Set(0, 17, "ShapeRectangle", "Nhận biết hình chữ nhật",    "", Engine.TongHopGame, group: "Hình học");
 
         // ── Category 1: Tiếng Việt ───────────────────────────────────────────
-        Set(1, 0, "ListenSelect",       "Nghe và chọn",          "ListenGame",          Engine.ListenGame);
-        Set(1, 1, "ChuCai",             "Chữ cái",               "ChuCaiGame",          Engine.ListenGame);
-        Set(1, 2, "ChuCai2",            "Chữ cái - Bóng bay",    "BalloonGame",         Engine.BalloonGame);
-        Set(1, 3, "FamilySpellingJump", "Ghép vần - Nhảy ô",     "FamilySpellingGame",  Engine.MiniGameKit);
-        Set(1, 4, "WordHuntMaze",       "Tìm từ - Mê cung",      "WordHuntMazeGame",    Engine.MiniGameKit);
-        Set(1, 5, "SentenceBuilder",    "Ghép câu",              "SentenceBuilderGame", Engine.MiniGameKit);
+        // 2026-09-18: soi lại asset/audio thật thì ListenSelect/FamilySpellingJump/WordHuntMaze/
+        // SentenceBuilder đều là nội dung TIẾNG ANH (audio "Audio/Letters/A-Z.mp3" kiểu tên chữ
+        // cái Anh, CSV "mom/dad/sister", hardcode "MOM/HAPPY/SAD", câu "He is thirsty"...) —
+        // trước đó bị gán nhầm category 1, đã chuyển đúng sang category 2 bên dưới. Chỉ ChuCai/
+        // ChuCai2 dùng kho âm chữ cái tiếng Việt thật (Dờ/Sờ/Đờ/Ư...) nên mới thực sự ở đây.
+        Set(1, 0, "ChuCai",  "Chữ cái",            "ChuCaiGame",  Engine.ListenGame);
+        Set(1, 1, "ChuCai2", "Chữ cái - Bóng bay", "BalloonGame", Engine.BalloonGame);
 
         // ── Category 2: Tiếng Anh ────────────────────────────────────────────
-        // Chưa có game riêng cho tiếng Anh (SolarQuizEn chỉ là bản dịch câu hỏi khoa học,
-        // không phải nội dung dạy tiếng Anh) — để trống, thêm game vào đây khi có.
+        // 4 game chuyển từ category 1 sang đây (xem ghi chú ở trên) — SolarQuizEn (category 3)
+        // vẫn KHÔNG tính vào đây, chỉ là bản dịch câu hỏi khoa học, không phải nội dung dạy tiếng Anh.
+        Set(2, 0, "ListenSelect",       "Nghe và chọn",          "ListenGame",          Engine.ListenGame);
+        Set(2, 1, "FamilySpellingJump", "Ghép vần - Nhảy ô",     "FamilySpellingGame",  Engine.MiniGameKit);
+        Set(2, 2, "WordHuntMaze",       "Tìm từ - Mê cung",      "WordHuntMazeGame",    Engine.MiniGameKit);
+        Set(2, 3, "SentenceBuilder",    "Ghép câu",              "SentenceBuilderGame", Engine.MiniGameKit);
 
         // ── Category 3: Khoa học (khám phá tự nhiên - xã hội) ────────────────
         Set(3, 0,  "SaveEnvironment",  "Bảo vệ môi trường",         "TestTongHopGame",      Engine.TongHopGame);

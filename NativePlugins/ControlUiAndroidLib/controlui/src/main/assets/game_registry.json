@@ -21,12 +21,13 @@
     {"name": "ShapeCircle", "displayName": "Nhận biết hình tròn", "group": "Hình học", "sceneName": "", "category": 0},
     {"name": "ShapeRectangle", "displayName": "Nhận biết hình chữ nhật", "group": "Hình học", "sceneName": "", "category": 0},
 
-    {"name": "ListenSelect", "displayName": "Nghe và chọn", "sceneName": "ListenGame", "category": 1},
     {"name": "ChuCai", "displayName": "Chữ cái", "sceneName": "ChuCaiGame", "category": 1},
     {"name": "ChuCai2", "displayName": "Chữ cái - Bóng bay", "sceneName": "BalloonGame", "category": 1},
-    {"name": "FamilySpellingJump", "displayName": "Ghép vần - Nhảy ô", "sceneName": "FamilySpellingGame", "category": 1},
-    {"name": "WordHuntMaze", "displayName": "Tìm từ - Mê cung", "sceneName": "WordHuntMazeGame", "category": 1},
-    {"name": "SentenceBuilder", "displayName": "Ghép câu", "sceneName": "SentenceBuilderGame", "category": 1},
+
+    {"name": "ListenSelect", "displayName": "Nghe và chọn", "sceneName": "ListenGame", "category": 2},
+    {"name": "FamilySpellingJump", "displayName": "Ghép vần - Nhảy ô", "sceneName": "FamilySpellingGame", "category": 2},
+    {"name": "WordHuntMaze", "displayName": "Tìm từ - Mê cung", "sceneName": "WordHuntMazeGame", "category": 2},
+    {"name": "SentenceBuilder", "displayName": "Ghép câu", "sceneName": "SentenceBuilderGame", "category": 2},
 
     {"name": "SaveEnvironment", "displayName": "Bảo vệ môi trường", "sceneName": "TestTongHopGame", "category": 3},
     {"name": "Fruit", "displayName": "Hoa quả", "sceneName": "TestTongHopGame", "category": 3},

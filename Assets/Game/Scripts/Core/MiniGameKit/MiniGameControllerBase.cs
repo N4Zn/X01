@@ -95,9 +95,19 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     protected virtual void Start()
     {
+        Debug.Log($"[MiniGameControllerBase][DEBUG] Start() — type={GetType().Name} instance={GetInstanceID()} scene={gameObject.scene.name} t={Time.unscaledTime:F1}");
+
+        // Auto bật touch ngay khi game bắt đầu (mọi đường vào scene đều chạy qua đây — cold
+        // boot/OnLoadGameRequested/nút "Chơi lại" tự SceneManager.LoadScene() bỏ qua
+        // GameControlBridge — nên đây là chỗ DUY NHẤT chắc chắn chạy đúng 1 lần/sớm nhất cho
+        // mọi trường hợp). Set thẳng true, không cần if — đã true thì gọi lại vẫn true, không
+        // ảnh hưởng gì nếu giáo viên vừa bật tay bằng nút cứng trước đó.
+        LidarTouchBridge.Instance?.SetTouchEnabled(true);
+
         Current = this;
         InitScoring();
         InitFsm();
+        Debug.Log($"[MiniGameControllerBase][DEBUG] Start() xong — type={GetType().Name}");
     }
 
     protected virtual void OnDestroy()
@@ -157,6 +167,12 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         string rightName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName2() : "Phải";
         int rightScore = playMode == MiniGamePlayMode.Solo ? 0 : ScoreManager.ScoreRight;
         GameControlBridge.Instance?.PushReport(secondsLeft, leftName, ScoreManager.ScoreLeft, rightName, rightScore);
+
+        // Breakdown từng người chơi thật (khác tổng điểm ở trên) — cùng nhịp throttle 1s, để
+        // panel_live trên ControlActivity hết roster mock. Xem GameControlBridge.PushPlayerBreakdown().
+        GameControlBridge.Instance?.PushPlayerBreakdown(
+            PlayerRecognitionService.Instance?.GetPlayerStats(0),
+            PlayerRecognitionService.Instance?.GetPlayerStats(1));
     }
 
     // ── Setup ────────────────────────────────────────────────────────────────
@@ -404,6 +420,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     protected virtual void StateMachineEnter_GameOver(Enum prev, Dictionary<string, object> opts)
     {
+        Debug.Log($"[MiniGameControllerBase][DEBUG] StateMachineEnter_GameOver — type={GetType().Name} instance={GetInstanceID()} t={Time.unscaledTime:F1}");
         if (_timeoutCoroutine != null) { StopCoroutine(_timeoutCoroutine); _timeoutCoroutine = null; }
         if (_nextRoundCoroutine != null) { StopCoroutine(_nextRoundCoroutine); _nextRoundCoroutine = null; }
 
@@ -416,6 +433,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
         CleanupCurrentDisplay();
 
+        // KHÔNG tắt touch ở đây — đã thử tắt lúc GameOver (yêu cầu ban đầu) nhưng gây lỗi thật:
+        // nút "Chơi lại"/"Đổi đội" trên chính ScoreScene (máy chiếu) cũng được bấm qua LiDAR
+        // floor-touch giống lúc chơi, tắt touch trước khi ScoreScene load = 2 nút đó liệt luôn,
+        // dậm chân tại chỗ không phản hồi gì (đã xác nhận qua báo cáo thực tế trên K02). Touch
+        // vẫn để nguyên xuyên suốt Game → ScoreScene → game tiếp theo; chỉ tắt lúc Pause/Stop
+        // (hành động thủ công của giáo viên, không liên quan gì tới GameOver tự nhiên).
+
         if (GameSessionManager.Instance != null)
         {
             int leftScore = ScoreManager.ScoreLeft;
@@ -425,7 +449,20 @@ public abstract class MiniGameControllerBase : MonoBehaviour
                 GameSessionManager.Instance.LastPlayedGame = sceneNameForRegistry;
         }
         MusicManager.Instance?.PlayMainMusic();
-        if (!string.IsNullOrEmpty(nextSceneName)) SceneManager.LoadScene(nextSceneName);
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            Debug.Log($"[MiniGameControllerBase][DEBUG] sắp SceneManager.LoadScene('{nextSceneName}')...");
+            SceneManager.LoadScene(nextSceneName);
+            Debug.Log($"[MiniGameControllerBase][DEBUG] LoadScene('{nextSceneName}') ĐÃ RETURN.");
+        }
+
+        // PushReportIfDue() throttle 1 lần/giây — điểm cuối cùng (đủ thắng round cuối) có thể
+        // đổi trong khoảng <1s trước GameOver và chưa kịp đẩy, khiến report ControlActivity/màn
+        // chiếu bị lệch/cũ so với điểm thật (đã xác nhận qua báo cáo thực tế: trong game/tổng kết
+        // đúng 3-2 nhưng report dưới màn chiếu vẫn còn 2-1 của round trước). Ép đẩy ngay 1 lần
+        // không qua throttle bằng điểm vừa chốt trước khi báo game kết thúc.
+        _lastReportPushTime = -999f;
+        PushReportIfDue();
 
         // Hết giờ tự nhiên (không phải bấm Stop) — báo ControlActivity tự quay Menu chọn
         // game tiếp theo, coi như hết 1 round. Display máy chiếu không bị đụng, vẫn hiện

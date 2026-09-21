@@ -377,15 +377,20 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     // drag/swipe (độ phân giải Lidar hiện tại không đủ cho việc đó, đã thống nhất bỏ qua).
     private static void DispatchTap(Vector2 screenPosition)
     {
-        if (EventSystem.current == null) return;
+        if (EventSystem.current == null)
+        {
+            Debug.LogWarning("[LidarTouchBridge][DEBUG] DispatchTap: EventSystem.current NULL — không có EventSystem trong scene hiện tại, tap bị bỏ qua hoàn toàn.");
+            return;
+        }
 
         var pointerData = new PointerEventData(EventSystem.current) { position = screenPosition };
         RaycastResults.Clear();
         EventSystem.current.RaycastAll(pointerData, RaycastResults);
-        if (RaycastResults.Count == 0) return;
+        if (RaycastResults.Count == 0) return; // bình thường — đa số điểm quét không trúng UI nào, không log để tránh spam
 
         pointerData.pointerPressRaycast = RaycastResults[0];
         GameObject target = RaycastResults[0].gameObject;
+        Debug.Log($"[LidarTouchBridge][DEBUG] DispatchTap: TRÚNG '{target.name}' tại ({screenPosition.x:F0},{screenPosition.y:F0})");
 
         GameObject pressed = ExecuteEvents.ExecuteHierarchy(target, pointerData, ExecuteEvents.pointerDownHandler);
         GameObject upTarget = pressed != null ? pressed : target;

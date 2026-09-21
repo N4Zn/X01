@@ -76,6 +76,13 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         const val EXTRA_STUDENT_NAME = "student_name"
         const val MODE_VIEW_STUDENT = "view_student"
         const val MODE_BULK_PICK = "bulk_pick"
+        // "Cập nhật ảnh" từ panel chi tiết học sinh trong ClassManagementActivity — học sinh đã
+        // biết tên rồi (EXTRA_STUDENT_NAME), nên bỏ qua hẳn showEnrollNameDialog() (hỏi tên/tên
+        // gọi/giới tính cho người MỚI), add thẳng mẫu ảnh vào đúng tên đó. Camera: giáo viên tự
+        // bấm nút chụp như bình thường (targetStudentName lệch hướng enrollNextFace tại chỗ).
+        // Gallery: mở luôn picker nhiều ảnh, mỗi ảnh cũng add thẳng vào tên đó.
+        const val MODE_ADD_SAMPLES_CAMERA = "add_samples_camera"
+        const val MODE_ADD_SAMPLES_GALLERY = "add_samples_gallery"
     }
 
     private lateinit var previewImage: ImageView
@@ -97,6 +104,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // đến từ ClassManagementActivity. pendingBulkPick nhớ việc bấm "Thêm hàng loạt" đang chờ
     // quyền READ_EXTERNAL_STORAGE, để biết bật picker đơn hay nhiều khi quyền vừa được cấp.
     private var targetClassName: String? = null
+    // Khi != null: đang ở chế độ "cập nhật ảnh" cho 1 học sinh ĐÃ CÓ (từ panel chi tiết trong
+    // ClassManagementActivity) — enrollNextFace() add thẳng mẫu vào tên này, bỏ qua hộp thoại đặt
+    // tên/giới tính (đã biết cả rồi, không phải người mới).
+    private var targetStudentName: String? = null
     private var pendingBulkPick = false
 
     private var faceEngine: FaceEngine? = null
@@ -255,6 +266,14 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         when (mode) {
             MODE_VIEW_STUDENT -> intent.getStringExtra(EXTRA_STUDENT_NAME)?.let { showStudentSamplesDialog(it) }
             MODE_BULK_PICK -> requestBulkPick()
+            MODE_ADD_SAMPLES_CAMERA -> {
+                targetStudentName = intent.getStringExtra(EXTRA_STUDENT_NAME)
+                toastStatus("Chụp ảnh bổ sung cho ${targetStudentName ?: "?"} — bấm nút chụp khi thấy mặt rõ")
+            }
+            MODE_ADD_SAMPLES_GALLERY -> {
+                targetStudentName = intent.getStringExtra(EXTRA_STUDENT_NAME)
+                requestBulkPick()
+            }
         }
         greetingTts = GreetingTts(this)
         greetingTts.startWeatherRefresh()
@@ -1002,6 +1021,16 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     private fun enrollNextFace(faces: List<Pair<FloatArray, Mat>>, index: Int, onAllDone: () -> Unit = {}) {
         if (index >= faces.size) {
             onAllDone()
+            return
+        }
+        val target = targetStudentName
+        if (target != null) {
+            // Cập nhật ảnh cho học sinh ĐÃ CÓ (từ panel chi tiết) — đã biết tên/tên gọi/giới
+            // tính rồi, add thẳng mẫu vào đúng tên đó, không hỏi lại showEnrollNameDialog().
+            val (emb, crop) = faces[index]
+            attendanceStore.addSample(target, emb, crop)
+            toastStatus("Đã thêm ảnh cho $target (${attendanceStore.samplesOf(target).size} mẫu)")
+            enrollNextFace(faces, index + 1, onAllDone)
             return
         }
         showEnrollNameDialog(

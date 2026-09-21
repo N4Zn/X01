@@ -107,15 +107,26 @@ public class TestTongHopController : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[TestTongHopController][DEBUG] Start() — instance={GetInstanceID()} scene={gameObject.scene.name} t={Time.unscaledTime:F1}");
+
+        // Auto bật touch ngay khi game bắt đầu — cùng lý do/vị trí với
+        // MiniGameControllerBase.Start(): đây là chỗ DUY NHẤT chắc chắn chạy đúng 1 lần/sớm nhất
+        // cho mọi đường vào scene (cold boot, OnLoadGameRequested, hay nút "Chơi lại" tự
+        // SceneManager.LoadScene() bỏ qua GameControlBridge). Set thẳng true — không ảnh hưởng
+        // gì nếu giáo viên đã bật tay bằng nút cứng từ trước.
+        LidarTouchBridge.Instance?.SetTouchEnabled(true);
+
         Current       = this;
         _fsm          = gameObject.AddComponent<CustomFSMManager>();
         _fsm.fsmName  = nameof(TestTongHopController) + "FSM";
         _fsm.Initialize(typeof(TestTongHopSceneState), GetType(), false);
         _fsm.StateMachineChange(TestTongHopSceneState.Initialize);
+        Debug.Log($"[TestTongHopController][DEBUG] Start() xong — FSM state hiện tại={GetCurrentState()}");
     }
 
     void OnDestroy()
     {
+        Debug.Log($"[TestTongHopController][DEBUG] OnDestroy() — instance={GetInstanceID()} t={Time.unscaledTime:F1}");
         if (Current == this) Current = null;
     }
 
@@ -147,6 +158,12 @@ public class TestTongHopController : MonoBehaviour
         string leftName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName1() : "Trái";
         string rightName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName2() : "Phải";
         GameControlBridge.Instance?.PushReport(secondsLeft, leftName, left, rightName, right);
+
+        // Breakdown từng người chơi thật (khác tổng điểm ở trên) — cùng nhịp throttle 1s, để
+        // panel_live trên ControlActivity hết roster mock. Xem GameControlBridge.PushPlayerBreakdown().
+        GameControlBridge.Instance?.PushPlayerBreakdown(
+            PlayerRecognitionService.Instance?.GetPlayerStats(0),
+            PlayerRecognitionService.Instance?.GetPlayerStats(1));
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
@@ -156,6 +173,33 @@ public class TestTongHopController : MonoBehaviour
         if (_fsm == null) return TestTongHopSceneState.Initialize;
         Enum s = _fsm.GetCurrentState();
         return s == null ? TestTongHopSceneState.Initialize : (TestTongHopSceneState)s;
+    }
+
+    /// <summary>Mô tả ngắn gọn 1 câu hỏi — chỉ dùng để ghi log (PlayerRecognitionService), không
+    /// hiện lên UI nên không cần đẹp, chỉ cần đủ để đọc lại JSON biết đang hỏi gì. Nhận thẳng
+    /// QuestionData thay vì đọc _currentQuestion (field) vì PlayerLoop() — nhịp Independent Play
+    /// (Counting5, ...) — dùng biến cục bộ `q` riêng, không đụng field này.</summary>
+    static string DescribeQuestion(QuestionData q)
+    {
+        if (q == null) return "(?)";
+        string content = !string.IsNullOrEmpty(q.questionMediaValue) ? q.questionMediaValue : q.id;
+        return $"[{q.topic}] {content}";
+    }
+
+    /// <summary>Mô tả đáp án học sinh đã chọn — playerAnswer là mảng index (Choose: index vào
+    /// answers[]; Matching: index cặp) nên map ngược lại sang text khi có thể, thay vì chỉ ghi
+    /// số index trần trụi trong log.</summary>
+    static string DescribeGivenAnswer(QuestionData q, int[] playerAnswer)
+    {
+        if (playerAnswer == null || playerAnswer.Length == 0) return "(none)";
+        if (q != null && q.questionType == QuestionType.Choose && q.answers != null)
+        {
+            var parts = new List<string>();
+            foreach (int i in playerAnswer)
+                parts.Add(i >= 0 && i < q.answers.Length ? q.answers[i] : i.ToString());
+            return string.Join(",", parts);
+        }
+        return string.Join(",", playerAnswer);
     }
 
     // =========================================================================
@@ -396,6 +440,17 @@ public class TestTongHopController : MonoBehaviour
         bool addScore = !(isCorrect && _currentQuestion?.answerMode == AnswerMode.MultiSelect);
         gameModel.RecordAnswer(_currentQuestion, isCorrect, team, responseTime, addScore);
 
+        // Game này không kế thừa MiniGameControllerBase nên không tự có LogRound() như các
+        // minigame khác (AddNumberGame/ChuCai/...) — thiếu dòng này thì PlayerRecognitionService
+        // chỉ có entry "recognition" (ai đang chơi) chứ không có entry "round" (câu gì/đúng-sai/
+        // bao nhiêu giây), khiến bảng "điểm cá nhân trong đội" ở ScoreScene luôn trống cho game
+        // chính này dù đã nhận diện đúng tên. Log đúng slot theo team (0=trái, 1=phải) — khớp
+        // GetPlayerStats() ở ScoreSceneController.
+        int slot = team == Team.Left ? 0 : 1;
+        int roundNum = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
+        PlayerRecognitionService.Instance.LogRound(slot, roundNum,
+            DescribeQuestion(_currentQuestion), DescribeGivenAnswer(_currentQuestion, playerAnswer), isCorrect, responseTime);
+
         _lastCorrect = isCorrect;
         _lastTeam    = team;
 
@@ -503,22 +558,56 @@ public class TestTongHopController : MonoBehaviour
 
     protected void StateMachineEnter_GameOver(Enum prev, Dictionary<string, object> opts)
     {
+        Debug.Log($"[TestTongHopController][DEBUG] StateMachineEnter_GameOver — instance={GetInstanceID()} prev={prev} t={Time.unscaledTime:F1} — StartCoroutine(FinalizeGameOver)");
+        StartCoroutine(FinalizeGameOver());
+    }
+
+    /// <summary>Đợi đúng 1 frame trước khi chốt điểm/log/ScoreScene — bug thật đã xác nhận qua
+    /// test trên K02: ScoreScene báo 4-4 trong khi report live ControlActivity (và tổng breakdown
+    /// từng người) đã lên đúng 5-6. Nguyên nhân: PlayerLoop() (Independent Play) có thể vừa
+    /// answered=true ngay TRONG frame GameOver kích hoạt, nhưng coroutine của nó chỉ resume SAU
+    /// khi mọi Update() trong frame đó chạy xong (thứ tự cố định của Unity) — chốt điểm ĐỒNG BỘ
+    /// ngay trong Update()/StateMachineEnter sẽ lỡ mất round vừa trả lời đó. Đợi 1 frame cho các
+    /// PlayerLoop coroutine đang dở kịp gọi RecordIndependentAnswer() trước khi snapshot.</summary>
+    IEnumerator FinalizeGameOver()
+    {
+        Debug.Log($"[TestTongHopController][DEBUG] FinalizeGameOver: bắt đầu, chờ 1 frame... t={Time.unscaledTime:F1} frame={Time.frameCount}");
+        yield return null;
+        Debug.Log($"[TestTongHopController][DEBUG] FinalizeGameOver: qua khỏi yield return null, t={Time.unscaledTime:F1} frame={Time.frameCount}");
+
         gameModel.ExportLog();
+        Debug.Log("[TestTongHopController][DEBUG] FinalizeGameOver: ExportLog() xong.");
+
+        // KHÔNG tắt touch ở đây — xem lý do đầy đủ ở MiniGameControllerBase.StateMachineEnter_
+        // GameOver(): nút "Chơi lại"/"Đổi đội" trên chính ScoreScene (máy chiếu) cũng bấm qua
+        // LiDAR floor-touch, tắt touch trước khi ScoreScene load sẽ làm 2 nút đó liệt.
 
         if (GameSessionManager.Instance != null)
         {
             var (left, right) = gameModel.GetScore();
             GameSessionManager.Instance.RecordScores(left, right);
             GameSessionManager.Instance.LastPlayedGame = "TestTongHopGame";
+            Debug.Log($"[TestTongHopController][DEBUG] FinalizeGameOver: RecordScores({left},{right}) xong.");
         }
 
         MusicManager.Instance?.PlayMainMusic();
+        Debug.Log("[TestTongHopController][DEBUG] FinalizeGameOver: sắp SceneManager.LoadScene(\"ScoreScene\")...");
         SceneManager.LoadScene("ScoreScene");
+        Debug.Log($"[TestTongHopController][DEBUG] FinalizeGameOver: LoadScene(\"ScoreScene\") ĐÃ RETURN. t={Time.unscaledTime:F1}");
+
+        // PushReportIfDue() throttle 1 lần/giây — điểm cuối cùng có thể chưa kịp đẩy trước
+        // GameOver, khiến report dưới màn chiếu lệch/cũ so với điểm thật (đã xác nhận qua báo
+        // cáo thực tế: 3-2 lúc tổng kết nhưng report vẫn còn 2-1). Ép đẩy ngay 1 lần không qua
+        // throttle bằng điểm vừa chốt.
+        _lastReportPushTime = -999f;
+        PushReportIfDue();
+        Debug.Log("[TestTongHopController][DEBUG] FinalizeGameOver: PushReportIfDue() (forced) xong.");
 
         // Hết giờ tự nhiên (không phải bấm Stop) — báo ControlActivity tự quay Menu chọn
         // game tiếp theo, coi như hết 1 round. Display máy chiếu không bị đụng, vẫn hiện
         // ScoreScene vừa load ở trên như bình thường.
         GameControlBridge.Instance?.PushGameEnded();
+        Debug.Log($"[TestTongHopController][DEBUG] FinalizeGameOver: PushGameEnded() xong — HOÀN TẤT toàn bộ coroutine. t={Time.unscaledTime:F1}");
     }
 
     protected void StateMachineExit_GameOver(Enum prev, Dictionary<string, object> opts) { }
@@ -668,12 +757,14 @@ public class TestTongHopController : MonoBehaviour
                 questionDisplays[playerIdx].Show(q);
 
             // 3. Setup buttons cho player này — callback báo khi player xong
-            bool answered  = false;
-            bool isCorrect = false;
-            answerDisplayManager.SetupPlayerIndependent(team, q, (ok, _, __) =>
+            bool  answered     = false;
+            bool  isCorrect    = false;
+            int[] givenAnswer  = null;
+            answerDisplayManager.SetupPlayerIndependent(team, q, (ok, _, ans) =>
             {
-                isCorrect = ok;
-                answered  = true;
+                isCorrect   = ok;
+                givenAnswer = ans;
+                answered    = true;
             });
 
             float startTime = Time.time;
@@ -681,7 +772,21 @@ public class TestTongHopController : MonoBehaviour
             // 4. Chờ player trả lời hoặc hết giờ
             yield return new WaitUntil(() => answered ||
                 GetCurrentState() == TestTongHopSceneState.GameOver);
-            if (GetCurrentState() == TestTongHopSceneState.GameOver) yield break;
+
+            // Check `answered` TRƯỚC, không check lại state GameOver — bug thật đã xác nhận qua
+            // test trên K02 (tổng kết ScoreScene báo 4-4 trong khi thực tế 5-6, đúng bằng
+            // breakdown cộng lại + report live ControlActivity). Root cause: WaitUntil ở trên có
+            // thể resolve vì answered==true (player VỪA trả lời xong) nhưng nếu đúng lúc đó
+            // GameOver CŨNG vừa kích hoạt (hết giờ ở bên kia/timer chung) thì bản check cũ
+            // `if (state==GameOver) yield break` sẽ NÉM BỎ câu trả lời thật đó — mất điểm dù
+            // player đã trả lời đúng lúc. Ưu tiên `answered`: đã trả lời thì luôn ghi nhận, dù
+            // GameOver có lỡ chuyển cùng lúc; chỉ bỏ qua khi THỰC SỰ chưa kịp trả lời (hết giờ).
+            if (!answered)
+            {
+                Debug.Log($"[PlayerLoop][DEBUG] {team}: WaitUntil resolve do GameOver (chưa answered) → yield break, kết thúc loop bên này. t={Time.unscaledTime:F1}");
+                yield break;
+            }
+            Debug.Log($"[PlayerLoop][DEBUG] {team}: answered=true, tiếp tục ghi nhận round. t={Time.unscaledTime:F1}");
 
             // 5. Ghi kết quả — RecordIndependentAnswer (KHÔNG phải RecordAnswer): mỗi bên tự
             // nhịp câu hỏi riêng ở đây, BeginRound/EndRound dùng chung 1 _currentRound sẽ bị
@@ -691,7 +796,17 @@ public class TestTongHopController : MonoBehaviour
             // [DEBUG] trace — xóa khi đã xác nhận
             Debug.Log($"[PlayerLoop] {team} answered q={q.id} → isCorrect={isCorrect}");
             int roundNum = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
-            gameModel.RecordIndependentAnswer(q, isCorrect, team, roundNum, Time.time - startTime);
+            float indAnswerTime = Time.time - startTime;
+            gameModel.RecordIndependentAnswer(q, isCorrect, team, roundNum, indAnswerTime);
+
+            // Thiếu dòng này là lý do thật khiến breakdown "điểm cá nhân" luôn trống cho
+            // Counting5/... (independentPlay=true) dù điểm tổng vẫn lên đúng: nhánh Independent
+            // Play có đường xử lý round RIÊNG (PlayerLoop, không phải OnAnswerResult) nên
+            // LogRound() thêm ở OnAnswerResult() không bao giờ chạy tới đây — xác nhận qua test
+            // thật trên K02 (điểm 3-6 lên đúng nhưng panel live báo "chưa nhận diện được ai").
+            PlayerRecognitionService.Instance.LogRound(playerIdx, roundNum,
+                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime);
+
             if (team == Team.Left) _leftRoundsCompleted++; else _rightRoundsCompleted++;
 
             // 6. Feedback icon

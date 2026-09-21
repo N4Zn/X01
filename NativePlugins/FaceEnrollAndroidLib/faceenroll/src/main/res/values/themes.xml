@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.FaceAttendance" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+
+    <!-- Ngày sinh trong panel "Quản lý lớp" — cuộn 3 cột ngày/tháng/năm thay vì lịch lưới mặc
+         định, dễ chọn hơn cho cô giáo (không cần gõ, không cần lật qua nhiều tháng để tới năm
+         sinh của bé). Chỉ đổi cách HIỂN THỊ của widget DatePicker có sẵn của hệ thống - không
+         thêm code/tính toán, không có chi phí xử lý gì thêm. -->
+    <style name="SpinnerDatePickerDialog" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="android:datePickerStyle">@style/SpinnerDatePickerStyle</item>
+    </style>
+    <style name="SpinnerDatePickerStyle" parent="android:Widget.Material.DatePicker">
+        <item name="android:datePickerMode">spinner</item>
+        <item name="android:calendarViewShown">false</item>
+    </style>
 </resources>

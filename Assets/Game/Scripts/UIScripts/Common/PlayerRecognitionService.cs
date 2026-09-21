@@ -198,6 +198,46 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         WriteLogNow();
     }
 
+    /// <summary>Điểm/số liệu gộp theo TỪNG người chơi thật (tên nhận diện được) trong 1 bên
+    /// (slot) — dùng cho bảng "điểm cá nhân trong đội" ở ScoreScene, khác với
+    /// ScoreManager.ScoreLeft/Right vốn chỉ gộp theo BÊN (có thể nhiều bạn thay phiên nhau chơi
+    /// cùng 1 bên qua các round khác nhau).</summary>
+    [Serializable]
+    public struct PlayerRoundStat
+    {
+        public string name;
+        public int    answered;
+        public int    correct;
+        public float  totalAnswerTimeSec;
+        public float  totalCorrectAnswerTimeSec;
+
+        public float AvgAnswerTimeSec => answered > 0 ? totalAnswerTimeSec / answered : 0f;
+        public float AvgCorrectAnswerTimeSec => correct > 0 ? totalCorrectAnswerTimeSec / correct : 0f;
+    }
+
+    /// <summary>Gộp mọi entry "round" của 1 slot (0=trái, 1=phải) theo tên người chơi thật, sort
+    /// điểm (số câu đúng) giảm dần — khớp đúng cách ScoreManager.AddPoint() cộng điểm (1 điểm/
+    /// câu đúng), nên correct count của từng người CỘNG LẠI đúng bằng tổng điểm của cả bên.</summary>
+    public List<PlayerRoundStat> GetPlayerStats(int slot)
+    {
+        string slotTag = slot == 0 ? "left" : "right";
+        var map = new Dictionary<string, PlayerRoundStat>();
+        foreach (var e in _logEntries)
+        {
+            if (e.eventType != "round" || e.slot != slotTag) continue;
+            string name = string.IsNullOrEmpty(e.name) ? "?" : e.name;
+            if (!map.TryGetValue(name, out var stat)) stat = new PlayerRoundStat { name = name };
+            float t = Mathf.Max(0f, e.answerTimeSec);
+            stat.answered++;
+            stat.totalAnswerTimeSec += t;
+            if (e.correct) { stat.correct++; stat.totalCorrectAnswerTimeSec += t; }
+            map[name] = stat;
+        }
+        var list = new List<PlayerRoundStat>(map.Values);
+        list.Sort((a, b) => b.correct != a.correct ? b.correct.CompareTo(a.correct) : b.answered.CompareTo(a.answered));
+        return list;
+    }
+
     void WriteLogNow()
     {
         if (string.IsNullOrEmpty(_sessionFileName)) return;

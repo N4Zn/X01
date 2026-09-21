@@ -10,6 +10,7 @@ public class ScoreSceneController : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[ScoreSceneController][DEBUG] Start() — instance={GetInstanceID()} t={Time.unscaledTime:F1}");
         _customFSMManager = gameObject.AddComponent<CustomFSMManager>();
         _customFSMManager.fsmName = this.GetType().Name + "FSM";
         _customFSMManager.Initialize(typeof(ScoreSceneState), this.GetType(), false);
@@ -48,6 +49,11 @@ public class ScoreSceneController : MonoBehaviour
                 session.Player2FinalScore
             );
         }
+
+        // Breakdown từng người chơi thật KHÔNG hiện ở đây nữa — đã chuyển hẳn sang tablet
+        // (ControlActivity.renderSummary(), nút "TỔNG KẾT") theo yêu cầu thực tế: đây là màn
+        // chiếu (display phụ) cho học sinh xem, chi tiết từng người/thời gian chỉ giáo viên cần
+        // nên hợp lý hơn khi xem trên tablet. Màn chiếu chỉ cần tổng điểm mỗi bên như cũ.
 
         _customFSMManager.StateMachineChange(ScoreSceneState.DisplayResults);
     }

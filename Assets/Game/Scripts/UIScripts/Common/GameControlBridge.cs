@@ -29,6 +29,31 @@ public class GameControlBridge : Singleton<GameControlBridge>
     protected override void OnCreated()
     {
         gameObject.name = "GameControlBridge";
+        Debug.Log("[GameControlBridge] OnCreated — singleton sống, DontDestroyOnLoad.");
+
+        // Tạo sẵn blank overlay ngay từ lúc khởi động (ẩn), thay vì tạo MỚI lúc bấm Stop —
+        // nguyên nhân treo máy thật đã xác nhận qua log Dev Build trên K02: main thread Unity
+        // ngừng tick HẲN ngay sau khi OnStopRequested() chạy xong dòng log cuối cùng — đúng lúc
+        // CreateBlankOverlay() lần đầu dựng 1 Canvas hoàn toàn mới trên display phụ (kiến trúc
+        // 2-display tuỳ biến của K02). Dựng sẵn lúc app còn đang ổn định (ngay sau khi warm-up),
+        // Stop chỉ cần SetActive(true) trên object đã có sẵn — rẻ, không tạo GameObject/Canvas/
+        // load Sprite mới giữa lúc đang xử lý sự kiện Stop.
+        _blankOverlay = CreateBlankOverlay();
+        _blankOverlay.gameObject.SetActive(false);
+        Debug.Log("[GameControlBridge] Blank overlay đã tạo sẵn (ẩn) lúc khởi động.");
+    }
+
+    // ── DEBUG: heartbeat — bằng chứng trực tiếp main thread Unity còn chạy hay không (log
+    // mỗi ~2s từ 1 object DontDestroyOnLoad, sống xuyên suốt mọi scene). Nếu log này NGỪNG xuất
+    // hiện trong lúc app "treo" (màn chiếu đứng hình, ControlActivity gửi lệnh không phản hồi)
+    // → xác nhận main thread Unity thực sự bị block/deadlock, không phải lỗi hiển thị/display.
+    // Xoá khối DEBUG này sau khi tìm ra nguyên nhân treo (xem CLAUDE.md/phiên debug "Chơi lại").
+    float _lastHeartbeatLog;
+    void Update()
+    {
+        if (Time.unscaledTime - _lastHeartbeatLog < 2f) return;
+        _lastHeartbeatLog = Time.unscaledTime;
+        Debug.Log($"[GameControlBridge][HEARTBEAT] t={Time.unscaledTime:F1} scene={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name} frame={Time.frameCount}");
     }
 
     /// <summary>Gọi từ ControlActivity (UnitySendMessage) khi bấm Pause. Dừng timer/logic
@@ -78,14 +103,19 @@ public class GameControlBridge : Singleton<GameControlBridge>
     /// cold-boot — xem ControlBridge.Init()). payload: "sceneName|gameName".</summary>
     public void OnLoadGameRequested(string payload)
     {
-        if (string.IsNullOrEmpty(payload)) return;
+        Debug.Log($"[GameControlBridge][DEBUG] OnLoadGameRequested NHẬN được payload='{payload}' (chứng minh UnitySendMessage TỚI được C#).");
+        if (string.IsNullOrEmpty(payload)) { Debug.LogWarning("[GameControlBridge][DEBUG] payload rỗng — return sớm, KHÔNG load gì cả."); return; }
         int sep = payload.IndexOf('|');
         string sceneName = sep >= 0 ? payload.Substring(0, sep) : payload;
         string gameName  = sep >= 0 ? payload.Substring(sep + 1) : null;
+        Debug.Log($"[GameControlBridge][DEBUG] Parsed sceneName='{sceneName}' gameName='{gameName}'");
 
         ShowBlankOverlay(false);
+        Debug.Log("[GameControlBridge][DEBUG] ShowBlankOverlay(false) xong.");
         LidarTouchBridge.Instance.SetTouchEnabled(true);
+        Debug.Log("[GameControlBridge][DEBUG] SetTouchEnabled(true) xong. Gọi ControlBridge.LoadGame()...");
         ControlBridge.LoadGame(sceneName, gameName);
+        Debug.Log("[GameControlBridge][DEBUG] ControlBridge.LoadGame() ĐÃ RETURN (không có nghĩa là scene đã load xong, chỉ là lệnh gọi không bị treo/exception ở tầng này).");
     }
 
     // ── Blank overlay — che display máy chiếu lúc Stop, thay cho việc destroy Activity ──────
@@ -94,8 +124,11 @@ public class GameControlBridge : Singleton<GameControlBridge>
 
     void ShowBlankOverlay(bool visible)
     {
-        if (_blankOverlay == null && visible) _blankOverlay = CreateBlankOverlay();
+        // _blankOverlay giờ luôn được tạo sẵn từ OnCreated() — không còn nhánh "tạo mới lúc
+        // này" nữa (xem lý do đầy đủ ở OnCreated()). Log cảnh báo nếu vì lý do gì đó vẫn null,
+        // để không im lặng bỏ qua Stop.
         if (_blankOverlay != null) _blankOverlay.gameObject.SetActive(visible);
+        else Debug.LogWarning("[GameControlBridge] ShowBlankOverlay: _blankOverlay vẫn null — chưa tạo được lúc khởi động?");
     }
 
     // Nền màn hình che display máy chiếu lúc Stop — cùng ảnh logo dùng cho lúc mới mở app
@@ -191,5 +224,51 @@ public class GameControlBridge : Singleton<GameControlBridge>
             Debug.LogWarning($"[GameControlBridge] PushReport lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
         }
 #endif
+    }
+
+    [System.Serializable] class LivePlayerDto { public string name; public int correct; public int answered; public float avgTime; public float avgCorrectTime; }
+    [System.Serializable] class LivePlayerListDto { public System.Collections.Generic.List<LivePlayerDto> players; }
+
+    /// <summary>Đẩy điểm/số liệu THẬT từng người chơi đã nhận diện được (PlayerRecognitionService.
+    /// GetPlayerStats) sang ControlActivity — cùng nhịp throttle 1s với PushReport() ở nơi gọi.
+    /// Thay cho roster MockData.classData(...).playedStudents cũ trên panel_live (danh sách CẢ
+    /// LỚP với số liệu random, không liên quan ván đang chơi — đã xác nhận qua báo cáo thực tế
+    /// trên K02: số liệu hiện ra không khớp điểm ván đang chơi).</summary>
+    public void PushPlayerBreakdown(System.Collections.Generic.List<PlayerRecognitionService.PlayerRoundStat> leftStats,
+        System.Collections.Generic.List<PlayerRecognitionService.PlayerRoundStat> rightStats)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var controlActivityClass = new AndroidJavaClass(ControlActivityClass))
+            {
+                controlActivityClass.CallStatic("UpdateLivePlayers", ToJson(leftStats), ToJson(rightStats));
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameControlBridge] PushPlayerBreakdown lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
+    }
+
+    static string ToJson(System.Collections.Generic.List<PlayerRecognitionService.PlayerRoundStat> stats)
+    {
+        var dto = new LivePlayerListDto { players = new System.Collections.Generic.List<LivePlayerDto>() };
+        if (stats != null)
+        {
+            foreach (var s in stats)
+            {
+                dto.players.Add(new LivePlayerDto
+                {
+                    name = s.name,
+                    correct = s.correct,
+                    answered = s.answered,
+                    avgTime = s.AvgAnswerTimeSec,
+                    avgCorrectTime = s.AvgCorrectAnswerTimeSec
+                });
+            }
+        }
+        return JsonUtility.ToJson(dto);
     }
 }

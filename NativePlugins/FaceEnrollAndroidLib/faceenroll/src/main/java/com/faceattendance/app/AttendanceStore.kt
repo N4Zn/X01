@@ -48,6 +48,10 @@ class AttendanceStore(private val context: Context) {
     // needs to change; defaults to the real name's last 2 syllables (see defaultAliasFor) but the
     // teacher can override it freely.
     private val aliasNames = HashMap<String, String>()
+    // Ngày sinh, dạng ISO "yyyy-MM-dd" - null cho tới khi giáo viên nhập qua panel "Quản lý lớp".
+    // Tiền đề để chuẩn hoá năng lực mầm non theo THÁNG tuổi (xem ageInMonthsOf()) thay vì theo
+    // năm - 3 tuổi 1 tháng và 3 tuổi 11 tháng không nên bị coi là cùng 1 nhóm.
+    private val birthdates = HashMap<String, String>()
     // Known class names, including ones with zero students yet (created via "Thêm lớp mới") -
     // a plain list separate from classNames' values so an empty class still shows up.
     private val knownClasses = LinkedHashSet<String>()
@@ -110,6 +114,9 @@ class AttendanceStore(private val context: Context) {
                 if (obj.has("alias") && !obj.isNull("alias")) {
                     aliasNames[name] = obj.getString("alias")
                 }
+                if (obj.has("birthdate") && !obj.isNull("birthdate")) {
+                    birthdates[name] = obj.getString("birthdate")
+                }
             }
             val totalSamples = enrolled.values.sumOf { it.size }
             android.util.Log.e("FaceAttendance", "Loaded ${enrolled.size} persisted enrollments ($totalSamples samples)")
@@ -135,6 +142,7 @@ class AttendanceStore(private val context: Context) {
             obj.put("gender", genders[name] ?: "nam")
             obj.put("className", classNames[name])
             obj.put("alias", aliasNames[name])
+            obj.put("birthdate", birthdates[name])
             val samplesArr = org.json.JSONArray()
             for (s in samples) {
                 val sObj = org.json.JSONObject()
@@ -236,6 +244,7 @@ class AttendanceStore(private val context: Context) {
         genders[trimmed] = genders.remove(oldName) ?: "nam"
         classNames.remove(oldName)?.let { classNames[trimmed] = it }
         aliasNames.remove(oldName)?.let { aliasNames[trimmed] = it }
+        birthdates.remove(oldName)?.let { birthdates[trimmed] = it }
         lastLogged.remove(oldName)?.let { lastLogged[trimmed] = it }
         personLog.remove(oldName)?.let { personLog[trimmed] = it }
         val idx = recentNames.indexOf(oldName)
@@ -306,6 +315,44 @@ class AttendanceStore(private val context: Context) {
 
     fun genderOf(name: String): String = genders[name] ?: "nam"
 
+    /** Sửa lại giới tính đã có - khác setGender() (chỉ set được LẦN ĐẦU, cố ý không cho ghi đè
+     * lúc enroll bổ sung). Dùng cho panel sửa thông tin học sinh trong "Quản lý lớp". */
+    fun updateGender(name: String, gender: String) {
+        genders[name] = gender
+        persist()
+    }
+
+    // ──────────────────────────  Ngày sinh / tuổi theo tháng  ──────────────────────────
+
+    /** ISO "yyyy-MM-dd", null nếu giáo viên chưa nhập. */
+    fun birthdateOf(name: String): String? = birthdates[name]
+
+    fun setBirthdate(name: String, isoDate: String) {
+        birthdates[name] = isoDate
+        persist()
+    }
+
+    /** Tuổi theo THÁNG tại thời điểm gọi hàm - null nếu chưa có ngày sinh. Mầm non 3 tuổi 1
+     * tháng và 3 tuổi 11 tháng phát triển khác nhau nhiều, nên chuẩn hoá năng lực cần độ phân
+     * giải theo tháng, không phải theo năm (xem CLAUDE.md, phần "Năng lực theo môn" Giai đoạn 0). */
+    fun ageInMonthsOf(name: String): Int? {
+        val iso = birthdates[name] ?: return null
+        return try {
+            val parts = iso.split("-")
+            val today = java.util.Calendar.getInstance()
+            val birth = java.util.Calendar.getInstance().apply {
+                clear()
+                set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
+            }
+            var months = (today.get(java.util.Calendar.YEAR) - birth.get(java.util.Calendar.YEAR)) * 12
+            months += today.get(java.util.Calendar.MONTH) - birth.get(java.util.Calendar.MONTH)
+            if (today.get(java.util.Calendar.DAY_OF_MONTH) < birth.get(java.util.Calendar.DAY_OF_MONTH)) months--
+            if (months < 0) null else months
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun representativePhoto(name: String): String? = enrolled[name]?.firstOrNull { it.photo != null }?.photo
 
     fun deleteEnrollment(name: String) {
@@ -313,6 +360,7 @@ class AttendanceStore(private val context: Context) {
         for (s in samples) deleteSamplePhoto(s.photo)
         genders.remove(name)
         aliasNames.remove(name)
+        birthdates.remove(name)
         lastLogged.remove(name)
         persist()
     }
