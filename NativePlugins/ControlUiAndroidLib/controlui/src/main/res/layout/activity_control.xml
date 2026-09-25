@@ -94,6 +94,18 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/settings_trigger"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="6dp"
+                android:gravity="center"
+                android:text="⚙"
+                android:textColor="@color/text_dim"
+                android:textSize="22sp"
+                android:background="?android:attr/selectableItemBackgroundBorderless" />
+
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="64dp"
@@ -305,13 +317,12 @@
                             android:padding="16dp" />
                     </LinearLayout>
 
-                    <!-- Scene ended, bấm "Tổng kết" -->
-                    <LinearLayout
+                    <!-- Scene ended, bấm "Tổng kết" — bọc ScrollView vì giờ hiện lần lượt NHIỀU
+                         game (không chỉ 1 ván gần nhất), danh sách có thể dài hơn 1 màn hình. -->
+                    <ScrollView
                         android:id="@+id/panel_summary"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
                         android:padding="20dp"
                         android:visibility="gone">
 
@@ -322,7 +333,7 @@
                             android:orientation="vertical"
                             android:background="@color/panel"
                             android:padding="22dp" />
-                    </LinearLayout>
+                    </ScrollView>
                 </FrameLayout>
             </LinearLayout>
         </LinearLayout>

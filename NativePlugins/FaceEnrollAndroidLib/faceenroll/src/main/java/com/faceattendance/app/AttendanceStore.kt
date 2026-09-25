@@ -64,6 +64,11 @@ class AttendanceStore(private val context: Context) {
     private val sharedDir = File("/sdcard/EduXplore").also { it.mkdirs() }
     private val enrolledFile = File(sharedDir, "enrolled.json")
     private val classesFile = File(sharedDir, "classes.json")
+    // Điểm THẬT từng học sinh, ghi bởi Unity (PlayerRecognitionService.MergeStudentScoresToSharedFile,
+    // luỹ kế qua nhiều ván/nhiều lần mở app) — đọc để phục vụ sort-theo-điểm + hiện điểm cá nhân
+    // trong "Quản lý lớp" (ClassManagementActivity), đúng tính năng có ở bản HTML mockup nhưng
+    // trước đây CHƯA nối được vì không có nguồn dữ liệu thật (roster khi đó toàn MockData).
+    private val scoresFile = File(sharedDir, "student_scores.json")
     private val enrolledPhotosDir = File(context.getExternalFilesDir(null), "enrolled_photos")
     private val snapshotDir = File(context.getExternalFilesDir(null), "snapshots")
     private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
@@ -75,11 +80,43 @@ class AttendanceStore(private val context: Context) {
     val personLog = LinkedHashMap<String, PersonLogEntry>()
     val recentNames = mutableListOf<String>()
 
+    data class StudentScore(val totalScore: Int, val totalAnswered: Int, val totalCorrect: Int, val lastPlayed: String)
+    private val scores = HashMap<String, StudentScore>()
+
     init {
         enrolledPhotosDir.mkdirs()
         snapshotDir.mkdirs()
         loadPersisted()
+        reloadScores()
     }
+
+    /** File điểm do Unity ghi ĐỘC LẬP với vòng đời FA app (game chạy ở process/module khác,
+     * ghi bất cứ lúc nào giáo viên đang chơi) — gọi lại hàm này mỗi khi mở/quay lại "Quản lý
+     * lớp" (onResume()) để luôn thấy điểm mới nhất, không chỉ điểm lúc app khởi động. */
+    fun reloadScores() {
+        scores.clear()
+        if (!scoresFile.exists()) return
+        try {
+            val root = org.json.JSONObject(scoresFile.readText())
+            val arr = root.optJSONArray("scores") ?: return
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val name = obj.optString("name", "")
+                if (name.isEmpty()) continue
+                scores[name] = StudentScore(
+                    totalScore = obj.optInt("totalScore", 0),
+                    totalAnswered = obj.optInt("totalAnswered", 0),
+                    totalCorrect = obj.optInt("totalCorrect", 0),
+                    lastPlayed = obj.optString("lastPlayed", "")
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("AttendanceStore", "reloadScores lỗi: ${e.message}")
+        }
+    }
+
+    /** null = học sinh này chưa có điểm nào (chưa từng được nhận diện lúc chơi game). */
+    fun scoreOf(name: String): StudentScore? = scores[name]
 
     private fun loadPersisted() {
         if (!enrolledFile.exists()) return

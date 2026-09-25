@@ -104,6 +104,12 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         // ảnh hưởng gì nếu giáo viên vừa bật tay bằng nút cứng trước đó.
         LidarTouchBridge.Instance?.SetTouchEnabled(true);
 
+        // Đọc lại settings mỗi lần vào game — GameSettings là singleton sống xuyên suốt session
+        // (chỉ Load() 1 lần lúc tạo), nên nếu giáo viên đổi "Cài đặt" (⚙ trên ControlActivity)
+        // GIỮA CHỪNG session (không restart app) mà không reload lại ở đây, ván tiếp theo vẫn
+        // dùng giá trị cũ. Load() rẻ (vài lần đọc SharedPreferences), an toàn gọi lại mỗi ván.
+        GameSettings.Instance?.Load();
+
         Current = this;
         InitScoring();
         InitFsm();
@@ -447,7 +453,19 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             GameSessionManager.Instance.RecordScores(leftScore, rightScore);
             if (!string.IsNullOrEmpty(sceneNameForRegistry))
                 GameSessionManager.Instance.LastPlayedGame = sceneNameForRegistry;
+
+            // Ghi thêm 1 dòng lịch sử "tổng điểm nhiều game" — xem GameSessionManager.
+            // AppendGameHistory() và TestTongHopController.FinalizeGameOver() (cùng pattern).
+            string displayName = !string.IsNullOrEmpty(GameSessionManager.Instance.SelectedEntry.displayName)
+                ? GameSessionManager.Instance.SelectedEntry.displayName
+                : (!string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name);
+            GameSessionManager.Instance.AppendGameHistory(displayName,
+                GameSessionManager.Instance.GetDisplayName1(), leftScore,
+                GameSessionManager.Instance.GetDisplayName2(), rightScore);
+            GameControlBridge.Instance?.PushGameHistory(GameSessionManager.Instance.GameHistory);
         }
+        // Điểm THEO TỪNG HỌC SINH THẬT — xem TestTongHopController.FinalizeGameOver() (cùng pattern).
+        PlayerRecognitionService.Instance?.MergeStudentScoresToSharedFile();
         MusicManager.Instance?.PlayMainMusic();
         if (!string.IsNullOrEmpty(nextSceneName))
         {

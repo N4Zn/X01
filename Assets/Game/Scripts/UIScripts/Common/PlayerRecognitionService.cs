@@ -238,6 +238,70 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         return list;
     }
 
+    // ── Điểm THEO TỪNG HỌC SINH THẬT, luỹ kế qua nhiều ván/nhiều lần mở app — khác
+    // GameHistory (GameSessionManager, gộp theo BÊN trái/phải) ở chỗ đây gộp theo TÊN NGƯỜI,
+    // ghi ra thư mục dùng chung "/sdcard/EduXplore/" (ĐÃ có sẵn — AttendanceStore.kt dùng chung
+    // thư mục này cho enrolled.json/classes.json) để màn "Quản lý lớp" (ClassManagementActivity,
+    // module FaceEnrollAndroidLib khác hẳn) đọc được điểm thật, phục vụ sort-theo-điểm + xem
+    // điểm cá nhân từng em — đúng tính năng đã có trên bản HTML mockup nhưng trước đây CHƯA CÓ
+    // nguồn dữ liệu thật để nối vào (roster/năng lực khi đó toàn bộ là MockData).
+    [Serializable] class StudentScoreEntry { public string name; public int totalScore; public int totalAnswered; public int totalCorrect; public string lastPlayed; }
+    [Serializable] class StudentScoreWrapper { public List<StudentScoreEntry> scores = new List<StudentScoreEntry>(); }
+
+    const string SharedScoresDir = "/sdcard/EduXplore";
+    static string SharedScoresPath => SharedScoresDir + "/student_scores.json";
+
+    /// <summary>Gọi sau khi 1 ván kết thúc (GameOver tự nhiên hoặc Stop) — cộng dồn điểm/số câu
+    /// của từng học sinh THẬT (bỏ qua tên fallback "Player_1"/"Player_2"/"Player 1"/"Player 2" —
+    /// không phải học sinh có thật trong lớp) vào file dùng chung. Đọc file cũ trước rồi CỘNG
+    /// THÊM (không ghi đè) — luỹ kế đúng như GameSessionManager.AppendGameHistory().</summary>
+    public void MergeStudentScoresToSharedFile()
+    {
+        var map = new Dictionary<string, StudentScoreEntry>();
+        try
+        {
+            if (System.IO.File.Exists(SharedScoresPath))
+            {
+                string existingJson = System.IO.File.ReadAllText(SharedScoresPath);
+                var existing = JsonUtility.FromJson<StudentScoreWrapper>(existingJson);
+                if (existing?.scores != null)
+                    foreach (var e in existing.scores) map[e.name] = e;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[PlayerRecognitionService] Đọc student_scores.json lỗi: {e.Message}");
+        }
+
+        void MergeSlot(int slot)
+        {
+            foreach (var s in GetPlayerStats(slot))
+            {
+                if (string.IsNullOrEmpty(s.name)) continue;
+                if (s.name.StartsWith("Player_") || s.name.StartsWith("Player ")) continue; // fallback, không phải học sinh thật
+                if (!map.TryGetValue(s.name, out var entry)) entry = new StudentScoreEntry { name = s.name };
+                entry.totalScore += s.correct;
+                entry.totalAnswered += s.answered;
+                entry.totalCorrect += s.correct;
+                entry.lastPlayed = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                map[s.name] = entry;
+            }
+        }
+        MergeSlot(0);
+        MergeSlot(1);
+
+        try
+        {
+            System.IO.Directory.CreateDirectory(SharedScoresDir);
+            string json = JsonUtility.ToJson(new StudentScoreWrapper { scores = new List<StudentScoreEntry>(map.Values) }, prettyPrint: true);
+            System.IO.File.WriteAllText(SharedScoresPath, json);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[PlayerRecognitionService] Ghi student_scores.json lỗi: {e.Message}");
+        }
+    }
+
     void WriteLogNow()
     {
         if (string.IsNullOrEmpty(_sessionFileName)) return;

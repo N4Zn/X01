@@ -1,10 +1,25 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public enum GameMode
 {
     OneVsOne,
     Team
+}
+
+/// <summary>1 dòng lịch sử "tổng điểm nhiều game" (yêu cầu thực tế: mục tổng điểm trước đây chỉ
+/// hiện game gần nhất, cần hiện LẦN LƯỢT từng game đã chơi + tổng hợp toàn bộ). Ghi thêm 1 dòng
+/// mỗi khi 1 ván kết thúc (GameOver tự nhiên hoặc Stop) — KHÔNG ghi đè, chỉ append.</summary>
+[System.Serializable]
+public class GameHistoryEntry
+{
+    public string gameDisplayName;
+    public string leftName;
+    public int leftScore;
+    public string rightName;
+    public int rightScore;
+    public string timestamp; // "yyyy-MM-dd HH:mm:ss" — chỉ để hiển thị, không dùng để tính toán
 }
 
 [System.Serializable]
@@ -102,6 +117,72 @@ public class GameSessionManager : Singleton<GameSessionManager>
         BlueTeamPlayers = new List<PlayerInfo>();
         RedTeamPlayers = new List<PlayerInfo>();
         ResetSession();
+        LoadHistory();
+    }
+
+    // ── Lịch sử nhiều game (mục "TỔNG KẾT" trên ControlActivity) ────────────────────────────
+    // Lưu ra file, KHÔNG chỉ giữ trong RAM — theo đúng yêu cầu "lưu qua nhiều lần mở app" (mỗi
+    // lần bật máy tích luỹ tiếp, không mất khi tắt/mở lại app). Không tự xoá theo ngày/reboot —
+    // muốn xoá thì giáo viên tự bấm nút xoá trên UI (ClearHistory()), tránh phải tự dò "máy vừa
+    // reboot hay chưa" (phức tạp, dễ sai) chỉ để làm đúng 1 việc mà 1 nút bấm thủ công giải quyết
+    // gọn hơn nhiều.
+    public List<GameHistoryEntry> GameHistory { get; private set; } = new List<GameHistoryEntry>();
+
+    [System.Serializable] class GameHistoryWrapper { public List<GameHistoryEntry> entries = new List<GameHistoryEntry>(); }
+
+    static string HistoryFilePath => Path.Combine(Application.persistentDataPath, "game_history.json");
+
+    void LoadHistory()
+    {
+        try
+        {
+            if (File.Exists(HistoryFilePath))
+            {
+                string json = File.ReadAllText(HistoryFilePath);
+                var wrapper = JsonUtility.FromJson<GameHistoryWrapper>(json);
+                GameHistory = wrapper?.entries ?? new List<GameHistoryEntry>();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameSessionManager] LoadHistory lỗi: {e.Message}");
+            GameHistory = new List<GameHistoryEntry>();
+        }
+    }
+
+    void SaveHistory()
+    {
+        try
+        {
+            string json = JsonUtility.ToJson(new GameHistoryWrapper { entries = GameHistory }, prettyPrint: true);
+            File.WriteAllText(HistoryFilePath, json);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameSessionManager] SaveHistory lỗi: {e.Message}");
+        }
+    }
+
+    /// <summary>Gọi đúng 1 lần mỗi khi 1 ván kết thúc (GameOver tự nhiên hoặc Stop) — xem
+    /// StateMachineEnter_GameOver của TestTongHopController/MiniGameControllerBase.</summary>
+    public void AppendGameHistory(string gameDisplayName, string leftName, int leftScore, string rightName, int rightScore)
+    {
+        GameHistory.Add(new GameHistoryEntry
+        {
+            gameDisplayName = gameDisplayName,
+            leftName = leftName,
+            leftScore = leftScore,
+            rightName = rightName,
+            rightScore = rightScore,
+            timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+        });
+        SaveHistory();
+    }
+
+    public void ClearHistory()
+    {
+        GameHistory.Clear();
+        SaveHistory();
     }
 
     public void SetupOneVsOne(string p1Name, string p2Name)

@@ -56,6 +56,16 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Debug.Log($"[GameControlBridge][HEARTBEAT] t={Time.unscaledTime:F1} scene={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name} frame={Time.frameCount}");
     }
 
+    /// <summary>Gọi từ ControlActivity (nút "Xoá lịch sử" trong tab TỔNG KẾT) — xoá file
+    /// GameSessionManager.GameHistory (lịch sử điểm nhiều game). ControlActivity tự cập nhật UI
+    /// về rỗng ngay lập tức phía nó (không đợi round-trip), gọi đây chỉ để đồng bộ file lưu thật
+    /// phía Unity, tránh dữ liệu cũ sống lại nếu app bị kill rồi mở lại.</summary>
+    public void OnClearGameHistoryRequested(string unused)
+    {
+        GameSessionManager.Instance?.ClearHistory();
+        Debug.Log("[GameControlBridge] OnClearGameHistoryRequested — đã xoá GameHistory.");
+    }
+
     /// <summary>Gọi từ ControlActivity (UnitySendMessage) khi bấm Pause. Dừng timer/logic
     /// của minigame đang chạy (nếu có) VÀ tắt Lidar touch cùng lúc — 2 việc luôn đi đôi vì
     /// nguồn touch duy nhất trên thiết bị là Lidar (xem LidarTouchBridge).</summary>
@@ -162,11 +172,13 @@ public class GameControlBridge : Singleton<GameControlBridge>
             var logoGo = new GameObject("Logo");
             logoGo.transform.SetParent(go.transform, false);
             var logoRt = logoGo.AddComponent<RectTransform>();
-            // Neo theo tỉ lệ % màn hình (không dùng sizeDelta cố định theo pixel) — canvas này
-            // không có CanvasScaler nên px cố định sẽ to/nhỏ khác nhau tuỳ độ phân giải máy
-            // chiếu thật; preserveAspect co ảnh vừa khít khung 50% mà không méo.
-            logoRt.anchorMin = new Vector2(0.25f, 0.3f);
-            logoRt.anchorMax = new Vector2(0.75f, 0.7f);
+            // Full màn hình (khớp logo lúc "vào game" ở ControlActivity.showLogoOnSecondaryDisplay()
+            // — trước đây chỉ chiếm 50%x40% giữa màn, không đồng nhất). preserveAspect vẫn co ảnh
+            // vừa khít khung mà không méo dù neo full-rect. Neo theo tỉ lệ % (không sizeDelta cố
+            // định theo pixel) — canvas này không có CanvasScaler nên px cố định sẽ to/nhỏ khác
+            // nhau tuỳ độ phân giải máy chiếu thật.
+            logoRt.anchorMin = Vector2.zero;
+            logoRt.anchorMax = Vector2.one;
             logoRt.offsetMin = logoRt.offsetMax = Vector2.zero;
             var logoImg = logoGo.AddComponent<Image>();
             logoImg.sprite = logoSprite;
@@ -270,5 +282,46 @@ public class GameControlBridge : Singleton<GameControlBridge>
             }
         }
         return JsonUtility.ToJson(dto);
+    }
+
+    [System.Serializable] class HistoryEntryDto { public string gameDisplayName; public string leftName; public int leftScore; public string rightName; public int rightScore; public string timestamp; }
+    [System.Serializable] class HistoryListDto { public System.Collections.Generic.List<HistoryEntryDto> entries; }
+
+    /// <summary>Đẩy TOÀN BỘ lịch sử điểm nhiều game (GameSessionManager.GameHistory, lưu file,
+    /// tích luỹ qua nhiều lần mở app) sang ControlActivity — gọi ngay sau
+    /// GameSessionManager.AppendGameHistory() mỗi khi 1 ván kết thúc, để mục "TỔNG KẾT" hiện lần
+    /// lượt từng game + tổng hợp toàn bộ, thay vì chỉ hiện game gần nhất như trước.</summary>
+    public void PushGameHistory(System.Collections.Generic.List<GameHistoryEntry> history)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            var dto = new HistoryListDto { entries = new System.Collections.Generic.List<HistoryEntryDto>() };
+            if (history != null)
+            {
+                foreach (var h in history)
+                {
+                    dto.entries.Add(new HistoryEntryDto
+                    {
+                        gameDisplayName = h.gameDisplayName,
+                        leftName = h.leftName,
+                        leftScore = h.leftScore,
+                        rightName = h.rightName,
+                        rightScore = h.rightScore,
+                        timestamp = h.timestamp
+                    });
+                }
+            }
+            string json = JsonUtility.ToJson(dto);
+            using (var controlActivityClass = new AndroidJavaClass(ControlActivityClass))
+            {
+                controlActivityClass.CallStatic("UpdateGameHistory", json);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameControlBridge] PushGameHistory lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
     }
 }

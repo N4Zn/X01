@@ -116,6 +116,10 @@ public class TestTongHopController : MonoBehaviour
         // gì nếu giáo viên đã bật tay bằng nút cứng từ trước.
         LidarTouchBridge.Instance?.SetTouchEnabled(true);
 
+        // Đọc lại settings mỗi lần vào game — xem lý do đầy đủ ở
+        // MiniGameControllerBase.Start() (GameSettings là singleton chỉ Load() 1 lần/session).
+        GameSettings.Instance?.Load();
+
         Current       = this;
         _fsm          = gameObject.AddComponent<CustomFSMManager>();
         _fsm.fsmName  = nameof(TestTongHopController) + "FSM";
@@ -588,7 +592,22 @@ public class TestTongHopController : MonoBehaviour
             GameSessionManager.Instance.RecordScores(left, right);
             GameSessionManager.Instance.LastPlayedGame = "TestTongHopGame";
             Debug.Log($"[TestTongHopController][DEBUG] FinalizeGameOver: RecordScores({left},{right}) xong.");
+
+            // Ghi thêm 1 dòng lịch sử "tổng điểm nhiều game" — xem GameSessionManager.
+            // AppendGameHistory(). Tên game ưu tiên displayName thật từ GameRegistry (vd "Đếm số
+            // (dễ)"), fallback về tên scene nếu chưa chọn qua ControlActivity (vd test trong Editor).
+            string displayName = !string.IsNullOrEmpty(GameSessionManager.Instance.SelectedEntry.displayName)
+                ? GameSessionManager.Instance.SelectedEntry.displayName
+                : "TestTongHopGame";
+            GameSessionManager.Instance.AppendGameHistory(displayName,
+                GameSessionManager.Instance.GetDisplayName1(), left,
+                GameSessionManager.Instance.GetDisplayName2(), right);
+            GameControlBridge.Instance?.PushGameHistory(GameSessionManager.Instance.GameHistory);
         }
+        // Điểm THEO TỪNG HỌC SINH THẬT — ghi ra file dùng chung để "Quản lý lớp"
+        // (ClassManagementActivity, module khác) đọc được, phục vụ sort-theo-điểm/xem điểm cá
+        // nhân. Độc lập với AppendGameHistory ở trên (đó gộp theo BÊN, đây gộp theo TÊN).
+        PlayerRecognitionService.Instance?.MergeStudentScoresToSharedFile();
 
         MusicManager.Instance?.PlayMainMusic();
         Debug.Log("[TestTongHopController][DEBUG] FinalizeGameOver: sắp SceneManager.LoadScene(\"ScoreScene\")...");

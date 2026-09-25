@@ -51,6 +51,7 @@ class ClassManagementActivity : AppCompatActivity() {
     private lateinit var sortAliasBtn: TextView
     private lateinit var studentArea: FrameLayout
     private lateinit var sortRealBtn: TextView
+    private lateinit var sortScoreBtn: TextView
     private lateinit var scroll: ScrollView
 
     /** Lớp đang chọn ở cột trái — null nếu chưa có lớp nào (hoặc chưa tạo lớp nào cả). */
@@ -85,9 +86,25 @@ class ClassManagementActivity : AppCompatActivity() {
     private fun reversedWords(s: String): List<String> =
         s.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.asReversed()
 
-    /** Sắp theo tên thường gọi hoặc tên thật (tuỳ sortMode), chiều A→Z hoặc Z→A (tuỳ
-     * sortAscending) — xem reversedWords() ở trên cho lý do so theo từng âm tiết từ cuối lên. */
+    /** Sắp theo tên thường gọi / tên thật / điểm (tuỳ sortMode), chiều A→Z/Z→A hoặc cao→thấp/
+     * thấp→cao (tuỳ sortAscending) — xem reversedWords() ở trên cho lý do so tên theo từng âm
+     * tiết từ cuối lên. "score": chưa có điểm nào (scoreOf==null) luôn xếp CUỐI bất kể chiều sort
+     * — 0 điểm thật (đã chơi nhưng toàn sai) và "chưa từng chơi" là 2 trạng thái khác nhau, không
+     * nên trộn lẫn ở đầu danh sách khi sort tăng dần. */
     private fun sortedRoster(names: List<String>): List<String> {
+        if (sortMode == "score") {
+            val cmp = Comparator<String> { a, b ->
+                val sa = attendanceStore.scoreOf(a)?.totalScore
+                val sb = attendanceStore.scoreOf(b)?.totalScore
+                when {
+                    sa == null && sb == null -> 0
+                    sa == null -> 1  // a luôn xuống cuối
+                    sb == null -> -1 // b luôn xuống cuối
+                    else -> (if (sortAscending) sa.compareTo(sb) else sb.compareTo(sa))
+                }
+            }
+            return names.sortedWith(cmp)
+        }
         val keyOf: (String) -> String = if (sortMode == "real") { n -> n } else { n -> attendanceStore.aliasOf(n) }
         val cmp = Comparator<String> { a, b ->
             val wa = reversedWords(keyOf(a))
@@ -379,8 +396,10 @@ class ClassManagementActivity : AppCompatActivity() {
         })
         sortAliasBtn = sortToggleButton("Tên thường gọi") { setSortMode("alias") }
         sortRealBtn = sortToggleButton("Tên thật") { setSortMode("real") }
+        sortScoreBtn = sortToggleButton("Điểm") { setSortMode("score") }
         listControlsRow.addView(sortAliasBtn)
         listControlsRow.addView(sortRealBtn)
+        listControlsRow.addView(sortScoreBtn)
         topBlock.addView(listControlsRow)
 
         studentArea = FrameLayout(this).apply {
@@ -430,10 +449,13 @@ class ClassManagementActivity : AppCompatActivity() {
 
     private fun setSortMode(mode: String) {
         if (sortMode == mode) {
-            sortAscending = !sortAscending // bấm lại đúng cột đang sort -> đảo chiều A-Z/Z-A
+            sortAscending = !sortAscending // bấm lại đúng cột đang sort -> đảo chiều
         } else {
             sortMode = mode
-            sortAscending = true // đổi sang cột khác -> luôn bắt đầu lại từ A-Z
+            // Tên: bắt đầu lại từ A→Z. Điểm: bắt đầu lại từ CAO→THẤP (điểm cao trước hợp lý
+            // hơn hẳn làm mặc định — giáo viên bấm vào "Điểm" gần như luôn muốn xem ai cao nhất
+            // trước, không phải ai 0 điểm/chưa chơi trước).
+            sortAscending = mode != "score"
         }
         renderRightPanel()
     }
@@ -612,12 +634,19 @@ class ClassManagementActivity : AppCompatActivity() {
         renameBtn.visibility = View.VISIBLE
         actionButtonsRow.visibility = View.VISIBLE
 
+        // Đọc lại file điểm mỗi lần render — Unity ghi file này ĐỘC LẬP với vòng đời FA app
+        // (giáo viên có thể vừa chơi game xong rồi quay lại đây), không reload thì thấy điểm cũ.
+        attendanceStore.reloadScores()
+
         viewModeBtn.text = if (viewMode == "grid") "☰ Xem dạng danh sách" else "▦ Xem dạng lưới"
-        val dirArrow = if (sortAscending) " A→Z" else " Z→A"
-        sortAliasBtn.text = "Tên thường gọi" + if (sortMode == "alias") dirArrow else ""
-        sortRealBtn.text = "Tên thật" + if (sortMode == "real") dirArrow else ""
+        val nameDirArrow = if (sortAscending) " A→Z" else " Z→A"
+        val scoreDirArrow = if (sortAscending) " Thấp→Cao" else " Cao→Thấp"
+        sortAliasBtn.text = "Tên thường gọi" + if (sortMode == "alias") nameDirArrow else ""
+        sortRealBtn.text = "Tên thật" + if (sortMode == "real") nameDirArrow else ""
+        sortScoreBtn.text = "Điểm" + if (sortMode == "score") scoreDirArrow else ""
         styleSortToggle(sortAliasBtn, sortMode == "alias")
         styleSortToggle(sortRealBtn, sortMode == "real")
+        styleSortToggle(sortScoreBtn, sortMode == "score")
 
         val students = sortedRoster(attendanceStore.studentsInClass(className))
         currentDupGroups = findDuplicateAliasGroups(students)
@@ -632,20 +661,22 @@ class ClassManagementActivity : AppCompatActivity() {
         )
     }
 
-    /** Danh sách hàng ngang, 1 học sinh/hàng: STT, tên thường gọi, tên thật, ghi chú ảnh mẫu —
+    /** Danh sách hàng ngang, 1 học sinh/hàng: STT, tên thường gọi, tên thật, ảnh mẫu, điểm —
      * dành cho lớp đông (mục tiêu 30 học sinh), dễ rà soát/đối chiếu hơn lưới ảnh. */
     private fun buildListView(students: List<String>): View {
         val emphasizeReal = sortMode == "real" // cột nào đang là "tên chính" (in đậm) - xem sortedRoster()/setSortMode()
         val container = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        container.addView(listRow("STT", "Tên thường gọi", "Tên thật", "Ảnh mẫu", header = true, emphasizeReal = emphasizeReal))
+        container.addView(listRow("STT", "Tên thường gọi", "Tên thật", "Ảnh mẫu", "Điểm", header = true, emphasizeReal = emphasizeReal))
         students.forEachIndexed { i, name ->
             val samples = attendanceStore.samplesOf(name)
             val needsUpdate = samples.isEmpty()
             val alias = attendanceStore.aliasOf(name)
+            val score = attendanceStore.scoreOf(name)
             container.addView(
                 listRow(
                     "${i + 1}", alias, if (alias != name) name else "—",
                     if (needsUpdate) "Cần thêm ảnh" else "${samples.size} ảnh",
+                    if (score != null) "★ ${score.totalScore}" else "—",
                     warn = needsUpdate,
                     onClick = { openStudent(name) },
                     zebra = i % 2 == 0,
@@ -670,7 +701,7 @@ class ClassManagementActivity : AppCompatActivity() {
      * thường gọi là chính; bấm nút sort "Tên thật" thì đảo lại, tên thật thành chính (xem
      * "click vào tên thường gọi/tên thật thì hiện thành tên chính" trong yêu cầu). */
     private fun listRow(
-        stt: String, alias: String, realName: String, note: String,
+        stt: String, alias: String, realName: String, note: String, scoreText: String = "—",
         header: Boolean = false, warn: Boolean = false, zebra: Boolean = false,
         emphasizeReal: Boolean = false, onClick: (() -> Unit)? = null
     ): View = LinearLayout(this).apply {
@@ -694,6 +725,7 @@ class ClassManagementActivity : AppCompatActivity() {
         addView(listCell(alias, 2f, aliasBold, aliasColor, if (header) 11.5f else 13.5f))
         addView(listCell(realName, 2f, realBold, realColor, if (header) 11.5f else 13.5f))
         addView(listCell(note, 1.4f, header, if (warn) cWarn else dimColor, if (header) 11.5f else 12f))
+        addView(listCell(scoreText, 1.1f, header || scoreText != "—", if (header) dimColor else cAccent, if (header) 11.5f else 13f))
     }
 
     /** Hiện dialog liệt kê từng nhóm trùng tên thường gọi + đề xuất đổi tên phân biệt (Họ + Tên,
@@ -760,6 +792,18 @@ class ClassManagementActivity : AppCompatActivity() {
                 textSize = 11f
                 gravity = Gravity.CENTER
                 setPadding(0, px(4), 0, 0)
+            })
+            // Điểm THẬT luỹ kế từ game (AttendanceStore.reloadScores(), Unity ghi ra file dùng
+            // chung) — null = chưa từng được nhận diện lúc chơi, khác 0 điểm (đã chơi nhưng sai
+            // hết), nên hiện "Chưa chơi game" thay vì "0 điểm" để không gây hiểu lầm.
+            val score = attendanceStore.scoreOf(name)
+            addView(TextView(this@ClassManagementActivity).apply {
+                text = if (score != null) "★ ${score.totalScore} điểm (${score.totalCorrect}/${score.totalAnswered} câu)" else "Chưa chơi game"
+                setTextColor(if (score != null) cAccent else cTextFaint)
+                textSize = 10.5f
+                setTypeface(typeface, if (score != null) Typeface.BOLD else Typeface.NORMAL)
+                gravity = Gravity.CENTER
+                setPadding(0, px(2), 0, 0)
             })
         }
     }
