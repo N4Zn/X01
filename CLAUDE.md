@@ -469,6 +469,22 @@ logcat trực tiếp (không đoán) phát hiện 3 lớp vấn đề chồng l�
   `PlayerRecognitionService`) gửi lên Google Sheet qua Apps Script Web App (không cần OAuth phía
   app), batch mỗi ~3s. Config: `Application.persistentDataPath/sheets_sync_config.json`
   (`webAppUrl`, `enabled`, `intervalSeconds`).
+  > **Format gamelog của `PlayerRecognitionService.cs`** (`Assets/Game/Scripts/UIScripts/Common/`)
+  > — Singleton dùng chung cho MỌI game trừ FRTest/TestTongHopGame (2 game này có logger riêng —
+  > `FRRoundRecord`/`GameLogger` — đã tự ghép tên nhận diện từ trước, không đụng). Mỗi game gọi
+  > `BeginGameSession(gameName)` lúc bắt đầu (nhớ dùng `ResolveActiveGameName()`, xem gotcha
+  > trên), `RecognizeSlot(slot, onDone)` mỗi lần cần nhận diện (headless), `LogRound(slot, round,
+  > question, answer, correct, answerTimeSec)` mỗi khi có kết quả 1 câu/round. Ghi ra 1 file JSON
+  > DUY NHẤT/phiên (`GameLog_<gameName>_<timestamp>.json`, cả `persistentDataPath` lẫn
+  > `getExternalFilesDir()/GameLogs/`), rewrite lại TOÀN BỘ file sau MỖI entry (real-time, không
+  > batch). File là **1 list phẳng theo đúng thứ tự thời gian thực tế xảy ra** (KHÔNG group theo
+  > round) — phân biệt bằng field `eventType`: `"recognition"` (ai được nhận, mất bao lâu) hay
+  > `"round"` (câu hỏi/đáp án/đúng-sai/thời gian trả lời); mỗi round-entry tự gắn tên người chơi
+  > MỚI NHẤT được nhận diện ở slot đó. `MiniGameControllerBase.cs` chèn `LogRound()` tại 1 điểm
+  > chung (`HandleResult()` + `IndependentPlayerLoop()`) — tự áp dụng cho mọi game kế thừa base.
+  > Game không kế thừa base (ChuCaiGame, AddUpGame, TongHopGame, PathFinderGame, ...) chèn tay tại
+  > đúng chỗ tự chấm đúng/sai; LaneDashGame/SaveTheAstronautGame không có "câu hỏi" nên ghi theo
+  > sự kiện (obstacle hit/dodge, reward, lap completed).
   > **Gotcha Apps Script**: sửa code trong editor **KHÔNG** tự cập nhật URL `/exec` đang chạy —
   > bắt buộc **Deploy → Manage deployments → Edit (bút chì) → New version → Deploy** thì code mới
   > mới thật sự chạy. Response log giờ có in body (`{"ok":true,"count":N}`) để kiểm tra ngay thay
@@ -483,6 +499,67 @@ logcat trực tiếp (không đoán) phát hiện 3 lớp vấn đề chồng l�
   nhịp câu hỏi riêng nên có thể chồng thời gian nhau, bên này `BeginRound()` sẽ đè mất câu đang
   dở của bên kia). Dùng `GameLogger.LogIndependentRound()` /
   `GameManager.RecordIndependentAnswer()` thay thế — ghi trực tiếp, không qua `_currentRound`.
+
+## Face Recognition plugin — camera USB UVC + nhận diện người chơi
+
+AAR build từ project RIÊNG `D:\X_projects\FaceRecognition\android\unityplugin` (Kotlin, KHÔNG
+nằm trong repo này), copy vào `Assets/Plugins/Android/unityplugin-release.aar`.
+`FaceRecognitionPlugin.cs` (`Assets/Game/Scripts/UIScripts/FRTest/`) là Singleton
+DontDestroyOnLoad, warm-up ngay từ `StartMainController.Awake()` (không đợi vào mini-game mới
+init, tránh mất round 1 do cold-start race — CSV/config loading của StartScene cho camera đủ thời
+gian kết nối trước khi mini-game đầu tiên cần tới).
+
+### Gotcha: DB `enrolled.json` không sống sót qua cài lại APK (2026-09-11)
+
+FA app viết DB gốc vào `/sdcard/EduXplore/enrolled.json`, và tự mirror sang
+`Android/data/<pkg>/files/enrolled.json` của từng bản game (`AttendanceStore.kt`'s
+`mirrorToGameApps()`, hardcode list `com.EduXplore.X01`/`X01a`/`X01b`) — nhưng CHỈ mirror lúc FA
+ghi DB MỚI (1 lần enroll/sửa), KHÔNG tự backfill khi 1 bản game bị cài lại từ đầu (thư mục
+`Android/data/<pkg>/files/` bị xoá sạch lúc đó). Nếu 1 bản game "chạy được nhưng không có tên
+người chơi trong gamelog" sau khi cài lại — nhiều khả năng đúng lý do này, không phải bug logic.
+Copy tay lại (trên máy, không cần qua PC):
+```bash
+adb shell mkdir -p /sdcard/Android/data/<pkg>/files
+adb shell cp /sdcard/EduXplore/enrolled.json /sdcard/Android/data/<pkg>/files/enrolled.json
+```
+Nếu bản FA gốc cũng bị thiếu người (vd FA bị cài lại/reset riêng) — copy chéo từ 1 bản game khác
+còn đủ người thay vì từ FA (`X01`/`X01a`/`X01b` dùng chung định dạng file, xác nhận thật đã xảy
+ra 1 lần: FA chỉ còn 1 người nhưng X01 vẫn giữ đủ 8). Trên Windows/Git Bash **PHẢI** set
+`MSYS_NO_PATHCONV=1` trước `adb shell .../adb push ...` — không thì MSYS tự convert path
+`/sdcard/...` sai lệch hoàn toàn (biến `/sdcard/...` thành path Windows).
+
+### Gotcha: crash "biến mất" bí ẩn — zombie `detectionExecutor` thread (2026-09-11)
+
+Root cause xác nhận được (không phải giả thuyết) — nằm trong `UnityFaceBridge.kt` (project RIÊNG
+`D:\X_projects\FaceRecognition\android\unityplugin`, KHÔNG nằm trong repo này):
+`shutdownInternal()` gọi `detectionExecutor.shutdownNow()` nhưng KHÔNG đợi task đang chạy xong —
+native OpenCV inference (`detectFaces`/`alignFace`/`getEmbedding`, đo thật 300-3000ms tuỳ tải máy)
+không hề bị `Thread.interrupt()` dừng lại. `FaceRecognitionPlugin.OnApplicationPause` gọi
+`shutdown()` rồi `initialize()` lại mỗi lần app bị pause/resume (màn hình tắt, dialog xin quyền
+USB, chuyển task...) — nếu resume xảy ra trước khi thread cũ kịp xong, có **2 thế hệ**
+engine/database/executor chạy song song vào native OpenCV DNN cùng lúc → crash native không để
+lại Java stack trace, đúng kiểu "app biến mất" không dấu vết trong logcat thường xem.
+
+(Đã điều tra và loại trừ 1 nghi phạm khác trước đó: `onDisconnect()` gọi `uvcCamera.destroy()`
+tưởng double-free vì `UsbControlBlock.close()` gọi lại `onDisconnect()` đệ quy — truy sâu vào
+native lib (`UVCCamera.cpp`/`UVCPreview.cpp`) xác nhận thư viện đã tự guard kỹ qua
+`mDeviceHandle`/`mIsRunning`/`mNativePtr`/`mPreview` null-check, KHÔNG phải root cause.)
+
+**Đã fix**: `shutdownInternal()` thêm `detectionExecutor.awaitTermination(2, SECONDS)` sau
+`shutdownNow()` (chặn tới khi thread cũ thực sự xong mới cho `initialize()` tiếp theo chạy);
+`frameCallback` bọc try/catch quanh `detectionExecutor.execute{}` (tránh `isProcessing` kẹt
+`true` vĩnh viễn — nhận diện im lặng ngừng hẳn — nếu bị `RejectedExecutionException` đúng lúc
+executor đang shutdown); `onDisconnect()` null reference trước khi gọi `destroy()` (phòng hờ tái
+nhập, không phải root cause chính nhưng rẻ và an toàn hơn).
+
+Rebuild AAR sau khi sửa file `UnityFaceBridge.kt` — build C# trong Unity KHÔNG đủ, đây là thay
+đổi native, bắt buộc rebuild AAR + build/cài lại APK mới có hiệu lực:
+```bash
+cd D:\X_projects\FaceRecognition\android
+JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew :unityplugin:assembleRelease
+cp unityplugin/build/outputs/aar/unityplugin-release.aar \
+   "path/to/eduXploreGame2.0/Assets/Plugins/Android/unityplugin-release.aar"
+```
 
 ## Phase roadmap
 
