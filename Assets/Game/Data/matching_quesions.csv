@@ -1,0 +1,2 @@
+id,topic,difficulty,questionText,questionMediaType,questionMediaValue,answerMediaType,left0,left1,left2,right0,right1,right2,correctPairs
+m001,science,Easy,Ghép con vật với tiếng kêu,Text,Ghép đúng cặp,Text,Chó,Mèo,Bò,Gâu gâu,Meo meo,Ụm bò,"0-0,1-1,2-2"

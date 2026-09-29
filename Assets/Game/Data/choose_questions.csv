@@ -1,0 +1,4 @@
+id,topic,difficulty,questionText,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,answerMode,correctAnswers
+q001,math,Easy,Có bao nhiêu con voi?,IconCompose,elephant:5,Text,3,4,5,6,7,Single,2
+q002,science,Medium,Chọn các hành tinh?,Image,planets.png,Text,Sao Hỏa,Mặt Trăng,Sao Mộc,Mặt Trời,Sao Kim,MultiSelect,"0,2,4"
+q003,math,Hard,Sắp xếp tăng dần?,Text,3 - 1 - 2 - 5 - 4,Text,Ba,Một,Hai,Năm,Bốn,OrderedSequence,"1,2,0,4,3"

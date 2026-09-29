@@ -1,0 +1,14 @@
+{
+    "weightFloating": 100,
+    "weightButton": 0,
+    "weightMatching": 0,
+    "independentPlay": false,
+    "difficulty": 1,
+    "difficultyMin": 1,
+    "difficultyMax": 3,
+    "feedbackDelayCorrect": 0,
+    "feedbackDelayWrong": 0,
+    "nextQuestionDelay": 0,
+    "audioRoot": "",
+    "roundBasedDifficulty": true
+}

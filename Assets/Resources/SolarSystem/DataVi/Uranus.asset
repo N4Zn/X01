@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd313ac8e6ecba4468c8e39a5c09a2a2, type: 3}
+  m_Name: Uranus
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetData
+  planetName: Uranus
+  planetNameVi: "Sao Thi\xEAn V\u01B0\u01A1ng"
+  descriptionVi: "H\xE0nh tinh duy nh\u1EA5t t\u1EF1 quay nghi\xEAng g\u1EA7n 90\xB0.
+    B\u1EA7u kh\xED quy\u1EC3n methane cho m\xE0u xanh lam \u0111\u1EB7c tr\u01B0ng."
+  texturePath: SolarSystem/Textures/2k_uranus
+  orbitRadius: 40
+  orbitSpeed: 0.7
+  selfRotateSpeed: -40
+  scale: 3.75
+  distanceFromSun: "2,871 tri\u1EC7u km"
+  diameter: 50,724 km
+  numberOfMoons: 28
+  surfaceTemp: "-224\xB0C"
+  videoPath: Uranus_Vi
+  hasSaturnRings: 0
+  isSun: 0
+  axialTilt: 97.8
+  orbitInclination: 0

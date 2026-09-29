@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CP2102/CP2104 (Silicon Labs) — chip USB-UART dùng trên module Lidar (LDROBOT LD14P).
+         vendor-id/product-id ở đây là DECIMAL: 0x10C4=4292, 0xEA60=60000. -->
+    <usb-device vendor-id="4292" product-id="60000" />
+</resources>

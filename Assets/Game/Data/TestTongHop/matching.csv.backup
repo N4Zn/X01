@@ -1,0 +1,9 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,left0,left1,left2,right0,right1,right2,correctPairs,rightMediaType
+m01,SoHoc,2,Text,Noi phep tinh voi ket qua dung,Text,1+1,2+1,3+1,4,2,3,"1,2,0",
+m02,SoHoc,1,Text,Noi so voi ten cua no,Text,1,2,3,Hai,Ba,Mot,"2,0,1",
+m03,DongVat,1,Text,Noi con vat voi tieng keu,Text,Con meo,Con cho,Con ga,Gau gau,Meo meo,Cuc tac,"1,0,2",
+m04,SoHoc,5,Text,Noi phep tinh voi ket qua,Text,5+6,8+4,15-7,8,11,12,"1,2,0",
+m05,TiengAnh,6,Text,Nối từ tiếng Anh với nghĩa tiếng Việt,Text,Cat,Dog,Fish,Con ca,Con meo,Con cho,"1,2,0",
+mi01,DongVat,3,Text,Noi nhom co cung so luong vat,IconCompose,TestTongHop/images/animals/cat:3,TestTongHop/images/animals/dog:4,TestTongHop/images/animals/fish:2,TestTongHop/images/fruits/apple:2,TestTongHop/images/fruits/banana:3,TestTongHop/images/animals/bird:4,"1,2,0",
+mi02,SoHoc,2,Text,Noi so voi nhom tuong ung,Text,2,3,4,TestTongHop/images/animals/cat:2,TestTongHop/images/animals/bird:3,TestTongHop/images/animals/dog:4,"0,1,2",IconCompose
+mi03,DongVat,2,Text,Noi hinh con vat voi ten cua no,Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/bird,Con cho,Con meo,Con chim,"1,0,2",Text

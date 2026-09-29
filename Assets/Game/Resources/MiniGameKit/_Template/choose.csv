@@ -1,0 +1,6 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,answerMode,correctAnswers
+q1,Template,1,Text,Con cho keu the nao?,Text,Gau gau,Meo meo,Ap ap,Um be,,Single,0
+q2,Template,1,Text,2 + 2 = ?,Text,3,4,5,6,,Single,1
+q3,Template,1,Text,Mau cua qua chuoi chin?,Text,Do,Vang,Tim,Xanh,,Single,1
+q4,Template,1,Text,Con vat nao biet bay?,Text,Ca,Chim,Cho,Meo,,Single,1
+q5,Template,1,Text,1 tuan co may ngay?,Text,5,6,7,8,,Single,2

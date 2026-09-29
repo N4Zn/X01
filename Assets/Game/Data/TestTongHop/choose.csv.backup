@@ -1,0 +1,56 @@
+id,topic,difficulty,questionMediaType,questionMediaValue,answerMediaType,a0,a1,a2,a3,a4,answerMode,correctAnswers
+q01,SoHoc,1,Text,2 + 3 = ?,Text,4,5,6,7,8,Single,1
+q02,SoHoc,1,Text,1 + 4 = ?,Text,3,4,5,6,7,Single,2
+q03,SoHoc,1,Text,6 - 2 = ?,Text,2,3,4,5,6,Single,2
+q04,SoHoc,1,Text,3 + 3 = ?,Text,4,5,6,7,8,Single,2
+q05,SoHoc,1,Text,7 - 3 = ?,Text,2,3,4,5,6,Single,2
+q06,SoHoc,2,Text,So nao lon hon 5?,Text,2,3,4,6,5,Single,3
+q07,SoHoc,2,Text,So nao be hon 4?,Text,4,5,6,3,7,Single,3
+q08,SoHoc,2,Text,2 + 2 + 1 = ?,Text,3,4,5,6,7,Single,2
+q09,SoHoc,4,Text,5 + 6 = ?,Text,9,10,11,12,13,Single,2
+q10,SoHoc,4,Text,8 + 4 = ?,Text,10,11,12,13,14,Single,1
+q11,SoHoc,5,Text,15 - 7 = ?,Text,6,7,8,9,10,Single,2
+q12,SoHoc,5,Text,9 + 9 = ?,Text,16,17,18,19,20,Single,2
+q13,SoHoc,5,Text,20 - 8 = ?,Text,10,11,12,13,14,Single,2
+q14,SoHoc,8,Text,12 + 9 = ?,Text,19,20,21,22,23,Single,2
+q15,SoHoc,9,Text,7 x 3 = ?,Text,18,19,20,21,22,Single,3
+a01,DongVat,1,Image,TestTongHop/images/animals/cat,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,0
+a02,DongVat,1,Image,TestTongHop/images/animals/dog,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,1
+a03,DongVat,1,Image,TestTongHop/images/animals/fish,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,2
+a04,DongVat,1,Image,TestTongHop/images/animals/bird,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,3
+a05,DongVat,2,Text,Con gi biet bay?,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,3
+a06,DongVat,2,Text,Con gi song duoi nuoc?,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,2
+a07,TraiCay,1,Image,TestTongHop/images/fruits/apple,Text,Qua tao,Qua chuoi,Qua cam,Qua nho,Qua dua,Single,0
+a08,TraiCay,1,Image,TestTongHop/images/fruits/banana,Text,Qua tao,Qua chuoi,Qua cam,Qua nho,Qua dua,Single,1
+a09,TraiCay,2,Text,Qua nao co mau do?,Text,Chuoi,Tao,Cam,Nho,Dua leo,Single,1
+a10,TraiCay,2,Text,Qua nao co mau vang?,Text,Tao,Chuoi,Cam,Nho,Dua leo,Single,1
+s01,DongVat,2,Audio,TestTongHop/audio/cat_sound,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,0
+s02,DongVat,2,Audio,TestTongHop/audio/dog_sound,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,1
+s03,DongVat,2,Audio,TestTongHop/audio/bird_sound,Text,Con meo,Con cho,Con ca,Con chim,Con bo,Single,3
+i01,DongVat,2,Text,Chon hinh con meo,Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/fish,TestTongHop/images/animals/bird,TestTongHop/images/fruits/apple,Single,0
+i02,TraiCay,2,Text,Chon hinh qua chuoi,Image,TestTongHop/images/fruits/apple,TestTongHop/images/fruits/banana,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/fish,Single,1
+i03,DongVat,2,Text,Chon hinh con ca,Image,TestTongHop/images/animals/bird,TestTongHop/images/fruits/apple,TestTongHop/images/fruits/banana,TestTongHop/images/animals/cat,TestTongHop/images/animals/fish,Single,4
+i04,TraiCay,2,Image,TestTongHop/images/fruits/banana,Image,TestTongHop/images/animals/cat,TestTongHop/images/fruits/banana,TestTongHop/images/animals/dog,TestTongHop/images/animals/fish,TestTongHop/images/animals/bird,Single,1
+n01,DongVat,2,IconCompose,TestTongHop/images/animals/cat:5,IconCompose,TestTongHop/images/animals/cat:4,TestTongHop/images/animals/dog:5,TestTongHop/images/animals/cat:5,TestTongHop/images/animals/cat:3,TestTongHop/images/animals/bird:5,Single,2
+n02,DongVat,2,IconCompose,TestTongHop/images/animals/dog:3,IconCompose,TestTongHop/images/animals/dog:3,TestTongHop/images/animals/cat:3,TestTongHop/images/animals/dog:4,TestTongHop/images/animals/fish:3,TestTongHop/images/animals/dog:2,Single,0
+n03,TraiCay,2,IconCompose,TestTongHop/images/fruits/apple:4,IconCompose,TestTongHop/images/fruits/apple:2,TestTongHop/images/fruits/apple:3,TestTongHop/images/fruits/banana:4,TestTongHop/images/fruits/apple:4,TestTongHop/images/fruits/apple:5,Single,3
+n04,DongVat,3,Text,Chon nhom co 4 con chim,IconCompose,TestTongHop/images/animals/bird:3,TestTongHop/images/animals/bird:5,TestTongHop/images/animals/bird:4,TestTongHop/images/animals/cat:4,TestTongHop/images/animals/bird:2,Single,2
+n05,TraiCay,3,Text,Chon nhom co 3 qua chuoi,IconCompose,TestTongHop/images/fruits/banana:2,TestTongHop/images/fruits/banana:3,TestTongHop/images/fruits/apple:3,TestTongHop/images/fruits/banana:4,TestTongHop/images/fruits/banana:1,Single,1
+si01,DongVat,3,Audio,TestTongHop/audio/cat_sound,Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/fish,TestTongHop/images/animals/bird,TestTongHop/images/fruits/apple,Single,0
+si02,DongVat,3,Audio,TestTongHop/audio/dog_sound,Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/fish,TestTongHop/images/animals/bird,TestTongHop/images/fruits/apple,Single,1
+cn01,DongVat,2,IconCompose,TestTongHop/images/animals/cat:5,Text,3,4,5,6,7,Single,2
+cn02,DongVat,2,IconCompose,TestTongHop/images/animals/dog:3,Text,2,3,4,5,1,Single,1
+cn03,TraiCay,2,IconCompose,TestTongHop/images/fruits/apple:4,Text,3,5,6,4,2,Single,3
+ac01,DongVat,3,Audio,TestTongHop/audio/cat_sound,IconCompose,TestTongHop/images/animals/cat:3,TestTongHop/images/animals/dog:2,TestTongHop/images/animals/fish:1,TestTongHop/images/animals/bird:3,TestTongHop/images/fruits/apple:2,Single,0
+ni01,DongVat,3,Image,TestTongHop/images/animals/cat,IconCompose,TestTongHop/images/animals/cat:4,TestTongHop/images/animals/dog:2,TestTongHop/images/animals/fish:1,TestTongHop/images/animals/bird:3,TestTongHop/images/fruits/apple:2,Single,0
+iq01,DongVat,3,IconCompose,TestTongHop/images/animals/cat:5,Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/bird,TestTongHop/images/animals/fish,TestTongHop/images/fruits/apple,Single,0
+o01,SoHoc,2,Text,"Chon so tang dan: 1, 2, 3",Text,1,2,3,5,4,OrderedSequence,"0,1,2"
+o02,SoHoc,2,Text,"Chon so giam dan: 5, 4, 3",Text,5,4,3,1,2,OrderedSequence,"0,1,2"
+o03,SoHoc,5,Text,"Chon so tang dan: 7, 8, 9",Text,7,8,9,5,6,OrderedSequence,"0,1,2"
+o04,DongVat,3,Text,Sap xep: meo ro→cho sua→chim hot,Text,Con meo,Con cho,Con chim,Con bo,Con ca,OrderedSequence,"0,1,2"
+oi01,DongVat,3,Text,Chon anh theo thu tu: meo→cho→chim,Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/bird,TestTongHop/images/animals/fish,TestTongHop/images/fruits/apple,OrderedSequence,"0,1,2"
+oc01,SoHoc,3,Text,Chon nhom tang dan so luong: 1→2→3,IconCompose,TestTongHop/images/animals/cat:1,TestTongHop/images/animals/cat:2,TestTongHop/images/animals/cat:3,TestTongHop/images/animals/dog:4,TestTongHop/images/animals/fish:5,OrderedSequence,"0,1,2"
+mu01,SoHoc,3,Text,Chon cac so le,Text,1,2,3,4,5,MultiSelect,"0,2,4"
+mu02,DongVat,2,Text,Chon cac con vat biet bay,Text,Con meo,Con chim,Con cho,Con ong,Con bo,MultiSelect,"1,3"
+mui01,DongVat,3,Text,Chon cac con vat (khong phai trai cay),Image,TestTongHop/images/animals/cat,TestTongHop/images/animals/dog,TestTongHop/images/animals/fish,TestTongHop/images/fruits/apple,TestTongHop/images/fruits/banana,MultiSelect,"0,1,2"
+mun01,SoHoc,3,Text,Chon cac nhom co duoi 3 con,IconCompose,TestTongHop/images/animals/cat:1,TestTongHop/images/animals/cat:2,TestTongHop/images/animals/cat:3,TestTongHop/images/animals/cat:4,TestTongHop/images/animals/cat:5,MultiSelect,"0,1"

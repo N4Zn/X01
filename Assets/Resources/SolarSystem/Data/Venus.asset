@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd313ac8e6ecba4468c8e39a5c09a2a2, type: 3}
+  m_Name: Venus
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetData
+  planetName: Venus
+  planetNameVi: Sao Kim
+  descriptionVi: It is the hottest planet in the solar system, even though it is
+    not the closest to the Sun. Its thick CO2 atmosphere creates a greenhouse effect.
+  texturePath: SolarSystem/Textures/2k_venus_atmosphere
+  orbitRadius: 9
+  orbitSpeed: 3.5
+  selfRotateSpeed: -7
+  scale: 1.95
+  distanceFromSun: "108.2 tri\u1EC7u km"
+  diameter: 12,104 km
+  numberOfMoons: 0
+  surfaceTemp: "465\xB0C"
+  videoPath: Venus
+  hasSaturnRings: 0
+  isSun: 0
+  axialTilt: 2.64
+  orbitInclination: 3.4

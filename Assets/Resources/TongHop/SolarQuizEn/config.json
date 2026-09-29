@@ -1,0 +1,11 @@
+{
+    "weightFloating": 0,
+    "weightButton": 100,
+    "weightMatching": 0,
+    "independentPlay": false,
+    "difficulty": 1,
+    "difficultyMin": 1,
+    "difficultyMax": 2,
+    "audioRoot": "SolarQuiz",
+    "questionBatches": [10, 10, 9]
+}

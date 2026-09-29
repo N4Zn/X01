@@ -1,0 +1,7 @@
+#!/system/bin/sh
+# Neutralized 2026-09-16: OEM's SurfaceControl-based mirror override was hardcoding a wrong
+# destination rect (assumed ~1280x720, real panel is 1920x1080), causing corner-cropped
+# duplicate at boot. The lower HAL-level clone (persist.vendor.sys.hdmi_hidl.clone=1) already
+# mirrors correctly at full resolution on its own — this override just broke it 8s after boot.
+# Original backed up as mirror_hdmi.sh.orig.bak.
+exit 0
