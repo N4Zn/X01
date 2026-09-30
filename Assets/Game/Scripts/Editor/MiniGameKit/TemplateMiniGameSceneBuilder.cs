@@ -61,6 +61,7 @@ public static class TemplateMiniGameSceneBuilder
         // Back button
         var backButton = MiniGameSceneBuilderHelpers.CreateSimpleButton(
             "BackButton", canvasGo.transform, "Back", new Vector2(0.01f, 0.9f), new Vector2(0.1f, 0.99f));
+        backButton.SetActive(false); // ẩn nút back — vẫn wire bình thường, chỉ không hiện/không bấm được (mặc định cho game mới clone từ template)
 
         // Tutorial panel
         var tutorialPanel = MiniGameSceneBuilderHelpers.CreateTutorialPanel(canvasGo.transform, "MiniGameKit Template");

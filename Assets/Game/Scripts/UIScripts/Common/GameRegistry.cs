@@ -119,6 +119,8 @@ public static class GameRegistry
         Set(0, 15, "ShapeSquare",    "Nhận biết hình vuông",       "", Engine.TongHopGame, group: "Hình học");
         Set(0, 16, "ShapeCircle",    "Nhận biết hình tròn",        "", Engine.TongHopGame, group: "Hình học");
         Set(0, 17, "ShapeRectangle", "Nhận biết hình chữ nhật",    "", Engine.TongHopGame, group: "Hình học");
+        Set(0, 18, "HaiQua",         "Hái quả",                    "HaiQuaGame", Engine.MiniGameKit, group: "Đếm");
+        Set(0, 19, "DemQua",        "Đếm quả",                    "DemQuaGame", Engine.MiniGameKit, group: "Đếm");
 
         // ── Category 1: Tiếng Việt ───────────────────────────────────────────
         // 2026-09-18: soi lại asset/audio thật thì ListenSelect/FamilySpellingJump/WordHuntMaze/

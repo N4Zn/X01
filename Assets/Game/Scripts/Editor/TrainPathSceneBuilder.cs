@@ -146,6 +146,7 @@ public static class TrainPathSceneBuilder
         backRT.anchorMin = new Vector2(0f, 1f); backRT.anchorMax = new Vector2(0f, 1f);
         backRT.pivot = new Vector2(0f, 1f);
         backRT.anchoredPosition = new Vector2(8f, -5f); backRT.sizeDelta = new Vector2(40f, 40f);
+        backButton.SetActive(false); // ẩn nút back — vẫn wire bình thường, chỉ không hiện/không bấm được
 
         GameObject homeButton = new GameObject("HomeButton", typeof(RectTransform), typeof(Image), typeof(Button));
         homeButton.transform.SetParent(canvasGo.transform, false);

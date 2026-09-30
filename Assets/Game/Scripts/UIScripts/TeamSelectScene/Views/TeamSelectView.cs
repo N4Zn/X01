@@ -34,7 +34,7 @@ public class TeamSelectView : MonoBehaviour
     [SerializeField] private Sprite modeSpriteTeam;
     [SerializeField] private Text modeText1vs1;
     [SerializeField] private Text modeTextTeam;
-    private GameMode _currentMode = GameMode.OneVsOne;
+    private GameMode _currentMode = GameMode.Team;
 
     [Header("=== Player Grid ===")]
     [SerializeField] private Transform playerGridContent;
@@ -156,7 +156,7 @@ public class TeamSelectView : MonoBehaviour
 
         // Defaults
         SetStartButtonInteractable(false);
-        SetMode(GameMode.OneVsOne);
+        SetMode(GameMode.Team);
 
         if (playerIconTemplate != null) playerIconTemplate.SetActive(false);
         if (teamAvatarSlotTemplate != null) teamAvatarSlotTemplate.SetActive(false);

@@ -255,6 +255,105 @@ public static class MiniGameSceneBuilderHelpers
     }
 
     /// <summary>
+    /// Chỉnh 1 nhóm ButtonItem (đã dựng bằng CreateButtonGroupHorizontal/CreateButtonGroup) thành
+    /// HÌNH VUÔNG thật sự trên màn hình — 2 helper trên chia đều theo 1 chiều (ngang/dọc) nhưng
+    /// giữ nguyên chiều còn lại theo kích thước AREA, ra hình chữ nhật dài nếu area không tỷ lệ
+    /// đúng với số lượng item (vd HaiQua/DemQua: area cao cố định 0.22 bị chia thành 5-6 cột hẹp
+    /// → mỗi ô thành hình chữ nhật đứng dài). Hàm này giữ NGUYÊN chiều rộng (fractional X, do
+    /// CreateButtonGroupHorizontal đã chia đúng số cột) và tính lại chiều cao dựa theo tỷ lệ khung
+    /// hình Canvas THẬT (1024x600, xem CreateCanvasWithEventSystem) để ra hình vuông đúng nghĩa
+    /// theo PIXEL, không phải vuông theo fractional 0-1 (2 thứ khác nhau vì canvas không vuông) —
+    /// giữ nguyên TÂM của mỗi ô, chỉ đổi biên trên/dưới. KHÔNG sửa trực tiếp trong
+    /// CreateButtonGroupHorizontal vì hàm đó dùng chung cho nhiều game khác có thể đang cố tình
+    /// cần hình chữ nhật (vd nút chữ dài) — gọi hàm này THÊM, opt-in riêng cho game nào cần vuông.
+    /// </summary>
+    public static void SquarifyHorizontalGroup(ButtonItem[] group)
+    {
+        const float canvasAspect = 1024f / 600f; // referenceResolution — xem CreateCanvasWithEventSystem
+        foreach (var item in group)
+        {
+            if (item == null) continue;
+            var rt = (RectTransform)item.transform;
+            float widthFrac = rt.anchorMax.x - rt.anchorMin.x;
+            float squareHeightFrac = widthFrac * canvasAspect;
+            float centerY = (rt.anchorMin.y + rt.anchorMax.y) * 0.5f;
+            rt.anchorMin = new Vector2(rt.anchorMin.x, centerY - squareHeightFrac * 0.5f);
+            rt.anchorMax = new Vector2(rt.anchorMax.x, centerY + squareHeightFrac * 0.5f);
+        }
+    }
+
+    /// <summary>
+    /// Dựng 1 nhóm ButtonItem VUÔNG kích thước PIXEL CỐ ĐỊNH (không suy theo area/count như
+    /// CreateButtonGroupHorizontal), xếp thành ĐÚNG 2 hàng (hàng trên ceil(count/2) cột, hàng dưới
+    /// phần còn lại — vd count=5 → 3 trên/2 dưới, count=6 → 3 trên/3 dưới), mỗi hàng tự căn giữa
+    /// đều trong area. Dùng canvas THẬT (1024x600, xem CreateCanvasWithEventSystem) để quy đổi
+    /// pixelSize sang fractional theo đúng 2 trục X/Y riêng (khác nhau vì canvas không vuông) —
+    /// ra hình vuông đúng nghĩa theo pixel, không phải theo fractional 0-1.
+    ///
+    /// Layout ban đầu này chỉ có ý nghĩa lúc CHƯA Play (xem trong Editor) — HaiQua/DemQua đều tự
+    /// random lại vị trí mỗi round ngay khi vào game (xem RandomizeFruitPositions ở controller),
+    /// nên area truyền vào không cần khớp chính xác vùng chơi thật, chỉ cần đủ rộng để 2 hàng
+    /// không dính nhau khi nhìn trong Editor.
+    /// </summary>
+    public static ButtonItem[] CreateButtonGridTwoRows(string prefix, Transform parent, Vector2 areaMin, Vector2 areaMax, int count, float pixelSize)
+    {
+        const float refW = 1024f, refH = 600f;
+        float widthFrac  = pixelSize / refW;
+        float heightFrac = pixelSize / refH;
+
+        int colsTop = Mathf.CeilToInt(count / 2f);
+        int colsBottom = count - colsTop;
+        float areaW = areaMax.x - areaMin.x;
+        float rowH  = (areaMax.y - areaMin.y) * 0.5f;
+
+        var items = new ButtonItem[count];
+        for (int i = 0; i < count; i++)
+        {
+            bool topRow = i < colsTop;
+            int col = topRow ? i : i - colsTop;
+            int colsInRow = topRow ? colsTop : colsBottom;
+
+            float cellW = areaW / colsInRow;
+            float centerX = areaMin.x + cellW * (col + 0.5f);
+            float centerY = topRow ? areaMax.y - rowH * 0.5f : areaMin.y + rowH * 0.5f;
+
+            var go = CreateButtonItem($"{prefix}_{i}", parent,
+                new Vector2(centerX - widthFrac * 0.5f, centerY - heightFrac * 0.5f),
+                new Vector2(centerX + widthFrac * 0.5f, centerY + heightFrac * 0.5f));
+            items[i] = go.GetComponent<ButtonItem>();
+        }
+        return items;
+    }
+
+    /// <summary>
+    /// Xoá màu nền "thẻ bài" mặc định của ButtonItem (bgImage.colorNormal = trắng đục, xem
+    /// ButtonItem.Setup()) — mặc định đó hợp lý cho answer dạng chữ/icon (thẻ trắng làm nền cho
+    /// chữ/icon đen) nhưng SAI với ảnh quả PNG nền trong suốt thật (HaiQua/DemQua): phần trong
+    /// suốt của ảnh sẽ lộ ra ô trắng phía sau, nhìn như khung ảnh có viền trắng xấu. Đặt cả
+    /// colorNormal/Chosen/Correct/Wrong/Locked về alpha=0 — ButtonItem dùng CHUNG các màu này cho
+    /// mọi trạng thái, quả trong game hái quả chỉ thật sự hiện ở Normal (Correct đã bị ẩn ngay lập
+    /// tức trong OnFruitTapped của cả 2 controller, không cần màu, nhưng đặt luôn cho chắc). CHỈ
+    /// đổi property PER-INSTANCE qua SerializedObject — KHÔNG đụng default trong ButtonItem.cs vì
+    /// class đó dùng chung cho rất nhiều game khác đang cần đúng cái nền trắng mặc định.
+    /// </summary>
+    public static void MakeButtonGroupBackgroundTransparent(ButtonItem[] group)
+    {
+        var clear = new Color(1f, 1f, 1f, 0f);
+        foreach (var item in group)
+        {
+            if (item == null) continue;
+            var so = new SerializedObject(item);
+            so.FindProperty("colorNormal").colorValue   = clear;
+            so.FindProperty("colorChosen").colorValue   = clear;
+            so.FindProperty("colorSelected").colorValue = clear;
+            so.FindProperty("colorCorrect").colorValue  = clear;
+            so.FindProperty("colorWrong").colorValue    = clear;
+            so.FindProperty("colorLocked").colorValue   = clear;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+    }
+
+    /// <summary>
     /// Dựng 1 nhóm ButtonItem theo hình cung (fan) — 2 item ngoài rìa thấp gần cạnh dưới (nơi
     /// đứng), 2 item giữa cao hơn, toả hình vòng cung như tay quạt. Toạ độ fractional (0-1) so
     /// với parent, giống các helper khác trong file này.

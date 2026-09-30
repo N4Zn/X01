@@ -21,8 +21,20 @@ public class QuestionPool : MonoBehaviour
     int _chooseIdx;
     int _matchingIdx;
 
+    // ── imageRoot/audioRoot restore (xem OnDestroy) ───────────────────────────
+    // TongHopConfig.Current là static, sống suốt phiên app — set imageRoot/audioRoot
+    // ở Awake() mà không trả lại lúc rời scene sẽ làm SAI đường dẫn ảnh cho MỌI game
+    // load sau đó trong cùng phiên (kể cả game không dùng QuestionPool/CSV, vd HaiQuaGame
+    // dùng chung AssetOverrideLoader qua ButtonItem/ItemMediaHelper).
+    string _prevImageRoot;
+    string _prevAudioRoot;
+    bool _mutatedRoots;
+
     void Awake()
     {
+        _prevImageRoot = TongHopConfig.Current.imageRoot;
+        _prevAudioRoot = TongHopConfig.Current.audioRoot;
+
         // ── Dynamic loading theo SelectedGameName ─────────────────────────────
         // Nếu MenuScene đã set GameSessionManager.SelectedGameName (vd: "ChuCai"),
         // load CSV từ Resources/TongHop/{variant}/choose  và  .../matching
@@ -63,6 +75,7 @@ public class QuestionPool : MonoBehaviour
                 //   Resources.Load("Counting/T-Rex") → Assets/Resources/Counting/T-Rex.png ✓
                 TongHopConfig.Current.imageRoot = variant;
                 TongHopConfig.Current.audioRoot = variant;
+                _mutatedRoots = true;
             }
 
             // ── Variant-specific config override (luôn chạy nếu variant != "") ────
@@ -94,6 +107,19 @@ public class QuestionPool : MonoBehaviour
     {
         TongHopConfig.Current.difficulty = d;
         BuildPool();
+    }
+
+    /// <summary>
+    /// Trả imageRoot/audioRoot về giá trị TRƯỚC khi Awake() ghi đè — chạy khi rời scene
+    /// (SceneManager.LoadScene thay scene sẽ destroy QuestionPool này). Không làm vậy thì
+    /// game tiếp theo trong cùng phiên app (kể cả game không liên quan TongHop) sẽ load sai
+    /// đường dẫn ảnh vì TongHopConfig.Current là static, không tự reset theo scene.
+    /// </summary>
+    void OnDestroy()
+    {
+        if (!_mutatedRoots) return;
+        TongHopConfig.Current.imageRoot = _prevImageRoot;
+        TongHopConfig.Current.audioRoot = _prevAudioRoot;
     }
 
     // ─── Public API ───────────────────────────────────────────────────────────

@@ -25,6 +25,12 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
     [SerializeField] Color colorLocked   = new Color(0.7f, 0.7f, 0.7f);
 
     public int AnswerIndex { get; private set; }
+
+    /// <summary>Sprite đang hiện trên item (AnswerMediaType.Image) — null nếu đang hiện dạng chữ/
+    /// icon-compose, hoặc chưa load được sprite. Dùng cho hiệu ứng phụ cần LẤY LẠI đúng ảnh đang
+    /// hiện (vd hiệu ứng bay lên rổ ở HaiQua/DemQua — bay bằng chính ảnh quả, không phải icon rời).</summary>
+    public Sprite CurrentSprite => imageHolder != null ? imageHolder.sprite : null;
+
     Action<int, Team> _onClick;
     Team _team;
     bool _locked;

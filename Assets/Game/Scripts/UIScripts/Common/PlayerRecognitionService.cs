@@ -95,9 +95,11 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         bool recognized = result != null;
         if (!recognized)
         {
-            result = slot == 0
-                ? (plugin != null ? plugin.GetDefaultNameLeft()  : "Player_1")
-                : (plugin != null ? plugin.GetDefaultNameRight() : "Player_2");
+            result = GameSessionManager.Instance != null && GameSessionManager.Instance.CurrentGameMode == GameMode.Team
+                ? (slot == 0 ? "Blue_1" : "Red_1")
+                : slot == 0
+                    ? (plugin != null ? plugin.GetDefaultNameLeft()  : "Player_1")
+                    : (plugin != null ? plugin.GetDefaultNameRight() : "Player_2");
         }
         float elapsed = Time.time - startTime;
 
@@ -174,9 +176,13 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         bool recognized = (slot == 0 || slot == 1) && _lastRecognized[slot];
         if (string.IsNullOrEmpty(name))
         {
-            name = GameSessionManager.Instance != null && GameSessionManager.Instance.Players.Count > slot
-                ? GameSessionManager.Instance.Players[slot].PlayerName
-                : (slot == 0 ? "Player_1" : "Player_2");
+            var session = GameSessionManager.Instance;
+            if (session != null && session.Players.Count > slot && !string.IsNullOrEmpty(session.Players[slot].PlayerName))
+                name = session.Players[slot].PlayerName;
+            else if (session != null && session.CurrentGameMode == GameMode.Team)
+                name = slot == 0 ? "Blue_1" : "Red_1";
+            else
+                name = slot == 0 ? "Player_1" : "Player_2";
         }
 
         _logEntries.Add(new LogEntry

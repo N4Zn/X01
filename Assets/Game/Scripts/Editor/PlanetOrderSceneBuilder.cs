@@ -96,6 +96,7 @@ public static class PlanetOrderSceneBuilder
         // Nav buttons
         Sprite bkS = LoadArt("btn_back"); Sprite hmS = LoadArt("btn_home"); Sprite stBS = LoadArt("btn_setting");
         GameObject bk = CSB("BackButton", canvasGo.transform, bkS); RectTransform bkR = bk.GetComponent<RectTransform>(); bkR.anchorMin = bkR.anchorMax = new Vector2(0, 1); bkR.pivot = new Vector2(0, 1); bkR.anchoredPosition = new Vector2(8, -5); bkR.sizeDelta = new Vector2(40, 40);
+        bk.SetActive(false); // ẩn nút back — vẫn wire bình thường, chỉ không hiện/không bấm được
         GameObject hm = CSB("HomeButton", canvasGo.transform, hmS); RectTransform hmR = hm.GetComponent<RectTransform>(); hmR.anchorMin = hmR.anchorMax = new Vector2(1, 1); hmR.pivot = new Vector2(1, 1); hmR.anchoredPosition = new Vector2(-8, -5); hmR.sizeDelta = new Vector2(40, 40);
         GameObject st = CSB("SettingButton", canvasGo.transform, stBS); RectTransform stR = st.GetComponent<RectTransform>(); stR.anchorMin = stR.anchorMax = new Vector2(1, 1); stR.pivot = new Vector2(1, 1); stR.anchoredPosition = new Vector2(-52, -5); stR.sizeDelta = new Vector2(40, 40);
 

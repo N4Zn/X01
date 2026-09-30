@@ -39,7 +39,7 @@ public class TeamSelectModel
 
     public TeamSelectModel()
     {
-        SelectedMode = GameMode.OneVsOne;
+        SelectedMode = GameMode.Team;
         SelectedClassName = "";
         CurrentClassStudents = new List<PlayerInfo>();
         BlueTeamMembers = new List<PlayerInfo>();

@@ -70,6 +70,7 @@ public static class PathFinderSceneBuilder
         GameObject backButton = CreateStyledButton("BackButton", canvasGo.transform, "\u2190",
             new Vector2(0.01f, 0.91f), new Vector2(0.06f, 0.98f),
             new Color(0.4f, 0.4f, 0.5f, 0.8f), Color.white, 22);
+        backButton.SetActive(false); // \u1ea9n n\u00fat back \u2014 v\u1eabn wire b\u00ecnh th\u01b0\u1eddng, ch\u1ec9 kh\u00f4ng hi\u1ec7n/kh\u00f4ng b\u1ea5m \u0111\u01b0\u1ee3c
 
         // Center divider
         GameObject divider = CreatePanel("Divider", canvasGo.transform, new Color(0.3f, 0.3f, 0.4f, 0.8f));

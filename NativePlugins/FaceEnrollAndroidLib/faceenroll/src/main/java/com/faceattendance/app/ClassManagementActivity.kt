@@ -51,6 +51,7 @@ class ClassManagementActivity : AppCompatActivity() {
     private lateinit var sortAliasBtn: TextView
     private lateinit var studentArea: FrameLayout
     private lateinit var sortRealBtn: TextView
+    private lateinit var sortScoreBtn: TextView
     private lateinit var scroll: ScrollView
 
     /** Lớp đang chọn ở cột trái — null nếu chưa có lớp nào (hoặc chưa tạo lớp nào cả). */
@@ -59,8 +60,9 @@ class ClassManagementActivity : AppCompatActivity() {
     /** "grid" (lưới ảnh, mặc định) hoặc "list" (danh sách hàng ngang, tên thường gọi/tên thật
      * tách cột) — xem nút viewModeBtn. */
     private var viewMode: String = "grid"
-    /** "alias" (tên thường gọi) hoặc "real" (tên thật) — quyết định sortedRoster() sắp theo cột
-     * nào, và cột nào được hiện thành tên chính (in đậm) ở cả 2 chế độ xem. */
+    /** "alias" (tên thường gọi), "real" (tên thật), hoặc "score" (điểm) — quyết định
+     * sortedRoster() sắp theo cột nào, và cột nào được hiện thành tên chính (in đậm) ở cả 2 chế
+     * độ xem. */
     private var sortMode: String = "alias"
     /** true = A→Z, false = Z→A — bấm lại đúng nút đang active (sortAliasBtn/sortRealBtn) thì đảo
      * chiều; bấm sang nút còn lại thì luôn reset về A→Z. */
@@ -85,9 +87,27 @@ class ClassManagementActivity : AppCompatActivity() {
     private fun reversedWords(s: String): List<String> =
         s.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.asReversed()
 
-    /** Sắp theo tên thường gọi hoặc tên thật (tuỳ sortMode), chiều A→Z hoặc Z→A (tuỳ
-     * sortAscending) — xem reversedWords() ở trên cho lý do so theo từng âm tiết từ cuối lên. */
+    /** Điểm GIẢ (mock) — deterministic theo tên (không random lại mỗi lần render), dùng để demo
+     * UI/UX sort "Điểm" trước khi có pipeline đọc điểm thật. FA app hiện không lưu/nhận điểm nào
+     * cả — điểm thật nằm hoàn toàn bên Unity (GameLogs/PlayerRecognitionService), chưa có đường
+     * dữ liệu nối sang app này. Thay thân hàm này bằng nguồn thật sau (vd đọc 1 file điểm được
+     * Unity ghi ra, tương tự cách enrolled.json được mirror hiện nay) — không cần đổi UI/sort
+     * logic ở dưới, chỉ đổi đúng hàm này. */
+    private fun mockScoreOf(name: String): Int {
+        val seed = name.fold(7) { acc, c -> acc * 31 + c.code }
+        return 35 + Math.floorMod(seed, 61) // 35..95, ổn định theo tên
+    }
+
+    /** Sắp theo tên thường gọi/tên thật/điểm (tuỳ sortMode), chiều tăng/giảm (tuỳ sortAscending)
+     * — xem reversedWords() ở trên cho lý do so tên theo từng âm tiết từ cuối lên. */
     private fun sortedRoster(names: List<String>): List<String> {
+        if (sortMode == "score") {
+            val cmp = Comparator<String> { a, b ->
+                val result = mockScoreOf(a).compareTo(mockScoreOf(b))
+                if (sortAscending) result else -result
+            }
+            return names.sortedWith(cmp)
+        }
         val keyOf: (String) -> String = if (sortMode == "real") { n -> n } else { n -> attendanceStore.aliasOf(n) }
         val cmp = Comparator<String> { a, b ->
             val wa = reversedWords(keyOf(a))
@@ -379,8 +399,10 @@ class ClassManagementActivity : AppCompatActivity() {
         })
         sortAliasBtn = sortToggleButton("Tên thường gọi") { setSortMode("alias") }
         sortRealBtn = sortToggleButton("Tên thật") { setSortMode("real") }
+        sortScoreBtn = sortToggleButton("Điểm") { setSortMode("score") }
         listControlsRow.addView(sortAliasBtn)
         listControlsRow.addView(sortRealBtn)
+        listControlsRow.addView(sortScoreBtn)
         topBlock.addView(listControlsRow)
 
         studentArea = FrameLayout(this).apply {
@@ -430,10 +452,12 @@ class ClassManagementActivity : AppCompatActivity() {
 
     private fun setSortMode(mode: String) {
         if (sortMode == mode) {
-            sortAscending = !sortAscending // bấm lại đúng cột đang sort -> đảo chiều A-Z/Z-A
+            sortAscending = !sortAscending // bấm lại đúng cột đang sort -> đảo chiều
         } else {
             sortMode = mode
-            sortAscending = true // đổi sang cột khác -> luôn bắt đầu lại từ A-Z
+            // Đổi sang cột khác -> reset chiều mặc định: tên A->Z, điểm cao->thấp (giống roster
+            // mặc định "Tổng" giảm dần bên ControlActivity).
+            sortAscending = mode != "score"
         }
         renderRightPanel()
     }
@@ -613,11 +637,14 @@ class ClassManagementActivity : AppCompatActivity() {
         actionButtonsRow.visibility = View.VISIBLE
 
         viewModeBtn.text = if (viewMode == "grid") "☰ Xem dạng danh sách" else "▦ Xem dạng lưới"
-        val dirArrow = if (sortAscending) " A→Z" else " Z→A"
-        sortAliasBtn.text = "Tên thường gọi" + if (sortMode == "alias") dirArrow else ""
-        sortRealBtn.text = "Tên thật" + if (sortMode == "real") dirArrow else ""
+        val nameDirArrow = if (sortAscending) " A→Z" else " Z→A"
+        val scoreDirArrow = if (sortAscending) " Thấp→Cao" else " Cao→Thấp"
+        sortAliasBtn.text = "Tên thường gọi" + if (sortMode == "alias") nameDirArrow else ""
+        sortRealBtn.text = "Tên thật" + if (sortMode == "real") nameDirArrow else ""
+        sortScoreBtn.text = "Điểm" + if (sortMode == "score") scoreDirArrow else ""
         styleSortToggle(sortAliasBtn, sortMode == "alias")
         styleSortToggle(sortRealBtn, sortMode == "real")
+        styleSortToggle(sortScoreBtn, sortMode == "score")
 
         val students = sortedRoster(attendanceStore.studentsInClass(className))
         currentDupGroups = findDuplicateAliasGroups(students)
@@ -636,8 +663,9 @@ class ClassManagementActivity : AppCompatActivity() {
      * dành cho lớp đông (mục tiêu 30 học sinh), dễ rà soát/đối chiếu hơn lưới ảnh. */
     private fun buildListView(students: List<String>): View {
         val emphasizeReal = sortMode == "real" // cột nào đang là "tên chính" (in đậm) - xem sortedRoster()/setSortMode()
+        val emphasizeScore = sortMode == "score" // đang sort theo Điểm -> tô đậm cột Điểm
         val container = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        container.addView(listRow("STT", "Tên thường gọi", "Tên thật", "Ảnh mẫu", header = true, emphasizeReal = emphasizeReal))
+        container.addView(listRow("STT", "Tên thường gọi", "Tên thật", "Điểm", "Ảnh mẫu", header = true, emphasizeReal = emphasizeReal, emphasizeScore = emphasizeScore))
         students.forEachIndexed { i, name ->
             val samples = attendanceStore.samplesOf(name)
             val needsUpdate = samples.isEmpty()
@@ -645,11 +673,13 @@ class ClassManagementActivity : AppCompatActivity() {
             container.addView(
                 listRow(
                     "${i + 1}", alias, if (alias != name) name else "—",
+                    mockScoreOf(name).toString(),
                     if (needsUpdate) "Cần thêm ảnh" else "${samples.size} ảnh",
                     warn = needsUpdate,
                     onClick = { openStudent(name) },
                     zebra = i % 2 == 0,
-                    emphasizeReal = emphasizeReal
+                    emphasizeReal = emphasizeReal,
+                    emphasizeScore = emphasizeScore
                 )
             )
         }
@@ -668,11 +698,12 @@ class ClassManagementActivity : AppCompatActivity() {
 
     /** emphasizeReal quyết định cột nào là "tên chính" (in đậm, màu chữ chính) — mặc định tên
      * thường gọi là chính; bấm nút sort "Tên thật" thì đảo lại, tên thật thành chính (xem
-     * "click vào tên thường gọi/tên thật thì hiện thành tên chính" trong yêu cầu). */
+     * "click vào tên thường gọi/tên thật thì hiện thành tên chính" trong yêu cầu). emphasizeScore
+     * tô đậm/màu accent cột Điểm khi đang sort theo Điểm — cột Điểm là MOCK (xem mockScoreOf()). */
     private fun listRow(
-        stt: String, alias: String, realName: String, note: String,
+        stt: String, alias: String, realName: String, score: String, note: String,
         header: Boolean = false, warn: Boolean = false, zebra: Boolean = false,
-        emphasizeReal: Boolean = false, onClick: (() -> Unit)? = null
+        emphasizeReal: Boolean = false, emphasizeScore: Boolean = false, onClick: (() -> Unit)? = null
     ): View = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
@@ -690,10 +721,12 @@ class ClassManagementActivity : AppCompatActivity() {
         val realBold = !header && emphasizeReal
         val aliasColor = if (!header && emphasizeReal) dimColor else mainColor
         val realColor = if (!header && emphasizeReal) mainColor else dimColor
+        val scoreColor = if (!header && emphasizeScore) cAccent else dimColor
         addView(listCell(stt, 0.6f, header, dimColor, if (header) 11.5f else 13f))
-        addView(listCell(alias, 2f, aliasBold, aliasColor, if (header) 11.5f else 13.5f))
-        addView(listCell(realName, 2f, realBold, realColor, if (header) 11.5f else 13.5f))
-        addView(listCell(note, 1.4f, header, if (warn) cWarn else dimColor, if (header) 11.5f else 12f))
+        addView(listCell(alias, 1.8f, aliasBold, aliasColor, if (header) 11.5f else 13.5f))
+        addView(listCell(realName, 1.8f, realBold, realColor, if (header) 11.5f else 13.5f))
+        addView(listCell(score, 0.9f, !header && emphasizeScore, scoreColor, if (header) 11.5f else 13.5f))
+        addView(listCell(note, 1.3f, header, if (warn) cWarn else dimColor, if (header) 11.5f else 12f))
     }
 
     /** Hiện dialog liệt kê từng nhóm trùng tên thường gọi + đề xuất đổi tên phân biệt (Họ + Tên,
@@ -761,6 +794,18 @@ class ClassManagementActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 setPadding(0, px(4), 0, 0)
             })
+            // Chỉ hiện điểm (mock) khi đang sort theo Điểm — tránh rối card lúc sort theo tên,
+            // giống cách ControlActivity chỉ hiện cột "Lượt" khi đang xem 1 mini game cụ thể.
+            if (sortMode == "score") {
+                addView(TextView(this@ClassManagementActivity).apply {
+                    text = "${mockScoreOf(name)} điểm"
+                    setTextColor(cAccent)
+                    textSize = 11.5f
+                    setTypeface(typeface, Typeface.BOLD)
+                    gravity = Gravity.CENTER
+                    setPadding(0, px(2), 0, 0)
+                })
+            }
         }
     }
 

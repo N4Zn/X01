@@ -163,26 +163,36 @@ public class GameSessionManager : Singleton<GameSessionManager>
     }
 
     /// <summary>
-    /// Returns team name in Team mode, or player name in OneVsOne mode.
-    /// Use this in game HUDs so the label matches TeamSelectScene consistently.
+    /// Returns "{TeamName}: {PlayerName}" in Team mode (PlayerName = whoever
+    /// PlayerRecognitionService last recognized standing in that slot — updates live as players
+    /// swap in/out), or player name in OneVsOne mode. Use this in game HUDs so the label matches
+    /// TeamSelectScene consistently.
     /// </summary>
     public string GetDisplayName1()
     {
         if (CurrentGameMode == GameMode.Team)
-            return !string.IsNullOrEmpty(BlueTeamName) ? BlueTeamName : "Blue";
+        {
+            string team = !string.IsNullOrEmpty(BlueTeamName) ? BlueTeamName : "Blue";
+            string player = Players.Count > 0 ? Players[0].PlayerName : null;
+            return string.IsNullOrEmpty(player) ? team : $"{team}: {player}";
+        }
         return GetPlayer1Name();
     }
 
     public string GetDisplayName2()
     {
         if (CurrentGameMode == GameMode.Team)
-            return !string.IsNullOrEmpty(RedTeamName) ? RedTeamName : "Red";
+        {
+            string team = !string.IsNullOrEmpty(RedTeamName) ? RedTeamName : "Red";
+            string player = Players.Count > 1 ? Players[1].PlayerName : null;
+            return string.IsNullOrEmpty(player) ? team : $"{team}: {player}";
+        }
         return GetPlayer2Name();
     }
 
     public void ResetSession()
     {
-        CurrentGameMode = GameMode.OneVsOne;
+        CurrentGameMode = GameMode.Team;
         if (Players == null) Players = new List<PlayerData>();
         Players.Clear();
         Players.Add(new PlayerData("Player 1", 0));

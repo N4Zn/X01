@@ -8,7 +8,7 @@ public class CharacterSelectController : MonoBehaviour
     [SerializeField] private CharacterSelectView characterSelectView;
     protected CustomFSMManager _customFSMManager;
 
-    private GameMode _selectedMode = GameMode.OneVsOne;
+    private GameMode _selectedMode = GameMode.Team;
     private int _selectingPlayer = 1; // 1 or 2
     private int _p1CharIndex = -1;
     private int _p2CharIndex = -1;

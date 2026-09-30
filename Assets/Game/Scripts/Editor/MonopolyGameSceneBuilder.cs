@@ -199,6 +199,7 @@ public static class MonopolyGameSceneBuilder
         // Back button + tutorial
         var backButton = MiniGameSceneBuilderHelpers.CreateSimpleButton(
             "BackButton", canvasGo.transform, "Back", new Vector2(0.01f, 0.9f), new Vector2(0.1f, 0.99f));
+        backButton.SetActive(false); // ẩn nút back — vẫn wire bình thường, chỉ không hiện/không bấm được
         var tutorialPanel = MiniGameSceneBuilderHelpers.CreateTutorialPanel(canvasGo.transform, "Monopoly");
 
         // ── Đổ xúc xắc — overlay phủ TOÀN màn hình (helper dùng chung của Kit) — tạo SAU CÙNG để

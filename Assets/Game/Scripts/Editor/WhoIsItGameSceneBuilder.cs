@@ -217,6 +217,7 @@ public static class WhoIsItGameSceneBuilder
         // Back button
         var backButton = MiniGameSceneBuilderHelpers.CreateSimpleButton(
             "BackButton", canvasGo.transform, "Back", new Vector2(0.01f, 0.9f), new Vector2(0.1f, 0.99f));
+        backButton.SetActive(false); // ẩn nút back — vẫn wire bình thường, chỉ không hiện/không bấm được
 
         // Tutorial
         var tutorialPanel = MiniGameSceneBuilderHelpers.CreateTutorialPanel(canvasGo.transform, "Who Is It?");
