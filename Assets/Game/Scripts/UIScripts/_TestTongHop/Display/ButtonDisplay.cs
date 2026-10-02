@@ -323,6 +323,54 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     ButtonItem GetButton(ButtonItem[] group, int answerIndex)
         => System.Array.Find(group, b => b.AnswerIndex == answerIndex);
 
+    /// <summary>API công khai cho hiệu ứng phụ tự viết (vd hiệu ứng bay/vị trí quả — xem
+    /// HaiQuaController/DemQuaController) cần TÌM ĐÚNG button vừa chạm từ answerIndex nhận được
+    /// qua onAnswerTapped. QUAN TRỌNG: answerIndex là chỉ số LOGIC (ButtonItem.AnswerIndex),
+    /// KHÔNG PHẢI vị trí trong mảng leftButtons/rightButtons — PickSlots() xáo việc gán answerIndex
+    /// cho từng slot hiển thị mỗi round, nên "leftButtons[answerIndex]" hầu như luôn SAI. Đồng
+    /// thời PHẢI lọc activeSelf — slot đã bị ẩn (round trước) vẫn giữ NGUYÊN answerIndex cũ, không
+    /// lọc dễ khớp nhầm sang 1 slot đã ẩn từ trước (2 bug thật đã xảy ra ở HaiQua/DemQua trước khi
+    /// rút ra được cách làm đúng này — không tự viết lại pattern GetButton() nội bộ, dùng thẳng
+    /// hàm này).</summary>
+    public ButtonItem GetActiveButtonByAnswerIndex(Team team, int answerIndex)
+    {
+        var group = team == Team.Left ? leftButtons : rightButtons;
+        if (group == null) return null;
+        foreach (var b in group)
+            if (b != null && b.gameObject.activeSelf && b.AnswerIndex == answerIndex) return b;
+        return null;
+    }
+
+    /// <summary>Gán leftButtons/rightButtons TỪ CODE — dùng cho engine dựng slot lúc RUNTIME
+    /// (vd GenericGameController đọc layout từ JSON, Instantiate ButtonItem prefab theo số lượng/
+    /// vị trí tuỳ game, không qua Editor SceneBuilder cố định). Game dùng SceneBuilder như thường
+    /// lệ (gán leftButtons/rightButtons qua Inspector/SerializedObject lúc build scene) KHÔNG cần
+    /// gọi hàm này.</summary>
+    public void ConfigureSlots(ButtonItem[] left, ButtonItem[] right)
+    {
+        leftButtons = left;
+        rightButtons = right;
+    }
+
+    /// <summary>Mở khoá lại ĐÚNG 1 bên về trạng thái "chưa trả lời" sau WrongFinal — dùng cho game
+    /// muốn "chạm sai thử lại", KHÔNG kết thúc round ngay (khác hành vi mặc định: sai luôn khoá +
+    /// kết thúc, xem AnswerValidator.cs). Validator mới tinh (giữ nguyên câu hỏi hiện tại), màu về
+    /// Normal, bên kia KHÔNG bị đụng tới. Gọi sau khi đã hiện xong hiệu ứng/feedback sai của round
+    /// đó — gọi quá sớm sẽ xoá mất hiệu ứng tô đỏ/khoá đang hiện cho người chơi xem.</summary>
+    public void ResetTeamAttempt(Team team)
+    {
+        bool isLeft = team == Team.Left;
+        var question = _isIndependent ? (isLeft ? _leftQuestionInd : _rightQuestionInd) : _current;
+        if (question == null) return;
+
+        if (isLeft) { _leftFinalised = false; _leftAnsweredWrong = false; _leftValidator = new AnswerValidator(question); _leftSelectTimes.Clear(); }
+        else { _rightFinalised = false; _rightAnsweredWrong = false; _rightValidator = new AnswerValidator(question); _rightSelectTimes.Clear(); }
+
+        var group = isLeft ? leftButtons : rightButtons;
+        foreach (var b in group)
+            if (b != null && b.gameObject.activeSelf) b.SetState(ItemState.Normal);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────────
 
     /// <summary>Tạo danh sách các answerIndex hợp lệ (không rỗng) từ QuestionData.</summary>

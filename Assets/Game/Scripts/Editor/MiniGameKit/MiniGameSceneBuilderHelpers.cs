@@ -12,6 +12,13 @@ using TMPro;
 /// Khác với các SceneBuilder cũ (hard-code sprite nghệ thuật riêng của từng game), helper ở đây
 /// chỉ dựng UI placeholder màu phẳng — đủ để chơi thử ngay, không phụ thuộc asset nghệ thuật.
 /// Thay sprite/màu sau khi ý tưởng đã chạy đúng logic.
+///
+/// GOTCHA khi viết Editor script gọi method trên component vừa tạo: KHÔNG dùng
+/// `component.SendMessage(...)` — SendMessage kiểm tra ShouldRunBehaviour() nội bộ, LUÔN false
+/// ngoài Play mode (Editor script chạy ở Edit mode) → assert lỗi thật ("ShouldRunBehaviour()"),
+/// làm hỏng cả BuildScene() (đã gặp thật). Muốn gọi 1 method của MonoBehaviour từ Editor script,
+/// đổi method đó thành `public` rồi gọi TRỰC TIẾP (vd `controller.ApplyLayout();`), không qua
+/// reflection/messaging.
 /// </summary>
 public static class MiniGameSceneBuilderHelpers
 {
@@ -217,6 +224,16 @@ public static class MiniGameSceneBuilderHelpers
         so.FindProperty("iconSlot").objectReferenceValue = iconSlot;
         so.FindProperty("iconContainer").objectReferenceValue = iconSlot.transform;
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        // Ẩn NGAY từ lúc tạo — trước khi ButtonDisplay.Setup()/SetupGroup() chạy lần đầu, nút này
+        // chỉ có màu placeholder xanh nhạt + chưa có nội dung thật, hiện ra sẽ rất xấu (đã xảy ra
+        // thật ở HaiQua/DemQua, phải tự SetActive(false) từng SceneBuilder). Chuyển mặc định vào
+        // ĐÂY một lần cho MỌI game dùng ButtonItem — an toàn vì SetupGroup() LUÔN tự
+        // SetActive(true/false) dứt khoát cho mọi slot mỗi lần Setup() chạy (xem ButtonDisplay.
+        // SetupGroup), không phụ thuộc trạng thái active trước đó. Scene ĐÃ build trước thay đổi
+        // này không bị ảnh hưởng (trạng thái active được lưu trong file .unity, chỉ áp dụng cho
+        // lần Build Scene MỚI trở đi).
+        go.SetActive(false);
 
         return go;
     }

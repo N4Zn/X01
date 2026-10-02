@@ -57,6 +57,10 @@ game kế thừa `MiniGameControllerBase`, không cần viết gì thêm:
   học sinh trả lời xong thường còn đứng nguyên tại chỗ, cần vài giây để biết mà di chuyển trước khi
   câu mới hiện ra. Muốn hiện số đếm ngược: gán `leftCountdownText/rightCountdownText` (kiểu `Text`).
   Để trống thì khoảng chờ vẫn chạy, chỉ không có chữ hiện ra.
+  - **`waitForZoneClearBeforeCountdown`** (bool, mặc định `false`) — bật thì chờ vùng trả lời THẬT
+    SỰ sạch (không còn ai đứng/chạm, tái dùng `FloorZoneClearer` đã chạy thật ở SolarQuizVi) TRƯỚC
+    khi bắt đầu đếm "Next in Ns", thay vì đếm ngay bất kể còn ai đang đứng trong vùng hay không.
+    Chỉ áp dụng Combined mode.
 
 Override `UseDefaultFeedbackFx`/`UseDefaultTransitionCountdown` thành `false` nếu game tự làm
 phần này riêng (xem `WhoIsItGameController` — đã có feedback text/sfx/mystery-box riêng, tắt
@@ -72,7 +76,15 @@ phần này riêng (xem `WhoIsItGameController` — đã có feedback text/sfx/m
   `SetupIndependentDisplay(Team, QuestionData, onDone)` ở subclass, gọi thẳng
   `display.SetupPlayerIndependent(team, q, onDone)` (method có sẵn trên `ButtonDisplay`/
   `FloatingDisplay`, không có trên `MatchingDisplay`). Base tự lo 2 vòng lặp riêng + timer/round
-  chung.
+  chung. **`UseDefaultTransitionCountdown`/`TransitionCountdown()` KHÔNG chạy ở mode này** (chỉ
+  Combined) — muốn có "Next in Ns" riêng từng bên giữa các round, bật
+  **`useIndependentRoundCountdown`** (bool, mặc định `false`) thay vì tự viết coroutine riêng (đã
+  từng làm ở DemQuaController rồi rút gọn lại thành tính năng chung này — xem
+  `IndependentRoundCountdown`). Round ĐẦU TIÊN của mỗi bên không đếm lại (đã có "Start in Ns" từ
+  `InitialStartCountdownThenBegin()` lúc `StartGame()` rồi). **Cần gán
+  `leftCountdownText/rightCountdownText`** ở SceneBuilder mới có chữ hiện ra — bật cờ mà không gán
+  Text sẽ tạo ra khoảng dừng 3s VÔ HÌNH mỗi round (đã là bài học thật — đừng bật cho HaiQua tới khi
+  dựng Text cho nó).
 
 ## Cơ chế hoàn toàn mới (không phải chọn nút/matching)
 
@@ -89,6 +101,32 @@ public interface IAnswerDisplay
 
 `onResult(correct, team, playerAnswer)` gọi khi round kết thúc — `MiniGameControllerBase` tự lo
 phần còn lại (ghi điểm, feedback, next round).
+
+## Gotcha: `answerIndex` KHÔNG PHẢI vị trí trong mảng nút
+
+Nếu game tự viết hiệu ứng phụ dựa vào `ButtonDisplay.onAnswerTapped` (vd hiệu ứng bay, tự ẩn nút
+vừa chạm — xem HaiQuaController/DemQuaController), **KHÔNG được** suy vị trí nút từ `answerIndex`
+kiểu `leftButtons[answerIndex]`. `ButtonDisplay.PickSlots()` xáo (shuffle) việc gán `answerIndex`
+(chỉ số LOGIC trong `QuestionData.answers`) cho từng slot hiển thị mỗi round — slot ở vị trí mảng
+thứ N có thể đang hiện answerIndex bất kỳ, không nhất thiết N. Đây là bug thật đã xảy ra 2 lần độc
+lập (sai vị trí hiệu ứng bay, rồi 1 slot cũ không ẩn được) trước khi chốt được cách làm đúng.
+
+Dùng thẳng API dùng chung: **`ButtonDisplay.GetActiveButtonByAnswerIndex(Team team, int
+answerIndex)`** — trả về đúng `ButtonItem` đang active khớp answerIndex đó (đã lọc `activeSelf`,
+tránh khớp nhầm 1 slot đã ẩn từ round trước còn giữ answerIndex cũ). Không tự viết lại vòng lặp
+tìm kiếm này ở từng game.
+
+## `ButtonItem` mặc định ẨN tới khi `Setup()` chạy
+
+Mọi `ButtonItem` dựng qua `MiniGameSceneBuilderHelpers.CreateButtonItem()` (và các hàm dùng nó:
+`CreateButtonGroup*`) mặc định **inactive** ngay lúc tạo — trước khi `Setup()` chạy lần đầu, nút
+chỉ có màu placeholder xanh nhạt + chưa có nội dung thật, hiện ra sẽ xấu (bug thật đã gặp ở
+HaiQua/DemQua, phải tự `SetActive(false)` từng SceneBuilder trước khi tính năng này được đưa vào
+helper dùng chung). `ButtonDisplay.SetupGroup()` (chạy bên trong `Setup()`/`SetupPlayerIndependent()`)
+LUÔN tự `SetActive(true/false)` dứt khoát cho mọi slot mỗi lần gọi, nên không cần làm gì thêm —
+nút sẽ tự hiện đúng lúc round đầu tiên sẵn sàng. Scene ĐÃ build trước khi tính năng này được thêm
+vào không bị ảnh hưởng (trạng thái active nằm trong file `.unity`, chỉ áp dụng từ lần Build Scene
+MỚI trở đi).
 
 ## Dựng scene nhanh
 
@@ -114,6 +152,28 @@ backgroundColor, fontSize, textColor)` — dựng 1 panel (0,0)-(1,1) + 1 dòng 
 ngược lớn...) — gọi hàm này SAU CÙNG trong code dựng scene để sibling cao nhất (vẽ đè lên mọi thứ,
 kể cả HUD). Trả về `(GameObject root, Text bigText)` — game tự bật/tắt `root` và set `bigText.text`.
 Xem `MonopolyGameSceneBuilder.cs` (overlay đổ xúc xắc) làm ví dụ.
+
+**Đáp án ảnh thật (không phải placeholder màu)** — 3 helper đúc kết từ HaiQua/DemQua, ưu tiên dùng
+thay vì `CreateButtonGroupHorizontal`/`CreateButtonGroup` cũ khi ý tưởng dùng ảnh chụp/PNG thật:
+
+- `CreateButtonGridTwoRows(prefix, parent, areaMin, areaMax, count, pixelSize)` — button VUÔNG
+  kích thước PIXEL CỐ ĐỊNH (không suy theo area/count), xếp 2 hàng thay vì 1 hàng dài — dễ bấm hơn
+  hẳn cho sàn chiếu, không bị bóp méo khi số lượng đáp án tăng.
+- `SquarifyHorizontalGroup(group)` — nếu đã lỡ dùng `CreateButtonGroupHorizontal` (chia đều theo 1
+  chiều, giữ nguyên chiều kia theo area) và ra hình chữ nhật dài xấu, gọi hàm này để ép lại thành
+  hình vuông thật theo pixel (dùng tỷ lệ khung hình Canvas thật, không phải fractional 0-1 ngây thơ).
+- `MakeButtonGroupBackgroundTransparent(group)` — xoá màu nền "thẻ bài" trắng đục mặc định của
+  `ButtonItem` (`colorNormal`/`colorChosen`/... — hợp lý cho đáp án chữ/icon, nhưng lộ khung trắng
+  xấu phía sau ảnh PNG nền trong suốt thật). Gọi SAU khi tạo group, trước khi wire vào
+  `ButtonDisplay`.
+
+**Layout cần tinh chỉnh nhiều lần (vị trí/khoảng cách/kích thước theo từng game)** — đừng hard-code
+số trong SceneBuilder rồi phải Build Scene lại mỗi lần chỉnh. Đưa ra thành field
+`[SerializeField]` trên controller (không phải trên SceneBuilder) + 1 hàm `ApplyLayout()` gọi từ cả
+`OnValidate()` (xem trực tiếp trong Editor, KHÔNG cần bấm Play) lẫn `Start()` (đảm bảo đúng lúc
+chạy thật) — xem `DemQuaController.ApplyBasketFruitLayout()` làm ví dụ đầy đủ. SceneBuilder chỉ
+cần tạo placeholder rect tạm (bị hàm này ghi đè ngay), gọi luôn 1 lần cuối code dựng scene (method
+phải `public`, KHÔNG gọi qua `SendMessage` — xem gotcha ở `MiniGameSceneBuilderHelpers.cs`).
 
 ## `_Template/` — ví dụ chạy được ngay
 

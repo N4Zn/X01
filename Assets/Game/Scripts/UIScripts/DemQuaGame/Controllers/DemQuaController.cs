@@ -105,8 +105,11 @@ public class DemQuaController : MiniGameControllerBase
     // báo gì thêm — SceneBuilder tự FindProperty đúng field của lớp cha qua SerializedObject.
 
     [Tooltip("CHÍNH XÁC những GameObject đã wire vào ButtonDisplay.leftButtons/rightButtons (kiểu " +
-             "ButtonItem, KHÔNG phải RectTransform — cần đọc .AnswerIndex để tìm đúng nút vừa bấm, " +
-             "xem FindTappedButton — answerIndex KHÔNG phải vị trí mảng, xem ghi chú ở OnFruitTapped).")]
+             "ButtonItem, KHÔNG phải RectTransform) — dùng để ĐỔI VỊ TRÍ theo chỉ số mảng " +
+             "(RandomizeFruitPositions, ButtonDisplay luôn dồn quả active về đầu mảng nên an toàn " +
+             "để suy theo vị trí ở ĐÂY). KHÔNG dùng mảng này để tìm nút vừa CHẠM — việc đó phải qua " +
+             "ButtonDisplay.GetActiveButtonByAnswerIndex() (xem OnFruitTapped), vì answerIndex " +
+             "KHÔNG phải vị trí mảng.")]
     [SerializeField] ButtonItem[] leftFruitSlots;
     [SerializeField] ButtonItem[] rightFruitSlots;
 
@@ -206,42 +209,6 @@ public class DemQuaController : MiniGameControllerBase
 
     protected override IAnswerDisplay GetDisplayForQuestion(QuestionData q) => buttonDisplay;
 
-    // true sau khi bên đó đã hoàn thành round ĐẦU TIÊN — round đầu tiên KHÔNG tự đếm ngược ở đây
-    // nữa (xem lý do trong CountdownThenRevealFruits), chỉ round 2 trở đi mới đếm "Next in Ns".
-    bool _leftHasStarted, _rightHasStarted;
-
-    /// <summary>"Next in 3,2,1" — chạy từ ROUND 2 TRỞ ĐI, riêng cho TỪNG BÊN (2 bên nhịp độc lập
-    /// nên không dùng chung 1 coroutine). KHÔNG đếm cho round 1 — MiniGameControllerBase.StartGame()
-    /// đã tự chạy "Start in 3,2,1" MỘT LẦN (InitialStartCountdownThenBegin(), TRƯỚC KHI
-    /// IndependentPlayerLoop bắt đầu) dùng ĐÚNG 2 field leftCountdownText/rightCountdownText này —
-    /// nếu đếm thêm ở đây cho round 1 sẽ bị đếm 2 LẦN LIÊN TIẾP (bug thật đã xảy ra, user báo lại).
-    /// Dùng lại 2 field Text kế thừa từ MiniGameControllerBase (đã có sẵn cho "Next in Ns" mặc định
-    /// của Combined mode — xem TransitionCountdown ở đó — nhưng cơ chế đó chỉ chạy trong Combined
-    /// mode; Independent mode như DemQua không bao giờ tới StateMachineEnter_Feedback/
-    /// NextRoundAfterDelay nên phải tự đếm lấy ở đây cho round 2 trở đi). Nền/rổ/reset vẫn set
-    /// NGAY (không chờ đếm ngược) — chỉ có QUẢ (SetupPlayerIndependent) bị trì hoãn tới khi đếm
-    /// xong, giữ đúng cảm giác "chuẩn bị rồi mới xuất hiện".</summary>
-    IEnumerator CountdownThenRevealFruits(Team team, QuestionData q, Action<bool, Team, int[]> onDone)
-    {
-        bool hasStarted = team == Team.Left ? _leftHasStarted : _rightHasStarted;
-        if (team == Team.Left) _leftHasStarted = true; else _rightHasStarted = true;
-
-        if (hasStarted) // round 2 trở đi — round 1 đã có "Start in Ns" từ InitialStartCountdownThenBegin() rồi
-        {
-            var countdownText = team == Team.Left ? leftCountdownText : rightCountdownText;
-            if (countdownText != null) countdownText.gameObject.SetActive(true);
-            for (int n = 3; n >= 1; n--)
-            {
-                if (countdownText != null) countdownText.text = $"Next in {n}";
-                yield return new WaitForSeconds(1f);
-            }
-            if (countdownText != null) countdownText.gameObject.SetActive(false);
-        }
-
-        buttonDisplay.SetupPlayerIndependent(team, q, onDone);
-        RandomizeFruitPositions(team, q.correctAnswers.Length);
-    }
-
     // TẠM THỜI chỉ test 1 loại có ảnh/nền thật (CaRot) — 5 loại còn lại chưa có art, để random đủ
     // hết sẽ ra placeholder xen kẽ gây khó test. Đổi lại thành null (hoặc xoá điều kiện bên dưới
     // trong PullNextQuestion) để random đủ 6 loại như thiết kế gốc khi có đủ ảnh/nền các loại kia.
@@ -296,8 +263,11 @@ public class DemQuaController : MiniGameControllerBase
         var basketIcon = team == Team.Left ? leftBasketIcon : rightBasketIcon;
         if (basketIcon != null) basketIcon.gameObject.SetActive(true);
 
-        // Quả CHỈ xuất hiện sau khi đếm "Start/Next in 3,2,1" xong — xem CountdownThenRevealFruits.
-        StartCoroutine(CountdownThenRevealFruits(team, q, onDone));
+        // "Start/Next in 3,2,1" giờ do MiniGameControllerBase tự lo (useIndependentRoundCountdown,
+        // bật ở SceneBuilder) — CHẠY TRƯỚC khi SetupIndependentDisplay() này được gọi lại cho round
+        // sau, nên tới đây là "go time", gọi thẳng không cần tự đếm/tự trì hoãn gì thêm nữa.
+        buttonDisplay.SetupPlayerIndependent(team, q, onDone);
+        RandomizeFruitPositions(team, q.correctAnswers.Length);
     }
 
     static readonly Dictionary<string, Sprite> _backgroundCache = new();
@@ -434,8 +404,8 @@ public class DemQuaController : MiniGameControllerBase
     ///
     /// QUAN TRỌNG: answerIndex là ButtonItem.AnswerIndex (chỉ số LOGIC trong QuestionData.answers),
     /// KHÔNG phải vị trí trong mảng leftFruitSlots/rightFruitSlots — ButtonDisplay.PickSlots() xáo
-    /// việc gán answerIndex cho từng slot hiển thị, nên slots[answerIndex] có thể trỏ NHẦM quả.
-    /// Phải tìm đúng bằng FindTappedButton() (so khớp .AnswerIndex).</summary>
+    /// việc gán answerIndex cho từng slot hiển thị mỗi round. Dùng API dùng chung
+    /// ButtonDisplay.GetActiveButtonByAnswerIndex() (đã lọc activeSelf sẵn) thay vì tự dò lại.</summary>
     void OnFruitTapped(Team team, int answerIndex, ClickResult result)
     {
         if (result != ClickResult.CorrectPartial && result != ClickResult.CorrectFinal) return;
@@ -445,8 +415,7 @@ public class DemQuaController : MiniGameControllerBase
         // Independent mode không đi qua đường đó nên phải tự gọi ở đây.
         MusicManager.Instance?.PlayCorrectSfx();
 
-        var group = team == Team.Left ? leftFruitSlots : rightFruitSlots;
-        var tappedButton = FindTappedButton(group, answerIndex);
+        var tappedButton = buttonDisplay.GetActiveButtonByAnswerIndex(team, answerIndex);
         var basket = team == Team.Left ? leftBasketIcon : rightBasketIcon;
         bool isFinal = result == ClickResult.CorrectFinal;
 
@@ -493,17 +462,6 @@ public class DemQuaController : MiniGameControllerBase
         if (text != null) text.text = value.ToString();
     }
 
-    /// <summary>Chỉ so khớp button ĐANG active — ButtonDisplay.SetupGroup() chỉ gọi .Setup() (set
-    /// .AnswerIndex) cho slot active round NÀY, slot inactive còn lại giữ NGUYÊN .AnswerIndex CŨ
-    /// từ round trước. Không lọc activeSelf thì có thể khớp NHẦM 1 slot ẩn còn sót giá trị trùng
-    /// answerIndex, khiến hiệu ứng bay lấy vị trí SAI (đứng yên từ round trước).</summary>
-    static ButtonItem FindTappedButton(ButtonItem[] group, int answerIndex)
-    {
-        if (group == null) return null;
-        foreach (var b in group)
-            if (b != null && b.gameObject.activeSelf && b.AnswerIndex == answerIndex) return b;
-        return null;
-    }
 
     // Cache AudioClip theo path — load bằng Resources.Load TRỰC TIẾP (KHÔNG qua
     // AssetOverrideLoader.GetClip như trước) vì path giờ nằm ở 2 thư mục KHÁC NHAU, không theo

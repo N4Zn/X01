@@ -62,6 +62,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     [Tooltip("Text 'Next in Ns' mỗi bên trong lúc chờ chuyển câu — để trống nếu không cần hiện chữ (khoảng chờ vẫn chạy, chỉ không có số đếm ngược hiện ra).")]
     [SerializeField] protected Text leftCountdownText;
     [SerializeField] protected Text rightCountdownText;
+    [Tooltip("Bật 'Next in 3,2,1' RIÊNG cho từng bên ở Independent mode (mặc định TẮT) — " +
+             "TransitionCountdown()/UseDefaultTransitionCountdown ở trên CHỈ chạy ở Combined mode, " +
+             "Independent mode (2 bên tự nhịp riêng, không qua StateMachineEnter_Feedback) cần bản " +
+             "RIÊNG này. Round ĐẦU TIÊN của mỗi bên KHÔNG đếm lại (đã có 'Start in Ns' từ " +
+             "InitialStartCountdownThenBegin() rồi) — chỉ đếm từ round 2 trở đi. Dùng lại đúng 2 " +
+             "field leftCountdownText/rightCountdownText phía trên.")]
+    [SerializeField] protected bool useIndependentRoundCountdown = false;
 
     public ScoreManager ScoreManager { get; private set; }
     protected CustomFSMManager Fsm { get; private set; }
@@ -329,7 +336,16 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     {
         if (correct) MusicManager.Instance?.PlayCorrectSfx();
         else MusicManager.Instance?.PlayWrongSfx();
+        ShowFeedbackIcon(team, correct);
+    }
 
+    /// <summary>Hiện icon ✔/✖ bounce (FeedbackEffect) cho 1 bên — tách riêng từ PlayDefaultFeedbackFx
+    /// để subclass tự gọi được khi KHÔNG dùng UseDefaultFeedbackFx mặc định (vd GenericGameController
+    /// tự quyết định có phát âm thanh/icon hay không theo cấu hình riêng từng game — xem
+    /// GenericGameController.PlayActionFx) nhưng vẫn muốn tái dùng ĐÚNG hiệu ứng icon đã dùng chung
+    /// cho mọi game khác, không viết lại.</summary>
+    protected void ShowFeedbackIcon(Team team, bool correct)
+    {
         var showIcon = team == Team.Left
             ? (correct ? leftCorrectIcon : leftWrongIcon)
             : (correct ? rightCorrectIcon : rightWrongIcon);
@@ -348,12 +364,27 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         fx.Play(correct, 1f, false);
     }
 
+    /// <summary>Ẩn icon ✔/✖ của 1 bên — tách riêng từ HideDefaultFeedbackIcons (ẩn CẢ 2 bên) để
+    /// subclass Independent-mode tự ẩn ĐÚNG 1 bên lúc round MỚI của bên đó bắt đầu, không đụng icon
+    /// bên KIA có thể đang hiện dở (xem GenericGameController.SetupIndependentDisplay).</summary>
+    protected void HideFeedbackIcon(Team team)
+    {
+        if (team == Team.Left)
+        {
+            if (leftCorrectIcon != null) leftCorrectIcon.SetActive(false);
+            if (leftWrongIcon != null) leftWrongIcon.SetActive(false);
+        }
+        else
+        {
+            if (rightCorrectIcon != null) rightCorrectIcon.SetActive(false);
+            if (rightWrongIcon != null) rightWrongIcon.SetActive(false);
+        }
+    }
+
     void HideDefaultFeedbackIcons()
     {
-        if (leftCorrectIcon != null) leftCorrectIcon.SetActive(false);
-        if (leftWrongIcon != null) leftWrongIcon.SetActive(false);
-        if (rightCorrectIcon != null) rightCorrectIcon.SetActive(false);
-        if (rightWrongIcon != null) rightWrongIcon.SetActive(false);
+        HideFeedbackIcon(Team.Left);
+        HideFeedbackIcon(Team.Right);
     }
 
     protected virtual void StateMachineEnter_Feedback(Enum prev, Dictionary<string, object> opts)
@@ -381,6 +412,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     /// hard-code riêng từng game. Override thành false nếu game tự có nhịp chuyển câu riêng.</summary>
     protected virtual bool UseDefaultTransitionCountdown => true;
 
+    [Tooltip("Bật thì đếm ngược 'Next in Ns' CHỜ vùng trả lời sạch (không còn ai đứng/chạm) trước " +
+             "khi bắt đầu đếm — tái dùng FloorZoneClearer đã chạy thật ở SolarQuizVi (engine CSV " +
+             "cũ), giờ dùng chung được cho Kit mới. Mặc định TẮT — không đổi hành vi của game nào " +
+             "trừ khi tự bật. Chỉ áp dụng cho Combined mode (TransitionCountdown), KHÔNG áp dụng cho " +
+             "Independent mode (xem useIndependentRoundCountdown/IndependentRoundCountdown riêng).")]
+    [SerializeField] protected bool waitForZoneClearBeforeCountdown = false;
+
     IEnumerator TransitionCountdown()
     {
         int seconds = Mathf.Max(0, Mathf.RoundToInt(
@@ -391,6 +429,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         // both slots at once here — headless (no camera preview/bounding box).
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshHudNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshHudNames());
+
+        if (waitForZoneClearBeforeCountdown && hud != null)
+        {
+            bool cleared = false;
+            FloorZoneClearer.AwaitBothSides(hud.transform.root as RectTransform, () => cleared = true);
+            yield return new WaitUntil(() => cleared);
+        }
 
         for (int i = seconds; i >= 1; i--)
         {
@@ -593,12 +638,22 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     IEnumerator IndependentPlayerLoop(Team team)
     {
+        int roundCount = 0; // KHÔNG dùng _leftRoundIndex/_rightRoundIndex — 2 field đó chỉ tăng khi
+                             // totalRounds>0, còn round đếm ngược "Next in Ns" cần đếm cả khi chơi
+                             // vô hạn (totalRounds<=0, trường hợp HaiQua/DemQua).
         while (_independentRunning)
         {
             if (totalRounds > 0)
             {
                 int idx = team == Team.Left ? ++_leftRoundIndex : ++_rightRoundIndex;
                 if (idx > totalRounds) break;
+            }
+
+            roundCount++;
+            if (useIndependentRoundCountdown && roundCount > 1)
+            {
+                yield return IndependentRoundCountdown(team);
+                if (!_independentRunning) yield break;
             }
 
             QuestionData q = PullNextQuestion();
@@ -629,6 +684,22 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         }
 
         CheckIndependentBothDone();
+    }
+
+    /// <summary>"Next in 3,2,1" riêng cho TỪNG BÊN — xem useIndependentRoundCountdown. Dùng lại
+    /// đúng field leftCountdownText/rightCountdownText của bên đó, KHÔNG đụng bên còn lại (2 bên
+    /// Independent mode không đồng bộ round nên không thể dùng 1 coroutine chung như
+    /// TransitionCountdown() của Combined mode).</summary>
+    IEnumerator IndependentRoundCountdown(Team team)
+    {
+        var text = team == Team.Left ? leftCountdownText : rightCountdownText;
+        if (text != null) text.gameObject.SetActive(true);
+        for (int i = 3; i >= 1; i--)
+        {
+            if (text != null) text.text = $"Next in {i}";
+            yield return new WaitForSeconds(1f);
+        }
+        if (text != null) text.gameObject.SetActive(false);
     }
 
     void CheckIndependentBothDone()

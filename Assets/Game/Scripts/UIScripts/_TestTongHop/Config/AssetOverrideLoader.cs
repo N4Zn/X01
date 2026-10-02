@@ -31,6 +31,17 @@ using UnityEngine.Networking;
 ///   1. Thêm vào CSV (questionMediaValue / answerMediaValue)
 ///   2. Push file lên persistentDataPath
 ///   3. Chạy lại game — KHÔNG cần rebuild APK
+///
+///   ─── KHI NÀO KHÔNG DÙNG class này ──────────────────────────────────────────────
+///   GetSprite()/GetClip() TỰ ĐỘNG cộng thêm TongHopConfig.Current.imageRoot/audioRoot (mặc định
+///   "TestTongHop/images"/"TestTongHop/audio") vào path nếu path đó CHƯA bắt đầu bằng đúng root
+///   đó (xem Resolve()) — bug thật đã gặp 3 lần (HaiQua/DemQua): path để ảnh nền/audio số/audio
+///   tên quả nằm ở thư mục KHÁC ("Background/", "SoDem/", "Fruit/") bị cộng nhầm thành
+///   "TestTongHop/images/Background/..." (không tồn tại, load ra null lặng lẽ, không exception).
+///   → Bất kỳ asset nào KHÔNG đi qua hệ CSV/QuestionData (ảnh nền phẳng theo màn hình, audio
+///   không phải câu hỏi, sprite trang trí...) PHẢI load bằng `Resources.Load&lt;T&gt;(path)` TRỰC
+///   TIẾP, KHÔNG qua AssetOverrideLoader — chấp nhận mất tính năng "override qua persistentDataPath
+///   không cần rebuild" cho các asset đó, đổi lại path không bị mangle sai.
 /// </summary>
 public static class AssetOverrideLoader
 {
@@ -141,6 +152,7 @@ public static class AssetOverrideLoader
         _sprites.Clear();
         _clips.Clear();
     }
+
 
     // ── Internal ──────────────────────────────────────────────────────────────
 

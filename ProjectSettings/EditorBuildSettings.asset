@@ -110,5 +110,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/DemQuaGame/DemQuaGame.unity
     guid: a81fc1900fcc4d04da95c2e8442e4a36
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/GenericGamePlayer.unity
+    guid: 7c93710ee70f1e14f9d96d4b7cd32e3c
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

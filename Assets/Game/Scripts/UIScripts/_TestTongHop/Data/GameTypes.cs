@@ -8,7 +8,11 @@ public enum AnswerMode
 {
     Single,           // 1 đáp án đúng
     MultiSelect,      // nhiều đáp án, không thứ tự
-    OrderedSequence   // nhiều đáp án, đúng thứ tự
+    OrderedSequence,  // nhiều đáp án, đúng thứ tự
+    /// <summary>Mọi đáp án đều bấm được, giá trị SỐ của từng đáp án (QuestionData.sumValues) cộng dồn —
+    /// tổng ĐÚNG BẰNG QuestionData.sumTarget thì thắng (CorrectFinal), chưa tới = CorrectPartial,
+    /// VƯỢT = WrongFinal. Chỉ GenericGame dùng (xem AnswerValidator.ValidateSum).</summary>
+    SumToTarget
 }
 
 public enum QuestionMediaType { Text, Image, Audio, IconCompose }
@@ -54,6 +58,10 @@ public class QuestionData
     public AnswerMode       answerMode;
     public int[]            correctAnswers;
     public ChooseDisplayMode displayMode;     // Auto = theo weight config; Button/Floating = cố định
+
+    // Chỉ dùng khi answerMode == SumToTarget (xem AnswerValidator) — game khác để mặc định, bỏ qua.
+    public int   sumTarget;                   // tổng cần đạt ĐÚNG
+    public int[] sumValues;                   // sumValues[answerIndex] = giá trị cộng của đáp án đó
 
     // Đáp án (Matching) — left/right mỗi bên 3
     public string[]     leftItems;

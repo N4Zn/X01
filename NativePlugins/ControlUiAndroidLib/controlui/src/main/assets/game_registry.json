@@ -7,6 +7,8 @@
     {"name": "AddNumber", "displayName": "Cộng số", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "SoDem", "displayName": "Số đếm", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
     {"name": "SoDem2", "displayName": "Số đếm - Bóng bay", "group": "Đếm", "sceneName": "BalloonGame", "category": 0},
+    {"name": "HaiQua", "displayName": "Hái quả", "group": "Đếm", "sceneName": "HaiQuaGame", "category": 0},
+    {"name": "DemQua", "displayName": "Đếm quả", "group": "Đếm", "sceneName": "DemQuaGame", "category": 0},
     {"name": "Numbers", "displayName": "Nhận biết số", "sceneName": "NumbersGame", "category": 0},
 
     {"name": "CountTo5", "displayName": "Đếm đến 5", "group": "Đếm", "sceneName": "", "category": 0},

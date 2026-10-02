@@ -144,6 +144,13 @@ public class MusicManager : Singleton<MusicManager>
         if (_bgmSource != null && !_bgmSource.isPlaying) _bgmSource.UnPause();
     }
 
+    /// <summary>Phát 1 AudioClip TUỲ Ý làm BGM lặp lại — dùng cho nhạc nền RIÊNG của từng game (vd
+    /// GenericGameController đọc từ layout.backgroundAudio trong game.json do web tool xuất), khác
+    /// các BGM cố định (PlayGameplayMusic/PlayMainMusic/...) vốn load từ Resources tên cố định. Đi
+    /// qua CHUNG 1 AudioSource với các BGM khác nên Pause/Resume (GameControlBridge) vẫn hoạt động
+    /// bình thường, không cần AudioSource riêng.</summary>
+    public void PlayCustomBgm(AudioClip clip, string clipId) => PlayBgm(clip, clipId);
+
     private void PlayBgm(AudioClip clip, string clipName)
     {
         if (clip == null)

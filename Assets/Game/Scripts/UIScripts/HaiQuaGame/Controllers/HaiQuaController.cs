@@ -31,9 +31,10 @@ public class HaiQuaController : MiniGameControllerBase
     [SerializeField] Image rightBackground;
 
     [Tooltip("CHÍNH XÁC những GameObject đã wire vào ButtonDisplay.leftButtons/rightButtons (kiểu " +
-             "ButtonItem, KHÔNG phải RectTransform — cần đọc .AnswerIndex để tìm đúng nút vừa bấm, " +
-             "xem ghi chú ở FindTappedButton). KHÔNG tự điều khiển hiện/ẩn (ButtonDisplay đã tự lo), " +
-             "chỉ đọc để lấy vị trí bay + tự ẩn quả cuối round (xem OnFruitTapped).")]
+             "ButtonItem, KHÔNG phải RectTransform) — dùng để ĐỔI VỊ TRÍ theo chỉ số mảng " +
+             "(RandomizeFruitPositions). KHÔNG dùng mảng này để tìm nút vừa CHẠM — việc đó phải qua " +
+             "ButtonDisplay.GetActiveButtonByAnswerIndex() (xem OnFruitTapped), vì answerIndex " +
+             "KHÔNG phải vị trí mảng.")]
     [SerializeField] ButtonItem[] leftFruitSlots;
     [SerializeField] ButtonItem[] rightFruitSlots;
 
@@ -295,16 +296,15 @@ public class HaiQuaController : MiniGameControllerBase
     ///
     /// QUAN TRỌNG: answerIndex là ButtonItem.AnswerIndex (chỉ số LOGIC trong QuestionData.answers),
     /// KHÔNG phải vị trí trong mảng leftFruitSlots/rightFruitSlots — ButtonDisplay.PickSlots() xáo
-    /// (shuffle) việc gán answerIndex cho từng slot hiển thị (xem PickSlots bước 3), nên
-    /// slots[answerIndex] có thể trỏ NHẦM sang 1 quả khác quả vừa bấm thật. Phải tìm đúng bằng
-    /// FindTappedButton() (so khớp .AnswerIndex), không được suy từ vị trí mảng.</summary>
+    /// (shuffle) việc gán answerIndex cho từng slot hiển thị mỗi round. Dùng API dùng chung
+    /// ButtonDisplay.GetActiveButtonByAnswerIndex() (đã lọc activeSelf sẵn) thay vì tự dò lại —
+    /// KHÔNG suy từ vị trí mảng (slots[answerIndex] hầu như luôn SAI).</summary>
     void OnFruitTapped(Team team, int answerIndex, ClickResult result)
     {
         if (result != ClickResult.CorrectPartial && result != ClickResult.CorrectFinal) return;
 
         int fruitIndex = team == Team.Left ? _leftRoundFruitIndex : _rightRoundFruitIndex;
-        var group = team == Team.Left ? leftFruitSlots : rightFruitSlots;
-        var tappedButton = FindTappedButton(group, answerIndex);
+        var tappedButton = buttonDisplay.GetActiveButtonByAnswerIndex(team, answerIndex);
         var basketRect = GetBasketRect(team, fruitIndex);
 
         if (tappedButton != null && basketRect != null)
@@ -318,19 +318,6 @@ public class HaiQuaController : MiniGameControllerBase
 
         if (result == ClickResult.CorrectFinal)
             StartCoroutine(CommitRoundToBasketDelayed(team, fruitIndex));
-    }
-
-    /// <summary>Chỉ so khớp button ĐANG active — ButtonDisplay.SetupGroup() chỉ gọi .Setup() (set
-    /// .AnswerIndex) cho slot active round NÀY, slot inactive còn lại giữ NGUYÊN .AnswerIndex CŨ
-    /// từ round trước. Không lọc activeSelf thì có thể khớp NHẦM 1 slot ẩn còn sót giá trị trùng
-    /// answerIndex, khiến hiệu ứng bay lấy vị trí SAI (đứng yên từ round trước) — đây chính là
-    /// nguyên nhân hiệu ứng bay "thỉnh thoảng lệch vị trí".</summary>
-    static ButtonItem FindTappedButton(ButtonItem[] group, int answerIndex)
-    {
-        if (group == null) return null;
-        foreach (var b in group)
-            if (b != null && b.gameObject.activeSelf && b.AnswerIndex == answerIndex) return b;
-        return null;
     }
 
     /// <summary>Chờ 0.5s sau khi hái hết quả trong round rồi mới cộng "+N" vào tổng ở thân rổ —

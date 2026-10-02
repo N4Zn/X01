@@ -67,6 +67,52 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
     /// <summary>Khoá click mà không đổi màu — dùng sau CorrectPartial của OrderedSequence.</summary>
     public void Lock() => _locked = true;
 
+    /// <summary>Ghi đè cỡ chữ của textLabel — dùng cho GenericGameController (settings.answerFontSize),
+    /// game khác trong Kit không gọi hàm này nên không ảnh hưởng gì (cỡ chữ gốc trong prefab giữ
+    /// nguyên nếu không gọi). `size<=0` bị bỏ qua (coi là "không ghi đè").</summary>
+    public void SetFontSize(float size)
+    {
+        if (textLabel != null && size > 0) textLabel.fontSize = size;
+    }
+
+    /// <summary>Bật/tắt nền thẻ bài (card trắng mặc định) — dùng cho đáp án ảnh thật không có
+    /// khung/nền (xem MakeButtonGroupBackgroundTransparent ở Editor cho game dựng sẵn lúc build;
+    /// hàm này là bản tương đương gọi được lúc RUNTIME, cho GenericGameController quyết định theo
+    /// từng answer có ảnh hay chỉ có chữ).</summary>
+    public void SetBackgroundTransparent(bool transparent)
+    {
+        if (bgImage == null) return;
+        // Cập nhật luôn colorNormal — SetState(Normal)/Setup() ở round sau phải tiếp tục trong
+        // suốt, không chỉ đổi màu tức thời rồi bị ghi đè lại opaque ở round kế tiếp.
+        colorNormal = transparent ? new Color(1f, 1f, 1f, 0f) : new Color(1f, 1f, 1f, 1f);
+        bgImage.color = colorNormal;
+    }
+
+    /// <summary>Đổi hình dạng NỀN nút — dùng cho GenericGameController (xem
+    /// GenericGame/GenericGameTypes.cs's slotShape). CHỈ "circle" tạo khác biệt thật (đổi
+    /// bgImage.sprite sang hình tròn sinh runtime, xem RuntimeShapeSprites) — "square"/"rectangle"
+    /// không cần đổi gì ở đây, đã là chuyện kích thước wPct/hPct quyết định từ phía layout.
+    /// GIỚI HẠN ĐÃ BIẾT: ảnh người dùng tải lên (imageHolder, AnswerMediaType.Image) KHÔNG bị clip
+    /// tròn theo — chỉ nền nút tròn, ảnh vẫn hiện dạng chữ nhật đè lên trên.</summary>
+    public void ApplyShape(string shape)
+    {
+        if (shape != "circle" || bgImage == null) return;
+        bgImage.sprite = RuntimeShapeSprites.GetCircle();
+        bgImage.type = Image.Type.Simple;
+    }
+
+    /// <summary>Thay ảnh NỀN thẻ (bgImage) bằng 1 ảnh khung riêng, kéo giãn kín nút — dùng cho
+    /// GenericGameController (layout.slotFrames, nhiều ảnh gán xoay vòng theo thứ tự ô). Chỉ nên gọi cho
+    /// đáp án dạng CHỮ; chữ (textLabel) vẫn vẽ ĐÈ lên trên như bình thường. Màu nền colorNormal giữ trắng
+    /// → ảnh hiện đúng màu gốc, các state Correct/Wrong/Locked vẫn nhân màu lên ảnh như trước.</summary>
+    public void SetFrameSprite(Sprite sprite)
+    {
+        if (bgImage == null || sprite == null) return;
+        bgImage.sprite = sprite;
+        bgImage.type = Image.Type.Simple;
+        bgImage.preserveAspect = false;
+    }
+
     public void SetState(ItemState state)
     {
         switch (state)
