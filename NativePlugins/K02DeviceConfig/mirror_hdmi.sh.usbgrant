@@ -1,0 +1,28 @@
+#!/system/bin/sh
+# [HDMI] Neutralized 2026-09-16: OEM's SurfaceControl-based mirror override hardcoded a wrong
+# destination rect (assumed ~1280x720, real panel 1920x1080). HAL-level clone
+# (persist.vendor.sys.hdmi_hidl.clone=1) already mirrors correctly — override removed.
+# Original: mirror_hdmi.sh.orig
+#
+# [USB] 2026-10-03: hook root chạy lúc boot_completed+8s (service mirror_hdmi, oneshot) —
+# dùng để cấp quyền USB (lidar CP2102 + camera) cho app EduXplore, vì Android 10 không lưu
+# quyền USB qua reboot và app không tự gọi su được. Retry tới khi thấy lidar (4292:60000).
+LOG=/data/local/tmp/usbgrant_log.txt
+PKG=com.EduXplore.X01a
+DEX=/data/local/tmp/UsbGrant.dex
+echo "=== $(date) boot grant start" > $LOG
+i=0
+while [ $i -lt 40 ]; do
+  AUID=$(pm list packages -U $PKG 2>/dev/null | sed -n 's/.*uid:\([0-9]*\).*/\1/p')
+  if [ -n "$AUID" ]; then
+    OUT=$(CLASSPATH=$DEX app_process /system/bin UsbGrant $AUID 2>&1)
+    echo "try $i uid=$AUID: $OUT" >> $LOG
+    case "$OUT" in *4292:60000*) echo "done" >> $LOG; exit 0;; esac
+  else
+    echo "try $i: chưa thấy package $PKG" >> $LOG
+  fi
+  i=$((i+1))
+  sleep 2
+done
+echo "gave up" >> $LOG
+exit 0

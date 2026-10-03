@@ -13,4 +13,6 @@
     <usb-device vendor-id="22595" product-id="30852" />
     <!-- Current webcam as reported by this ROM (Sonix 0x0c45/0x636b misparsed → 742/6733) -->
     <usb-device vendor-id="742" product-id="6733" />
+    <!-- Camera hien tai cb07:1bcf (serial 20240420112909) - K02 ROM bao sai thanh vid=1410 pid=2848 -->
+    <usb-device vendor-id="1410" product-id="2848" />
 </resources>

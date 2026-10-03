@@ -12,8 +12,6 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
@@ -45,18 +43,6 @@ public class LidarUsbBridge {
     private static volatile boolean sStarted = false;
     private static volatile boolean sConnected = false;
     private static volatile boolean sUsbPermissionPending = false;
-    private static int sSilentRetries = 0;
-
-    // "Grace period" trước khi tự xin quyền qua dialog — nhường chỗ cho cơ chế auto-grant
-    // im lặng của Android (USB_DEVICE_ATTACHED + usb_device_filter.xml, xử lý qua
-    // LidarUsbAttachActivity) chạy xong trước. Không có grace period này, tryConnect() gọi
-    // ngay lúc app khởi động thắng cuộc đua và LUÔN hiện dialog xin quyền — kể cả khi user
-    // đã tick "always" ở lần trước, vì đó là 2 cơ chế cấp quyền KHÁC NHAU (dialog vs.
-    // auto-grant), tick "always" trên dialog không tắt được việc dialog tự hiện lại lần sau
-    // nếu code cứ gọi requestPermission() ngay từ đầu mỗi lần app khởi động.
-    private static final int MAX_SILENT_RETRIES = 6;
-    private static final long SILENT_RETRY_DELAY_MS = 500;
-    private static final Handler sHandler = new Handler(Looper.getMainLooper());
 
     private static ParcelFileDescriptor sPipeRead;
     private static ParcelFileDescriptor sPipeWrite;
@@ -108,24 +94,19 @@ public class LidarUsbBridge {
             return;
         }
 
+        // Không dựa vào sự kiện cắm: đã có quyền (hasPermission) thì mở đọc luôn, không hỏi.
+        // Chưa có quyền (lần đầu / sau reboot vì Android 10 không lưu quyền USB qua boot) thì
+        // mới xin qua dialog, ngay lập tức, không chờ auto-grant.
         if (!usbManager.hasPermission(cp2102)) {
-            if (sSilentRetries < MAX_SILENT_RETRIES) {
-                sSilentRetries++;
-                Log.i(TAG, "tryConnect: chưa có quyền — chờ auto-grant im lặng (" + sSilentRetries + "/" + MAX_SILENT_RETRIES + ")");
-                final Context ctxForRetry = context;
-                sHandler.postDelayed(() -> tryConnect(ctxForRetry), SILENT_RETRY_DELAY_MS);
-                return;
-            }
             if (!sUsbPermissionPending) {
                 sUsbPermissionPending = true;
-                Log.i(TAG, "tryConnect: hết grace period, xin quyền USB qua dialog (fallback)");
+                Log.i(TAG, "tryConnect: chưa có quyền USB — xin qua dialog");
                 PendingIntent pi = PendingIntent.getBroadcast(context, 0,
                         new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
                 usbManager.requestPermission(cp2102, pi);
             }
             return;
         }
-        sSilentRetries = 0;
         sUsbPermissionPending = false;
         LidarUsbAttachActivity.grantedDevice = null; // consumed
 

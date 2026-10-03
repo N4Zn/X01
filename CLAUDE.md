@@ -113,6 +113,10 @@ dùng `item.displayName` để vẽ danh sách chọn game, nhưng vẫn giữ `
 (định danh nội bộ) cho toàn bộ logic chọn/gửi Unity — chỗ hiển thị tên game ở nơi khác
 (pause card, banner, summary...) tra ngược qua `displayNameOf(selectedGameName)`.
 
+### ControlActivity — lớp/điểm THẬT, hết mock (2026-10-03)
+
+`MockData.java` đã xoá. **Lớp/học sinh**: `ui/ClassRepo.java` đọc `/sdcard/EduXplore/classes.json` + `enrolled.json` (do "Quản lý lớp" ghi; chỉ đọc name/alias/className bằng JsonReader, bỏ qua embedding) — nạp lại ở `onResume()`. **Điểm**: `ui/ScoreStore.java` ghi `/sdcard/EduXplore/class_scores.json` (fallback `getExternalFilesDir`): mỗi ván xong (`backToMenu()`, chỉ khi đang `playing`) ghi 1 dòng/người = đúng/đã chơi, từ breakdown Unity push gần nhất. **Công thức tạm**: điểm 1 học phần = Σ đúng / Σ đã chơi trong học phần × 100 (vd So sánh số làm đúng 3/5 câu → 60). **Học phần** = `group` của game trong registry (vd "Đếm", "So sánh số"), game không có group thì lấy tên môn. Cột "môn" ở tab Lớp học = TB các học phần đã chơi của môn đó; "Tổng" = TB mọi học phần đã chơi. Tab Lịch sử cũng là dữ liệu thật (50 ván gần nhất của lớp).
+
 ### Launcher — Home launcher thật của K02 (`D:\X_projects\Launcher`, 2026-09-16/17)
 
 **Project RIÊNG, KHÔNG nằm trong `eduXploreGame2.0`** — 1 app Android launcher (Kotlin, không
@@ -249,6 +253,69 @@ chạy) không bị ghi thêm gì mới → xác nhận override không còn ch�
   > project), KHÔNG nằm trong APK/build Unity — flash lại ROM hoặc factory reset sẽ mất fix này,
   > phải làm lại bước push script trên cho từng máy.
 
+### USB permission (lidar CP2102 + camera) — cấp bằng root lúc boot (2026-10-03, K02 #2 đã verify)
+
+**Vấn đề**: Android 10 KHÔNG lưu quyền USB qua reboot, và sự kiện `USB_DEVICE_ATTACHED` lúc boot
+đến trước khi app chạy (không giao được cho app) → sau mỗi reboot app hiện dialog "Allow USB
+access" cho lidar + camera. Mục "mặc định" trong `/data/system/users/0/usb_device_manager.xml`
+KHÔNG giúp gì cho `requestPermission()` trên Android 10.
+
+**Không làm được từ trong app**: `su` của K02 chỉ cho **root/shell** gọi — app gọi `su` bị
+`not allowed` (đã giả lập bằng `su 10104 /system/xbin/su 0 id`). Cú pháp `su` ở đây là
+`su 0 <cmd>`, KHÔNG phải `su -c`. Nên cấp quyền phải do root chạy **từ ngoài app**.
+
+**Cách đã triển khai** (per-device, như fix HDMI ở trên — nằm trên firmware, mất khi flash lại ROM):
+- [`NativePlugins/K02DeviceConfig/usbgrant/UsbGrant.dex`](NativePlugins/K02DeviceConfig/usbgrant/UsbGrant.dex)
+  (nguồn `UsbGrant.java`, build: `javac -source 8` + `d8 --min-api 22`) — chạy bằng root qua
+  `app_process`, gọi hidden API `IUsbManager.grantDevicePermission(device, uid)` bằng reflection.
+  Độc lập APK nên **không cần build lại app** khi đổi bản.
+- Hook boot = chính `/data/local/tmp/mirror_hdmi.sh` (service OEM `mirror_hdmi`, oneshot, root,
+  chạy ở `boot_completed`+8s — cùng hook đã dùng cho fix HDMI). Bản mới ở
+  [`mirror_hdmi.sh.usbgrant`](NativePlugins/K02DeviceConfig/mirror_hdmi.sh.usbgrant): giữ phần HDMI
+  no-op, rồi lấy uid `com.EduXplore.X01a` qua `pm list packages -U`, chạy `UsbGrant.dex` retry tối đa
+  40 lần × 2s cho tới khi thấy lidar (`4292:60000`). Log: `/data/local/tmp/usbgrant_log.txt`
+  (đọc cần `adb root`). **Đã reboot kiểm chứng trên K02 #2: không còn dialog, nhận cả lidar + cam.**
+- **Cài cho 1 máy K02 mới** (adb, Git Bash cần `MSYS_NO_PATHCONV=1`; `adb root` phải bật):
+  ```bash
+  adb root
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/usbgrant/UsbGrant.dex /data/local/tmp/UsbGrant.dex
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/mirror_hdmi.sh.usbgrant /data/local/tmp/mirror_hdmi.sh
+  adb shell chmod 755 /data/local/tmp/mirror_hdmi.sh
+  adb reboot
+  ```
+  Nếu package khác `X01a`, sửa biến `PKG` trong script. Muốn cấp thử ngay không cần reboot:
+  `adb shell "su 0 sh -c 'CLASSPATH=/data/local/tmp/UsbGrant.dex app_process /system/bin UsbGrant <uid>'"`.
+- **Giới hạn**: quyền chỉ sống trong bộ nhớ → **rút/cắm lại cáp USB lidar/camera lúc máy đang chạy
+  thì mất quyền** (dialog hiện lại) cho tới lần reboot sau, hoặc chạy tay lệnh trên. Script chạy 1 lần
+  lúc boot, chưa theo dõi hotplug.
+- File script/dex đang thuộc user `shell` (không `chown root` được lúc triển khai) — vẫn chạy đúng
+  vì init chạy bằng root, nhưng ai có adb shell đều sửa được.
+- **K02 #1** (serial `PNH6ZHMNZDEAYDLB`) KHÔNG làm gì — user nói máy đó không hỏi quyền sau reboot từ
+  lâu (dùng X01b + `MyNativeApp` đọc lidar qua `ttyUSB2`, setup khác hẳn); chỉ dùng tham khảo.
+
+**Sửa kèm theo (cần build lại APK Unity mới có hiệu lực)**:
+- **ID camera**: camera hiện tại `cb07:1bcf` bị ROM K02 báo sai thành **`vid=1410 pid=2848`** (serial
+  "Web Camera"); đã thêm vào `res/xml/usb_device_filter.xml` của cả `unityplugin-release.aar` +
+  `faceenroll-release.aar` + nguồn FaceEnroll (trước chỉ có ID camera cũ `742/6733`, `22595/30852`).
+  Backup aar cũ: `NativePlugins/K02DeviceConfig/backups/*.bak_20261003`.
+- **`LidarUsbBridge.java`**: bỏ cơ chế chờ auto-grant 6×500ms/sự kiện cắm — giờ check `hasPermission`
+  trước, có quyền thì mở đọc luôn, chưa có mới hiện dialog ngay. Đã build lại + copy
+  `lidarlib-release.aar` (`gradlew :lidarlib:assembleRelease` trong `NativePlugins/LidarNativeAndroidLib`,
+  cần `JAVA_HOME` = `C:\Program Files\Android\Android Studio\jbr`).
+
+### Audio K02 — max hết + tắt Safe Media Volume (2026-10-03, K02 #2)
+
+Yêu cầu: mọi đường audio (HDMI, loa, USB, BT...) đều max, tắt cảnh báo an toàn tai nghe.
+- `adb shell settings put global audio_safe_volume_state 2` (INACTIVE) rồi **reboot** — dịch vụ audio
+  chỉ đọc lúc khởi động (trước reboot `dumpsys audio` vẫn báo ACTIVE).
+- Mức theo từng thiết bị lưu trong `settings system`: `volume_<stream>_<device>` (stream: system,
+  ring, music, alarm, notification, bluetooth_sco, system_enforced, dtmf, tts, accessibility; device:
+  speaker, hdmi, usb_headset, headset, bluetooth_a2dp, ...) = 15 (`volume_voice*` = 7). Chỉ ghi vào
+  settings thì phải **reboot** mới áp dụng; đang chạy thì dùng `service call audio 10 i32 <stream> i32 15
+  i32 0 s16 com.android.shell` (setStreamVolume; `10` đúng cho Android 10 — mã `7` thì không ra gì).
+  Đã verify sau reboot: mọi stream × mọi device = 15/15, `SAFE_MEDIA_VOLUME_INACTIVE`.
+- HDMI không có gain riêng ở mixer phần cứng (`tinymix`) — âm lượng HDMI chỉ chỉnh bằng phần mềm.
+
 ### Stop/Start — KHÔNG destroy UnityPlayerActivity (gotcha quan trọng)
 
 **Unity tự gọi `Process.killProcess()` cả process (dùng chung với `ControlActivity`) khi
@@ -295,13 +362,27 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
   `LidarTouchBridge.Instance.ReloadConfig()` hoặc restart app để áp dụng.
   - **Máy chiếu #1** (đã xác nhận hoạt động trước 2026-09-17): `{half_x:1130,
     hight_floor:1350, ymax:-600, shift_x_floor:1, shift_y:1, shift_x:1, offset_angle:-5,
-    nums_point_report:2}`.
+    nums_point_report:2}`. **Bản đẩy lại 2026-10-03 (user xác nhận "work" trên K02 đang nối):
+    `shift_x_floor/shift_y/shift_x` = 0** (không phải 1) — backup `lidar_config.json.projector1_20261003`.
   - **Máy chiếu #2 (đang dùng hiện tại, 2026-09-18, tune bằng `MyNativeApp_v3` — xem section
     riêng bên dưới)**: `{half_x:1190, hight_floor:1380, ymax:-800, shift_x_floor:-110,
     shift_y:-15, shift_x:-35, offset_angle:-5, nums_point_report:2}`. Khớp đúng backup mới nhất
     `lidar_config.json.new_20260918_v2` — không có gì mới hơn chưa ghi lại.
   - Backup cả 2 bộ (+ mọi lần đổi khác, gồm cả 1 bộ nháp `new_20260917_projector_2340x1400`
     không dùng) lưu tại `NativePlugins/K02DeviceConfig/backups/`.
+  - **Config nằm trên TỪNG THIẾT BỊ, không trong APK/project** — nạp bản Unity mới / máy K02 mới
+    thì file KHÔNG theo: app tự tạo bản MẶC ĐỊNH (`half_x 1000, hight_floor 0, ymax 1500, shift_* 0,
+    offset_angle 0, nums_point_report 1` — backup `lidar_config.json.k02_pulled_20261003_default`),
+    LiDAR "không nhận" vì điểm rơi lệch/ngoài màn hình (đã xảy ra thật 2026-10-03, đẩy đúng bộ
+    máy chiếu vào là work). `interaction_area_calib.json` cũng mất, về chưa-calib. Phục hồi:
+    `MSYS_NO_PATHCONV=1 adb push <file> /sdcard/Android/data/com.EduXplore.X01a/files/lidar_config.json`
+    (package K02 hiện là `X01a`; **Git Bash PHẢI có `MSYS_NO_PATHCONV=1` trước lệnh** `adb push/
+    cat/exec-out` có đường dẫn `/sdcard/...`, không thì bị đổi thành `C:/Program Files/Git/sdcard`),
+    rồi **đóng hẳn app mở lại** (config chỉ đọc lúc khởi động).
+  - Khi LiDAR không nhận, kiểm tra theo thứ tự: (1) config có phải mặc định không; (2) nút cứng
+    `JoystickButton0` đã bật LiDAR chưa (mặc định OFF); (3) K02 còn app `com.example.mynativeapp_v1`
+    (MyNativeApp, `LidarService` foreground) chạy nền cùng có quyền USB CP2102 — nghi tranh cổng
+    UART, chưa xác nhận (lần 2026-10-03 nguyên nhân là config).
 - `GameControlBridge.OnPauseRequested/OnResumeRequested`/`OnStopRequested` đều gọi
   `LidarTouchBridge.SetTouchEnabled()` — dùng CHUNG cờ với nút cứng, nên nút cứng có thể ghi đè
   trạng thái Pause của control panel nếu bấm không đúng lúc (biết trước, chưa fix — hỏi trước
@@ -491,3 +572,21 @@ logcat trực tiếp (không đoán) phát hiện 3 lớp vấn đề chồng l�
 - **Phase 3** — Game modes: Endless, Survival, Time Attack, Sudden Death
 - **Phase 4** — 3-4 người cùng màn hình (multi-touch zones)
 - **Phase 5** — Multi-device (LAN/Bluetooth)
+
+## GenericGame Builder
+
+Dự án web riêng, ghi chú đầy đủ tại `WebTools/GenericGameBuilder/CLAUDE.md` (runtime Unity: `Assets/Game/Scripts/Core/MiniGameKit/GenericGame/`).
+
+### Import zip → scene riêng cho từng game (2026-10-03)
+
+Mỗi game `.zip` xuất từ web builder = 1 scene riêng chỉnh được trong Editor (thay vì scene dùng chung `GenericGamePlayer` dựng lúc runtime). Chi tiết quy trình: `GenericGame/SCHEMA.md`, mục "Scene riêng cho từng game".
+
+- **Tool**: `Tools/GenericGame/Import Zip (1 file)...` / `Import Zips (cả thư mục)...` (`Assets/Game/Scripts/Editor/MiniGameKit/GenericGameZipImporter.cs`). `gameId` suy từ TÊN FILE zip (bỏ dấu, PascalCase) — **đổi tên file zip = ra game mới**.
+- **Kết quả mỗi game**: `Assets/Game/GenericGames/<id>/{game.json, <id>_LayoutBase.prefab, <id>_Layout.prefab (Variant)}`, scene `Assets/Game/Scenes/_GenericGame/Games/<id>.unity` (nhân bản từ scene mẫu), ảnh/âm thanh vào `Resources/TestTongHop/{images,audio}/GenericGames/<id>/`, tự thêm vào Build Settings. **Đăng ký registry**: nếu `gameId` chưa có trong `GameRegistry.cs`, importer hiện hộp thoại (tên hiển thị / category / group) rồi tự chèn `Set(...)` NGAY TRÊN marker `// <GENERIC-GAMES>` (đừng xoá marker) + thêm mục vào `game_registry.json` (`NativePlugins/ControlUiAndroidLib/.../assets/`) — code ở `GenericGameRegistryWriter.cs`. **Importer KHÔNG rebuild aar**: sau khi json đổi phải chạy tay (PowerShell, từ gốc repo): `cd NativePlugins\ControlUiAndroidLib; .\gradlew.bat :controlui:assembleRelease; Copy-Item controlui\build\outputs\aar\controlui-release.aar ..\..\Assets\Plugins\Android\controlui-release.aar -Force` rồi build lại APK.
+- **Update bằng cách import lại cùng zip tên**: có hộp xác nhận. Ghi đè `game.json`/ảnh/âm thanh/`LayoutBase`; **giữ nguyên scene + Variant** (chỉnh tay còn). Chưa kiểm chứng: Variant có mất override khi `LayoutBase` dựng lại không.
+- **Nguyên tắc: `game.json` là bản cuối.** Unity chỉ port phần json không có. Mọi xung đột phải báo user thống nhất, KHÔNG ép "luôn nằm trên cùng" bất kể `layerOrder`.
+  - Marker (`GenericBakedRect`) trong Variant ghi đè vị trí json lúc chạy; lệch >0.1% → `LogWarning "XUNG ĐỘT"` (đang dùng vị trí scene). Câu hỏi còn mở: marker thắng hay json thắng?
+  - Layer: `sortingOrder = (vị trí trong layerOrder + 1) × 10`; icon ✔/✖ = layer `feedback`. **GameHUD** (không có trong json) = `feedback − 5`, và nền web (`layout.background`) thay luôn nền HUD (`GameHUD.SetBackground`). Log Play: `[GenericGameKit] Layer order ...`.
+- **Gotcha Canvas trên object đang tắt**: Canvas thêm vào object tắt (icon ✔/✖) mất `overrideSorting`/`sortingOrder` khi bật lần đầu → `ApplyLayer` bật tạm rồi tắt lại. Đã sửa và xác nhận bằng Play (icon lên top); các log chẩn đoán layer/icon đã xoá.
+- **Chỉnh kích thước icon ✔/✖**: icon nằm trong scene (không phải prefab layout), kích thước do **Anchors** quyết định; **đừng chỉnh Scale** vì `FeedbackEffect` ép `BaseScale = 1.5` mỗi lần hiện. 4 icon (Left/Right × Correct/Wrong) chỉnh riêng.
+- **Chưa làm**: đăng ký `CuaHangKemTruocSau`/`ThuNghiem12` vào GameRegistry (import lại zip → hộp thoại đăng ký sẽ hiện); chưa test hộp thoại/ghi registry trong Unity; so schema `game_builder_v2.2_1003.html` (mới hơn v2) với types Unity; tool so/reset marker Variant theo json mới.
