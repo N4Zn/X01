@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "gameId": "ThuNghiem1",
+    "displayName": "Thử nghiệm 1",
+    "category": "Cộng"
+  },
+  "settings": {
+    "playMode": "Independent",
+    "answerMode": "Single",
+    "scoringMode": "flat",
+    "flatPoints": 1,
+    "countdownMode": "nextInN",
+    "countdownSeconds": 3,
+    "hasTargetScore": false,
+    "targetScore": 10,
+    "wrongEndsRound": true,
+    "showCorrectWrongTint": true
+  },
+  "layout": {
+    "slots": [
+      {
+        "xPct": 6.5625,
+        "yPct": 52.13334147135417,
+        "wPct": 20.43752384185791,
+        "hPct": 40.739154459635415
+      },
+      {
+        "xPct": 29.000009536743164,
+        "yPct": 52.40000406901042,
+        "wPct": 20.12495708465576,
+        "hPct": 41.537038764953614
+      },
+      {
+        "xPct": 50.499961853027344,
+        "yPct": 52.40002441406249,
+        "wPct": 21.062538146972656,
+        "hPct": 41.793325068155916
+      },
+      {
+        "xPct": 73.43753337860107,
+        "yPct": 52.133321126302086,
+        "wPct": 20.937509536743164,
+        "hPct": 41.79998779296876
+      }
+    ],
+    "answerArea": {
+      "xPct": 5,
+      "yPct": 50,
+      "wPct": 90,
+      "hPct": 45
+    },
+    "randomArea": {
+      "enabled": false,
+      "count": 5,
+      "itemWPct": 15,
+      "itemHPct": 13
+    },
+    "slotShape": "rectangle",
+    "questionArea": {
+      "xPct": 7.562485694885254,
+      "yPct": 7.466695149739584,
+      "wPct": 84,
+      "hPct": 37.599995930989586
+    },
+    "background": "bg_52.png",
+    "decorations": []
+  },
+  "effects": {
+    "onIdle": {
+      "effects": [],
+      "sound": null
+    },
+    "onCorrectTap": {
+      "effects": [
+        {
+          "type": "Punch",
+          "effectParams": {
+            "duration": 0.3,
+            "scale": 1.25
+          }
+        }
+      ],
+      "sound": null
+    },
+    "onWrongTap": {
+      "effects": [
+        {
+          "type": "Shake",
+          "effectParams": {
+            "duration": 0.3,
+            "amplitudePct": 1.5,
+            "speed": 30
+          }
+        }
+      ],
+      "sound": null
+    },
+    "onCorrectRemove": {
+      "effects": [
+        {
+          "type": "FlyOff",
+          "effectParams": {
+            "duration": 0.45,
+            "distancePct": 20,
+            "angleDeg": 90,
+            "scale": 0.4
+          }
+        }
+      ],
+      "sound": null
+    }
+  },
+  "rounds": [
+    {
+      "question": {
+        "text": null,
+        "image": "q0_10.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a0_0_20.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": null,
+          "image": "a0_1_21.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a0_2_22.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a0_3_23.png",
+          "imagePool": null,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q1_11.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a1_0_24.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a1_1_25.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": null,
+          "image": "a1_2_26.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a1_3_27.png",
+          "imagePool": null,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q2_12.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a2_0_28.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a2_1_29.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a2_2_30.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": null,
+          "image": "a2_3_31.png",
+          "imagePool": null,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q3_13.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a3_0_32.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a3_1_33.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": null,
+          "image": "a3_2_34.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a3_3_35.png",
+          "imagePool": null,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q4_14.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a4_0_36.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a4_1_37.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a4_2_38.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": null,
+          "image": "a4_3_39.png",
+          "imagePool": null,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q5_15.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a5_0_40.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a5_1_41.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a5_2_42.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a5_3_43.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q6_16.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a6_0_44.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a6_1_45.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a6_2_46.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": null,
+          "image": "a6_3_47.png",
+          "imagePool": null,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "question": {
+        "text": null,
+        "image": "q7_17.png",
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": null,
+          "image": "a7_0_48.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a7_1_49.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a7_2_50.png",
+          "imagePool": null,
+          "correct": false
+        },
+        {
+          "text": null,
+          "image": "a7_3_51.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    }
+  ],
+  "imagePools": []
+}

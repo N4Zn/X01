@@ -1,0 +1,669 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "gameId": "ThuNghiem2",
+    "displayName": "ThuNghiem2",
+    "category": "Cộng"
+  },
+  "settings": {
+    "playMode": "Independent",
+    "answerMode": "SumToTarget",
+    "sumTarget": 10,
+    "scoringMode": "perCorrectCount",
+    "flatPoints": 1,
+    "countdownMode": "nextInN",
+    "countdownSeconds": 3,
+    "hasTargetScore": false,
+    "targetScore": 10,
+    "wrongEndsRound": true,
+    "showCorrectWrongTint": true,
+    "questionAudioOnly": false
+  },
+  "layout": {
+    "slots": [
+      {
+        "xPct": 1.9628692793391258,
+        "yPct": 79.19387577727218,
+        "wPct": 19,
+        "hPct": 15
+      },
+      {
+        "xPct": 21.295056130763676,
+        "yPct": 79.19387577727218,
+        "wPct": 19,
+        "hPct": 15
+      },
+      {
+        "xPct": 40.62724298218822,
+        "yPct": 79.19387577727218,
+        "wPct": 19,
+        "hPct": 15
+      },
+      {
+        "xPct": 59.95942983361277,
+        "yPct": 79.19387577727218,
+        "wPct": 19,
+        "hPct": 15
+      },
+      {
+        "xPct": 79.29161668503733,
+        "yPct": 79.19387577727218,
+        "wPct": 19,
+        "hPct": 15
+      }
+    ],
+    "answerArea": {
+      "xPct": 1.9628692793391258,
+      "yPct": 79.19387577727218,
+      "wPct": 96.3287474056982,
+      "hPct": 15.518738879085124
+    },
+    "randomArea": {
+      "enabled": false,
+      "count": 5,
+      "itemWPct": 15,
+      "itemHPct": 20,
+      "gapPct": 2
+    },
+    "spawnFlow": {
+      "enabled": false,
+      "direction": "BottomToTop",
+      "itemWPct": 15,
+      "itemHPct": 15,
+      "speedPct": 25,
+      "spawnIntervalSec": 1,
+      "maxConcurrent": 4
+    },
+    "collectSlots": [
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 67.25491337238212,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 60.355498110228844,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 53.45608284807556,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 46.55666758592228,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 39.657252323768994,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 32.75783706161571,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 25.858421799462423,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 18.95900653730914,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 12.059591275155856,
+        "wPct": 13,
+        "hPct": 7
+      },
+      {
+        "xPct": 8.606568292103292,
+        "yPct": 5.160176013002574,
+        "wPct": 13,
+        "hPct": 7
+      }
+    ],
+    "collectArea": {
+      "xPct": 8.606568292103292,
+      "yPct": 5.160176013002574,
+      "wPct": 13.994543765659767,
+      "hPct": 69.09473735937955
+    },
+    "collectMatrix": {
+      "count": 10,
+      "cols": 1,
+      "itemWPct": 13,
+      "itemHPct": 7,
+      "fillOrder": "reverse"
+    },
+    "collectLayoutMode": "grid",
+    "collectCols": 1,
+    "collectFillReverse": true,
+    "collectAutoStretch": false,
+    "slotShape": "rectangle",
+    "questionArea": {
+      "xPct": 37.61204624971597,
+      "yPct": 6.878419520882016,
+      "wPct": 44.517257184863745,
+      "hPct": 20.452640488418115
+    },
+    "background": "bg_0.png",
+    "backgroundAudio": null,
+    "decorations": [
+      {
+        "id": "deco1790934509556",
+        "image": "deco1_2.png",
+        "launchOnComplete": false,
+        "mirrorImage": false,
+        "xPct": 6.280687923902503,
+        "yPct": 3.878437857097807,
+        "wPct": 17.40716233671159,
+        "hPct": 71.76748284830374,
+        "effect": {
+          "type": "None",
+          "effectParams": {}
+        },
+        "text": {
+          "bind": "",
+          "fontSizePct": 7
+        }
+      },
+      {
+        "id": "deco1790934427949",
+        "image": "deco0_1.png",
+        "launchOnComplete": true,
+        "mirrorImage": true,
+        "xPct": 42.540630122619184,
+        "yPct": 23.105344493487713,
+        "wPct": 34.680867749151815,
+        "hPct": 53.35970814612057,
+        "effect": {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        },
+        "text": {
+          "bind": "",
+          "fontSizePct": 7
+        }
+      }
+    ],
+    "collectFillByValue": true,
+    "qFrame": "qFrame_3.png"
+  },
+  "effects": {
+    "onIdle": {
+      "effects": [
+        {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectTap": {
+      "effects": [
+        {
+          "type": "FlyToStay",
+          "effectParams": {
+            "duration": 0.45
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onWrongTap": {
+      "effects": [
+        {
+          "type": "Shake",
+          "effectParams": {
+            "duration": 0.3,
+            "amplitudePct": 1.5,
+            "speed": 30
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectRemove": {
+      "effects": [
+        {
+          "type": "FlyToStay",
+          "effectParams": {
+            "duration": 0.45
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": false
+    }
+  },
+  "rounds": [
+    {
+      "target": null,
+      "question": {
+        "text": "Nhiên liệu cần 10",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 9,
+      "question": {
+        "text": "Nhiên liệu cần 9",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 2,
+      "question": {
+        "text": "Nhiên liệu cần 2",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 1,
+      "question": {
+        "text": "Nhiên liệu cần 1",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 3,
+      "question": {
+        "text": "Nhiên liệu cần 3",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 4,
+      "question": {
+        "text": "Nhiên liệu cần 4",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 5,
+      "question": {
+        "text": "Nhiên liệu cần ",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 6,
+      "question": {
+        "text": "Nhiên liệu cần 6",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 8,
+      "question": {
+        "text": "Nhiên liệu cần 8",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    },
+    {
+      "target": 7,
+      "question": {
+        "text": "Nhiên liệu cần 7",
+        "image": null,
+        "audio": null
+      },
+      "answers": [
+        {
+          "text": "5",
+          "image": "a0_0_4.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "4",
+          "image": "a0_1_5.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "3",
+          "image": "a0_2_6.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "2",
+          "image": "a0_3_9.png",
+          "imagePool": null,
+          "correct": true
+        },
+        {
+          "text": "1",
+          "image": "a0_4_8.png",
+          "imagePool": null,
+          "correct": true
+        }
+      ]
+    }
+  ],
+  "imagePools": []
+}

@@ -1,0 +1,27 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Player 1",
+    "playerRight": "Player 2",
+    "sessionDate": "2026-08-09",
+    "sessionTime": "14:26:08",
+    "durationSeconds": 102.69999694824219,
+    "scoreLeft": 1,
+    "scoreRight": 0,
+    "totalRounds": 1,
+    "rounds": [
+        {
+            "round": 1,
+            "questionId": "ss010",
+            "topic": "SolarQuizVi",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": true,
+            "winnerName": "Player 1",
+            "responseTimeSeconds": 13.239999771118164,
+            "correctAnswers": [
+                0
+            ],
+            "clicks": []
+        }
+    ]
+}

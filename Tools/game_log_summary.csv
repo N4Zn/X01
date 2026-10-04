@@ -1,0 +1,39 @@
+source_file,game,player,slot,rounds_played,rounds_correct,accuracy_pct,avg_answer_time_sec,recognition_attempts,recognition_success_pct,avg_recognize_elapsed_sec
+GameLog_AddNumberGame_2026-04-04_125419.json,AddNumberGame,Đạt,right,2,2,100.0,2.51,3,100.0,1.41
+GameLog_AddNumberGame_2026-04-04_125419.json,AddNumberGame,Player_1,left,2,1,50.0,3.26,3,0.0,4.02
+Recognition_AddNumberGame_2026-04-04_121437.json,AddNumberGame,Player_2,right,,,,,3,66.7,2.47
+Recognition_AddNumberGame_2026-04-04_121437.json,AddNumberGame,Đạt,left,,,,,3,33.3,3.29
+Recognition_AddNumberGame_2026-04-04_142204.json,AddNumberGame,Việt,left,,,,,29,65.5,2.62
+Recognition_AddNumberGame_2026-04-04_142204.json,AddNumberGame,Hải,right,,,,,32,90.6,1.8
+Recognition_AddNumberGame_2026-04-04_142528.json,AddNumberGame,Player_2,right,,,,,25,76.0,2.22
+Recognition_AddNumberGame_2026-04-04_142528.json,AddNumberGame,Hải,left,,,,,24,70.8,2.29
+Recognition_AddNumberGame_2026-04-04_144118.json,AddNumberGame,Đạt,left,,,,,25,84.0,1.96
+Recognition_AddNumberGame_2026-04-04_144118.json,AddNumberGame,Quốc Anh,right,,,,,26,76.9,2.37
+Recognition_AddNumberGame_2026-04-04_144444.json,AddNumberGame,Hải,left,,,,,28,96.4,1.51
+Recognition_AddNumberGame_2026-04-04_144444.json,AddNumberGame,Quốc Anh,right,,,,,28,92.9,1.6
+Recognition_AddNumberGame_2026-04-04_145002.json,AddNumberGame,Hải,left,,,,,10,90.0,1.98
+Recognition_AddNumberGame_2026-04-04_145002.json,AddNumberGame,Quốc Anh,right,,,,,10,90.0,2.03
+Recognition_AddNumberGame_2026-04-04_145808.json,AddNumberGame,Quốc Anh,left,,,,,21,76.2,2.1
+Recognition_AddNumberGame_2026-04-04_145808.json,AddNumberGame,Xuân Đức,right,,,,,26,92.3,1.6
+Recognition_FamilySpellingGame_2026-04-04_143955.json,FamilySpellingGame,Hải,left,,,,,1,100.0,2.58
+Recognition_FamilySpellingGame_2026-04-04_143955.json,FamilySpellingGame,Player_2,right,,,,,1,0.0,4.08
+Recognition_PathFinderGame_2026-04-04_150215.json,PathFinderGame,Player_1,left,,,,,2,0.0,4.01
+Recognition_PathFinderGame_2026-04-04_150215.json,PathFinderGame,Player_2,right,,,,,3,0.0,4.07
+Recognition_PlanetAlphabetGame_2026-04-04_143257.json,PlanetAlphabetGame,Player_1,left,,,,,22,59.1,3.2
+Recognition_PlanetAlphabetGame_2026-04-04_143257.json,PlanetAlphabetGame,Đạt,right,,,,,22,68.2,2.75
+Recognition_PlanetAlphabetGame_2026-04-04_143611.json,PlanetAlphabetGame,Player_2,right,,,,,17,58.8,3.25
+Recognition_PlanetAlphabetGame_2026-04-04_143611.json,PlanetAlphabetGame,Quốc Anh,left,,,,,17,76.5,2.81
+Recognition_PlanetOrderGame_2026-04-04_145124.json,PlanetOrderGame,Quốc Anh,left,,,,,8,87.5,2.13
+Recognition_PlanetOrderGame_2026-04-04_145124.json,PlanetOrderGame,Hải,right,,,,,7,85.7,3.26
+Recognition_PlanetOrderGame_2026-04-04_145314.json,PlanetOrderGame,Quốc Anh,left,,,,,2,50.0,2.56
+Recognition_PlanetOrderGame_2026-04-04_145314.json,PlanetOrderGame,Player_2,right,,,,,1,0.0,4.01
+Recognition_PlanetOrderGame_2026-04-04_145417.json,PlanetOrderGame,Quốc Anh,left,,,,,2,50.0,2.5
+Recognition_PlanetOrderGame_2026-04-04_145417.json,PlanetOrderGame,Player_2,right,,,,,2,0.0,4.02
+Recognition_PlanetOrderGame_2026-04-04_145500.json,PlanetOrderGame,Quốc Anh,left,,,,,19,73.7,2.52
+Recognition_PlanetOrderGame_2026-04-04_145500.json,PlanetOrderGame,Hải,right,,,,,18,66.7,2.38
+Recognition_TestTongHopGame_2026-04-04_142943.json,TestTongHopGame,Hải,left,,,,,10,70.0,2.32
+Recognition_TestTongHopGame_2026-04-04_142943.json,TestTongHopGame,Việt,right,,,,,10,80.0,2.33
+Recognition_WordHuntMazeGame_2026-04-04_144004.json,WordHuntMazeGame,Quốc Anh,left,,,,,4,50.0,3.11
+Recognition_WordHuntMazeGame_2026-04-04_144004.json,WordHuntMazeGame,Đạt,right,,,,,4,50.0,3.23
+TestTongHop_2026-04-04_142942.json,TestTongHop,Hải,left,9,0,0.0,12.24,9,77.8,
+TestTongHop_2026-04-04_142942.json,TestTongHop,Player_2,right,9,2,22.2,12.24,9,77.8,

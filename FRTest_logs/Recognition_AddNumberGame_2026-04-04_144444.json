@@ -1,0 +1,452 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:44:49",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:44:49",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:44:54",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.9600000381469728
+        },
+        {
+            "time": "2026-04-04 14:44:56",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:45:00",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.049999952316284
+        },
+        {
+            "time": "2026-04-04 14:45:01",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.0799999237060549
+        },
+        {
+            "time": "2026-04-04 14:45:04",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.1799999475479127
+        },
+        {
+            "time": "2026-04-04 14:45:06",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9900000095367432
+        },
+        {
+            "time": "2026-04-04 14:45:10",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.190000057220459
+        },
+        {
+            "time": "2026-04-04 14:45:12",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.149999976158142
+        },
+        {
+            "time": "2026-04-04 14:45:17",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.949999988079071
+        },
+        {
+            "time": "2026-04-04 14:45:20",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.3299999237060549
+        },
+        {
+            "time": "2026-04-04 14:45:22",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.8299999833106995
+        },
+        {
+            "time": "2026-04-04 14:45:24",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.8100000023841858
+        },
+        {
+            "time": "2026-04-04 14:45:29",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9200000166893005
+        },
+        {
+            "time": "2026-04-04 14:45:31",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.949999988079071
+        },
+        {
+            "time": "2026-04-04 14:45:35",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.8100000023841858
+        },
+        {
+            "time": "2026-04-04 14:45:36",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.2400000095367432
+        },
+        {
+            "time": "2026-04-04 14:45:42",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9900000095367432
+        },
+        {
+            "time": "2026-04-04 14:45:43",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.6799999475479127
+        },
+        {
+            "time": "2026-04-04 14:45:48",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.1799999475479127
+        },
+        {
+            "time": "2026-04-04 14:45:50",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.899999976158142
+        },
+        {
+            "time": "2026-04-04 14:45:55",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.5799999833106995
+        },
+        {
+            "time": "2026-04-04 14:45:56",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.200000047683716
+        },
+        {
+            "time": "2026-04-04 14:46:02",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.0499999523162842
+        },
+        {
+            "time": "2026-04-04 14:46:02",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.069999933242798
+        },
+        {
+            "time": "2026-04-04 14:46:08",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.1100000143051148
+        },
+        {
+            "time": "2026-04-04 14:46:09",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.140000104904175
+        },
+        {
+            "time": "2026-04-04 14:46:13",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9900000095367432
+        },
+        {
+            "time": "2026-04-04 14:46:14",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.7699999809265137
+        },
+        {
+            "time": "2026-04-04 14:46:21",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9200000166893005
+        },
+        {
+            "time": "2026-04-04 14:46:24",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.7400000095367432
+        },
+        {
+            "time": "2026-04-04 14:46:26",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.6800000071525574
+        },
+        {
+            "time": "2026-04-04 14:46:29",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.0499999523162842
+        },
+        {
+            "time": "2026-04-04 14:46:32",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.0299999713897706
+        },
+        {
+            "time": "2026-04-04 14:46:35",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.9500000476837159
+        },
+        {
+            "time": "2026-04-04 14:46:41",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.25
+        },
+        {
+            "time": "2026-04-04 14:46:41",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.049999952316284
+        },
+        {
+            "time": "2026-04-04 14:46:47",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.5
+        },
+        {
+            "time": "2026-04-04 14:46:50",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.869999885559082
+        },
+        {
+            "time": "2026-04-04 14:46:53",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.440000057220459
+        },
+        {
+            "time": "2026-04-04 14:46:54",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.44999998807907107
+        },
+        {
+            "time": "2026-04-04 14:46:58",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.0800000429153443
+        },
+        {
+            "time": "2026-04-04 14:46:59",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.7099999785423279
+        },
+        {
+            "time": "2026-04-04 14:47:04",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.2999999523162842
+        },
+        {
+            "time": "2026-04-04 14:47:05",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.8899999856948853
+        },
+        {
+            "time": "2026-04-04 14:47:10",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.0
+        },
+        {
+            "time": "2026-04-04 14:47:14",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.9399999976158142
+        },
+        {
+            "time": "2026-04-04 14:47:18",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.7300000190734863
+        },
+        {
+            "time": "2026-04-04 14:47:21",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.6100000143051148
+        },
+        {
+            "time": "2026-04-04 14:47:26",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.299999952316284
+        },
+        {
+            "time": "2026-04-04 14:47:28",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.9300000071525574
+        },
+        {
+            "time": "2026-04-04 14:47:34",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.159999966621399
+        },
+        {
+            "time": "2026-04-04 14:47:36",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.9100000262260437
+        },
+        {
+            "time": "2026-04-04 14:47:43",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.600000023841858
+        },
+        {
+            "time": "2026-04-04 14:47:45",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.7200000286102297
+        }
+    ]
+}

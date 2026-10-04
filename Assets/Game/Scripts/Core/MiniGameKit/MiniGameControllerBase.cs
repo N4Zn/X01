@@ -430,7 +430,10 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshHudNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshHudNames());
 
-        if (waitForZoneClearBeforeCountdown && hud != null)
+        // Cờ riêng từng scene HOẶC setting tổng "chờ clear" (Control panel, mặc định BẬT).
+        bool waitClear = waitForZoneClearBeforeCountdown ||
+                         (GameSettings.Instance != null && GameSettings.Instance.WaitForClear);
+        if (waitClear && hud != null)
         {
             bool cleared = false;
             FloorZoneClearer.AwaitBothSides(hud.transform.root as RectTransform, () => cleared = true);
@@ -692,6 +695,8 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     /// TransitionCountdown() của Combined mode).</summary>
     IEnumerator IndependentRoundCountdown(Team team)
     {
+        // TODO(handoff C8b): khi GameSettings.WaitForClear bật, chờ RIÊNG nửa màn hình của `team`
+        // sạch (FloorZoneClearer.Await(halfRect, ...)) trước khi đếm — xem GAME_SETTINGS_HANDOFF.md.
         var text = team == Team.Left ? leftCountdownText : rightCountdownText;
         if (text != null) text.gameObject.SetActive(true);
         for (int i = 3; i >= 1; i--)

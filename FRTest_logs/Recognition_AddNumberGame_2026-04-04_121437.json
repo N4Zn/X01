@@ -1,0 +1,52 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 12:14:40",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 2.130000114440918
+        },
+        {
+            "time": "2026-04-04 12:14:43",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.0
+        },
+        {
+            "time": "2026-04-04 12:14:49",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 1.25
+        },
+        {
+            "time": "2026-04-04 12:15:02",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 12:15:13",
+            "game": "AddNumberGame",
+            "slot": "left",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 1.840000033378601
+        },
+        {
+            "time": "2026-04-04 12:15:18",
+            "game": "AddNumberGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        }
+    ]
+}

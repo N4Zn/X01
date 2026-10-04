@@ -1,0 +1,27 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Player 1",
+    "playerRight": "Player 2",
+    "sessionDate": "2026-07-16",
+    "sessionTime": "12:39:45",
+    "durationSeconds": 300.79998779296877,
+    "scoreLeft": 0,
+    "scoreRight": 0,
+    "totalRounds": 1,
+    "rounds": [
+        {
+            "round": 1,
+            "questionId": "ss012",
+            "topic": "SolarSystem",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 236.41000366210938,
+            "correctAnswers": [
+                6
+            ],
+            "clicks": []
+        }
+    ]
+}

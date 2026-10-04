@@ -1,0 +1,83 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Player 1",
+    "playerRight": "Player 2",
+    "sessionDate": "2026-08-10",
+    "sessionTime": "23:19:50",
+    "durationSeconds": 101.5,
+    "scoreLeft": 20,
+    "scoreRight": 30,
+    "totalRounds": 5,
+    "rounds": [
+        {
+            "round": 1,
+            "questionId": "ss002",
+            "topic": "SolarQuizVi",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": true,
+            "winnerName": "Player 1",
+            "responseTimeSeconds": 3.0399999618530275,
+            "correctAnswers": [
+                1
+            ],
+            "clicks": []
+        },
+        {
+            "round": 2,
+            "questionId": "ss009",
+            "topic": "SolarQuizVi",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": true,
+            "winnerName": "Player 2",
+            "responseTimeSeconds": 4.059999942779541,
+            "correctAnswers": [
+                2
+            ],
+            "clicks": []
+        },
+        {
+            "round": 3,
+            "questionId": "ss010",
+            "topic": "SolarQuizVi",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": true,
+            "winnerName": "Player 2",
+            "responseTimeSeconds": 2.9200000762939455,
+            "correctAnswers": [
+                0
+            ],
+            "clicks": []
+        },
+        {
+            "round": 4,
+            "questionId": "ss003",
+            "topic": "SolarQuizVi",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": true,
+            "winnerName": "Player 2",
+            "responseTimeSeconds": 64.22000122070313,
+            "correctAnswers": [
+                2
+            ],
+            "clicks": []
+        },
+        {
+            "round": 5,
+            "questionId": "ss007",
+            "topic": "SolarQuizVi",
+            "questionType": "Choose",
+            "answerMode": "Single",
+            "isCorrect": true,
+            "winnerName": "Player 1",
+            "responseTimeSeconds": 3.059999942779541,
+            "correctAnswers": [
+                6
+            ],
+            "clicks": []
+        }
+    ]
+}

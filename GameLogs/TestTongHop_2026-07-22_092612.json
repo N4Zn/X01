@@ -1,0 +1,12 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Player 1",
+    "playerRight": "Player 2",
+    "sessionDate": "2026-07-22",
+    "sessionTime": "09:26:12",
+    "durationSeconds": 301.29998779296877,
+    "scoreLeft": 0,
+    "scoreRight": 0,
+    "totalRounds": 0,
+    "rounds": []
+}

@@ -101,26 +101,11 @@ public static class GameRegistry
         Set(0, 2, "AddNumber5", "Cộng số (dễ)",         "AddNumberGame",   Engine.MathGame,    group: "Cộng");
         Set(0, 3, "AddNumber",  "Cộng số",              "AddNumberGame",   Engine.MathGame,    group: "Cộng");
         Set(0, 4, "SoDem",      "Số đếm",               "SoDemGame",       Engine.ListenGame,  group: "Đếm");
-        Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
+        // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
         Set(0, 6, "Numbers",    "Nhận biết số",         "NumbersGame",     Engine.ListenGame);
 
-        // Placeholder — mục "Đếm"/"Cộng" mở rộng, chưa có scene thật (sceneName "" = chưa
-        // implement, IsImplemented=false). Hiện trong danh sách để demo UI nhóm collapse/expand,
-        // nhưng KHÔNG bấm chạy được (ControlActivity chỉ bật nút START khi game có scene thật).
-        Set(0, 7,  "CountTo5",       "Đếm đến 5",                  "", Engine.TongHopGame, group: "Đếm");
-        Set(0, 8,  "CountTo10",      "Đếm đến 10",                 "", Engine.TongHopGame, group: "Đếm");
-        Set(0, 9,  "CountTo20",      "Đếm đến 20",                 "", Engine.TongHopGame, group: "Đếm");
-        Set(0, 10, "AddWithin5",     "Cộng trong phạm vi 5",       "", Engine.MathGame, group: "Cộng");
-        Set(0, 11, "AddWithin10",    "Cộng trong phạm vi 10",      "", Engine.MathGame, group: "Cộng");
-        Set(0, 12, "AddNoCarry20",   "Cộng không nhớ đến 20",      "", Engine.MathGame, group: "Cộng");
-        Set(0, 13, "AddNoCarry100",  "Cộng không nhớ đến 100",     "", Engine.MathGame, group: "Cộng");
-        Set(0, 14, "AddWithCarry",   "Cộng có nhớ",                "", Engine.MathGame, group: "Cộng");
-        // Mục mới "Hình học" — minh hoạ 1 group thêm sau vẫn tự xuất hiện, không cần sửa UI.
-        Set(0, 15, "ShapeSquare",    "Nhận biết hình vuông",       "", Engine.TongHopGame, group: "Hình học");
-        Set(0, 16, "ShapeCircle",    "Nhận biết hình tròn",        "", Engine.TongHopGame, group: "Hình học");
-        Set(0, 17, "ShapeRectangle", "Nhận biết hình chữ nhật",    "", Engine.TongHopGame, group: "Hình học");
-        Set(0, 18, "HaiQua",         "Hái quả",                    "HaiQuaGame", Engine.MiniGameKit, group: "Đếm");
-        Set(0, 19, "DemQua",        "Đếm quả",                    "DemQuaGame", Engine.MiniGameKit, group: "Đếm");
+        Set(0, 7, "HaiQua",         "Hái quả",                    "HaiQuaGame", Engine.MiniGameKit, group: "Đếm");
+        Set(0, 8, "DemQua",        "Đếm quả",                    "DemQuaGame", Engine.MiniGameKit, group: "Đếm");
 
         // ── Category 1: Tiếng Việt ───────────────────────────────────────────
         // 2026-09-18: soi lại asset/audio thật thì ListenSelect/FamilySpellingJump/WordHuntMaze/
@@ -129,7 +114,7 @@ public static class GameRegistry
         // trước đó bị gán nhầm category 1, đã chuyển đúng sang category 2 bên dưới. Chỉ ChuCai/
         // ChuCai2 dùng kho âm chữ cái tiếng Việt thật (Dờ/Sờ/Đờ/Ư...) nên mới thực sự ở đây.
         Set(1, 0, "ChuCai",  "Chữ cái",            "ChuCaiGame",  Engine.ListenGame);
-        Set(1, 1, "ChuCai2", "Chữ cái - Bóng bay", "BalloonGame", Engine.BalloonGame);
+        // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(1, 1, "ChuCai2", "Chữ cái - Bóng bay", "BalloonGame", Engine.BalloonGame);
 
         // ── Category 2: Tiếng Anh ────────────────────────────────────────────
         // 4 game chuyển từ category 1 sang đây (xem ghi chú ở trên) — SolarQuizEn (category 3)
@@ -158,16 +143,16 @@ public static class GameRegistry
         Set(4, 1, "FamilyMember", "Thành viên gia đình",  "FamilyMemberGame", Engine.MiniGameKit);
 
         // ── Category 5: Tư duy - Logic ────────────────────────────────────────
-        Set(5, 0, "PathFinder", "Tìm đường",    "PathFinderGame", Engine.PathGame);
-        Set(5, 1, "Monopoly",   "Cờ tỷ phú",     "MonopolyGame",   Engine.MiniGameKit);
+        // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(5, 0, "PathFinder", "Tìm đường",    "PathFinderGame", Engine.PathGame);
+        // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(5, 1, "Monopoly",   "Cờ tỷ phú",     "MonopolyGame",   Engine.MiniGameKit);
 
         // ── Category 6: Trí nhớ ───────────────────────────────────────────────
         Set(6, 0, "PlanetOrder",    "Thứ tự hành tinh",       "PlanetOrderGame",    Engine.PlanetGame);
         Set(6, 1, "PlanetAlphabet", "Bảng chữ cái hành tinh", "PlanetAlphabetGame", Engine.PlanetGame);
-        Set(6, 2, "TrainPath",      "Đường tàu",              "TrainPathGame",      Engine.TrainGame);
+        // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(6, 2, "TrainPath",      "Đường tàu",              "TrainPathGame",      Engine.TrainGame);
 
         // ── Category 7: Vận động ──────────────────────────────────────────────
-        Set(7, 0, "RiverCross", "Vượt sông",       "RiverCrossGame", Engine.ArcadeGame);
+        // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(7, 0, "RiverCross", "Vượt sông",       "RiverCrossGame", Engine.ArcadeGame);
         Set(7, 1, "LaneDash",   "Chạy làn đường",  "LaneDashGame",   Engine.ArcadeGame);
 
         // ── Category 8: Khác (giải trí / chưa rõ mục tiêu giáo dục / công cụ test) ──
@@ -176,6 +161,15 @@ public static class GameRegistry
         Set(8, 0, "TongHop",     "Tổng hợp",              "TestTongHopGame", Engine.TongHopGame);
         Set(8, 1, "TestTongHop", "Tổng hợp (thử nghiệm)", "TestTongHopGame", Engine.TongHopGame);
         Set(8, 2, "FRTest",      "Test nhận diện mặt",    "FRTestGame",      Engine.MiniGameKit);
+
+        // ── Game import từ .zip (Tools/GenericGame/Import Zip) — importer tự chèn Set(...) vào ngay phía trên dòng marker, KHÔNG xoá marker ──
+        Set(0, 9, "CuaHangKemTruocSau", "cửa hàng kem ( trước , sau)", "CuaHangKemTruocSau", Engine.MiniGameKit, group: "Vị trí, định hướng");
+        Set(0, 10, "DongHo", "Đồng hồ", "DongHo", Engine.MiniGameKit, group: "Thời gian");
+        Set(0, 11, "SangTruaChieuToi", "sáng trưa chiều tối", "SangTruaChieuToi", Engine.MiniGameKit, group: "Thời gian");
+        Set(0, 12, "ThuNghiem2", "Tách số", "ThuNghiem2", Engine.MiniGameKit, group: "Đếm");
+        Set(0, 13, "SoSanhSo", "So sánh số", "SoSanhSo", Engine.MiniGameKit, group: "So sánh");
+        Set(0, 14, "GameSangChuaChieuToiCuaBe", "Các buổi trong ngày", "GameSangChuaChieuToiCuaBe", Engine.MiniGameKit, group: "Thời gian");
+        // <GENERIC-GAMES>
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

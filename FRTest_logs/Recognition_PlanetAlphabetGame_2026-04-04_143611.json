@@ -1,0 +1,276 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:36:14",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 3.700000047683716
+        },
+        {
+            "time": "2026-04-04 14:36:15",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.059999942779541
+        },
+        {
+            "time": "2026-04-04 14:36:21",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.75
+        },
+        {
+            "time": "2026-04-04 14:36:22",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:36:27",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.0800000429153443
+        },
+        {
+            "time": "2026-04-04 14:36:29",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 2.740000009536743
+        },
+        {
+            "time": "2026-04-04 14:36:35",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.450000047683716
+        },
+        {
+            "time": "2026-04-04 14:36:37",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 3.4000000953674318
+        },
+        {
+            "time": "2026-04-04 14:36:42",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.069999933242798
+        },
+        {
+            "time": "2026-04-04 14:36:46",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.130000114440918
+        },
+        {
+            "time": "2026-04-04 14:36:52",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:36:52",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:36:59",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 1.1799999475479127
+        },
+        {
+            "time": "2026-04-04 14:37:01",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.1500000953674318
+        },
+        {
+            "time": "2026-04-04 14:37:10",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.700000047683716
+        },
+        {
+            "time": "2026-04-04 14:37:11",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 2.7799999713897707
+        },
+        {
+            "time": "2026-04-04 14:37:18",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.9500000476837159
+        },
+        {
+            "time": "2026-04-04 14:37:23",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:37:35",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.03000020980835
+        },
+        {
+            "time": "2026-04-04 14:37:35",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:37:44",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.070000171661377
+        },
+        {
+            "time": "2026-04-04 14:37:44",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.009999990463257
+        },
+        {
+            "time": "2026-04-04 14:37:54",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.3399999141693117
+        },
+        {
+            "time": "2026-04-04 14:37:56",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 2.109999895095825
+        },
+        {
+            "time": "2026-04-04 14:38:03",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.4900000095367432
+        },
+        {
+            "time": "2026-04-04 14:38:10",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 1.3600000143051148
+        },
+        {
+            "time": "2026-04-04 14:38:21",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.859999895095825
+        },
+        {
+            "time": "2026-04-04 14:38:26",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 3.3299999237060549
+        },
+        {
+            "time": "2026-04-04 14:38:31",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.7699999809265137
+        },
+        {
+            "time": "2026-04-04 14:38:46",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 3.8499999046325685
+        },
+        {
+            "time": "2026-04-04 14:38:46",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:38:58",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 2.299999952316284
+        },
+        {
+            "time": "2026-04-04 14:39:06",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 2.930000066757202
+        },
+        {
+            "time": "2026-04-04 14:39:18",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.25
+        }
+    ]
+}

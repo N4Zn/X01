@@ -35,8 +35,25 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
     Team _team;
     bool _locked;
 
+    // Sprite/type NỀN gốc của prefab — để SetBackgroundSprite(null)/ApplyShape("rectangle") trả nền về đúng như ban đầu.
+    Sprite _baseSprite;
+    Image.Type _baseType;
+    bool _basePreserveAspect;
+    bool _baseCaptured;
+    bool _circleShape;
+
+    void CaptureBase()
+    {
+        if (_baseCaptured || bgImage == null) return;
+        _baseSprite = bgImage.sprite;
+        _baseType = bgImage.type;
+        _basePreserveAspect = bgImage.preserveAspect;
+        _baseCaptured = true;
+    }
+
     void Awake()
     {
+        CaptureBase();
         // Chỉ bgImage nhận raycast; Label/Image content không được chặn click
         if (textLabel  != null) textLabel.raycastTarget  = false;
         if (imageHolder != null) imageHolder.raycastTarget = false;
@@ -96,9 +113,58 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
     /// tròn theo — chỉ nền nút tròn, ảnh vẫn hiện dạng chữ nhật đè lên trên.</summary>
     public void ApplyShape(string shape)
     {
-        if (shape != "circle" || bgImage == null) return;
-        bgImage.sprite = RuntimeShapeSprites.GetCircle();
-        bgImage.type = Image.Type.Simple;
+        if (bgImage == null) return;
+        CaptureBase();
+        // GenericGame v2 đổi hình dạng THEO ROUND (mỗi round có thể khác) — nên "rectangle" phải TRẢ nền về sprite gốc
+        // (trước đây no-op vì hình dạng chỉ đặt 1 lần cho cả game).
+        _circleShape = shape == "circle";
+        if (_circleShape)
+        {
+            bgImage.sprite = RuntimeShapeSprites.GetCircle();
+            bgImage.type = Image.Type.Simple;
+        }
+        else
+        {
+            bgImage.sprite = _baseSprite;
+            bgImage.type = _baseType;
+        }
+        bgImage.preserveAspect = _basePreserveAspect;
+    }
+
+    /// <summary>Đặt ảnh NỀN riêng của slot (GenericGame v2: `slot.image`/ảnh nền chung nhóm/ảnh ô đáp án xoay vòng) — nền vẫn là
+    /// bgImage nên các state Correct/Wrong/Locked vẫn nhân màu lên ảnh như trước. `preserveAspect=true` = ảnh giữ tỉ lệ (hợp ảnh
+    /// vật thể), false = kéo kín nút (hợp ảnh khung). `sprite=null` = trả về nền mặc định (trắng/tròn theo ApplyShape).</summary>
+    public void SetBackgroundSprite(Sprite sprite, bool preserveAspect)
+    {
+        if (bgImage == null) return;
+        CaptureBase();
+        if (sprite != null)
+        {
+            bgImage.sprite = sprite;
+            bgImage.type = Image.Type.Simple;
+            bgImage.preserveAspect = preserveAspect;
+        }
+        else
+        {
+            bgImage.sprite = _circleShape ? RuntimeShapeSprites.GetCircle() : _baseSprite;
+            bgImage.type = _circleShape ? Image.Type.Simple : _baseType;
+            bgImage.preserveAspect = _basePreserveAspect;
+        }
+    }
+
+    /// <summary>Nội dung hiện trên nền: có `iconValue` ("path:count", định dạng IconCompose của Kit) thì hiện N icon (CHỮ KHÔNG hiện),
+    /// không thì hiện `text`. Gọi SAU Setup() (Setup tự ApplyMedia với giá trị tạm của QuestionData).</summary>
+    public void SetContent(string text, string iconValue, int iconColumns = 0, int iconCount = 0)
+    {
+        if (!string.IsNullOrEmpty(iconValue))
+        {
+            ItemMediaHelper.ApplyMedia(iconValue, AnswerMediaType.IconCompose,
+                textSlot, textLabel, imageSlot, imageHolder, iconSlot, iconContainer, iconPrefab);
+            ArrangeIconGrid(iconColumns, iconCount);
+        }
+        else
+            ItemMediaHelper.ApplyMedia(text ?? "", AnswerMediaType.Text,
+                textSlot, textLabel, imageSlot, imageHolder, iconSlot, iconContainer, iconPrefab);
     }
 
     /// <summary>Thay ảnh NỀN thẻ (bgImage) bằng 1 ảnh khung riêng, kéo giãn kín nút — dùng cho
@@ -124,6 +190,25 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
             case ItemState.Revealed: bgImage.color = colorCorrect;  _locked = true;  break;
             case ItemState.Locked:   bgImage.color = colorLocked;   _locked = true;  break;
         }
+    }
+
+    /// <summary>Xếp N icon thành lưới `cols` cột (GridLayoutGroup có sẵn trong prefab), mỗi ô = (rộng/cột) × (cao/số hàng) — icon giữ tỉ lệ.</summary>
+    void ArrangeIconGrid(int cols, int count)
+    {
+        if (cols <= 0 || count <= 0 || iconContainer == null) return;
+        var grid = iconContainer.GetComponent<GridLayoutGroup>();
+        if (grid == null) return;
+        var rt = (RectTransform)iconContainer;
+        var rect = rt.rect;
+        if (rect.width <= 1f || rect.height <= 1f) rect = ((RectTransform)transform).rect;
+        int c = Mathf.Min(cols, count);
+        int rows = Mathf.CeilToInt(count / (float)c);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = c;
+        grid.childAlignment = TextAnchor.MiddleCenter;
+        float w = (rect.width - grid.padding.horizontal - grid.spacing.x * (c - 1)) / c;
+        float h = (rect.height - grid.padding.vertical - grid.spacing.y * (rows - 1)) / rows;
+        if (w > 1f && h > 1f) grid.cellSize = new Vector2(w, h);
     }
 
     public void OnPointerClick(PointerEventData eventData)

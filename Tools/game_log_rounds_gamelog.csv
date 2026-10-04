@@ -1,0 +1,3 @@
+source_file,game,round,left_player,left_recognized,left_question,left_answer,left_correct,left_answer_time_sec,right_player,right_recognized,right_question,right_answer,right_correct,right_answer_time_sec
+GameLog_AddNumberGame_2026-04-04_125419.json,AddNumberGame,1,Player_1,False,1 + 2 = ?,6,False,5.08,Đạt,True,3 + 2 = ?,5,True,3.46
+GameLog_AddNumberGame_2026-04-04_125419.json,AddNumberGame,2,Player_1,False,1 + 1 = ?,2,True,1.45,Đạt,True,1 + 1 = ?,2,True,1.56

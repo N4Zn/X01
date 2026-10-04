@@ -1,0 +1,979 @@
+{
+  "schemaVersion": 2,
+  "meta": {
+    "gameId": "SangTruaChieuToi",
+    "displayName": "sáng trưa chiều tối",
+    "category": "Đếm"
+  },
+  "settings": {
+    "playMode": "Independent",
+    "answerMode": "Single",
+    "scoringMode": "perCorrectCount",
+    "flatPoints": 1,
+    "countdownMode": "nextInN",
+    "countdownSeconds": 3,
+    "hasTargetScore": false,
+    "targetScore": 10,
+    "wrongEndsRound": true,
+    "showCorrectWrongTint": true,
+    "questionAudioOnly": false,
+    "questionFontSize": 0,
+    "answerFontSize": 0,
+    "iconColumns": 2
+  },
+  "layout": {
+    "spawnFlow": {
+      "enabled": false,
+      "direction": "BottomToTop",
+      "itemWPct": 15,
+      "itemHPct": 15,
+      "speedPct": 25,
+      "spawnIntervalSec": 1,
+      "maxConcurrent": 4
+    },
+    "background": null,
+    "backgroundAudio": null,
+    "qFrame": null,
+    "slotFrames": [],
+    "layerOrder": [
+      "question",
+      "answers",
+      "collect",
+      "feedback"
+    ],
+    "decorations": [],
+    "questionSpace": "stage"
+  },
+  "effects": {
+    "onIdle": {
+      "effects": [
+        {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectTap": {
+      "effects": [
+        {
+          "type": "Punch",
+          "effectParams": {
+            "duration": 0.3,
+            "scale": 1.25
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onWrongTap": {
+      "effects": [
+        {
+          "type": "Shake",
+          "effectParams": {
+            "duration": 0.3,
+            "amplitudePct": 1.5,
+            "speed": 30
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectRemove": {
+      "effects": [
+        {
+          "type": "FlyOff",
+          "effectParams": {
+            "duration": 0.45,
+            "distancePct": 20,
+            "angleDeg": 90,
+            "scale": 0.4
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": false
+    }
+  },
+  "rounds": [
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_0.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 100,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.273178894553916,
+          "yPct": 74.6185108819378,
+          "wPct": 90.72682110544608,
+          "hPct": 23.840282394695343
+        },
+        "matrix": {
+          "cols": 4,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.273178894553916,
+            "yPct": 74.6185108819378,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi sáng",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 27.18211926303594,
+            "yPct": 74.6185108819378,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi trưa",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 50.091059631517965,
+            "yPct": 74.6185108819378,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi chiều",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 73,
+            "yPct": 74.6185108819378,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi tối",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion1_1.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 100,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 73.60121691555463,
+          "wPct": 91.21138699337541,
+          "hPct": 25.6714301613939
+        },
+        "matrix": {
+          "cols": 4,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 73.60121691555463,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi sáng",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 26.859075337749726,
+            "yPct": 73.60121691555463,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi trưa",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 49.929537668874865,
+            "yPct": 73.60121691555463,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi chiều",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 73,
+            "yPct": 73.60121691555463,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi tối",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion2_2.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 100,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.030886708439949,
+          "yPct": 74.21159950445416,
+          "wPct": 90.96911329156005,
+          "hPct": 23.63682670595352
+        },
+        "matrix": {
+          "cols": 4,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.030886708439949,
+            "yPct": 74.21159950445416,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi sáng",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 27.020591138959965,
+            "yPct": 74.21159950445416,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi trưa",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 50.010295569479986,
+            "yPct": 74.21159950445416,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi chiều",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 73,
+            "yPct": 74.21159950445416,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi tối",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion3_3.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 100,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.5463300626599237,
+          "yPct": 73.19430553807099,
+          "wPct": 91.45366069519078,
+          "hPct": 23.026444117054
+        },
+        "matrix": {
+          "cols": 4,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.5463300626599237,
+            "yPct": 73.19430553807099,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi sáng",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 26.697550294390183,
+            "yPct": 73.19430553807099,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi trưa",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 49.84877052612045,
+            "yPct": 73.19430553807099,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi chiều",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 72.9999907578507,
+            "yPct": 73.19430553807099,
+            "wPct": 22,
+            "hPct": 22,
+            "image": null,
+            "imagePool": null,
+            "text": "Buổi tối",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    }
+  ],
+  "imagePools": []
+}

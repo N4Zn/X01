@@ -1,0 +1,127 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Player 1",
+    "playerRight": "Player 2",
+    "sessionDate": "2026-08-10",
+    "sessionTime": "22:38:10",
+    "durationSeconds": 100.5,
+    "scoreLeft": 10,
+    "scoreRight": 0,
+    "totalRounds": 3,
+    "rounds": [
+        {
+            "round": 1,
+            "questionId": "vi003",
+            "topic": "SolarSystem",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 31.739999771118165,
+            "correctAnswers": [
+                0,
+                1,
+                2
+            ],
+            "clicks": [
+                {
+                    "time": "22:38:37.652",
+                    "playerName": "Player 1",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "22:38:42.995",
+                    "playerName": "Player 2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 2,
+            "questionId": "vi002",
+            "topic": "SolarSystem",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 10.880000114440918,
+            "correctAnswers": [
+                0,
+                1,
+                2
+            ],
+            "clicks": [
+                {
+                    "time": "22:38:56.571",
+                    "playerName": "Player 1",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "22:38:57.482",
+                    "playerName": "Player 1",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "22:39:00.138",
+                    "playerName": "Player 2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 3,
+            "questionId": "vi001",
+            "topic": "SolarSystem",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "isCorrect": true,
+            "winnerName": "Player 1",
+            "responseTimeSeconds": 19.049999237060548,
+            "correctAnswers": [
+                0,
+                1,
+                2
+            ],
+            "clicks": [
+                {
+                    "time": "22:39:07.585",
+                    "playerName": "Player 2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "22:39:10.670",
+                    "playerName": "Player 1",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "22:39:14.143",
+                    "playerName": "Player 1",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "22:39:22.399",
+                    "playerName": "Player 1",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "CorrectFinal"
+                }
+            ]
+        }
+    ]
+}

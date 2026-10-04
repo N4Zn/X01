@@ -1,0 +1,20 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:39:59",
+            "game": "FamilySpellingGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.5799999237060549
+        },
+        {
+            "time": "2026-04-04 14:40:01",
+            "game": "FamilySpellingGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.079999923706055
+        }
+    ]
+}

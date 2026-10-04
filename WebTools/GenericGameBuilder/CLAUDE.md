@@ -1,0 +1,33 @@
+# GenericGame Builder — ghi chú dự án (schema v2.1)
+
+Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lời user bằng tiếng Việt.
+
+## File
+- **Bản mới nhất: `game_builder_v2.html`** (1 file, 1 IIFE → `game` không truy cập được từ ngoài). Các file `game_builder*.html` khác là bản cũ/backup (v1, 1002...).
+- Publish làm Claude Artifact: https://claude.ai/artifact/J8VjLjobGYkDWJq456ddQ8
+- Unity runtime: `Assets/Game/Scripts/Core/MiniGameKit/GenericGame/` — `GenericGameTypes.cs`, `GenericGameMigration.cs`, `GenericGameController.cs`, `SCHEMA.md`, `capabilities.json`; thêm `UIScripts/_TestTongHop/Items/ButtonItem.cs`.
+
+## Mô hình v2.1
+- `rounds[] = {target, question, answers, collect}`; mỗi cái là Group: `arrangement` (manual|matrix|random), `area`, `bgImage`, `bgIcon`, `mirror`, `autoStretch`, `fillByValue`, `fillReverse`, `slots[]`.
+- Slot: ảnh nền (mặc định stretch), text/icon (có icon thì text = số icon, không hiện), sound, `fx` ghi đè hiệu ứng chung (trigger có ≥1 hiệu ứng, kể cả "None", hoặc sound → thay hẳn global).
+- Item (`layout.decorations`) = đồ trang trí cả game; trigger onCorrect/onPartial/onWrong/onClick; hiệu ứng Fly* bị bỏ qua.
+- `settings.iconColumns` mặc định 2. File v1 tự migrate (web + Unity).
+- Toạ độ: % của 1 nửa (trái soạn, phải mirror). Combined: câu hỏi là 1 vùng chung toàn màn hình, toạ độ % cả stage (`layout.questionSpace="stage"`), kéo tự do 2 nửa, đáp án độc lập mỗi bên. Independent: câu hỏi mỗi bên, có `question.mirror`.
+- Vùng đã chọn (FlyToStay) theo round: `rounds[].collect`, tab "📥 Đã chọn"; có ô tick không mirror (`collect.mirror`).
+- Âm câu hỏi: phát đầu round, lặp sau 4s, chỉ ở Combined. HUD điểm chơi thử bị ẩn (chỉ web).
+
+## Layers & audio (2026-10-03)
+- Panel "Layers" (tab Nhân vật/Item): kéo từng dòng đổi thứ tự → `layout.layerOrder` (xem SCHEMA.md). Web gán `z-index = zOf(key)`; Unity `ApplyLayer`. Mặc định Nền < Câu hỏi < Item < Đáp án < Đáp án bay < Icon.
+- Nút "+ Thêm ô" copy NGUYÊN slot cuối của nhóm (kể cả đúng/sai, âm thanh, fx).
+- Nút ▶ nghe thử giờ toggle ▶/■ (`togglePreviewAudio`); âm thanh câu hỏi chơi thử có nhãn trạng thái `#ptAudioState`, bị trình duyệt chặn thì chờ chạm.
+- Spawn: `clearAllSpawnItems` dọn cả `.pt-slot` sót (đáp án cuối không còn hiện sang round sau).
+- **Đừng dùng script Python cắt/chèn theo `index()` trên file HTML này**: chuỗi như `moveCol` xuất hiện nhiều chỗ, từng cắt nhầm ~300 dòng. Dùng Edit.
+
+## Việc còn dở
+- Unity đã theo `collect.mirror` (`CollectFlipsFor` trong controller; SCHEMA.md/capabilities.json đã cập nhật).
+- Code Unity mới chỉ compile-check bằng Roslyn (0 lỗi), **chưa chạy trong Editor**: cần test round/collect/mirror/icon grid.
+
+## Lưu ý kỹ thuật
+- Test web: click DOM + `javascript_tool`; browser pane ẩn nên polyfill `requestAnimationFrame` bằng setTimeout; server local `node srv.js` cổng 8765.
+- Unity JsonUtility không có dict/null int; field class luôn được khởi tạo mặc định → "có override" xét theo nội dung.
+- Khi sửa script bằng bash: backtick trong `node -e` nháy kép bị hỏng → viết script qua file.

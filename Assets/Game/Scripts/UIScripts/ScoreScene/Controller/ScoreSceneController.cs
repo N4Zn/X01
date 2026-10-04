@@ -31,9 +31,9 @@ public class ScoreSceneController : MonoBehaviour
         {
             scoreSceneView.ShowTeamMode();
             scoreSceneView.DisplayTeamResults(
-                session.GetDisplayName1(),
+                SummaryTeamName(session, 0),
                 session.Player1FinalScore,
-                session.GetDisplayName2(),
+                SummaryTeamName(session, 1),
                 session.Player2FinalScore,
                 session.BlueTeamPlayers,
                 session.RedTeamPlayers
@@ -76,6 +76,20 @@ public class ScoreSceneController : MonoBehaviour
         Debug.Log("NDL: ScoreScene - StateMachineExit_DisplayResults");
     }
 
+    // Tên hiển thị của mỗi bên ở màn tổng kết: đội có NHIỀU người chơi (số người camera nhận diện
+    // trong ván, không có số liệu thì lấy danh sách TeamSelect) → tên đội (Blue/Red); chỉ 1 người
+    // → tên người đó.
+    // Chưa nhận diện/ghi nhận được ai trong ván → coi như 1 người chơi tên mặc định Blue_1/Red_1.
+    private static string DefaultPlayerName(int slot) => slot == 0 ? "Blue_1" : "Red_1";
+
+    private static string SummaryTeamName(GameSessionManager session, int slot)
+    {
+        var stats = PlayerRecognitionService.Instance?.GetPlayerStats(slot);
+        if (stats == null || stats.Count == 0) return DefaultPlayerName(slot);
+        if (stats.Count > 1) return slot == 0 ? session.GetTeamName1() : session.GetTeamName2();
+        return stats[0].name;
+    }
+
     // ── MVP + Tia Chớp ────────────────────────────────────────────────────────────────────
     // Quy ước: slot 0 (trái) = đội Blue = Player1; slot 1 (phải) = đội Red = Player2
     // (khớp SetupFromTeamSelect / DisplayTeamResults).
@@ -94,8 +108,8 @@ public class ScoreSceneController : MonoBehaviour
         // Danh sách thành viên trong 2 khung: những bạn camera nhận diện và đã trả lời trong ván
         // (nhiều câu đúng nhất lên đầu). Không có số liệu nào thì dùng danh sách đội từ TeamSelect.
         scoreSceneView.DisplayRoster(
-            BuildRoster(blueStats, session.BlueTeamPlayers),
-            BuildRoster(redStats, session.RedTeamPlayers));
+            BuildRoster(blueStats, session.BlueTeamPlayers, 0),
+            BuildRoster(redStats, session.RedTeamPlayers, 1));
 
         PlayerHighlight mvp = PickMvp(blueStats, session.BlueTeamPlayers, redStats, session.RedTeamPlayers);
         List<PlayerHighlight> blueFast = PickFastest(blueStats, session.BlueTeamPlayers, 1);
@@ -109,18 +123,13 @@ public class ScoreSceneController : MonoBehaviour
     }
 
     private static List<PlayerHighlight> BuildRoster(
-        List<PlayerRecognitionService.PlayerRoundStat> stats, List<PlayerInfo> teamList)
+        List<PlayerRecognitionService.PlayerRoundStat> stats, List<PlayerInfo> teamList, int slot)
     {
         var result = new List<PlayerHighlight>();
         if (stats != null && stats.Count > 0)
-        {
             foreach (var s in stats) result.Add(ToHighlight(s, teamList));
-        }
-        else if (teamList != null)
-        {
-            foreach (var p in teamList)
-                if (p != null) result.Add(new PlayerHighlight { name = p.PlayerName, hairIndex = p.HairIndex });
-        }
+        else
+            result.Add(new PlayerHighlight { name = DefaultPlayerName(slot), hairIndex = -1 });
         return result;
     }
 

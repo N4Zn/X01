@@ -21,6 +21,7 @@ public static class ControlBridge
 {
     private const string ExtraSceneName = "com.eduxplore.control.SCENE_NAME";
     private const string ExtraGameName = "com.eduxplore.control.GAME_NAME";
+    private const string ExtraSettingsJson = "com.eduxplore.control.SETTINGS_JSON";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
@@ -34,6 +35,9 @@ public static class ControlBridge
             {
                 string sceneName = intent.Call<string>("getStringExtra", ExtraSceneName);
                 string gameName = intent.Call<string>("getStringExtra", ExtraGameName);
+                string settingsJson = intent.Call<string>("getStringExtra", ExtraSettingsJson);
+                if (!string.IsNullOrEmpty(settingsJson) && GameSettings.Instance != null)
+                    GameSettings.Instance.ApplyJson(settingsJson); // cold-boot: áp trước khi load game
 
                 if (!string.IsNullOrEmpty(sceneName))
                     LoadGame(sceneName, gameName);

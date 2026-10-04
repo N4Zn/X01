@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 2,
+  "_comment": "NGUỒN DUY NHẤT mô tả khả năng của GenericGameController cho web tool (xem SCHEMA.md). Thêm effect/option mới vào Kit (C#) thì PHẢI thêm mục tương ứng ở đây rồi copy file này đè vào bản nhúng trong web tool (Artifact) — không có cơ chế tự đồng bộ, xem README Track web-builder.",
+
+  "answerDisplayTypes": [
+    { "id": "button", "label": "Chọn đáp án (nút bấm)", "answerModes": ["Single", "MultiSelect", "OrderedSequence", "SumToTarget"], "supportsImage": true, "supportsText": true }
+  ],
+
+  "layoutArrangements": [
+    { "id": "manual", "label": "Tự đặt từng ô — mỗi slot có toạ độ riêng (groups[].slots[])" },
+    { "id": "matrix", "label": "Ma trận — tính lưới 1 lần lúc soạn, kết quả ghi thẳng vào toạ độ từng slot (Unity không cần biết)" },
+    { "id": "random", "label": "Random vùng — group.area + group.random (cỡ ô, khoảng cách), Unity xáo lại vị trí mỗi round, tự tránh đè nhau" },
+    { "id": "spawn", "label": "Spawn liên tục — layout.spawnFlow (cờ CHUNG cả game, chỉ cho nhóm đáp án), đáp án tự xuất hiện định kỳ/trôi 1 hướng/biến mất nếu không chạm trúng" }
+  ],
+  "_note_spawnFlow": "layout.spawnFlow { enabled, direction: BottomToTop|TopToBottom|LeftToRight|RightToLeft, itemWPct, itemHPct, speedPct (%/giây), spawnIntervalSec, maxConcurrent } — là cờ CHUNG của cả game (enabled=true thì MỌI round đều dùng spawn, GHI ĐÈ cách sắp xếp manual/matrix/random của nhóm đáp án). Vùng 'dải' trôi = round.answers.area (khác nhau theo round). Item CHẠM TRÚNG (đúng hoặc sai) không biến mất ngay — đóng băng tại chỗ để hiệu ứng kịp chạy, chỉ dọn hẳn khi round/lượt kết thúc. Trôi hết màn hình KHÔNG trúng = bỏ qua, KHÔNG trừ điểm. Nội dung slot (ảnh nền/icon/chữ) áp được ở spawn; onIdle thì CHƯA hỗ trợ — xem SCHEMA.md.",
+
+  "_note_orderedSequence": "OrderedSequence: slot đáp án đánh dấu ĐÚNG (correct=true) phải được chạm ĐÚNG THEO THỨ TỰ xuất hiện trong mảng round.answers.slots[] — web tool cho bấm ↑/↓ để đổi thứ tự (chỉ đổi NỘI DUNG giữa các slot, giữ nguyên vị trí; không có field 'order' riêng). Chạm sai thứ tự (kể cả chạm 1 đáp án đúng nhưng chưa tới lượt) = WrongFinal ngay, không có retry (trừ khi wrongEndsRound=false).",
+
+  "_note_backgroundAudio": "layout.backgroundAudio (tên file trong assets/) = nhạc nền lặp lại suốt game, thay thế MusicManager.PlayGameplayMusic() mặc định — null/rỗng thì giữ nguyên nhạc mặc định.",
+
+  "questionDisplay": [
+    { "id": "visual", "label": "Hiện chữ/ảnh câu hỏi (mặc định)" },
+    { "id": "audioOnly", "label": "Chỉ phát âm thanh — ẩn hẳn chữ/ảnh (settings.questionAudioOnly=true), dùng cho dạng 'nghe và chọn'" }
+  ],
+
+  "playModes": [
+    { "id": "Combined", "label": "Gộp — 2 đội cùng 1 câu, ai bấm đúng trước ghi điểm" },
+    { "id": "Independent", "label": "Độc lập — mỗi đội tự nhịp câu hỏi riêng" }
+  ],
+
+  "scoringModes": [
+    { "id": "flat", "label": "Mỗi round đúng được +N điểm cố định", "params": [
+      { "name": "flatPoints", "type": "int", "default": 1, "min": 1, "max": 20 }
+    ]},
+    { "id": "perCorrectCount", "label": "Mỗi đáp án đúng đã chọn trong round (MultiSelect) +1 điểm — dùng cho game kiểu 'thu thập nhiều món'", "params": [] }
+  ],
+
+  "countdownModes": [
+    { "id": "none", "label": "Không đếm ngược giữa các round (chỉ có Start in 3,2,1 lúc vào game)" },
+    { "id": "nextInN", "label": "Đếm ngược 'Next in Ns' trước mỗi round (trừ round đầu tiên)", "params": [
+      { "name": "seconds", "type": "int", "default": 3, "min": 1, "max": 10 }
+    ]}
+  ],
+
+  "answerFeedback": [
+    { "id": "default", "label": "Mặc định Kit — tô xanh/đỏ + khoá nút, chờ hết round mới sang câu tiếp" },
+    { "id": "hideOnCorrectTap", "label": "Tự ẩn ngay khi chạm đúng (kiểu gom/hái — không có đáp án sai hiển thị cùng lúc)" }
+  ],
+
+  "effects": [
+    { "id": "None", "label": "Không có hiệu ứng", "params": [] },
+    { "id": "Punch", "label": "Phóng to rồi co lại tại chỗ", "params": [
+      { "name": "duration", "type": "float", "default": 0.3, "min": 0.1, "max": 2 },
+      { "name": "scale", "type": "float", "default": 1.25, "min": 1, "max": 2 }
+    ]},
+    { "id": "Shake", "label": "Rung lắc tại chỗ", "params": [
+      { "name": "duration", "type": "float", "default": 0.3, "min": 0.1, "max": 2 },
+      { "name": "amplitudePct", "type": "float", "default": 1.5, "min": 0.5, "max": 10 },
+      { "name": "speed", "type": "float", "default": 30, "min": 5, "max": 60 }
+    ]},
+    { "id": "FadeOut", "label": "Mờ dần rồi biến mất", "params": [
+      { "name": "duration", "type": "float", "default": 0.25, "min": 0.1, "max": 2 }
+    ]},
+    { "id": "FlyOff", "label": "Bay theo hướng + khoảng cách rồi thu nhỏ/mờ dần (không cần biết điểm đến)", "params": [
+      { "name": "duration", "type": "float", "default": 0.45, "min": 0.1, "max": 2 },
+      { "name": "distancePct", "type": "float", "default": 20, "min": 5, "max": 100 },
+      { "name": "angleDeg", "type": "float", "default": 90, "min": 0, "max": 360, "hint": "0=phải, 90=lên trên, 180=trái, 270=xuống" },
+      { "name": "scale", "type": "float", "default": 0.4, "min": 0.05, "max": 1 }
+    ]},
+    { "id": "FlyTo", "label": "Bay tới 1 ĐIỂM CỐ ĐỊNH (vd rổ/ô đếm) rồi thu nhỏ/mờ dần", "params": [
+      { "name": "duration", "type": "float", "default": 0.45, "min": 0.1, "max": 2 },
+      { "name": "targetXPct", "type": "float", "default": 50, "min": 0, "max": 100, "hint": "% ngang trong nửa màn hình, đặt bằng cách kéo điểm đích trên canvas" },
+      { "name": "targetYPct", "type": "float", "default": 90, "min": 0, "max": 100, "hint": "% dọc tính từ trên xuống" },
+      { "name": "scale", "type": "float", "default": 0.3, "min": 0.05, "max": 1 }
+    ]},
+    { "id": "FlyToStay", "label": "Bay tới & Ở LẠI (đọng lại thành vùng mới, không biến mất)", "params": [
+      { "name": "duration", "type": "float", "default": 0.45, "min": 0.1, "max": 2 },
+      { "name": "scale", "type": "float", "default": 1, "min": 0.05, "max": 2, "hint": "CHỈ áp dụng khi chưa cấu hình 'Vùng thu thập' (mảng ô đích) — có cấu hình thì kích thước lấy thẳng từ ô đó" }
+    ]},
+    { "id": "Breathing", "label": "Phóng to-nhỏ liên tục (mời gọi, trước khi chạm)", "params": [
+      { "name": "duration", "type": "float", "default": 0.6, "min": 0.2, "max": 2 },
+      { "name": "scale", "type": "float", "default": 1.08, "min": 1, "max": 1.5 }
+    ]}
+  ],
+
+  "effectSlots": [
+    { "id": "onIdle", "label": "Chạy liên tục khi round vừa bắt đầu, chưa ai chạm (chỉ nên chọn Breathing hoặc None)" },
+    { "id": "onCorrectTap", "label": "Chạm ĐÚNG và round KẾT THÚC luôn (= ClickResult.CorrectFinal)" },
+    { "id": "onWrongTap", "label": "Chạm SAI (= ClickResult.WrongFinal, luôn kết thúc round — xem AnswerValidator.cs)" },
+    { "id": "onCorrectRemove", "label": "Chạm ĐÚNG nhưng round CHƯA xong, còn đáp án đúng khác chưa chọn (= ClickResult.CorrectPartial, 'partial correct') — ô đó biến mất khỏi màn hình" }
+  ],
+
+  "_note_collectSlots": "layout.collectSlots (RectPct[]) — mảng Ô ĐÍCH cho hiệu ứng FlyToStay, KHÁC HẲN layout.slots (nơi hiện đáp án để bấm): đây là nơi đáp án ĐÃ CHỌN ĐÚNG bay tới rồi Ở LẠI (vd giỏ chứa chất dần). Soạn bằng CHÍNH công cụ 'Ma trận' đã dùng cho slots ('Lưới' trong web tool — có thêm tuỳ chọn thứ tự điền A→Z/Z→A, và KHÔNG ép khít: vùng nhỏ hơn tổng kích thước ô thì các ô tự đè lên nhau có chủ đích), hoặc đặt tay từng ô ('Tự do' — thêm/bớt/kéo thả độc lập từng ô, không theo lưới). Mỗi lần FlyToStay được dùng sẽ bay vào Ô TIẾP THEO (tăng dần), clamp ở ô cuối nếu dùng nhiều hơn số ô có — người soạn tự đảm bảo số đáp án đúng/round ≤ Length (TRỪ KHI collectAutoStretch=true, xem dưới). RESET (dọn sạch + đếm lại từ đầu) mỗi round mới, KHÔNG tích luỹ xuyên suốt game.",
+  "_note_collectAutoStretch": "layout.collectAutoStretch (bool, mặc định false) — true thì BỎ QUA collectSlots tĩnh ở trên, Unity/preview TỰ TÍNH LẠI 1 lưới mới MỖI ROUND lấp đầy layout.collectArea vừa khít đúng số đáp án ĐÚNG của round đó (không gap, ô luôn liền kề/lấp đầy) — dùng layout.collectCols (int, số cột để bẻ dòng) + layout.collectFillReverse (bool, true=Z→A tức ô thứ tự 1 điền vào vị trí lưới CUỐI thay vì đầu). Dùng cho game mà số đáp án đúng/round KHÔNG cố định giữa các round (vd round này 2 đáp án đúng, round khác 4) mà vẫn muốn 'giỏ' luôn vừa khít, không dư/thiếu ô.",
+
+  "_note_actionFx": "Mỗi effectSlot ở trên giờ là 1 ActionFx { effects: EffectSpec[], sound, playSound, showIcon }: CHẠY ĐƯỢC NHIỀU effect CÙNG LÚC (vd Punch + FlyTo) cộng thêm 1 âm thanh tuỳ chọn — không còn giới hạn 1 effect/slot như bản đầu. targetXPct (FlyTo) và angleDeg (FlyOff) đặt theo NỬA TRÁI, Unity tự mirror cho nửa phải.",
+
+  "_note_feedbackFallback": "onCorrectTap/onWrongTap/onCorrectRemove (KHÔNG áp dụng onIdle) có 2 cờ fallback: playSound (mặc định true — có sound thì dùng sound riêng, không có thì tự dùng âm thanh đúng/sai MẶC ĐỊNH của Kit, false = tắt hẳn) và showIcon (mặc định true cho onCorrectTap/onWrongTap, mặc định FALSE cho onCorrectRemove — bắn liên tục nhiều lần/round nên mặc định không hiện icon to, tự bật nếu muốn). Web tool hiện checkbox 'Phát âm thanh' ở cả 3 slot, checkbox 'Hiện icon' chỉ ở onCorrectTap/onWrongTap/onCorrectRemove (onCorrectRemove mặc định bỏ tick). Icon ✔/✖ (showIcon=true) LUÔN đợi hiệu ứng cấu hình ở effects[] CHẠY XONG mới hiện (lấy duration lớn nhất trong các effect thật của slot đó) — không hiện ngay lập tức như version cũ, tránh che mất hiệu ứng bay/biến mất.",
+
+  "_note_slots": "MÔ HÌNH v2 — mỗi round = {target, question: Group, answers: Group}; Group = {arrangement, area, matrix, random, shape, bgImage, bgIcon, slots[]}. Slot = toạ độ (xPct..hPct, nửa TRÁI, nửa phải tự mirror) + nội dung {image, imagePool, text, icon, sound, correct, fx}. `image` là ẢNH NỀN của slot (không có thì lấy group.bgImage; có imagePool thì random 1 ảnh trong tập, chốt 1 lần/phiên). `icon` là icon nhỏ nằm TRÊN nền (không có thì lấy group.bgIcon) — có icon thì `text` là SỐ LƯỢNG icon (tối đa 20, không phải số = 1) và chữ KHÔNG hiện (chữ và icon không bao giờ cùng lúc); không icon thì hiện `text`. Nhóm collect có thêm `mirror` (mặc định true; false = nửa phải không lật vùng 'Đã chọn'). Slot câu hỏi và slot đáp án đều không giới hạn số lượng, đều có bố cục manual/matrix/random riêng từng round. Unity: pool ButtonItem đáp án dựng theo số slot LỚN NHẤT mọi round, mỗi round đặt lại vị trí/hình dạng/nội dung (ApplyRoundLayout/ApplyRoundContent → ButtonItem.SetBackgroundSprite/SetContent, tái dùng ItemMediaHelper NATIVE: IconCompose 'path:count' hoặc Text); slot câu hỏi là QuestionSlotUi dựng lúc runtime. Game v1 (schemaVersion 1, layout.slots chung + round.answers[]) được chuyển sang v2 ngay lúc nạp (GenericGameMigration) — web tool cũng tự migrate khi mở file cũ.",
+
+  "_note_slotFx": "slot.fx = hiệu ứng GHI ĐÈ riêng 1 slot: {onIdle, onCorrectTap, onWrongTap, onCorrectRemove} (mỗi cái là 1 ActionFx như effectSlots ở trên). Trigger nào có ≥1 effect (kể cả 'None' để cố ý TẮT) hoặc âm thanh riêng thì THAY HẲN hiệu ứng chung (effects.*) ở trigger đó; trống = dùng hiệu ứng chung. Slot câu hỏi chỉ dùng onIdle. slot.sound: slot đáp án = phát khi chạm vào slot; slot câu hỏi = ÂM THANH CÂU HỎI — phát lần lượt các slot câu hỏi có âm thanh lúc vào round, NGHỈ 4 giây rồi lặp lại tới hết round, CHỈ khi settings.playMode='Combined' (Independent không phát vì 2 bên tranh âm thanh).",
+
+  "_note_itemTriggers": "ITEM (layout.decorations[]) = đồ vật/con vật trang trí cho CẢ GAME (vd con thỏ), luôn hiện ở mọi round, KHÔNG theo round. Ngoài hiệu ứng chờ `effect` (mặc định Breathing) còn có fx = {onCorrect (đúng, hết round), onPartial (đúng 1 phần, còn đáp án phải chọn), onWrong (sai), onClick (item bị chạm — âm thanh trong thẻ này = tiếng kêu khi dẫm vào)} — mỗi trigger là 1 ActionFx, MẶC ĐỊNH không có hiệu ứng, thêm tuỳ ý. Chỉ chạy ở BÊN vừa trả lời. Punch/Shake/FadeOut/Breathing chạy được; FlyOff/FlyTo/FlyToStay bị BỎ QUA ở item. Item chỉ bắt chạm khi có fx.onClick (không thì không chặn chạm của đáp án). Unity: GenericGameController.FireItems/RunItemFx.",
+
+  "_note_fontSize": "settings.questionFontSize/answerFontSize (float, mặc định 0) — 0 = tự co vừa ô (câu hỏi) / giữ cỡ chữ prefab (đáp án), không ghi đè. > 0 = ghi đè cỡ chữ trong slot câu hỏi (Text dựng lúc runtime) và TextMeshProUGUI của mỗi nút đáp án (ButtonItem.SetFontSize, gọi mỗi round khi áp nội dung). CHỈ có tác dụng khi slot đang hiện dạng CHỮ — không ảnh hưởng gì tới icon.",
+
+  "_note_sumToTarget": "settings.answerMode='SumToTarget' ('Cộng dồn tới mục tiêu') — mọi đáp án bấm được, giá trị SỐ (parse từ text; không phải số/≤0 → 1) cộng dồn vào layout.collectSlots dùng làm 'thanh nhiên liệu' (đáp án 'N' chiếm N ô liền nhau, ô SÁNG LÊN màu gradient xanh→vàng→cam→đỏ + số thứ tự ô; thẻ đáp án bay tới rồi biến mất). Tổng ĐÚNG BẰNG round.target (int, 0/thiếu = số ô của thanh, hoặc 10 nếu chưa có ô) → THẮNG; VƯỢT → hiệu ứng sai + khoá + gợi ý; hết đáp án mà chưa đủ → gợi ý. KHÔNG bao giờ kết thúc round vì sai — CHẠM VÀO THANH = chọn lại từ đầu (không trừ điểm). Cờ correct của đáp án bị BỎ QUA. Điểm perCorrectCount = số lần bấm trong lượt thắng. Unity: AnswerMode.SumToTarget + AnswerValidator.ValidateSum (Kit), QuestionData.sumTarget/sumValues, GenericGameController.HandleSumTapped/SumReset/SpawnLitCells. Tự bật collectFillByValue, bỏ qua collectAutoStretch. GIỚI HẠN: chưa hỗ trợ spawn flow; Combined mode nếu CẢ 2 bên cùng vượt mục tiêu thì Kit vẫn tự kết thúc round (giống wrongEndsRound=false).",
+
+  "_note_launchOnComplete": "DecorationSpec.launchOnComplete (bool) — true thì deco đó (vd tên lửa) bay thẳng LÊN khỏi màn hình (~1.5s, tăng tốc) khi bên đó THẮNG round (CorrectFinal — mọi answerMode, không riêng SumToTarget), tự về chỗ cũ + chạy lại hiệu ứng liên tục ở round mới. Có deco loại này thì thời gian chờ sau khi thắng được nâng tối thiểu 1.8s để kịp bay. Unity: GenericGameController.LaunchDecos/ResetDecoLaunch.",
+
+  "_note_frames": "layout.qFrame (string) = khung 9-slice (viền 90px nguồn, độ dày hiển thị = clamp(min(cao×0.32, rộng×0.12), ≥6)) đặt DƯỚI chữ của slot câu hỏi, chỉ khi slot là chữ trần (không ảnh nền/icon), cỡ chữ mặc định = cao khung×0.26 (trừ khi có questionFontSize); layout.slotFrames (string[]) = ảnh nền ô đáp án gán XOAY VÒNG theo thứ tự ô (slotIndex % số ảnh) cho đáp án CHƯA có ảnh nền (riêng/chung nhóm). Ưu tiên nền đáp án: ảnh riêng slot > group.bgImage > slotFrames xoay vòng > thẻ trắng. Unity: ButtonItem.SetBackgroundSprite (ảnh riêng giữ tỉ lệ; ảnh khung kéo kín)."
+}

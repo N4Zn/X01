@@ -1,0 +1,10 @@
+source_file,game,round,topic,question_type,answer_mode,left_player,left_recognized,left_clicks,left_correct,right_player,right_recognized,right_clicks,right_correct,response_time_sec,winner
+TestTongHop_2026-04-04_142942.json,TestTongHop,1,Science,Choose,MultiSelect,Hải,True,0:CorrectPartial; 4:WrongFinal,False,Player_2,False,0:CorrectPartial; 6:CorrectPartial; 1:CorrectPartial; 2:CorrectFinal,True,13.48,Player_2
+TestTongHop_2026-04-04_142942.json,TestTongHop,2,Science,Choose,MultiSelect,Hải,True,3:CorrectPartial; 1:WrongFinal,False,Player_2,True,5:CorrectPartial; 2:WrongFinal,False,6.97,
+TestTongHop_2026-04-04_142942.json,TestTongHop,3,Science,Choose,OrderedSequence,Hải,False,4:WrongFinal,False,Player_2,True,3:WrongFinal,False,7.08,
+TestTongHop_2026-04-04_142942.json,TestTongHop,4,Science,Choose,OrderedSequence,Hải,True,0:CorrectPartial; 1:CorrectPartial; 3:WrongFinal,False,Player_2,True,1:WrongFinal,False,10.73,
+TestTongHop_2026-04-04_142942.json,TestTongHop,5,Science,Choose,OrderedSequence,Hải,True,3:WrongFinal,False,Player_2,True,1:WrongFinal,False,8.28,
+TestTongHop_2026-04-04_142942.json,TestTongHop,6,Math,Matching,Single,Hải,False,1:PairCorrect→1; 2:PairWrong→0; 0:PairWrong→2,False,Player_2,True,1:PairWrong→0; 0:PairWrong→2; 2:PairWrong→1,False,35.71,
+TestTongHop_2026-04-04_142942.json,TestTongHop,7,Science,Choose,OrderedSequence,Hải,True,0:CorrectPartial; 2:WrongFinal,False,Player_2,False,1:WrongFinal,False,12.27,
+TestTongHop_2026-04-04_142942.json,TestTongHop,8,Math,Choose,MultiSelect,Hải,True,1:CorrectPartial; 2:CorrectPartial,False,Player_2,True,1:CorrectPartial; 2:CorrectPartial; 0:CorrectFinal,True,10.36,Player_2
+TestTongHop_2026-04-04_142942.json,TestTongHop,9,Science,Choose,OrderedSequence,Hải,True,4:WrongFinal,False,Player_2,True,0:CorrectPartial; 3:WrongFinal,False,5.3,

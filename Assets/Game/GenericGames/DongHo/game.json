@@ -1,0 +1,1261 @@
+{
+  "schemaVersion": 2,
+  "meta": {
+    "gameId": "DongHo",
+    "displayName": "Đồng hồ",
+    "category": "Đếm"
+  },
+  "settings": {
+    "playMode": "Independent",
+    "answerMode": "Single",
+    "scoringMode": "perCorrectCount",
+    "flatPoints": 1,
+    "countdownMode": "nextInN",
+    "countdownSeconds": 3,
+    "hasTargetScore": false,
+    "targetScore": 10,
+    "wrongEndsRound": true,
+    "showCorrectWrongTint": true,
+    "questionAudioOnly": false,
+    "questionFontSize": 0,
+    "answerFontSize": 0,
+    "iconColumns": 2
+  },
+  "layout": {
+    "spawnFlow": {
+      "enabled": false,
+      "direction": "BottomToTop",
+      "itemWPct": 15,
+      "itemHPct": 12.531645569620252,
+      "speedPct": 25,
+      "spawnIntervalSec": 1,
+      "maxConcurrent": 4
+    },
+    "background": "bg_0.png",
+    "backgroundAudio": null,
+    "qFrame": null,
+    "slotFrames": [],
+    "layerOrder": [
+      "question",
+      "answers",
+      "collect",
+      "feedback"
+    ],
+    "decorations": [],
+    "questionSpace": "stage"
+  },
+  "effects": {
+    "onIdle": {
+      "effects": [
+        {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectTap": {
+      "effects": [
+        {
+          "type": "Punch",
+          "effectParams": {
+            "duration": 0.3,
+            "scale": 1.25
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onWrongTap": {
+      "effects": [
+        {
+          "type": "Shake",
+          "effectParams": {
+            "duration": 0.3,
+            "amplitudePct": 1.5,
+            "speed": 30
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectRemove": {
+      "effects": [
+        {
+          "type": "FlyOff",
+          "effectParams": {
+            "duration": 0.45,
+            "distancePct": 20,
+            "angleDeg": 90,
+            "scale": 0.4
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": false
+    }
+  },
+  "rounds": [
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 26.105009385951142,
+            "yPct": 15.894724242956364,
+            "wPct": 47.54856636905735,
+            "hPct": 37.57084101099049,
+            "image": "q0_0_1.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 0.7242077423852241,
+          "yPct": 81.31578866083589,
+          "wPct": 97.103205865195,
+          "hPct": 15.242906632430147
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 15.037974683544304
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.531645569620252,
+          "gapPct": 2
+        },
+        "shape": "circle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0.7242077423852241,
+            "yPct": 81.31578866083589,
+            "wPct": 18,
+            "hPct": 15.037974683544304,
+            "image": null,
+            "imagePool": null,
+            "text": "3 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 20.500009208683974,
+            "yPct": 81.31578866083589,
+            "wPct": 18,
+            "hPct": 15.037974683544304,
+            "image": null,
+            "imagePool": null,
+            "text": "4 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40.27581067498272,
+            "yPct": 81.31578866083589,
+            "wPct": 18,
+            "hPct": 15.037974683544304,
+            "image": null,
+            "imagePool": null,
+            "text": "5 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 60.051612141281474,
+            "yPct": 81.31578866083589,
+            "wPct": 18,
+            "hPct": 15.037974683544304,
+            "image": null,
+            "imagePool": null,
+            "text": "6 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 79.82741360758021,
+            "yPct": 81.31578866083589,
+            "wPct": 18,
+            "hPct": 15.037974683544304,
+            "image": null,
+            "imagePool": null,
+            "text": "7 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 26.587811477979965,
+            "yPct": 18.121457177244576,
+            "wPct": 47.30716992738492,
+            "hPct": 33.319832085371374,
+            "image": "q1_0_2.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 0,
+          "yPct": 82.12550832383906,
+          "wPct": 100,
+          "hPct": 17.87449167616094
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 20,
+          "itemHPct": 16.70886075949367
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.531645569620252,
+          "gapPct": 2
+        },
+        "shape": "circle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "5 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 20,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "6 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "7 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 60,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "8 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 80,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "9 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 26.587811477979965,
+            "yPct": 18.121457177244576,
+            "wPct": 47.30716992738492,
+            "hPct": 33.319832085371374,
+            "image": "q2_0_3.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 0,
+          "yPct": 82.12550832383906,
+          "wPct": 100,
+          "hPct": 17.87449167616094
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 20,
+          "itemHPct": 16.70886075949367
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.531645569620252,
+          "gapPct": 2
+        },
+        "shape": "circle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "10 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 20,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "11 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "12 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 60,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "9 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 80,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "8 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 26.587811477979965,
+            "yPct": 18.121457177244576,
+            "wPct": 47.30716992738492,
+            "hPct": 33.319832085371374,
+            "image": "q3_0_4.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 0,
+          "yPct": 82.12550832383906,
+          "wPct": 100,
+          "hPct": 17.87449167616094
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 20,
+          "itemHPct": 16.70886075949367
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.531645569620252,
+          "gapPct": 2
+        },
+        "shape": "circle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "8 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 20,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "9 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "10 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 60,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "11 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 80,
+            "yPct": 82.12550832383906,
+            "wPct": 20,
+            "hPct": 16.70886075949367,
+            "image": null,
+            "imagePool": null,
+            "text": "12 giờ",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 8,
+          "yPct": 8,
+          "wPct": 84,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 22,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 25.622207293922315,
+            "yPct": 17.716605067801996,
+            "wPct": 47.30716992738492,
+            "hPct": 33.319832085371374,
+            "image": "q4_0_5.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 0,
+          "yPct": 82.12550832383906,
+          "wPct": 100,
+          "hPct": 17.87449167616094
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 19,
+          "itemHPct": 15.873417721518987
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.531645569620252,
+          "gapPct": 2
+        },
+        "shape": "circle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 82.12550832383906,
+            "wPct": 19,
+            "hPct": 15.873417721518987,
+            "image": null,
+            "imagePool": null,
+            "text": "3 giờ 30",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 20.25,
+            "yPct": 82.12550832383906,
+            "wPct": 19,
+            "hPct": 15.873417721518987,
+            "image": null,
+            "imagePool": null,
+            "text": "2 giờ 30",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40.5,
+            "yPct": 82.12550832383906,
+            "wPct": 19,
+            "hPct": 15.873417721518987,
+            "image": null,
+            "imagePool": null,
+            "text": "1 giờ 30",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 60.75,
+            "yPct": 82.12550832383906,
+            "wPct": 19,
+            "hPct": 15.873417721518987,
+            "image": null,
+            "imagePool": null,
+            "text": "4 giờ 30",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 81,
+            "yPct": 82.12550832383906,
+            "wPct": 19,
+            "hPct": 15.873417721518987,
+            "image": null,
+            "imagePool": null,
+            "text": "5 giờ 30",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    }
+  ],
+  "imagePools": []
+}

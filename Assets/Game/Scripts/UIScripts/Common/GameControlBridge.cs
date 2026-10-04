@@ -97,6 +97,14 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Debug.Log("[GameControlBridge] OnStopRequested");
     }
 
+    /// <summary>Gọi từ ControlActivity (UnitySendMessage) mỗi khi đổi Cài đặt game. payload = JSON
+    /// (xem GameSettings.Dto). Áp + lưu ngay, không cần load lại scene.</summary>
+    public void OnSettingsChanged(string json)
+    {
+        if (GameSettings.Instance != null) GameSettings.Instance.ApplyJson(json);
+        else Debug.LogWarning("[GameControlBridge] OnSettingsChanged: GameSettings.Instance null.");
+    }
+
     /// <summary>Gọi từ ControlActivity khi bấm Start LẦN 2 TRỞ ĐI — UnityPlayerActivity đã
     /// sống sẵn từ lần chơi trước (Stop không còn destroy nó nữa), nên chỉ cần lệnh nạp game
     /// mới qua message thay vì khởi động lại Activity (Intent extra chỉ đọc được 1 lần lúc

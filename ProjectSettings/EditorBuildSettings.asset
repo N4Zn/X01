@@ -113,5 +113,26 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/_GenericGame/GenericGamePlayer.unity
     guid: 7c93710ee70f1e14f9d96d4b7cd32e3c
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/CuaHangKemTruocSau.unity
+    guid: 46d78e11bdeade44a80555942b776cd8
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/ThuNghiem12.unity
+    guid: e1f8bfc6f8d3b8d4480983186aa374c9
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/DongHo.unity
+    guid: cc52238fbe79a78409ced745bfc84466
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/SangTruaChieuToi.unity
+    guid: 74f7dab639e1db64c8072242a24ad790
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/ThuNghiem2.unity
+    guid: 84e013ef5cbfcaa47bff6c05e6ee06ab
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/SoSanhSo.unity
+    guid: a2360753ecd5aa54e94952b4101dca41
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/GameSangChuaChieuToiCuaBe.unity
+    guid: 202b1e733b457b94392f429eb839260d
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

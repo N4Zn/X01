@@ -1,0 +1,1485 @@
+{
+  "schemaVersion": 2,
+  "meta": {
+    "gameId": "CuaHangKemTruocSau",
+    "displayName": "cửa hàng kem ( trước , sau)",
+    "category": "Đếm"
+  },
+  "settings": {
+    "playMode": "Combined",
+    "answerMode": "MultiSelect",
+    "scoringMode": "perCorrectCount",
+    "flatPoints": 1,
+    "countdownMode": "nextInN",
+    "countdownSeconds": 3,
+    "hasTargetScore": false,
+    "targetScore": 10,
+    "wrongEndsRound": true,
+    "showCorrectWrongTint": true,
+    "questionAudioOnly": false,
+    "questionFontSize": 69,
+    "answerFontSize": 0,
+    "iconColumns": 2
+  },
+  "layout": {
+    "spawnFlow": {
+      "enabled": false,
+      "direction": "BottomToTop",
+      "itemWPct": 15,
+      "itemHPct": 15,
+      "speedPct": 25,
+      "spawnIntervalSec": 1,
+      "maxConcurrent": 4
+    },
+    "background": null,
+    "backgroundAudio": null,
+    "qFrame": null,
+    "slotFrames": [],
+    "decorations": [],
+    "questionSpace": "stage"
+  },
+  "effects": {
+    "onIdle": {
+      "effects": [
+        {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectTap": {
+      "effects": [
+        {
+          "type": "Punch",
+          "effectParams": {
+            "duration": 0.3,
+            "scale": 1.25
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onWrongTap": {
+      "effects": [
+        {
+          "type": "Shake",
+          "effectParams": {
+            "duration": 0.3,
+            "amplitudePct": 1.5,
+            "speed": 30
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectRemove": {
+      "effects": [
+        {
+          "type": "FlyOff",
+          "effectParams": {
+            "duration": 0.45,
+            "distancePct": 20,
+            "angleDeg": 90,
+            "scale": 0.4
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": false
+    }
+  },
+  "rounds": [
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 4,
+          "yPct": 8,
+          "wPct": 42,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 11,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 7.5,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_5.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 75.50965331815009,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": "sndq1_0_4.mp3",
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 76.24618743722048,
+          "wPct": 90.72682110544608,
+          "hPct": 22.009165673344885
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 21
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_0_6.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 21.970318282986106,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_1_7.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 40.152023559347626,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_2_8.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 58.333728835709145,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_3_9.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 76.51543411207066,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_4_10.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 4,
+          "yPct": 8,
+          "wPct": 42,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 11,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 7.5,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_5.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 75.50965331815009,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": "sndq1_0_11.mp3",
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 76.24618743722048,
+          "wPct": 90.72682110544608,
+          "hPct": 22.009165673344885
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 21
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_0_6.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 21.970318282986106,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_1_7.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40.152023559347626,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_2_8.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 58.333728835709145,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_3_9.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 76.51543411207066,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_4_10.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 4,
+          "yPct": 8,
+          "wPct": 42,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 11,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 7.5,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_5.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 75.50965331815009,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": "sndq2_0_12.mp3",
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 76.24618743722048,
+          "wPct": 90.72682110544608,
+          "hPct": 22.009165673344885
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 21
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_0_6.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 21.970318282986106,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_1_7.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 40.152023559347626,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_2_8.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 58.333728835709145,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_3_9.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 76.51543411207066,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_4_10.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 4,
+          "yPct": 8,
+          "wPct": 42,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 11,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 7.5,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_5.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 75.50965331815009,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": "sndq3_0_13.mp3",
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 76.24618743722048,
+          "wPct": 90.72682110544608,
+          "hPct": 22.009165673344885
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 21
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_0_6.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 21.970318282986106,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_1_7.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 40.152023559347626,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_2_8.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 58.333728835709145,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_3_9.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 76.51543411207066,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_4_10.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 4,
+          "yPct": 8,
+          "wPct": 42,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 11,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 7.5,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_5.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 75.50965331815009,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": "sndq2_0_12.mp3",
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 76.24618743722048,
+          "wPct": 90.72682110544608,
+          "hPct": 22.009165673344885
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 21
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_0_6.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 21.970318282986106,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_1_7.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 40.152023559347626,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_2_8.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 58.333728835709145,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_3_9.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 76.51543411207066,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_4_10.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 4,
+          "yPct": 8,
+          "wPct": 42,
+          "hPct": 40
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 11,
+          "itemHPct": 22
+        },
+        "random": {
+          "itemWPct": 7.5,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": "gbgquestion0_5.png",
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 0,
+            "yPct": 0,
+            "wPct": 100,
+            "hPct": 75.50965331815009,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": "sndq5_0_14.mp3",
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 3.7886130066245878,
+          "yPct": 76.24618743722048,
+          "wPct": 90.72682110544608,
+          "hPct": 22.009165673344885
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 18,
+          "itemHPct": 21
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 3.7886130066245878,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_0_6.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 21.970318282986106,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_1_7.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 40.152023559347626,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_2_8.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          },
+          {
+            "xPct": 58.333728835709145,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_3_9.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 76.51543411207066,
+            "yPct": 76.24618743722048,
+            "wPct": 18,
+            "hPct": 21,
+            "image": "a0_4_10.png",
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {}
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 40,
+          "hPct": 30
+        },
+        "matrix": {
+          "cols": 5,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 5,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 11,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 17,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 23,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 29,
+            "yPct": 5,
+            "wPct": 16,
+            "hPct": 16,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    }
+  ],
+  "imagePools": []
+}

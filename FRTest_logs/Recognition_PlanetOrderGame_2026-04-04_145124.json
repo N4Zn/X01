@@ -1,0 +1,124 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:51:29",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:51:29",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:51:41",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.859999895095825
+        },
+        {
+            "time": "2026-04-04 14:51:42",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.7200000286102297
+        },
+        {
+            "time": "2026-04-04 14:51:47",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9599999785423279
+        },
+        {
+            "time": "2026-04-04 14:51:48",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.5399999618530275
+        },
+        {
+            "time": "2026-04-04 14:51:56",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.5799999237060549
+        },
+        {
+            "time": "2026-04-04 14:51:57",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.75
+        },
+        {
+            "time": "2026-04-04 14:52:02",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.7900000214576721
+        },
+        {
+            "time": "2026-04-04 14:52:04",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.940000057220459
+        },
+        {
+            "time": "2026-04-04 14:52:13",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.4600000381469727
+        },
+        {
+            "time": "2026-04-04 14:52:19",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.9700000286102297
+        },
+        {
+            "time": "2026-04-04 14:52:22",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.649999976158142
+        },
+        {
+            "time": "2026-04-04 14:52:27",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.430000066757202
+        },
+        {
+            "time": "2026-04-04 14:52:30",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 1.1200000047683716
+        }
+    ]
+}

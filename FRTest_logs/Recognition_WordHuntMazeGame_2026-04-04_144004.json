@@ -1,0 +1,68 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:40:08",
+            "game": "WordHuntMazeGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 3.4000000953674318
+        },
+        {
+            "time": "2026-04-04 14:40:08",
+            "game": "WordHuntMazeGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:40:30",
+            "game": "WordHuntMazeGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 3.069999933242798
+        },
+        {
+            "time": "2026-04-04 14:40:31",
+            "game": "WordHuntMazeGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.079999923706055
+        },
+        {
+            "time": "2026-04-04 14:40:54",
+            "game": "WordHuntMazeGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.0
+        },
+        {
+            "time": "2026-04-04 14:40:54",
+            "game": "WordHuntMazeGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.0
+        },
+        {
+            "time": "2026-04-04 14:41:09",
+            "game": "WordHuntMazeGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.949999988079071
+        },
+        {
+            "time": "2026-04-04 14:41:10",
+            "game": "WordHuntMazeGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 1.8300000429153443
+        }
+    ]
+}

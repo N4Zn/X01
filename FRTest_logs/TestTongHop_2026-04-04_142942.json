@@ -1,0 +1,435 @@
+{
+    "gameName": "TestTongHop",
+    "playerLeft": "Hải",
+    "playerRight": "Player_2",
+    "sessionDate": "2026-04-04",
+    "sessionTime": "14:29:42",
+    "durationSeconds": 182.1999969482422,
+    "scoreLeft": 4,
+    "scoreRight": 6,
+    "totalRounds": 9,
+    "rounds": [
+        {
+            "round": 1,
+            "questionId": "q03",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "MultiSelect",
+            "playerLeftRecognized": "Hải",
+            "playerRightRecognized": "",
+            "isCorrect": true,
+            "winnerName": "Player_2",
+            "responseTimeSeconds": 13.479999542236329,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                6
+            ],
+            "clicks": [
+                {
+                    "time": "14:29:52.748",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:29:53.382",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 4,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:29:53.485",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:29:57.960",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 6,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:29:59.529",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:30:00.263",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "CorrectFinal"
+                }
+            ]
+        },
+        {
+            "round": 2,
+            "questionId": "q02",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "MultiSelect",
+            "playerLeftRecognized": "Hải",
+            "playerRightRecognized": "Việt",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 6.96999979019165,
+            "correctAnswers": [
+                3,
+                4,
+                5
+            ],
+            "clicks": [
+                {
+                    "time": "14:30:06.098",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 5,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:30:06.289",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:30:10.866",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 3,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:30:11.785",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 3,
+            "questionId": "q04",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "playerLeftRecognized": "",
+            "playerRightRecognized": "Hải",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 7.079999923706055,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "clicks": [
+                {
+                    "time": "14:30:21.858",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 4,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:30:23.896",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 3,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 4,
+            "questionId": "q01",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "playerLeftRecognized": "Hải",
+            "playerRightRecognized": "Việt",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 10.729999542236329,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "clicks": [
+                {
+                    "time": "14:30:32.523",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:30:33.818",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:30:38.845",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:30:40.356",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 3,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 5,
+            "questionId": "q06",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "playerLeftRecognized": "Việt",
+            "playerRightRecognized": "Hải",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 8.279999732971192,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "clicks": [
+                {
+                    "time": "14:30:52.773",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:30:55.555",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 3,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 6,
+            "questionId": "m01",
+            "topic": "Math",
+            "questionType": "Matching",
+            "answerMode": "Single",
+            "playerLeftRecognized": "",
+            "playerRightRecognized": "Hải",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 35.709999084472659,
+            "correctAnswers": [],
+            "clicks": [
+                {
+                    "time": "14:31:20.951",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "PairCorrect→1"
+                },
+                {
+                    "time": "14:31:20.951",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "PairWrong→0"
+                },
+                {
+                    "time": "14:31:20.951",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "PairWrong→2"
+                },
+                {
+                    "time": "14:31:35.731",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "PairWrong→0"
+                },
+                {
+                    "time": "14:31:35.731",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 0,
+                    "result": "PairWrong→2"
+                },
+                {
+                    "time": "14:31:35.731",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "PairWrong→1"
+                }
+            ]
+        },
+        {
+            "round": 7,
+            "questionId": "q05",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "playerLeftRecognized": "Player_1",
+            "playerRightRecognized": "",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 12.270000457763672,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "clicks": [
+                {
+                    "time": "14:31:45.624",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:31:50.360",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:31:52.251",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "WrongFinal"
+                }
+            ]
+        },
+        {
+            "round": 8,
+            "questionId": "m11",
+            "topic": "Math",
+            "questionType": "Choose",
+            "answerMode": "MultiSelect",
+            "playerLeftRecognized": "Player_1",
+            "playerRightRecognized": "Hải",
+            "isCorrect": true,
+            "winnerName": "Player_2",
+            "responseTimeSeconds": 10.359999656677246,
+            "correctAnswers": [
+                0,
+                1,
+                2
+            ],
+            "clicks": [
+                {
+                    "time": "14:32:02.063",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:32:03.802",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 1,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:32:05.558",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 2,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:32:05.881",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 2,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:32:07.288",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 0,
+                    "result": "CorrectFinal"
+                }
+            ]
+        },
+        {
+            "round": 9,
+            "questionId": "q05",
+            "topic": "Science",
+            "questionType": "Choose",
+            "answerMode": "OrderedSequence",
+            "playerLeftRecognized": "Việt",
+            "playerRightRecognized": "Hải",
+            "isCorrect": false,
+            "winnerName": "",
+            "responseTimeSeconds": 5.300000190734863,
+            "correctAnswers": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "clicks": [
+                {
+                    "time": "14:32:18.132",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 0,
+                    "result": "CorrectPartial"
+                },
+                {
+                    "time": "14:32:18.709",
+                    "playerName": "Hải",
+                    "side": "Left",
+                    "answerIndex": 4,
+                    "result": "WrongFinal"
+                },
+                {
+                    "time": "14:32:19.957",
+                    "playerName": "Player_2",
+                    "side": "Right",
+                    "answerIndex": 3,
+                    "result": "WrongFinal"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,164 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:29:46",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.9700000286102297
+        },
+        {
+            "time": "2026-04-04 14:29:47",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 3.990000009536743
+        },
+        {
+            "time": "2026-04-04 14:30:02",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.8500000238418579
+        },
+        {
+            "time": "2026-04-04 14:30:03",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 1.3700000047683716
+        },
+        {
+            "time": "2026-04-04 14:30:16",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.369999885559082
+        },
+        {
+            "time": "2026-04-04 14:30:17",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 3.930000066757202
+        },
+        {
+            "time": "2026-04-04 14:30:27",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.9200000166893005
+        },
+        {
+            "time": "2026-04-04 14:30:28",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 1.340000033378601
+        },
+        {
+            "time": "2026-04-04 14:30:45",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 0.9100000262260437
+        },
+        {
+            "time": "2026-04-04 14:30:45",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.5
+        },
+        {
+            "time": "2026-04-04 14:30:59",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.5499999523162842
+        },
+        {
+            "time": "2026-04-04 14:31:01",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:31:40",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:31:40",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.039999961853027
+        },
+        {
+            "time": "2026-04-04 14:31:55",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.7899999618530274
+        },
+        {
+            "time": "2026-04-04 14:31:57",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:32:12",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 0.7200000286102295
+        },
+        {
+            "time": "2026-04-04 14:32:13",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.069999933242798
+        },
+        {
+            "time": "2026-04-04 14:32:24",
+            "game": "TestTongHopGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 0.800000011920929
+        },
+        {
+            "time": "2026-04-04 14:32:27",
+            "game": "TestTongHopGame",
+            "slot": "right",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 3.259999990463257
+        }
+    ]
+}

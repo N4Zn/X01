@@ -1,0 +1,44 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 15:02:20",
+            "game": "PathFinderGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 15:02:20",
+            "game": "PathFinderGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 15:02:26",
+            "game": "PathFinderGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.179999828338623
+        },
+        {
+            "time": "2026-04-04 15:02:27",
+            "game": "PathFinderGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.0
+        },
+        {
+            "time": "2026-04-04 15:02:32",
+            "game": "PathFinderGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        }
+    ]
+}

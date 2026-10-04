@@ -17,7 +17,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.eduxplore.control.ui.MockData;
+import com.eduxplore.control.ui.ClassRepo;
+import com.eduxplore.control.ui.ScoreStore;
 import com.eduxplore.control.ui.UiUtil;
 
 import org.json.JSONArray;
@@ -43,8 +44,9 @@ import java.util.Map;
  * cùng ý tưởng với bản mockup HTML đã duyệt với giáo viên.
  *
  * Dữ liệu game/môn học lấy THẬT từ assets/game_registry.json (xuất tay từ GameRegistry.cs).
- * Dữ liệu roster/điểm năng lực/lịch sử hiện là MOCK (MockData.java) — chưa có hệ thống lớp
- * học + công thức tính điểm thật, xem CLAUDE.md. Luồng Start/Pause/Stop/Unity vẫn 100% thật.
+ * Lớp/học sinh lấy THẬT từ "Quản lý lớp" (ClassRepo — /sdcard/EduXplore/classes.json + enrolled.json).
+ * Điểm/lịch sử là kết quả chơi thật (ScoreStore): hết mỗi ván ghi số câu đúng / số câu đã chơi của
+ * từng người; điểm 1 học phần = Σ đúng / Σ đã chơi trong học phần đó × 100. Luồng Start/Pause/Stop/Unity 100% thật.
  */
 public class ControlActivity extends Activity {
 
@@ -76,6 +78,9 @@ public class ControlActivity extends Activity {
     private final List<String> allGameNames = new ArrayList<>();
     // name (định danh nội bộ, dùng để chọn/gửi Unity) -> displayName (tiếng Việt hiện lên UI).
     private final Map<String, String> displayNameByName = new java.util.HashMap<>();
+    // "Học phần" của 1 game = nhóm chủ đề (group, vd "So sánh số") nếu có, không có group thì lấy tên môn.
+    private final Map<String, String> phanByGame = new java.util.HashMap<>();
+    private final Map<String, Integer> phanCategory = new java.util.HashMap<>(); // học phần -> chỉ số môn
 
     /** Tên hiển thị tiếng Việt cho 1 game, theo đúng định danh nội bộ (selectedGameName, ...).
      *  Không tìm thấy (game lạ/JSON thiếu) → hiện tạm chính định danh đó thay vì rỗng. */
@@ -100,7 +105,9 @@ public class ControlActivity extends Activity {
     // ── State ────────────────────────────────────────────────────────────────
     private String scene = "select"; // select | playing | ended
     private int domain = 0;
-    private String classKey;
+    private String classKey; // tên lớp đang chọn (null = chưa có lớp nào)
+    private ClassRepo.Snapshot roster = new ClassRepo.Snapshot();
+    private ScoreStore scoreStore;
     private String selectedScene = null;      // sceneName Unity thật (Start dùng cái này)
     private String selectedGameName = null;   // tên game/variant đang chọn hoặc vừa chơi
     private int compStudentIndex = 0;
@@ -122,7 +129,7 @@ public class ControlActivity extends Activity {
     private volatile String liveLeftName = "—", liveRightName = "—", liveLeftScore = "0", liveRightScore = "0", liveTime = "—";
 
     // Breakdown từng người chơi THẬT trong ván đang chạy (GameControlBridge.PushPlayerBreakdown,
-    // cùng nhịp 1s với PushReport) — thay cho roster MockData.classData(...).playedStudents cũ
+    // cùng nhịp 1s với PushReport) — thay cho roster mock cũ
     // vốn là danh sách CẢ LỚP với số liệu random, không liên quan ván đang chơi.
     private volatile List<LivePlayer> liveLeftPlayers = new ArrayList<>();
     private volatile List<LivePlayer> liveRightPlayers = new ArrayList<>();
@@ -173,12 +180,12 @@ public class ControlActivity extends Activity {
         summaryCard = findViewById(R.id.summary_card);
 
         loadGameRegistry();
-        MockData.generate(categoryNames.length, allGameNames);
-        classKey = MockData.classDefs()[0].key;
+        scoreStore = new ScoreStore(getExternalFilesDir(null));
+        ((TextView) findViewById(R.id.comp_note)).setText(
+                "Điểm học phần = số câu đúng / tổng số câu đã chơi trong học phần đó (thang 100) — công thức tạm, sẽ tinh chỉnh sau.");
 
         buildReportTabs();
-        buildHistoryPanel();
-        renderAll();
+        renderAll(); // lớp/điểm nạp ở luồng nền trong onResume() rồi vẽ lại
         showLogoOnSecondaryDisplay();
 
         startService(new Intent(this, TaskRemovedWatcherService.class));
@@ -245,12 +252,37 @@ public class ControlActivity extends Activity {
                 bucket.add(item);
                 allGameNames.add(item.name);
                 displayNameByName.put(item.name, item.displayName);
+                String phan = !group.isEmpty() ? group
+                        : (item.category >= 0 && item.category < categoryNames.length ? categoryNames[item.category] : "Khác");
+                phanByGame.put(item.name, phan);
+                if (!phanCategory.containsKey(phan)) phanCategory.put(phan, item.category);
             }
             Log.i(TAG, "loadGameRegistry: " + categoryNames.length + " môn, " + allGameNames.size() + " game");
         } catch (Exception e) {
             Log.e(TAG, "loadGameRegistry lỗi: " + e.getMessage(), e);
             categoryNames = new String[]{"Khác"};
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        reloadRosterAsync();
+    }
+
+    /** Nạp lại lớp/học sinh + điểm đã lưu (giáo viên có thể vừa sửa lớp ở "Quản lý lớp" rồi quay lại). Đọc file
+     *  ở luồng nền (enrolled.json có thể nặng), xong mới vẽ lại — đang chơi thì không vẽ chen vào màn live. */
+    private void reloadRosterAsync() {
+        new Thread(() -> {
+            ClassRepo.Snapshot snap = ClassRepo.load();
+            scoreStore.load();
+            runOnUiThread(() -> {
+                roster = snap;
+                if (classKey == null || !roster.classes.contains(classKey))
+                    classKey = roster.classes.isEmpty() ? null : roster.classes.get(0);
+                if (!"playing".equals(scene)) renderAll();
+            });
+        }, "roster-load").start();
     }
 
     @Override
@@ -295,23 +327,23 @@ public class ControlActivity extends Activity {
                     });
         });
 
-        MockData.ClassDef[] classDefs = MockData.classDefs();
-        int classIdx = 0;
-        List<String> classLabels = new ArrayList<>();
-        for (int i = 0; i < classDefs.length; i++) {
-            classLabels.add(classDefs[i].label);
-            if (classDefs[i].key.equals(classKey)) classIdx = i;
+        List<String> classLabels = roster.classes;
+        int classIdx = classKey == null ? -1 : classLabels.indexOf(classKey);
+        if (classIdx < 0) {
+            classTrigger.setText("—");
+            classTrigger.setOnClickListener(null);
+        } else {
+            // Trường "Lớp" đã có label riêng rồi nên giá trị chỉ cần tên ngắn (Mầm/Chồi/Lá), không
+            // lặp lại chữ "Lớp" trong value.
+            String classLabel = classLabels.get(classIdx);
+            classTrigger.setText(classLabel.startsWith("Lớp ") ? classLabel.substring(4) : classLabel);
+            final int fClassIdx = classIdx;
+            classTrigger.setOnClickListener(v -> UiUtil.showDropdown(this, classTrigger, classLabels, fClassIdx,
+                    UiUtil.ContextColor(this, R.color.live_dim), idx -> {
+                        classKey = classLabels.get(idx); compStudentIndex = 0;
+                        renderAll();
+                    }));
         }
-        // Trường "Lớp" đã có label riêng rồi nên giá trị chỉ cần tên ngắn (Mầm/Chồi/Lá), không
-        // lặp lại chữ "Lớp" trong value.
-        String classLabel = classDefs[classIdx].label;
-        classTrigger.setText(classLabel.startsWith("Lớp ") ? classLabel.substring(4) : classLabel);
-        final int fClassIdx = classIdx;
-        classTrigger.setOnClickListener(v -> UiUtil.showDropdown(this, classTrigger, classLabels, fClassIdx,
-                UiUtil.ContextColor(this, R.color.live_dim), idx -> {
-                    classKey = classDefs[idx].key; compStudentIndex = 0;
-                    renderAll();
-                }));
     }
 
     // ── ACTION ZONE (trái, nhỏ) — nội dung đổi theo scene ───────────────────────────────────
@@ -559,17 +591,80 @@ public class ControlActivity extends Activity {
         showReportView(reportTab.equals("live") || reportTab.equals("summary") ? "roster" : reportTab);
         renderRoster();
         renderCompetencyChips();
+        renderHistory();
+    }
+
+    // ── Số liệu học sinh THẬT (ClassRepo = lớp/học sinh, ScoreStore = kết quả chơi) ───────────
+    private static class Row {
+        final ClassRepo.Student s;
+        final Map<String, int[]> phan; // học phần -> {tổng đúng, tổng đã chơi}
+        Row(ClassRepo.Student s, Map<String, int[]> phan) { this.s = s; this.phan = phan; }
+        boolean played() {
+            for (int[] t : phan.values()) if (t[1] > 0) return true;
+            return false;
+        }
+    }
+
+    private List<Row> classRows() {
+        List<Row> out = new ArrayList<>();
+        for (ClassRepo.Student s : roster.inClass(classKey)) out.add(new Row(s, scoreStore.phanTotals(s.name)));
+        return out;
+    }
+
+    private List<Row> playedRows() {
+        List<Row> out = new ArrayList<>();
+        for (Row r : classRows()) if (r.played()) out.add(r);
+        return out;
+    }
+
+    /** Điểm trung bình các học phần ĐÃ CHƠI thuộc môn `cat` (thang 100); -1 = chưa chơi học phần nào của môn. */
+    private int categoryScore(Row r, int cat) {
+        int sum = 0, n = 0;
+        for (Map.Entry<String, int[]> e : r.phan.entrySet()) {
+            Integer c = phanCategory.get(e.getKey());
+            int sc = ScoreStore.scorePct(e.getValue()[0], e.getValue()[1]);
+            if (c != null && c == cat && sc >= 0) { sum += sc; n++; }
+        }
+        return n == 0 ? -1 : Math.round(sum / (float) n);
+    }
+
+    /** Điểm tổng = trung bình các học phần đã chơi (mỗi học phần 1 phiếu); -1 = chưa chơi gì. */
+    private int totalScore(Row r) {
+        int sum = 0, n = 0;
+        for (int[] t : r.phan.values()) {
+            int sc = ScoreStore.scorePct(t[0], t[1]);
+            if (sc >= 0) { sum += sc; n++; }
+        }
+        return n == 0 ? -1 : Math.round(sum / (float) n);
+    }
+
+    /** Môn có điểm thấp nhất trong các môn đã có điểm; -1 nếu chưa có môn nào. */
+    private int weakestCategory(Row r) {
+        int best = -1, bestScore = Integer.MAX_VALUE;
+        for (int c = 0; c < categoryNames.length; c++) {
+            int sc = categoryScore(r, c);
+            if (sc >= 0 && sc < bestScore) { bestScore = sc; best = c; }
+        }
+        return best;
+    }
+
+    private TextView emptyNote(String text) {
+        TextView tv = UiUtil.label(this, text, 12.5f, R.color.text_faint, false);
+        tv.setPadding(0, UiUtil.dp(this, 14), 0, 0);
+        return tv;
     }
 
     // ── Tab "Lớp học": Tên + 1 cột môn đang chọn + [Lượt] + Tổng ────────────────────────────
     private void renderRoster() {
-        MockData.ClassData cls = MockData.classData(classKey);
-        int catCount = categoryNames.length;
+        List<Row> all = classRows();
+        List<Row> played = new ArrayList<>();
+        List<String> notPlayedNames = new ArrayList<>();
+        for (Row r : all) { if (r.played()) played.add(r); else notPlayedNames.add(r.s.display); }
 
-        notPlayedStrip.setVisibility(cls.notPlayedNames.isEmpty() ? View.GONE : View.VISIBLE);
-        if (!cls.notPlayedNames.isEmpty()) {
-            notPlayedStrip.setText("Chưa chơi (" + cls.notPlayedNames.size() + "): "
-                    + android.text.TextUtils.join(", ", cls.notPlayedNames));
+        notPlayedStrip.setVisibility(notPlayedNames.isEmpty() ? View.GONE : View.VISIBLE);
+        if (!notPlayedNames.isEmpty()) {
+            notPlayedStrip.setText("Chưa chơi (" + notPlayedNames.size() + "): "
+                    + android.text.TextUtils.join(", ", notPlayedNames));
         }
 
         boolean showGameCol = "select".equals(scene) && selectedGameName != null;
@@ -584,18 +679,30 @@ public class ControlActivity extends Activity {
         if (showGameCol) rosterHeader.addView(headerCell("Lượt", null, new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT)));
         rosterHeader.addView(headerCell("Tổng", "total", new LinearLayout.LayoutParams(UiUtil.dp(this, 50), ViewGroup.LayoutParams.WRAP_CONTENT)));
 
-        List<MockData.Student> rows = new ArrayList<>(cls.playedStudents);
+        List<Row> rows = new ArrayList<>(played);
         final int dir = rosterSortDir;
         java.util.Collections.sort(rows, (a, b) -> {
             int cmp;
-            if ("name".equals(rosterSortKey)) cmp = a.name.compareTo(b.name);
-            else if ("total".equals(rosterSortKey)) cmp = Integer.compare(a.total(catCount), b.total(catCount));
-            else cmp = Integer.compare(a.scoreOr0(domain), b.scoreOr0(domain));
+            if ("name".equals(rosterSortKey)) cmp = a.s.display.compareTo(b.s.display);
+            else if ("total".equals(rosterSortKey)) cmp = Integer.compare(totalScore(a), totalScore(b));
+            else cmp = Integer.compare(categoryScore(a, domain), categoryScore(b, domain));
             return cmp * dir;
         });
 
         rosterBody.removeAllViews();
-        for (MockData.Student s : rows) {
+        if (classKey == null) {
+            rosterBody.addView(emptyNote("Chưa có lớp nào. Tạo lớp và thêm học sinh ở mục \"Quản lý lớp\"."));
+            return;
+        }
+        if (all.isEmpty()) {
+            rosterBody.addView(emptyNote("Lớp này chưa có học sinh. Thêm học sinh ở mục \"Quản lý lớp\"."));
+            return;
+        }
+        if (played.isEmpty()) {
+            rosterBody.addView(emptyNote("Chưa có học sinh nào trong lớp chơi game."));
+            return;
+        }
+        for (Row s : rows) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
@@ -606,34 +713,40 @@ public class ControlActivity extends Activity {
             nameCell.setOrientation(LinearLayout.HORIZONTAL);
             nameCell.setGravity(Gravity.CENTER_VERTICAL);
             nameCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.4f));
-            TextView av = UiUtil.makeAvatar(this, s.avatar, 26);
+            TextView av = UiUtil.makeAvatar(this, initialsOf(s.s.display), 26);
             LinearLayout.LayoutParams avLp = (LinearLayout.LayoutParams) av.getLayoutParams();
             avLp.rightMargin = UiUtil.dp(this, 8);
             nameCell.addView(av);
-            TextView nm = UiUtil.label(this, s.name, 13f, R.color.text, true);
+            TextView nm = UiUtil.label(this, s.s.display, 13f, R.color.text, true);
             nameCell.addView(nm);
             row.addView(nameCell);
 
-            boolean isMin = s.weakestCategory(catCount) == domain;
-            LinearLayout catCell = UiUtil.makeBarCell(this, s.scoreOr0(domain), isMin);
+            int catScore = categoryScore(s, domain);
+            View catCell;
+            if (catScore < 0) {
+                catCell = UiUtil.label(this, "—", 12f, R.color.text_faint, false);
+            } else {
+                catCell = UiUtil.makeBarCell(this, catScore, weakestCategory(s) == domain);
+            }
             catCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.3f));
             row.addView(catCell);
 
             if (showGameCol) {
-                Integer plays = s.playsByGame.get(selectedGameName);
-                TextView gameCell = UiUtil.label(this, plays != null ? String.valueOf(plays) : "—", 12f, R.color.accent, false);
+                int plays = scoreStore.plays(s.s.name, selectedGameName);
+                TextView gameCell = UiUtil.label(this, plays > 0 ? String.valueOf(plays) : "—", 12f, R.color.accent, false);
                 gameCell.setGravity(Gravity.END);
                 gameCell.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT));
                 row.addView(gameCell);
             }
 
-            TextView totalCell = UiUtil.label(this, String.valueOf(s.total(catCount)), 14f, R.color.text, true);
+            int total = totalScore(s);
+            TextView totalCell = UiUtil.label(this, total < 0 ? "—" : String.valueOf(total), 14f, R.color.text, true);
             totalCell.setGravity(Gravity.END);
             totalCell.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 50), ViewGroup.LayoutParams.WRAP_CONTENT));
             row.addView(totalCell);
 
             row.setOnClickListener(v -> {
-                compStudentIndex = cls.playedStudents.indexOf(s);
+                compStudentIndex = played.indexOf(s);
                 showReportView("competency");
                 renderCompetencyChips();
             });
@@ -664,13 +777,13 @@ public class ControlActivity extends Activity {
         return th;
     }
 
-    // ── Tab "Năng lực": list điểm theo môn (không vẽ ngũ giác — nhiều môn sẽ rối) ───────────
+    // ── Tab "Năng lực": điểm từng HỌC PHẦN đã chơi của 1 học sinh ───────────────────────────
     private void renderCompetencyChips() {
-        MockData.ClassData cls = MockData.classData(classKey);
-        if (compStudentIndex >= cls.playedStudents.size()) compStudentIndex = 0;
+        List<Row> played = playedRows();
+        if (compStudentIndex >= played.size()) compStudentIndex = 0;
         compChips.removeAllViews();
-        for (int i = 0; i < cls.playedStudents.size(); i++) {
-            MockData.Student s = cls.playedStudents.get(i);
+        for (int i = 0; i < played.size(); i++) {
+            ClassRepo.Student s = played.get(i).s;
             boolean sel = i == compStudentIndex;
             LinearLayout chip = new LinearLayout(this);
             chip.setOrientation(LinearLayout.HORIZONTAL);
@@ -682,11 +795,11 @@ public class ControlActivity extends Activity {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = UiUtil.dp(this, 6);
             chip.setLayoutParams(lp);
-            TextView av = UiUtil.makeAvatar(this, s.avatar, 20);
+            TextView av = UiUtil.makeAvatar(this, initialsOf(s.display), 20);
             LinearLayout.LayoutParams avLp = (LinearLayout.LayoutParams) av.getLayoutParams();
             avLp.rightMargin = UiUtil.dp(this, 8);
             chip.addView(av);
-            chip.addView(UiUtil.label(this, s.name, 12f, sel ? R.color.text : R.color.text_dim, true));
+            chip.addView(UiUtil.label(this, s.display, 12f, sel ? R.color.text : R.color.text_dim, true));
             final int idx = i;
             chip.setOnClickListener(v -> { compStudentIndex = idx; renderCompetencyChips(); });
             compChips.addView(chip);
@@ -695,27 +808,35 @@ public class ControlActivity extends Activity {
     }
 
     private void renderCompetency() {
-        MockData.ClassData cls = MockData.classData(classKey);
-        if (cls.playedStudents.isEmpty()) { compName.setText("—"); compFlags.setText(""); compScoreList.removeAllViews(); return; }
-        MockData.Student s = cls.playedStudents.get(compStudentIndex);
-        int catCount = categoryNames.length;
-        compName.setText(s.name);
-        compFlags.setText("slow-sure".equals(s.flag) ? "Chậm mà chắc" : "fast-careless".equals(s.flag) ? "Nhanh, hay ẩu" : "");
-        int weakest = s.weakestCategory(catCount);
-
+        List<Row> played = playedRows();
         compScoreList.removeAllViews();
-        for (int c = 0; c < catCount; c++) {
-            boolean isMin = c == weakest;
+        if (played.isEmpty()) { compName.setText("—"); compFlags.setText(""); return; }
+        Row r = played.get(Math.min(compStudentIndex, played.size() - 1));
+        compName.setText(r.s.display);
+        int total = totalScore(r);
+        compFlags.setText(total < 0 ? "" : "Điểm trung bình các học phần: " + total);
+
+        // Chỉ liệt kê học phần ĐÃ CHƠI; học phần điểm thấp nhất tô đỏ (chỉ khi có ≥2 học phần để so).
+        List<Map.Entry<String, int[]>> entries = new ArrayList<>();
+        for (Map.Entry<String, int[]> e : r.phan.entrySet()) if (e.getValue()[1] > 0) entries.add(e);
+        int minScore = Integer.MAX_VALUE;
+        for (Map.Entry<String, int[]> e : entries) minScore = Math.min(minScore, ScoreStore.scorePct(e.getValue()[0], e.getValue()[1]));
+
+        for (Map.Entry<String, int[]> e : entries) {
+            int sc = ScoreStore.scorePct(e.getValue()[0], e.getValue()[1]);
+            boolean isMin = entries.size() > 1 && sc == minScore;
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(0, UiUtil.dp(this, 8), 0, UiUtil.dp(this, 8));
 
-            TextView cname = UiUtil.label(this, categoryNames[c], 12.5f, isMin ? R.color.bad : R.color.text_dim, isMin);
-            cname.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 120), ViewGroup.LayoutParams.WRAP_CONTENT));
+            // "So sánh số · 3/5" = học phần · số câu đúng / số câu đã chơi.
+            TextView cname = UiUtil.label(this, e.getKey() + " · " + e.getValue()[0] + "/" + e.getValue()[1], 12.5f,
+                    isMin ? R.color.bad : R.color.text_dim, isMin);
+            cname.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 170), ViewGroup.LayoutParams.WRAP_CONTENT));
             row.addView(cname);
 
-            LinearLayout barCell = UiUtil.makeBarCell(this, s.scoreOr0(c), isMin);
+            LinearLayout barCell = UiUtil.makeBarCell(this, sc, isMin);
             barCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             row.addView(barCell);
 
@@ -727,27 +848,29 @@ public class ControlActivity extends Activity {
         }
     }
 
-    // ── Tab "Lịch sử" — mock tĩnh, build 1 lần lúc onCreate ─────────────────────────────────
-    private void buildHistoryPanel() {
-        String[][] rows = {
-                {"10:24:41", "Minh An", "Counting5", "✓", "2.8s"},
-                {"10:24:33", "Player_2", "Counting5", "✗", "6.2s"},
-                {"10:21:07", "Bảo Ngọc", "Counting", "✓", "3.1s"},
-                {"10:18:52", "Khánh Vy", "AddNumber5", "✓", "4.0s"},
-                {"10:15:19", "Thảo My", "TestTongHop", "✗", "7.5s"},
-        };
-        for (String[] r : rows) {
+    // ── Tab "Lịch sử": các ván gần đây của học sinh trong lớp đang chọn (dữ liệu thật) ────────
+    private void renderHistory() {
+        historyBody.removeAllViews();
+        java.util.Set<String> names = new java.util.HashSet<>();
+        java.util.Map<String, String> displayByName = new java.util.HashMap<>();
+        for (ClassRepo.Student s : roster.inClass(classKey)) { names.add(s.name); displayByName.put(s.name, s.display); }
+
+        List<ScoreStore.Record> recent = scoreStore.recent(names, 50);
+        if (recent.isEmpty()) { historyBody.addView(emptyNote("Chưa có ván chơi nào của lớp này.")); return; }
+        java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.US);
+        for (ScoreStore.Record rec : recent) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(0, UiUtil.dp(this, 8), 0, UiUtil.dp(this, 8));
-            row.addView(cellText(r[0], 70, R.color.text_faint));
-            row.addView(cellText(r[1], 0, R.color.text));
-            row.addView(cellText(r[2], 0, R.color.text_dim));
-            TextView mark = cellText(r[3], 30, "✓".equals(r[3]) ? R.color.good : R.color.bad);
+            row.addView(cellText(fmt.format(new java.util.Date(rec.time)), 84, R.color.text_faint));
+            row.addView(cellText(displayByName.get(rec.name), 0, R.color.text));
+            row.addView(cellText(displayNameOf(rec.game), 0, R.color.text_dim));
+            int pct = ScoreStore.scorePct(rec.correct, rec.answered);
+            TextView mark = cellText(rec.correct + "/" + rec.answered, 44, pct >= 50 ? R.color.good : R.color.bad);
             mark.setGravity(Gravity.CENTER);
             row.addView(mark);
-            TextView rt = cellText(r[4], 60, R.color.text_dim);
+            TextView rt = cellText(String.format(java.util.Locale.US, "%.1fs", rec.avgTime), 56, R.color.text_dim);
             rt.setGravity(Gravity.END);
             row.addView(rt);
             historyBody.addView(row);
@@ -966,6 +1089,9 @@ public class ControlActivity extends Activity {
         }
 
         paused = false;
+        // Ván mới: bỏ số liệu người chơi của ván trước (không để lẫn vào bản ghi của ván này).
+        liveLeftPlayers = new ArrayList<>();
+        liveRightPlayers = new ArrayList<>();
         scene = "playing";
         renderAll();
     }
@@ -992,9 +1118,33 @@ public class ControlActivity extends Activity {
         // hiện ra được: lệnh này chen ngay giữa lúc renderAll() vừa vẽ xong màn "ended", làm
         // gián đoạn trước khi người dùng kịp thấy (đã xác nhận qua báo cáo thực tế trên K02:
         // hết game tự nhiên không hề thấy nút Chơi lại).
+        // Ghi kết quả ván vừa xong (Stop tay / hết giờ tự nhiên đều qua đây) — chỉ khi đang "playing", để
+        // OnGameEnded gọi thêm lần nữa (vd bấm nút trên ScoreScene) không ghi trùng.
+        if ("playing".equals(scene)) recordSession();
         scene = "ended";
         Log.i(TAG, "backToMenu: scene=ended, renderAll()");
         renderAll();
+    }
+
+    /** Lưu kết quả ván vừa chơi: mỗi người chơi đã nhận diện được = 1 dòng (đúng/đã chơi) gắn với game + học phần
+     *  của game đó. Số liệu lấy từ lần push gần nhất của Unity (≤1s trước; hết giờ tự nhiên thì Unity ép push cuối). */
+    private void recordSession() {
+        if (selectedGameName == null) return;
+        String game = selectedGameName;
+        String phan = phanByGame.containsKey(game) ? phanByGame.get(game) : game;
+        long now = System.currentTimeMillis();
+        List<ScoreStore.Record> recs = new ArrayList<>();
+        List<LivePlayer> all = new ArrayList<>(liveLeftPlayers);
+        all.addAll(liveRightPlayers);
+        for (LivePlayer p : all) {
+            if (p.answered <= 0 || p.name == null || p.name.isEmpty()) continue;
+            recs.add(new ScoreStore.Record(now, p.name, game, phan, p.correct, p.answered, p.avgTime));
+        }
+        if (recs.isEmpty()) return;
+        new Thread(() -> {
+            scoreStore.add(recs);
+            runOnUiThread(() -> { if (!"playing".equals(scene)) renderReportZone(); });
+        }, "score-save").start();
     }
 
     private static void sendToUnity(String method, String message) {

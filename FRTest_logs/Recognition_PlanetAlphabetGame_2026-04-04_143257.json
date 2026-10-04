@@ -1,0 +1,356 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:32:59",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.090000033378601
+        },
+        {
+            "time": "2026-04-04 14:33:01",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:33:22",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 1.3600000143051148
+        },
+        {
+            "time": "2026-04-04 14:33:23",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.2300000190734865
+        },
+        {
+            "time": "2026-04-04 14:33:30",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.5799999237060549
+        },
+        {
+            "time": "2026-04-04 14:33:30",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 1.7899999618530274
+        },
+        {
+            "time": "2026-04-04 14:33:40",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.2999999523162842
+        },
+        {
+            "time": "2026-04-04 14:33:41",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.110000133514404
+        },
+        {
+            "time": "2026-04-04 14:33:50",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.090000152587891
+        },
+        {
+            "time": "2026-04-04 14:33:53",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:33:56",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.25
+        },
+        {
+            "time": "2026-04-04 14:34:07",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:34:08",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.009999990463257
+        },
+        {
+            "time": "2026-04-04 14:34:14",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:34:16",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:34:17",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.0199999809265138
+        },
+        {
+            "time": "2026-04-04 14:34:24",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.03000020980835
+        },
+        {
+            "time": "2026-04-04 14:34:27",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.4000000953674318
+        },
+        {
+            "time": "2026-04-04 14:34:31",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.070000171661377
+        },
+        {
+            "time": "2026-04-04 14:34:36",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.03000020980835
+        },
+        {
+            "time": "2026-04-04 14:34:38",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Việt",
+            "recognized": true,
+            "elapsedSec": 3.4100000858306886
+        },
+        {
+            "time": "2026-04-04 14:34:41",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Xuân Đức",
+            "recognized": true,
+            "elapsedSec": 2.049999952316284
+        },
+        {
+            "time": "2026-04-04 14:34:43",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.5399999618530275
+        },
+        {
+            "time": "2026-04-04 14:34:47",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Xuân Đức",
+            "recognized": true,
+            "elapsedSec": 1.1399999856948853
+        },
+        {
+            "time": "2026-04-04 14:34:50",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Xuân Đức",
+            "recognized": true,
+            "elapsedSec": 3.609999895095825
+        },
+        {
+            "time": "2026-04-04 14:34:56",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.6600000858306886
+        },
+        {
+            "time": "2026-04-04 14:34:58",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:35:07",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.9700000286102297
+        },
+        {
+            "time": "2026-04-04 14:35:10",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Xuân Đức",
+            "recognized": true,
+            "elapsedSec": 2.049999952316284
+        },
+        {
+            "time": "2026-04-04 14:35:15",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.5199999809265137
+        },
+        {
+            "time": "2026-04-04 14:35:16",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Xuân Đức",
+            "recognized": true,
+            "elapsedSec": 2.559999942779541
+        },
+        {
+            "time": "2026-04-04 14:35:21",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.4199999570846558
+        },
+        {
+            "time": "2026-04-04 14:35:23",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.450000047683716
+        },
+        {
+            "time": "2026-04-04 14:35:28",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Xuân Đức",
+            "recognized": true,
+            "elapsedSec": 2.640000104904175
+        },
+        {
+            "time": "2026-04-04 14:35:36",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 1.1299999952316285
+        },
+        {
+            "time": "2026-04-04 14:35:43",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:35:50",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:35:51",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.130000114440918
+        },
+        {
+            "time": "2026-04-04 14:35:56",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 3.700000047683716
+        },
+        {
+            "time": "2026-04-04 14:35:58",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.119999885559082
+        },
+        {
+            "time": "2026-04-04 14:36:00",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Hải",
+            "recognized": true,
+            "elapsedSec": 2.5
+        },
+        {
+            "time": "2026-04-04 14:36:00",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 1.2899999618530274
+        },
+        {
+            "time": "2026-04-04 14:36:07",
+            "game": "PlanetAlphabetGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 3.950000047683716
+        },
+        {
+            "time": "2026-04-04 14:36:07",
+            "game": "PlanetAlphabetGame",
+            "slot": "right",
+            "name": "Đạt",
+            "recognized": true,
+            "elapsedSec": 2.6700000762939455
+        }
+    ]
+}

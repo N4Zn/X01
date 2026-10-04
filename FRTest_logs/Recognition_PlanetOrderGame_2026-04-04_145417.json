@@ -1,0 +1,36 @@
+{
+    "entries": [
+        {
+            "time": "2026-04-04 14:54:22",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Player_1",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:54:22",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.010000228881836
+        },
+        {
+            "time": "2026-04-04 14:54:30",
+            "game": "PlanetOrderGame",
+            "slot": "right",
+            "name": "Player_2",
+            "recognized": false,
+            "elapsedSec": 4.019999980926514
+        },
+        {
+            "time": "2026-04-04 14:54:32",
+            "game": "PlanetOrderGame",
+            "slot": "left",
+            "name": "Quốc Anh",
+            "recognized": true,
+            "elapsedSec": 0.9900000095367432
+        }
+    ]
+}
