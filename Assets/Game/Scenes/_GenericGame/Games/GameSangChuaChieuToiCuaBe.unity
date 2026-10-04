@@ -2134,7 +2134,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
@@ -2913,10 +2913,40 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1556263860}
     m_Modifications:
+    - target: {fileID: 1849619076284423179, guid: d44879e7177fd4141939c1ffed5d6769,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1869178421871031192, guid: d44879e7177fd4141939c1ffed5d6769,
         type: 3}
       propertyPath: m_Name
       value: GameSangChuaChieuToiCuaBe_Layout
+      objectReference: {fileID: 0}
+    - target: {fileID: 4446364156493406944, guid: d44879e7177fd4141939c1ffed5d6769,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4852812614648589993, guid: d44879e7177fd4141939c1ffed5d6769,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5410647236738994290, guid: d44879e7177fd4141939c1ffed5d6769,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8413395568958062368, guid: d44879e7177fd4141939c1ffed5d6769,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8491716809416515751, guid: d44879e7177fd4141939c1ffed5d6769,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8613988508455461703, guid: d44879e7177fd4141939c1ffed5d6769,
         type: 3}
