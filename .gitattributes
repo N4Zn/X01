@@ -3,8 +3,10 @@
 *.mov filter=lfs diff=lfs merge=lfs -text
 *.onnx filter=lfs diff=lfs merge=lfs -text
 *.psd filter=lfs diff=lfs merge=lfs -text
+*.aar filter=lfs diff=lfs merge=lfs -text
 
 # File đã commit dạng thường trước đó: tắt filter để git status không báo sửa. Đừng xoá các dòng này.
+# (.aar rebuild hay đổi -> đã chuyển sang LFS 2026-10-04, trừ libvlc tĩnh 86MB)
 Assets/Game/Animations/AddNumber_Tutorial.mp4 -filter -diff -merge
 Assets/Game/Videos/tutorial_sample.mp4 -filter -diff -merge
 ExternalVideoAssets/Video/Jupiter.mp4 -filter -diff -merge
@@ -33,6 +35,7 @@ Assets/StreamingAssets/face_detection_yunet.onnx -filter -diff -merge
 Assets/StreamingAssets/face_recognition_sface.onnx -filter -diff -merge
 NativePlugins/FaceEnrollAndroidLib/faceenroll/src/main/assets/face_detection_yunet.onnx -filter -diff -merge
 NativePlugins/FaceEnrollAndroidLib/faceenroll/src/main/assets/face_recognition_sface.onnx -filter -diff -merge
+Assets/Plugins/Android/libvlc-all-3.6.3.aar -filter -diff -merge
 
 # Script shell luôn LF (CRLF làm sh lỗi)
 *.sh text eol=lf
