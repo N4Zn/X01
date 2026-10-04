@@ -3,6 +3,8 @@
 # Dùng:  sh Tools/build-aar.sh [controlui|lidarlib|faceenroll|all|changed] [--check-only]
 #   changed (mặc định) = chỉ module có source mới hơn aar đã build
 #   --check-only       = chỉ kiểm tra tiền điều kiện, không build
+#   --commit           = sau build: aar khác bản HEAD (so nội dung, bỏ qua timestamp) thì commit local
+#                        `aar: rebuild <module>` + ghi mục Kết quả trong handoff/build-aar.md; giống HEAD thì hoàn tác file
 # Thoát 0 = OK, !=0 = lỗi (xem build-aar.log). KHÔNG commit/push; in lệnh git add gợi ý ở cuối.
 # libvlc/unityplugin aar là file ngoài, script này không build. liblidar_unity.so: xem NativePlugins/LidarUnity/CLAUDE.md.
 set -u
@@ -10,10 +12,11 @@ ADD=""
 cd "$(dirname "$0")/.." || exit 2
 ROOT=$(pwd)
 LOG="$ROOT/build-aar.log"
-WHAT=changed; CHECK_ONLY=0
+WHAT=changed; CHECK_ONLY=0; DO_COMMIT=0
 for a in "$@"; do
   case "$a" in
     --check-only) CHECK_ONLY=1 ;;
+    --commit) DO_COMMIT=1 ;;
     controlui|lidarlib|faceenroll|all|changed) WHAT=$a ;;
     *) echo "Tham số lạ: $a"; exit 2 ;;
   esac
@@ -28,6 +31,14 @@ mod_info() {
     lidarlib)   DIR=NativePlugins/LidarNativeAndroidLib; TASK=:lidarlib:assembleRelease;   OUT=lidarlib/build/outputs/aar/lidarlib-release.aar;     DEST=Assets/Plugins/Android/lidarlib-release.aar;   SRC=lidarlib/src ;;
     faceenroll) DIR=NativePlugins/FaceEnrollAndroidLib;  TASK=:faceenroll:assembleRelease; OUT=faceenroll/build/outputs/aar/faceenroll-release.aar; DEST=Assets/Plugins/Android/faceenroll-release.aar; SRC=faceenroll/src ;;
   esac
+}
+
+
+# Chữ ký NỘI DUNG aar (crc từng file, kể cả bên trong classes.jar) — không phụ thuộc timestamp
+aar_sig() { python Tools/aar_sig.py "$1" 2>/dev/null || python3 Tools/aar_sig.py "$1" 2>/dev/null; }
+head_sig() {  # chữ ký aar ở HEAD (smudge LFS nếu là pointer)
+  t=$(mktemp); git cat-file -p "HEAD:$1" 2>/dev/null | git lfs smudge > "$t" 2>/dev/null
+  if [ -s "$t" ] && unzip -tq "$t" >/dev/null 2>&1; then aar_sig "$t"; fi; rm -f "$t"
 }
 
 # --- Tiền điều kiện ---
@@ -53,7 +64,7 @@ case "$WHAT" in
       # So với commit gần nhất đã chạm aar: source/gradle đổi (đã commit hoặc chưa) => cần build
       BASE=$(git log -1 --format=%H -- "$DEST" 2>/dev/null)
       P="$DIR/$SRC $DIR/$(dirname "$SRC")/build.gradle.kts"
-      if [ ! -f "$DEST" ] || [ -z "$BASE" ]          || [ -n "$(git diff --name-only "$BASE" -- $P 2>/dev/null | head -1)" ]          || [ -n "$(git ls-files --others --exclude-standard -- $P | head -1)" ]; then
+      if [ ! -f "$DEST" ] || [ -z "$BASE" ]          || [ -n "$(git diff --name-only "$BASE" -- $P 2>/dev/null | head -1)" ]          || [ -n "$(git ls-files --others --exclude-standard -- $P | head -1)" ]          || [ -n "$(git status --porcelain -- "$DEST")" ]; then
         MODS="$MODS $m"
       fi
     done ;;
@@ -96,3 +107,35 @@ for m in $MODS; do
 done
 echo
 echo "XONG. Gợi ý: git add${ADD:-}   (aar vào LFS tự động) — rồi build lại APK trong Unity."
+
+# --- Commit (chỉ khi --commit) ---
+[ "$DO_COMMIT" = 1 ] || exit 0
+RESULT=""; TOCOMMIT=""
+for m in $MODS; do
+  mod_info $m
+  NEW=$(aar_sig "$DEST"); OLD=$(head_sig "$DEST")
+  if [ -n "$OLD" ] && [ "$NEW" = "$OLD" ]; then
+    git checkout -- "$DEST" 2>/dev/null
+    RESULT="$RESULT\n- $m: nội dung aar KHÔNG đổi so với HEAD → bỏ file build (không commit)."
+  else
+    TOCOMMIT="$TOCOMMIT $m"
+    RESULT="$RESULT\n- $m: aar đã đổi → commit \`aar: rebuild $m\`."
+  fi
+done
+for m in $TOCOMMIT; do
+  mod_info $m
+  git add -- "$DEST" "$DIR/$SRC" "$DIR/$(dirname "$SRC")/build.gradle.kts" 2>/dev/null
+  git commit -q -m "aar: rebuild $m" -m "Build bằng Tools/build-aar.sh --commit" || fail "$m: git commit thất bại (hook?)"
+  echo "COMMIT $(git rev-parse --short HEAD): aar: rebuild $m"
+done
+# Ghi kết quả vào handoff/build-aar.md
+N=handoff/build-aar.md
+if [ -f "$N" ]; then
+  L=$(grep -n '^## Kết quả' "$N" | head -1 | cut -d: -f1)
+  head -n "$L" "$N" > "$N.tmp"
+  printf '%s\n%b\n' "_lần chạy $(date '+%Y-%m-%d %H:%M')_ (module:$MODS)" "$RESULT" >> "$N.tmp"
+  mv "$N.tmp" "$N"
+  [ -n "$TOCOMMIT" ] && { git add "$N"; git commit -q -m "build-aar: ghi kết quả"; }
+fi
+echo "--- Kết quả ---"; printf '%b\n' "$RESULT"
+echo "Trạng thái git:"; git status --short -- Assets/Plugins NativePlugins handoff
