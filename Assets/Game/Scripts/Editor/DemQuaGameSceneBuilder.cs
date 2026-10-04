@@ -205,9 +205,7 @@ public static class DemQuaGameSceneBuilder
         // 1.8s để đủ chỗ cho AnnounceCount() phát xong audio "số + tên quả" (vd "ba quả táo")
         // trước khi round sau xoá số trên rổ về 0. Vẫn nằm trong khoảng "~1-2s" user yêu cầu.
         ctrlSo.FindProperty("feedbackDelayCorrect").floatValue = 1.8f;
-        // "Next in 3,2,1" riêng từng bên từ round 2 trở đi — tính năng dùng chung mới thêm vào
-        // MiniGameControllerBase (xem IndependentRoundCountdown), thay cho coroutine tự viết cũ.
-        ctrlSo.FindProperty("useIndependentRoundCountdown").boolValue = true;
+        // "Next in Ns" riêng từng bên từ round 2: MiniGameControllerBase.UseIndependentRoundCountdown (mặc định bật, không cần cờ scene).
         ctrlSo.FindProperty("buttonDisplay").objectReferenceValue = buttonDisplay;
         ctrlSo.FindProperty("backButton").objectReferenceValue = backButton.GetComponent<Button>();
         ctrlSo.FindProperty("leftBackground").objectReferenceValue = leftBg.GetComponent<Image>();

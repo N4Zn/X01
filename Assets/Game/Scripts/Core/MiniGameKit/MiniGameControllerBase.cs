@@ -62,13 +62,6 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     [Tooltip("Text 'Next in Ns' mỗi bên trong lúc chờ chuyển câu — để trống nếu không cần hiện chữ (khoảng chờ vẫn chạy, chỉ không có số đếm ngược hiện ra).")]
     [SerializeField] protected Text leftCountdownText;
     [SerializeField] protected Text rightCountdownText;
-    [Tooltip("Bật 'Next in 3,2,1' RIÊNG cho từng bên ở Independent mode (mặc định TẮT) — " +
-             "TransitionCountdown()/UseDefaultTransitionCountdown ở trên CHỈ chạy ở Combined mode, " +
-             "Independent mode (2 bên tự nhịp riêng, không qua StateMachineEnter_Feedback) cần bản " +
-             "RIÊNG này. Round ĐẦU TIÊN của mỗi bên KHÔNG đếm lại (đã có 'Start in Ns' từ " +
-             "InitialStartCountdownThenBegin() rồi) — chỉ đếm từ round 2 trở đi. Dùng lại đúng 2 " +
-             "field leftCountdownText/rightCountdownText phía trên.")]
-    [SerializeField] protected bool useIndependentRoundCountdown = false;
 
     public ScoreManager ScoreManager { get; private set; }
     protected CustomFSMManager Fsm { get; private set; }
@@ -110,6 +103,10 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         // mọi trường hợp). Set thẳng true, không cần if — đã true thì gọi lại vẫn true, không
         // ảnh hưởng gì nếu giáo viên vừa bật tay bằng nút cứng trước đó.
         LidarTouchBridge.Instance?.SetTouchEnabled(true);
+
+        // Mọi countdown Kit (Start/Next, Combined lẫn Independent) dùng chung 1 kiểu chữ — xem CountdownStyle.
+        CountdownStyle.Apply(leftCountdownText);
+        CountdownStyle.Apply(rightCountdownText);
 
         Current = this;
         InitScoring();
@@ -416,7 +413,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
              "khi bắt đầu đếm — tái dùng FloorZoneClearer đã chạy thật ở SolarQuizVi (engine CSV " +
              "cũ), giờ dùng chung được cho Kit mới. Mặc định TẮT — không đổi hành vi của game nào " +
              "trừ khi tự bật. Chỉ áp dụng cho Combined mode (TransitionCountdown), KHÔNG áp dụng cho " +
-             "Independent mode (xem useIndependentRoundCountdown/IndependentRoundCountdown riêng).")]
+             "Independent mode (xem UseIndependentRoundCountdown/IndependentRoundCountdown riêng).")]
     [SerializeField] protected bool waitForZoneClearBeforeCountdown = false;
 
     IEnumerator TransitionCountdown()
@@ -448,11 +445,18 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         HideTransitionCountdown();
     }
 
+    /// <summary>Hiện chữ countdown cho 1 bên — ĐIỂM DUY NHẤT ghi chữ "Start/Next in Ns" (mọi đường đếm ngược gọi vào đây).</summary>
+    void ShowCountdownText(Text text, string label, int secondsLeft)
+    {
+        if (text == null) return;
+        text.text = CountdownStyle.Format(label, secondsLeft);
+        text.gameObject.SetActive(true);
+    }
+
     void ShowTransitionCountdown(int secondsLeft, string label = "Next")
     {
-        string msg = $"{label} in {secondsLeft}s";
-        if (leftCountdownText != null) { leftCountdownText.text = msg; leftCountdownText.gameObject.SetActive(true); }
-        if (rightCountdownText != null) { rightCountdownText.text = msg; rightCountdownText.gameObject.SetActive(true); }
+        ShowCountdownText(leftCountdownText, label, secondsLeft);
+        ShowCountdownText(rightCountdownText, label, secondsLeft);
     }
 
     void HideTransitionCountdown()
@@ -674,7 +678,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
                     if (!_independentRunning) yield break;
                 }
 
-                if (useIndependentRoundCountdown)
+                if (UseIndependentRoundCountdown)
                 {
                     yield return IndependentRoundCountdown(team);
                     if (!_independentRunning) yield break;
@@ -711,22 +715,30 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         CheckIndependentBothDone();
     }
 
-    /// <summary>"Next in 3,2,1" riêng cho TỪNG BÊN — xem useIndependentRoundCountdown. Dùng lại
+    /// <summary>"Next in 3,2,1" riêng cho TỪNG BÊN — xem UseIndependentRoundCountdown. Dùng lại
     /// đúng field leftCountdownText/rightCountdownText của bên đó, KHÔNG đụng bên còn lại (2 bên
     /// Independent mode không đồng bộ round nên không thể dùng 1 coroutine chung như
     /// TransitionCountdown() của Combined mode).</summary>
     IEnumerator IndependentRoundCountdown(Team team)
     {
         var text = team == Team.Left ? leftCountdownText : rightCountdownText;
-        if (text != null) text.gameObject.SetActive(true);
-        for (int i = 3; i >= 1; i--)
+        if (text == null) yield break; // không có chỗ hiện chữ → KHÔNG tạo khoảng dừng vô hình
+        int seconds = Mathf.Max(0, Mathf.RoundToInt(
+            GameSettings.Instance != null ? GameSettings.Instance.RoundEndDelay : 2f)); // cùng setting với Combined
+        for (int i = seconds; i >= 1; i--)
         {
-            if (text != null) text.text = $"Next in {i}";
+            ShowCountdownText(text, "Next", i);
             yield return new WaitForSeconds(1f);
             if (!_independentRunning) break;
         }
-        if (text != null) text.gameObject.SetActive(false);
+        text.gameObject.SetActive(false);
     }
+
+    /// <summary>Có đếm "Next in Ns" riêng từng bên giữa các round ở Independent mode không (từ round 2).
+    /// Mặc định BẬT cho mọi game Kit — không còn phụ thuộc cờ serialize trong scene (scene dựng từ
+    /// trước bị thiếu cờ → mất countdown, như DemQua). Game muốn tắt thì override (vd GenericGame theo
+    /// settings.countdownMode). Không có Text gán thì tự bỏ qua, không tạo khoảng chờ vô hình.</summary>
+    protected virtual bool UseIndependentRoundCountdown => true;
 
     void CheckIndependentBothDone()
     {

@@ -87,6 +87,12 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
     /// <summary>Ghi đè cỡ chữ của textLabel — dùng cho GenericGameController (settings.answerFontSize),
     /// game khác trong Kit không gọi hàm này nên không ảnh hưởng gì (cỡ chữ gốc trong prefab giữ
     /// nguyên nếu không gọi). `size<=0` bị bỏ qua (coi là "không ghi đè").</summary>
+    /// <summary>Ghi đè màu chữ của textLabel (settings.answerTextColor của GenericGame). Chỉ gọi khi có cấu hình.</summary>
+    public void SetTextColor(Color color)
+    {
+        if (textLabel != null) textLabel.color = color;
+    }
+
     public void SetFontSize(float size)
     {
         if (textLabel != null && size > 0) textLabel.fontSize = size;

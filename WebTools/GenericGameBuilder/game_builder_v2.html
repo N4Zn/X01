@@ -317,6 +317,12 @@ main{flex:1; display:grid; grid-template-columns:270px 1fr 360px; min-height:0;}
             <span>Đáp án</span><input type="number" id="answerFontSize" min="0" max="200" value="0" style="width:60px">
           </div>
           <div class="hint">0 = giữ cỡ chữ mặc định của Kit, không ghi đè. Số càng lớn chữ càng to (đơn vị point, giống Unity Text/TMP).</div>
+          <label style="margin-top:8px">Màu chữ (chỉ áp dụng khi hiện dạng CHỮ)</label>
+          <div class="row">
+            <span>Câu hỏi</span><input type="color" id="questionTextColor" value="#ffffff" style="width:44px;height:28px;padding:0"><button type="button" class="btn" id="questionTextColorReset" title="Về màu mặc định">↺</button>
+            <span>Đáp án</span><input type="color" id="answerTextColor" value="#23243a" style="width:44px;height:28px;padding:0"><button type="button" class="btn" id="answerTextColorReset" title="Về màu mặc định">↺</button>
+          </div>
+          <div class="hint">Mặc định: chữ câu hỏi trắng, chữ đáp án giữ màu đặt sẵn của Kit. Bấm ↺ để bỏ ghi đè.</div>
         </div>
         <div class="field">
           <label>Số cột icon trong 1 slot</label>
@@ -650,7 +656,7 @@ function newItemFxSet(){ const o = {}; ITEM_TRIGGERS.forEach(t=> o[t.id] = { eff
 let game = {
   schemaVersion: 2,
   meta: { gameId:"ThuNghiem1", displayName:"Thử nghiệm 1", category:"Đếm" },
-  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:0, answerFontSize:0, iconColumns:2 },
+  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:0, answerFontSize:0, questionTextColor:"", answerTextColor:"", iconColumns:2 },
   layout: {
     spawnFlow: { enabled:false, direction:"BottomToTop", itemWPct:15, itemHPct:15, speedPct:25, spawnIntervalSec:1, maxConcurrent:4 },
     background: null,     // tên file trong assets/ (vd "bg.png"), null = không có nền
@@ -883,6 +889,13 @@ function initSettingsPanel(){
   const aFontEl = document.getElementById('answerFontSize');
   aFontEl.value = game.settings.answerFontSize || 0;
   aFontEl.addEventListener('input', ()=>{ game.settings.answerFontSize = Math.max(0, parseFloat(aFontEl.value||'0')); renderStage(); });
+  // Màu chữ câu hỏi/đáp án: '' = mặc định (không ghi đè); Unity đọc settings.questionTextColor/answerTextColor.
+  [['questionTextColor','#ffffff'], ['answerTextColor','#23243a']].forEach(([key, dflt])=>{
+    const el = document.getElementById(key), rs = document.getElementById(key + 'Reset');
+    el.value = game.settings[key] || dflt;
+    el.addEventListener('input', ()=>{ game.settings[key] = el.value; renderStage(); });
+    rs.addEventListener('click', ()=>{ game.settings[key] = ''; el.value = dflt; renderStage(); });
+  });
   const icEl = document.getElementById('iconColumns');
   icEl.value = game.settings.iconColumns || 2;
   icEl.addEventListener('input', ()=>{ game.settings.iconColumns = Math.max(1, parseInt(icEl.value||'2',10)); renderStage(); });
@@ -1083,6 +1096,7 @@ function fillSlotContent(el, v, o){
   if (t){
     const sp = document.createElement('span'); sp.className='stxt'; sp.textContent = t;
     if (o.fontSize) sp.style.fontSize = o.fontSize;
+    if (o.color) sp.style.color = o.color;
     el.appendChild(sp);
   }
   return 'text';
@@ -1211,7 +1225,8 @@ function makeSlotEl(s, idx, W, H, isMirror, key, interactive){
   el.style.zIndex = zOf(key) + (interactive && !isMirror && selectedSlot===idx ? 1 : 0);
   if (g.shape==='circle') el.style.borderRadius='50%';
   const fs = key==='question' ? game.settings.questionFontSize : game.settings.answerFontSize;
-  fillSlotContent(el, slotView(s, g), { placeholder: String(idx+1), fontSize: fs>0 ? scaledFont(fs, H) : null });
+  const tc = key==='question' ? game.settings.questionTextColor : game.settings.answerTextColor;
+  fillSlotContent(el, slotView(s, g), { placeholder: String(idx+1), fontSize: fs>0 ? scaledFont(fs, H) : null, color: tc || null });
   if (interactive && !isMirror && arr()==='manual'){
     el.addEventListener('pointerdown', (ev)=> startDrag(ev, 'slot', idx));
     const handle = document.createElement('div'); handle.className='handle';
@@ -2068,7 +2083,7 @@ document.getElementById('btnExport').addEventListener('click', doExport);
 // không có chỗ lưu nào khác ngoài Export, đây là cách nhanh nhất để tạo 1 BIẾN THỂ mới mà không
 // phải chỉnh lại từ đầu.
 // ─────────────────────────────────────────────────────────────────
-const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:0, answerFontSize:0, iconColumns:2 };
+const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:0, answerFontSize:0, questionTextColor:"", answerTextColor:"", iconColumns:2 };
 const DEFAULT_LAYOUT = { spawnFlow:{enabled:false,direction:"BottomToTop",itemWPct:15,itemHPct:15,speedPct:25,spawnIntervalSec:1,maxConcurrent:4}, background:null, backgroundAudio:null, qFrame:null, slotFrames:[], layerOrder:[], decorations:[] };
 const DEFAULT_EFFECTS = { onIdle:newActionFx(), onCorrectTap:newActionFx(), onWrongTap:newActionFx(), onCorrectRemove:newActionFx() };
 
@@ -2185,6 +2200,8 @@ function syncUiFromGame(keepSel){
   document.getElementById('questionAudioOnly').checked = game.settings.questionAudioOnly;
   document.getElementById('questionFontSize').value = game.settings.questionFontSize || 0;
   document.getElementById('answerFontSize').value = game.settings.answerFontSize || 0;
+  document.getElementById('questionTextColor').value = game.settings.questionTextColor || '#ffffff';
+  document.getElementById('answerTextColor').value = game.settings.answerTextColor || '#23243a';
   document.getElementById('hasTargetScore').checked = game.settings.hasTargetScore;
   document.getElementById('targetScore').value = game.settings.targetScore;
   document.getElementById('targetScore').style.display = game.settings.hasTargetScore ? '' : 'none';
@@ -2573,7 +2590,7 @@ function renderQuestion(side, round){
     positionEl(el, p, W, H);
     el.style.zIndex = zOf('question');
     if (round.qGroup.shape==='circle') el.style.borderRadius='50%';
-    const kind = fillSlotContent(el, qs, { fontSize: fs>0 ? scaledFont(fs, H) : null });
+    const kind = fillSlotContent(el, qs, { fontSize: fs>0 ? scaledFont(fs, H) : null, color: game.settings.questionTextColor || null });
     if (kind==='text' && qs.text && !qs.image && game.layout.qFrame && assetFiles[game.layout.qFrame]){
       const bw = Math.max(6, Math.min(p.hPct/100*H*0.32, p.wPct/100*W*0.12));
       el.style.boxSizing = 'border-box';
@@ -2613,7 +2630,7 @@ function renderAnswers(side, round, onPick){
     el.style.zIndex = zOf('answers');
     if (round.aGroup.shape==='circle' && !framed) el.style.borderRadius='50%';
     const fontSize = fs>0 ? scaledFont(fs, H) : (framed ? (p.hPct/100*H*0.24) + 'px' : null);
-    fillSlotContent(el, { image:bgName, icon:a.icon, text:a.text }, { placeholder: hasOwn ? '' : '?', fontSize });
+    fillSlotContent(el, { image:bgName, icon:a.icon, text:a.text }, { placeholder: hasOwn ? '' : '?', fontSize, color: game.settings.answerTextColor || null });
     el.dataset.ansIdx = ansIdx;
     el._ans = a;
     el.addEventListener('click', ()=>{

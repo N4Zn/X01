@@ -263,8 +263,8 @@ public class DemQuaController : MiniGameControllerBase
         var basketIcon = team == Team.Left ? leftBasketIcon : rightBasketIcon;
         if (basketIcon != null) basketIcon.gameObject.SetActive(true);
 
-        // "Start/Next in 3,2,1" giờ do MiniGameControllerBase tự lo (useIndependentRoundCountdown,
-        // bật ở SceneBuilder) — CHẠY TRƯỚC khi SetupIndependentDisplay() này được gọi lại cho round
+        // "Start/Next in Ns" do MiniGameControllerBase tự lo (UseIndependentRoundCountdown, mặc định
+        // bật) — CHẠY TRƯỚC khi SetupIndependentDisplay() này được gọi lại cho round
         // sau, nên tới đây là "go time", gọi thẳng không cần tự đếm/tự trì hoãn gì thêm nữa.
         buttonDisplay.SetupPlayerIndependent(team, q, onDone);
         RandomizeFruitPositions(team, q.correctAnswers.Length);

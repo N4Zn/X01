@@ -54,6 +54,10 @@ public class GenericGameSettings
     /// <summary>Cỡ chữ (point size) của chữ trên mỗi nút đáp án (TextMeshProUGUI) — 0 (mặc định) =
     /// giữ nguyên cỡ chữ đặt sẵn trong prefab. > 0 = ghi đè qua ButtonItem.SetFontSize().</summary>
     public float answerFontSize;
+    /// <summary>Màu chữ câu hỏi, hex "#RRGGBB"/"#RRGGBBAA". Rỗng (mặc định) = trắng như cũ.</summary>
+    public string questionTextColor = "";
+    /// <summary>Màu chữ đáp án, hex "#RRGGBB"/"#RRGGBBAA". Rỗng (mặc định) = giữ màu đặt sẵn trong prefab nút đáp án.</summary>
+    public string answerTextColor = "";
     /// <summary>Số cột icon trong 1 slot (câu hỏi lẫn đáp án) — mặc định 2.</summary>
     public int iconColumns = 2;
 }

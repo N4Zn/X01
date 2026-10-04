@@ -36,3 +36,8 @@
 - [ ] Nút "Chơi lại đúng câu hỏi này" từ Lịch sử: `questionId` đã được lưu; còn thiếu phần Unity ép câu đầu tiên = id đó (GenericGame: pool theo id; game CSV: tra theo id) + message Java→Unity.
 - [ ] Lịch sử trong app chưa đọc `class_rounds_archive.jsonl` (round cũ >20.000); thêm nếu cần xem lại — (2026-10-04)
 - [ ] Sao lưu định kỳ `/sdcard/EduXplore/class_rounds*.jsonl` ra ngoài máy — (2026-10-04)
+
+## Countdown + màu chữ (2026-10-05)
+- [ ] Mở Unity: compile (CountdownStyle.cs + sửa MiniGameControllerBase/GenericGameController/10 View cũ), chơi DemQua xem có "Next in Ns" giữa round, kiểm tra chữ countdown trắng/cỡ 56 ở HaiQua, FamilyMember, TestTongHop, 1 game generic.
+- [ ] Test màu chữ câu hỏi/đáp án: chọn màu trong web builder → Export → import Unity → chữ đúng màu (web: ô màu dưới ô cỡ chữ).
+- [ ] PlanetOrderDisplay giữ countdown chữ tối trên nền trắng (cố ý); SaveTheAstronaut/LaneDash giữ số 3-2-1 to 120 (đã trắng) — đổi nếu muốn đồng bộ hẳn.

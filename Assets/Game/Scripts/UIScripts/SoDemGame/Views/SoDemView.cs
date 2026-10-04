@@ -286,7 +286,7 @@ public class SoDemView : MonoBehaviour
     public void ShowCountdown(int playerIndex, int seconds)
     {
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
-        if (txt != null) { txt.text = "Next in " + seconds + "s"; txt.gameObject.SetActive(true); }
+        if (txt != null) { CountdownStyle.Apply(txt); txt.text = CountdownStyle.Format("Next", seconds); txt.gameObject.SetActive(true); }
     }
 
     public void HideCountdown(int playerIndex) { if (playerIndex == 0) p1CountdownText?.gameObject.SetActive(false); else p2CountdownText?.gameObject.SetActive(false); }

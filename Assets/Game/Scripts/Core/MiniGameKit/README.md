@@ -77,14 +77,15 @@ phần này riêng (xem `WhoIsItGameController` — đã có feedback text/sfx/m
   `display.SetupPlayerIndependent(team, q, onDone)` (method có sẵn trên `ButtonDisplay`/
   `FloatingDisplay`, không có trên `MatchingDisplay`). Base tự lo 2 vòng lặp riêng + timer/round
   chung. **`UseDefaultTransitionCountdown`/`TransitionCountdown()` KHÔNG chạy ở mode này** (chỉ
-  Combined) — muốn có "Next in Ns" riêng từng bên giữa các round, bật
-  **`useIndependentRoundCountdown`** (bool, mặc định `false`) thay vì tự viết coroutine riêng (đã
-  từng làm ở DemQuaController rồi rút gọn lại thành tính năng chung này — xem
-  `IndependentRoundCountdown`). Round ĐẦU TIÊN của mỗi bên không đếm lại (đã có "Start in Ns" từ
-  `InitialStartCountdownThenBegin()` lúc `StartGame()` rồi). **Cần gán
-  `leftCountdownText/rightCountdownText`** ở SceneBuilder mới có chữ hiện ra — bật cờ mà không gán
-  Text sẽ tạo ra khoảng dừng 3s VÔ HÌNH mỗi round (đã là bài học thật — đừng bật cho HaiQua tới khi
-  dựng Text cho nó).
+  Combined) — "Next in Ns" riêng từng bên giữa các round do base tự chạy (`IndependentRoundCountdown`,
+  thời lượng = `GameSettings.RoundEndDelay` như Combined). **Mặc định BẬT** (property
+  `UseIndependentRoundCountdown`, override để tắt — GenericGame theo `settings.countdownMode`); KHÔNG còn
+  cờ serialize trong scene (scene dựng thiếu cờ từng làm DemQua mất countdown). Round ĐẦU TIÊN của mỗi
+  bên không đếm lại (đã có "Start in Ns" từ `InitialStartCountdownThenBegin()`). **Cần gán
+  `leftCountdownText/rightCountdownText`** mới có chữ hiện ra; chưa gán thì tự bỏ qua đếm (không có
+  khoảng dừng vô hình). Chữ + kiểu chữ countdown (trắng, đậm, viền đen, cỡ 56) do **`CountdownStyle`**
+  (`UIScripts/Common/CountdownStyle.cs`) quyết định, base tự áp lúc `Start()` — đừng đặt màu/cỡ riêng
+  trong SceneBuilder; game ngoài Kit gọi `CountdownStyle.Apply(text)` + `CountdownStyle.Format("Next", n)`.
 
 ## Cơ chế hoàn toàn mới (không phải chọn nút/matching)
 

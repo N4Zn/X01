@@ -390,8 +390,8 @@ public class PlanetAlphabetView : MonoBehaviour
         Text txt = (playerIndex == 0) ? p1CountdownText : p2CountdownText;
         if (txt != null)
         {
-            txt.resizeTextForBestFit = true;
-            txt.text = "Next question in " + seconds + "s";
+            CountdownStyle.Apply(txt);
+            txt.text = CountdownStyle.Format("Next", seconds);
             txt.gameObject.SetActive(true);
         }
     }

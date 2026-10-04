@@ -844,9 +844,9 @@ public class TestTongHopController : MonoBehaviour
 
     void ShowCountdownForPlayer(Team team, int seconds, bool isStart = false)
     {
-        string msg = $"{(isStart ? "Start" : "Next")} in {seconds}s";
+        string msg = CountdownStyle.Format(isStart ? "Start" : "Next", seconds);
         var txt    = team == Team.Left ? leftCountdownText : rightCountdownText;
-        if (txt) { txt.text = msg; txt.gameObject.SetActive(true); }
+        if (txt) { CountdownStyle.Apply(txt); txt.text = msg; txt.gameObject.SetActive(true); }
     }
 
     void HideCountdownForPlayer(Team team)

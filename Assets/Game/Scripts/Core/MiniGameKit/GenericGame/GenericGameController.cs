@@ -143,7 +143,6 @@ public class GenericGameController : MiniGameControllerBase
         sceneNameForRegistry = baked != null && baked.gameJson != null
             ? UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
             : SceneNameForRegistry;
-        useIndependentRoundCountdown = playMode == MiniGamePlayMode.Independent && _package.settings.countdownMode == "nextInN";
 
         BuildQuestionPool();
         BuildRuntimeUi();
@@ -506,7 +505,20 @@ public class GenericGameController : MiniGameControllerBase
         string text = s.text;
         if (string.IsNullOrEmpty(text) && bg == null) text = "?";
         item.SetContent(text, iconValue, _package.settings.iconColumns, IconCountOf(s.text));
+        ApplyAnswerTextStyle(item);
+    }
+
+    /// <summary>Hex "#RRGGBB"/"#RRGGBBAA" → Color; rỗng/sai định dạng → fallback.</summary>
+    static Color ParseTextColor(string hex, Color fallback)
+        => !string.IsNullOrEmpty(hex) && ColorUtility.TryParseHtmlString(hex, out var c) ? c : fallback;
+
+    /// <summary>Cỡ + màu chữ đáp án theo settings (0/rỗng = giữ mặc định prefab).</summary>
+    void ApplyAnswerTextStyle(ButtonItem item)
+    {
         item.SetFontSize(_package.settings.answerFontSize);
+        if (!string.IsNullOrEmpty(_package.settings.answerTextColor) &&
+            ColorUtility.TryParseHtmlString(_package.settings.answerTextColor, out var c))
+            item.SetTextColor(c);
     }
 
     /// <summary>Số icon từ chữ của slot: để trống/không phải số = 1, tối đa 20 (khớp web iconCountOf).</summary>
@@ -649,7 +661,7 @@ public class GenericGameController : MiniGameControllerBase
         ui.text = txtGo.AddComponent<Text>();
         ui.text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         ui.text.alignment = TextAnchor.MiddleCenter;
-        ui.text.color = Color.white;
+        ui.text.color = ParseTextColor(_package.settings.questionTextColor, Color.white);
         ui.text.fontStyle = FontStyle.Bold;
         ui.text.raycastTarget = false;
         ui.text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -1103,7 +1115,7 @@ public class GenericGameController : MiniGameControllerBase
         ApplyLayer(go, "answers");
         ApplyRectPct((RectTransform)go.transform, pct);
         var item = go.GetComponent<ButtonItem>();
-        item.SetFontSize(_package.settings.answerFontSize);
+        ApplyAnswerTextStyle(item);
         return item;
     }
 
@@ -1701,6 +1713,7 @@ public class GenericGameController : MiniGameControllerBase
         ApplyRoundContent(Team.Right, CurrentQuestion);
     }
 
+    protected override bool UseIndependentRoundCountdown => _package != null && _package.settings.countdownMode == "nextInN";
     protected override bool UseDefaultTransitionCountdown => _package == null || _package.settings.countdownMode != "none";
 
     /// <summary>Tắt hẳn cơ chế feedback mặc định của base class (tự phát PlayCorrectSfx/PlayWrongSfx

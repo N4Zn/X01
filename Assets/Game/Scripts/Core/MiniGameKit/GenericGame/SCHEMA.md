@@ -52,7 +52,7 @@ lúc nạp (`GenericGameMigration.FromV1`, cùng quy tắc với `migrateV1` tro
     "wrongEndsRound": true,          // false = "cho thử lại" — xem mục riêng bên dưới
     "showCorrectWrongTint": true,    // false = tắt tô xanh/đỏ/xám mặc định của Kit
     "questionAudioOnly": false,      // true = ẩn hẳn chữ/ảnh/icon câu hỏi, chỉ phát âm thanh slot câu hỏi (chỉ Combined) — xem mục riêng
-    "questionFontSize": 0, "answerFontSize": 0
+    "questionFontSize": 0, "answerFontSize": 0, "questionTextColor": "", "answerTextColor": ""
   },
   "layout": {                        // CẤP GAME — bố cục câu hỏi/đáp án nằm ở từng round
     "spawnFlow": { "enabled": false, "direction": "BottomToTop", "itemWPct": 15, "itemHPct": 15, "speedPct": 25, "spawnIntervalSec": 1, "maxConcurrent": 4 },
@@ -231,6 +231,12 @@ cột/lấp đầy để tự tính lại).
 đặt sẵn trong prefab (nút đáp án), không ghi đè. `> 0` = ghi đè cỡ chữ trong slot câu hỏi (`Text` dựng lúc runtime) và `TextMeshProUGUI` của mỗi
 nút đáp án qua `ButtonItem.SetFontSize()` (gọi lại mỗi round khi áp nội dung). CHỈ có tác dụng khi slot đang hiện dạng CHỮ — không ảnh hưởng icon.
 Web tool: 2 ô số trong "CÀI ĐẶT CHUNG", ngay dưới checkbox "Câu hỏi chỉ phát âm thanh".
+
+## Màu chữ câu hỏi/đáp án (settings.questionTextColor / answerTextColor)
+
+Hex `"#RRGGBB"`/`"#RRGGBBAA"` (string), `""` (mặc định) = không ghi đè: chữ câu hỏi trắng như cũ, chữ đáp án giữ màu prefab.
+Unity: `GenericGameController.ParseTextColor` (câu hỏi, lúc dựng `Text` slot) và `ApplyAnswerTextStyle` → `ButtonItem.SetTextColor()`
+(đáp án, gọi cùng chỗ với cỡ chữ mỗi round). CHỈ tác dụng khi slot hiện CHỮ. Web tool: 2 ô chọn màu + nút ↺ (bỏ ghi đè) ngay dưới ô cỡ chữ.
 
 ## "Cộng dồn tới mục tiêu" (answerMode = SumToTarget) + tên lửa + ảnh khung
 
