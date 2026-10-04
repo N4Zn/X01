@@ -1,0 +1,35 @@
+# Git LFS — CHỈ áp dụng cho file MỚI từ 2026-10-04 (file đã nằm trong lịch sử giữ nguyên, tránh tốn quota LFS).
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+
+# File đã commit dạng thường trước đó: tắt filter để git status không báo sửa. Đừng xoá các dòng này.
+Assets/Game/Animations/AddNumber_Tutorial.mp4 -filter -diff -merge
+Assets/Game/Videos/tutorial_sample.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Jupiter.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Jupiter_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Mars.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Mars_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Mercury.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Mercury_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Moon.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Moon_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Neptune.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Neptune_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Saturn.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Saturn_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Space.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Space_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Sun.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Sun_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/TheEarth.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/TheEarth_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Uranus.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Uranus_Vi.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Venus.mp4 -filter -diff -merge
+ExternalVideoAssets/Video/Venus_Vi.mp4 -filter -diff -merge
+Assets/StreamingAssets/face_detection_yunet.onnx -filter -diff -merge
+Assets/StreamingAssets/face_recognition_sface.onnx -filter -diff -merge
+NativePlugins/FaceEnrollAndroidLib/faceenroll/src/main/assets/face_detection_yunet.onnx -filter -diff -merge
+NativePlugins/FaceEnrollAndroidLib/faceenroll/src/main/assets/face_recognition_sface.onnx -filter -diff -merge
