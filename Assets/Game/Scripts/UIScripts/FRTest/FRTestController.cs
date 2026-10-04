@@ -406,8 +406,9 @@ public class FRTestController : MonoBehaviour
     void ShowCountdown(int sec, string label = "Next")
     {
         if (!countdownText) return;
+        CountdownStyle.Apply(countdownText);
         countdownText.gameObject.SetActive(true);
-        countdownText.text = $"{label} in {sec}s";
+        countdownText.text = CountdownStyle.Format(label, sec);
     }
 
     void SetCountdownVisible(bool visible)

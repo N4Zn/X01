@@ -230,13 +230,14 @@ cột/lấp đầy để tự tính lại).
 `GenericGameSettings.questionFontSize`/`answerFontSize` (float, mặc định 0) — `0` = tự co vừa ô (chữ slot câu hỏi, best-fit) / giữ cỡ chữ
 đặt sẵn trong prefab (nút đáp án), không ghi đè. `> 0` = ghi đè cỡ chữ trong slot câu hỏi (`Text` dựng lúc runtime) và `TextMeshProUGUI` của mỗi
 nút đáp án qua `ButtonItem.SetFontSize()` (gọi lại mỗi round khi áp nội dung). CHỈ có tác dụng khi slot đang hiện dạng CHỮ — không ảnh hưởng icon.
-Web tool: 2 ô số trong "CÀI ĐẶT CHUNG", ngay dưới checkbox "Câu hỏi chỉ phát âm thanh".
+Web tool: 1 dòng "Cỡ chữ: Hỏi [50][màu] Đáp [50][màu]" trong "CÀI ĐẶT CHUNG"; game MỚI mặc định 50 (file cũ giữ giá trị đã lưu).
+`settings.questionAudioOnly` không còn ô tick trên web (web luôn ghi `false`): slot câu hỏi không có chữ/ảnh thì tự chỉ phát âm thanh.
 
 ## Màu chữ câu hỏi/đáp án (settings.questionTextColor / answerTextColor)
 
 Hex `"#RRGGBB"`/`"#RRGGBBAA"` (string), `""` (mặc định) = không ghi đè: chữ câu hỏi trắng như cũ, chữ đáp án giữ màu prefab.
 Unity: `GenericGameController.ParseTextColor` (câu hỏi, lúc dựng `Text` slot) và `ApplyAnswerTextStyle` → `ButtonItem.SetTextColor()`
-(đáp án, gọi cùng chỗ với cỡ chữ mỗi round). CHỈ tác dụng khi slot hiện CHỮ. Web tool: 2 ô chọn màu + nút ↺ (bỏ ghi đè) ngay dưới ô cỡ chữ.
+(đáp án, gọi cùng chỗ với cỡ chữ mỗi round). CHỈ tác dụng khi slot hiện CHỮ. Web tool: ô chọn màu cùng dòng với cỡ chữ, nút ↺ (bỏ ghi đè) hiện khi đã chọn màu.
 
 ## "Cộng dồn tới mục tiêu" (answerMode = SumToTarget) + tên lửa + ảnh khung
 

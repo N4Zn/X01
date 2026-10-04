@@ -34,3 +34,9 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - Test web: click DOM + `javascript_tool`; browser pane ẩn nên polyfill `requestAnimationFrame` bằng setTimeout; server local `node srv.js` cổng 8765.
 - Unity JsonUtility không có dict/null int; field class luôn được khởi tạo mặc định → "có override" xét theo nội dung.
 - Khi sửa script bằng bash: backtick trong `node -e` nháy kép bị hỏng → viết script qua file.
+
+## Giao diện cột trái (2026-10-05)
+- Cột "Cài đặt chung": mọi ghi chú gom vào nút `?` cạnh tiêu đề (`#settingsHelp`); các mục khác cũng ẩn `.hint` sau `?` (JS cuối file). Mặc định MỌI mục đóng, nhớ trạng thái mở bằng localStorage (`gb.open.*`).
+- Lựa chọn 2 trạng thái dùng `bindCycle` (1 nút, click đổi giá trị + đổi chữ): 2 đội, Điểm, Đếm ngược, Chạm sai. Kiểu đáp án = dropdown `#selAnswerMode`. Đã bỏ ô Chủ đề/nhóm (meta.category vẫn nằm trong json, khai báo sau) và ô tick "chỉ phát âm thanh".
+- Cỡ chữ mặc định 50 + màu chữ (`questionTextColor`/`answerTextColor`) cùng 1 dòng.
+- Hiệu ứng web: mọi chuyển động CSS đi qua `runTransition` (ép reflow trước khi đổi giá trị đích — thiếu thì "Mờ dần"/"Bay" nhảy thẳng tới cuối); bản sao hiệu ứng đánh `data-collected` để khoá ô không reset transform; `doPartial` ẩn ô gốc khi có hiệu ứng thật.

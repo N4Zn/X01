@@ -203,6 +203,7 @@ public class LaneDashController : MonoBehaviour
 
     IEnumerator Countdown()
     {
+        CountdownStyle.Apply(countdownText);
         if (countdownText) countdownText.gameObject.SetActive(true);
 
         // Headless recognition (no camera preview/bounding box) running the whole countdown so
@@ -212,7 +213,7 @@ public class LaneDashController : MonoBehaviour
 
         for (int i = _cfg.countdownSeconds; i >= 1; i--)
         {
-            if (countdownText) countdownText.text = i.ToString();
+            if (countdownText) countdownText.text = CountdownStyle.Format("Start", i);
             yield return new WaitForSeconds(1f);
         }
 

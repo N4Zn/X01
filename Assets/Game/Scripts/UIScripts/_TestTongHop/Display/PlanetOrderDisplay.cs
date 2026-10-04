@@ -740,15 +740,14 @@ public class PlanetOrderDisplay : MonoBehaviour, IAnswerDisplay
         }
         _flashImg.color = Color.white;
 
-        // Countdown on white — dark text so it's readable
-        _countdownTxt.color = new Color(0.12f, 0.12f, 0.18f);
+        // Countdown dùng chung CountdownStyle (trắng + viền đen — viền đen giữ chữ đọc được trên nền trắng)
+        CountdownStyle.Apply(_countdownTxt);
         for (int i = 3; i >= 1; i--)
         {
-            _countdownTxt.text = $"Next in {i}...";
+            _countdownTxt.text = CountdownStyle.Format("Next", i);
             yield return new WaitForSeconds(1f);
         }
         _countdownTxt.text  = "";
-        _countdownTxt.color = Color.white; // reset
 
         // Fade back to clear
         t = 0f;

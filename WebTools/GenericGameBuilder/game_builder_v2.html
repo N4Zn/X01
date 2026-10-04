@@ -71,7 +71,7 @@ header .spacer{flex:1;}
 .btn.sm{padding:5px 9px; font-size:12px; border-radius:7px;}
 .btn[disabled]{opacity:.45; cursor:not-allowed;}
 
-main{flex:1; display:grid; grid-template-columns:270px 1fr 360px; min-height:0;}
+main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
 .col{overflow-y:auto; overflow-x:hidden; padding:16px; border-right:1px solid var(--border);}
 .col:last-child{border-right:none;}
 .col h2{font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-dim); margin:0 0 12px; font-family:'Inter'; font-weight:700;}
@@ -89,6 +89,25 @@ main{flex:1; display:grid; grid-template-columns:270px 1fr 360px; min-height:0;}
 .seg button{flex:1; border:none; background:transparent; padding:7px 6px; border-radius:6px; font-size:12.5px; font-weight:600; color:var(--text-dim); cursor:pointer;}
 .seg button.active{background:var(--panel); color:var(--accent); box-shadow:var(--shadow);}
 .hint{font-size:11.5px; color:var(--text-dim); margin-top:4px; line-height:1.4;}
+.help-q{margin-left:6px; width:20px; height:20px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--accent); font-weight:800; font-size:12px; line-height:1; cursor:pointer; padding:0;}
+.help-q:hover{background:var(--accent-soft);}
+.help-panel{max-height:46vh; overflow-y:auto; background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; margin-bottom:10px; font-size:11.5px; color:var(--text-dim); line-height:1.45;}
+.help-panel ul{margin:0; padding-left:16px;}
+.help-panel li{margin-bottom:6px;}
+.help-panel b{color:var(--text);}
+.srow{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+.srow > label{margin:0; min-width:64px; white-space:nowrap;}
+.srow > label.chk{display:flex; align-items:center; gap:6px; min-width:0; font-weight:600;}
+.srow > label.chk input{width:auto;}
+.btn.cyc{flex:1; justify-content:space-between; min-width:0; padding:7px 10px; font-size:12.5px;}
+.btn.cyc::after{content:'⟳'; color:var(--accent); font-size:14px;}
+.fontrow{gap:4px;}
+.fontrow > label{min-width:0;}
+.fontrow span{font-size:11px; color:var(--text-dim); font-weight:600;}
+.fontrow input[type=number]{width:44px; padding:5px 4px; text-align:center;}
+.fontrow input[type=color]{width:26px; height:26px; padding:0; border-radius:6px;}
+.fontrow .rst{display:none; border:none; background:transparent; color:var(--text-dim); cursor:pointer; padding:0; font-size:13px;}
+.fontrow .rst.on{display:inline;}
 
 /* effect config */
 .fx-card{background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; margin-bottom:10px;}
@@ -277,96 +296,46 @@ main{flex:1; display:grid; grid-template-columns:270px 1fr 360px; min-height:0;}
   <main>
     <!-- ── Settings + Effects ───────────────────────────────── -->
     <div class="col" id="colSettings">
-      <details class="panel-section" open>
-        <summary>Cài đặt chung</summary>
+      <details class="panel-section">
+        <summary>Cài đặt chung <button type="button" class="help-q" id="btnSettingsHelp" title="Xem ghi chú">?</button></summary>
         <div class="panel-body">
-        <div class="field">
-          <label>Game ID (nội bộ, không dấu)</label>
-          <input id="gameId" placeholder="VD: ThuNghiem1">
+        <div class="help-panel" id="settingsHelp" style="display:none">
+          <ul>
+            <li><b>Game ID</b>: tên nội bộ, không dấu (VD: ThuNghiem1). Chủ đề/nhóm: khai báo sau trong Unity hoặc json.</li>
+            <li><b>2 đội</b>: Gộp = 2 đội chơi chung 1 câu hỏi (câu hỏi là 1 vùng chung toàn màn hình, kéo tự do qua 2 nửa). Độc lập = mỗi đội có câu hỏi và nhịp chơi riêng.</li>
+            <li><b>Kiểu đáp án</b> — Nhiều đáp án: đánh dấu đúng (✓) nhiều ô, chạm hết các ô đúng (gom/hái). Theo đúng thứ tự: đánh dấu đúng (✓), dùng ↑↓ ở mỗi đáp án để sắp xếp thứ tự cần chạm; chạm sai thứ tự coi như sai, kết thúc round ngay. Cộng dồn tới mục tiêu: mọi đáp án đều bấm được, giá trị SỐ của đáp án cộng vào thanh (đáp án "3" = 3 ô); tổng phải ĐÚNG BẰNG mục tiêu mới thắng round, vượt thì sai và khoá đáp án; muốn chọn lại thì chạm vào thanh nhiên liệu (không trừ điểm). Dấu ✓ không dùng ở chế độ này. Mục tiêu mặc định = số ô của thanh (Vùng thu thập → "Số ô"), round nào khác thì đặt riêng.</li>
+            <li><b>Câu hỏi chỉ phát âm thanh</b>: không nhập chữ và không chọn ảnh ở slot câu hỏi, chỉ tải âm thanh (nút 🔈 ở dòng slot). Âm thanh câu hỏi chỉ phát khi 2 đội chơi chế độ Gộp.</li>
+            <li><b>Cỡ chữ / màu chữ</b>: chỉ áp khi slot hiện dạng CHỮ (đơn vị point, như Unity Text/TMP); 0 = giữ cỡ mặc định của Kit. Màu: bấm ↺ để bỏ ghi đè (câu hỏi mặc định trắng, đáp án giữ màu đặt sẵn của Kit).</li>
+            <li><b>Số cột icon</b>: slot có icon xếp N icon thành lưới theo số cột này (mặc định 2), áp cho cả câu hỏi và đáp án.</li>
+            <li><b>Điểm mục tiêu</b>: chỉ hiển thị trên màn hình, chưa có logic thắng/thua.</li>
+            <li><b>Chạm sai → Cho thử lại</b>: ô vừa chạm sai mở khoá lại sau khoảng 2s, chơi tiếp CÙNG câu hỏi tới khi đúng. Chế độ Gộp: nếu CẢ 2 bên cùng sai thì vẫn kết thúc round (quy tắc gốc Kit).</li>
+            <li><b>Tô xanh/đỏ</b>: tô màu mặc định khi đúng/sai. Tắt nếu đáp án là ảnh nền trong suốt (tô màu có thể đè xấu lên ảnh).</li>
+          </ul>
         </div>
-        <div class="field">
-          <label>Chủ đề / nhóm</label>
-          <input id="gameCategory" placeholder="VD: Đếm">
+        <div class="srow"><label>Game ID</label><input id="gameId" placeholder="VD: ThuNghiem1" style="flex:1; min-width:0"></div>
+        <div class="srow"><button type="button" class="btn cyc" id="cycPlayMode"></button></div>
+        <div class="srow"><label>Kiểu đáp án</label>
+          <select id="selAnswerMode" style="flex:1; min-width:0">
+            <option value="Single">1 đáp án đúng</option>
+            <option value="MultiSelect">Nhiều đáp án đúng</option>
+            <option value="OrderedSequence">Theo đúng thứ tự</option>
+            <option value="SumToTarget">Cộng dồn tới mục tiêu</option>
+          </select>
         </div>
-        <div class="field">
-          <label>2 đội</label>
-          <div class="seg" id="segPlayMode">
-            <button data-v="Combined">Gộp</button>
-            <button data-v="Independent">Độc lập</button>
-          </div>
+        <div class="srow fontrow"><label>Cỡ chữ</label>
+          <span>Hỏi</span><input type="number" id="questionFontSize" min="0" max="200" value="50"><input type="color" id="questionTextColor" value="#ffffff" title="Màu chữ câu hỏi"><button type="button" class="rst" id="questionTextColorReset" title="Về màu mặc định">↺</button>
+          <span>Đáp</span><input type="number" id="answerFontSize" min="0" max="200" value="50"><input type="color" id="answerTextColor" value="#23243a" title="Màu chữ đáp án"><button type="button" class="rst" id="answerTextColorReset" title="Về màu mặc định">↺</button>
         </div>
-        <div class="field">
-          <label>Kiểu đáp án</label>
-          <div class="seg" id="segAnswerMode">
-            <button data-v="Single">1 đáp án đúng</button>
-            <button data-v="MultiSelect">Nhiều đáp án (gom/hái)</button>
-            <button data-v="OrderedSequence">Theo đúng thứ tự</button>
-            <button data-v="SumToTarget">Cộng dồn tới mục tiêu</button>
-          </div>
-          <div class="hint" id="hintOrderedSeq" style="display:none">Đánh dấu đúng (✓) các đáp án cần chạm, dùng nút ↑↓ ở mỗi đáp án để sắp xếp ĐÚNG THỨ TỰ cần chạm (số trong vòng tròn xanh) — chạm sai thứ tự coi như chạm sai hẳn, kết thúc round ngay.</div>
-          <div class="hint" id="hintSumToTarget" style="display:none">Mọi đáp án đều bấm được. Mỗi lần bấm, giá trị SỐ của đáp án được cộng vào thanh (đáp án "3" = 3 ô). Tổng phải ĐÚNG BẰNG mục tiêu → thắng round, tên lửa bay lên rồi mới sang round mới. Tổng VƯỢT mục tiêu → hiệu ứng sai, khoá đáp án. Muốn chọn lại: CHẠM VÀO THANH NHIÊN LIỆU (chạm lúc nào cũng được trước khi thắng) — mọi đáp án về chỗ cũ, thanh tắt hết, không trừ điểm. Dấu ✓ không dùng ở chế độ này; phải có cách chọn ra tổng đúng bằng mục tiêu.<br>Mục tiêu mặc định = số ô của thanh (Vùng thu thập → "Số ô"); muốn round nào khác thì đặt riêng trong round đó.</div>
-        </div>
-        <div class="field">
-          <label><input type="checkbox" id="questionAudioOnly" style="width:auto"> Câu hỏi chỉ phát âm thanh (ẩn chữ/ảnh)</label>
-          <div class="hint">Dùng cho dạng "nghe và chọn" — câu hỏi không hiện chữ/ảnh, chỉ phát âm thanh đã tải ở slot câu hỏi của từng round (nút 🔈 ở dòng slot). Âm thanh câu hỏi chỉ phát khi 2 đội chơi chế độ GỘP.</div>
-        </div>
-        <div class="field">
-          <label>Cỡ chữ (chỉ áp dụng khi hiện dạng CHỮ)</label>
-          <div class="row">
-            <span>Câu hỏi</span><input type="number" id="questionFontSize" min="0" max="200" value="0" style="width:60px">
-            <span>Đáp án</span><input type="number" id="answerFontSize" min="0" max="200" value="0" style="width:60px">
-          </div>
-          <div class="hint">0 = giữ cỡ chữ mặc định của Kit, không ghi đè. Số càng lớn chữ càng to (đơn vị point, giống Unity Text/TMP).</div>
-          <label style="margin-top:8px">Màu chữ (chỉ áp dụng khi hiện dạng CHỮ)</label>
-          <div class="row">
-            <span>Câu hỏi</span><input type="color" id="questionTextColor" value="#ffffff" style="width:44px;height:28px;padding:0"><button type="button" class="btn" id="questionTextColorReset" title="Về màu mặc định">↺</button>
-            <span>Đáp án</span><input type="color" id="answerTextColor" value="#23243a" style="width:44px;height:28px;padding:0"><button type="button" class="btn" id="answerTextColorReset" title="Về màu mặc định">↺</button>
-          </div>
-          <div class="hint">Mặc định: chữ câu hỏi trắng, chữ đáp án giữ màu đặt sẵn của Kit. Bấm ↺ để bỏ ghi đè.</div>
-        </div>
-        <div class="field">
-          <label>Số cột icon trong 1 slot</label>
-          <input type="number" id="iconColumns" min="1" max="10" value="2" style="width:60px">
-          <div class="hint">Slot có icon: N icon xếp thành lưới theo số cột này (mặc định 2). Áp cho cả slot câu hỏi và đáp án.</div>
-        </div>
-        <div class="field">
-          <label>Cách tính điểm</label>
-          <div class="seg" id="segScoring">
-            <button data-v="flat">Cố định mỗi round</button>
-            <button data-v="perCorrectCount">Theo số lượng đúng</button>
-          </div>
-        </div>
-        <div class="field" id="flatPointsField">
-          <label>Điểm mỗi round đúng</label>
-          <input type="number" id="flatPoints" min="1" max="20" value="1" style="width:70px">
-        </div>
-        <div class="field">
-          <label>Đếm ngược giữa các round</label>
-          <div class="seg" id="segCountdown">
-            <button data-v="none">Không</button>
-            <button data-v="nextInN">Next in 3,2,1</button>
-          </div>
-        </div>
-        <div class="field">
-          <label><input type="checkbox" id="hasTargetScore" style="width:auto"> Hiện điểm mục tiêu (chỉ hiển thị, chưa có logic thắng/thua)</label>
-          <input type="number" id="targetScore" min="0" value="10" style="width:70px; display:none; margin-top:6px">
-        </div>
-        <div class="field">
-          <label>Chạm SAI thì</label>
-          <div class="seg" id="segWrongEndsRound">
-            <button data-v="true">Kết thúc round</button>
-            <button data-v="false">Cho thử lại (không kết thúc)</button>
-          </div>
-          <div class="hint">"Cho thử lại": ô vừa chạm sai mở khoá lại sau khoảng 2s, chơi tiếp CÙNG câu hỏi tới khi đúng. Chế độ Gộp: nếu CẢ 2 bên cùng sai thì vẫn kết thúc round (quy tắc gốc Kit, không can thiệp được).</div>
-        </div>
-        <div class="field">
-          <label><input type="checkbox" id="showTint" style="width:auto" checked> Tô xanh/đỏ mặc định khi đúng/sai</label>
-          <div class="hint">Tắt nếu đáp án là ảnh nền trong suốt — tô xanh/đỏ có thể đè xấu lên ảnh.</div>
-        </div>
+        <div class="srow"><label>Số cột icon</label><input type="number" id="iconColumns" min="1" max="10" value="2" style="width:56px"></div>
+        <div class="srow"><button type="button" class="btn cyc" id="cycScoring"></button><input type="number" id="flatPoints" min="1" max="20" value="1" style="width:52px" title="Điểm mỗi round đúng"></div>
+        <div class="srow"><button type="button" class="btn cyc" id="cycCountdown"></button></div>
+        <div class="srow"><button type="button" class="btn cyc" id="cycWrong"></button></div>
+        <div class="srow"><label class="chk"><input type="checkbox" id="hasTargetScore"> Hiện điểm mục tiêu</label><input type="number" id="targetScore" min="0" value="10" style="width:56px; display:none"></div>
+        <div class="srow"><label class="chk"><input type="checkbox" id="showTint" checked> Tô xanh/đỏ khi đúng/sai</label></div>
         </div>
       </details>
 
-      <details class="panel-section" open>
+      <details class="panel-section">
         <summary>Hiệu ứng đáp án (chung)</summary>
         <div class="panel-body">
         <div class="hint" style="margin-bottom:8px">Hiệu ứng MẶC ĐỊNH cho mọi đáp án (mỗi loại gắn được nhiều hiệu ứng + 1 âm thanh). Muốn riêng 1 slot nào thì bấm nút ✨ ở dòng slot đó (cột phải) — hiệu ứng riêng sẽ ghi đè cái chung.</div>
@@ -656,7 +625,7 @@ function newItemFxSet(){ const o = {}; ITEM_TRIGGERS.forEach(t=> o[t.id] = { eff
 let game = {
   schemaVersion: 2,
   meta: { gameId:"ThuNghiem1", displayName:"Thử nghiệm 1", category:"Đếm" },
-  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:0, answerFontSize:0, questionTextColor:"", answerTextColor:"", iconColumns:2 },
+  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 },
   layout: {
     spawnFlow: { enabled:false, direction:"BottomToTop", itemWPct:15, itemHPct:15, speedPct:25, spawnIntervalSec:1, maxConcurrent:4 },
     background: null,     // tên file trong assets/ (vd "bg.png"), null = không có nền
@@ -703,22 +672,25 @@ function arr(){ if (editGroup==='answers' && game.layout.spawnFlow.enabled) retu
 // ─────────────────────────────────────────────────────────────────
 // Render: Settings
 // ─────────────────────────────────────────────────────────────────
-function bindSeg(elId, settingsKey, onAfter){
-  const el = document.getElementById(elId);
-  el.querySelectorAll('button').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      game.settings[settingsKey] = btn.dataset.v;
-      renderSeg(elId, settingsKey);
-      if (onAfter) onAfter();
-    });
+const DEFAULT_FONT_SIZE = 50;
+const fontColorSync = []; // hàm đồng bộ ô cỡ chữ/màu từ game.settings (gọi lại khi nạp game khác)
+const cycles = {};        // nút đổi giá trị 1 click: id → {key, label, opts:[[giá trị, chữ hiển thị]]}
+/// Nút 1 click đổi qua giá trị kế tiếp (vòng tròn) và đổi chữ trên nút luôn — thay cho nhóm nút "seg" 2 trạng thái.
+function bindCycle(elId, settingsKey, label, opts, onAfter){
+  cycles[elId] = { key: settingsKey, label, opts };
+  document.getElementById(elId).addEventListener('click', ()=>{
+    const c = cycles[elId];
+    const i = c.opts.findIndex(o=> o[0] === game.settings[c.key]);
+    game.settings[c.key] = c.opts[(i + 1) % c.opts.length][0];
+    renderCycle(elId);
+    if (onAfter) onAfter();
   });
-  renderSeg(elId, settingsKey);
+  renderCycle(elId);
 }
-function renderSeg(elId, settingsKey){
-  const el = document.getElementById(elId);
-  el.querySelectorAll('button').forEach(btn=>{
-    btn.classList.toggle('active', btn.dataset.v === game.settings[settingsKey]);
-  });
+function renderCycle(elId){
+  const c = cycles[elId];
+  const o = c.opts.find(o=> o[0] === game.settings[c.key]) || c.opts[0];
+  document.getElementById(elId).textContent = c.label + ': ' + o[1];
 }
 
 const fxCardOpen = new WeakMap(); // nhớ trạng thái mở/đóng từng thẻ hiệu ứng (khoá theo object ActionFx) qua các lần render lại
@@ -866,48 +838,40 @@ function renderFxItem(key, fx, spec, ei, onChange, hideRemove){
 function initSettingsPanel(){
   document.getElementById('gameId').value = game.meta.gameId;
   document.getElementById('gameDisplayName').value = game.meta.displayName;
-  document.getElementById('gameCategory').value = game.meta.category;
   document.getElementById('gameId').addEventListener('input', e=> game.meta.gameId = e.target.value.trim());
   document.getElementById('gameDisplayName').addEventListener('input', e=> game.meta.displayName = e.target.value);
-  document.getElementById('gameCategory').addEventListener('input', e=> game.meta.category = e.target.value);
+  document.getElementById('btnSettingsHelp').addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation(); // nút nằm trong <summary>: không để nó gập/mở panel
+    const h = document.getElementById('settingsHelp');
+    h.style.display = h.style.display === 'none' ? '' : 'none';
+  });
 
   prevPlayMode = game.settings.playMode;
-  bindSeg('segPlayMode','playMode', onPlayModeChanged);
-  bindSeg('segAnswerMode','answerMode', updateAnswerModeHints);
-  bindSeg('segScoring','scoringMode', updateFlatPointsVisibility);
-  bindSeg('segCountdown','countdownMode');
+  // Các lựa chọn 2 trạng thái: 1 nút, mỗi click đổi sang giá trị kế và đổi chữ luôn.
+  bindCycle('cycPlayMode', 'playMode', '2 đội', [['Combined','Gộp'], ['Independent','Độc lập']], onPlayModeChanged);
+  bindCycle('cycScoring', 'scoringMode', 'Điểm', [['flat','Cố định mỗi round'], ['perCorrectCount','Theo số lượng đúng']], updateFlatPointsVisibility);
+  bindCycle('cycCountdown', 'countdownMode', 'Đếm ngược', [['nextInN','Next in 3,2,1'], ['none','Không']]);
+  bindCycle('cycWrong', 'wrongEndsRound', 'Chạm sai', [[true,'Kết thúc round'], [false,'Cho thử lại']]);
+  const ansSel = document.getElementById('selAnswerMode');
+  ansSel.value = game.settings.answerMode;
+  ansSel.addEventListener('change', ()=>{ game.settings.answerMode = ansSel.value; updateAnswerModeHints(); });
   updateFlatPointsVisibility();
   updateAnswerModeHints();
 
-  const audioOnlyEl = document.getElementById('questionAudioOnly');
-  audioOnlyEl.checked = game.settings.questionAudioOnly;
-  audioOnlyEl.addEventListener('change', ()=> game.settings.questionAudioOnly = audioOnlyEl.checked);
-
-  const qFontEl = document.getElementById('questionFontSize');
-  qFontEl.value = game.settings.questionFontSize || 0;
-  qFontEl.addEventListener('input', ()=>{ game.settings.questionFontSize = Math.max(0, parseFloat(qFontEl.value||'0')); renderStage(); });
-  const aFontEl = document.getElementById('answerFontSize');
-  aFontEl.value = game.settings.answerFontSize || 0;
-  aFontEl.addEventListener('input', ()=>{ game.settings.answerFontSize = Math.max(0, parseFloat(aFontEl.value||'0')); renderStage(); });
-  // Màu chữ câu hỏi/đáp án: '' = mặc định (không ghi đè); Unity đọc settings.questionTextColor/answerTextColor.
-  [['questionTextColor','#ffffff'], ['answerTextColor','#23243a']].forEach(([key, dflt])=>{
-    const el = document.getElementById(key), rs = document.getElementById(key + 'Reset');
-    el.value = game.settings[key] || dflt;
-    el.addEventListener('input', ()=>{ game.settings[key] = el.value; renderStage(); });
-    rs.addEventListener('click', ()=>{ game.settings[key] = ''; el.value = dflt; renderStage(); });
+  // Cỡ chữ + màu chữ câu hỏi/đáp án (mặc định cỡ 50). Màu '' = không ghi đè (Unity: câu hỏi trắng, đáp án giữ màu prefab).
+  [['question','#ffffff'], ['answer','#23243a']].forEach(([pre, dflt])=>{
+    const fKey = pre + 'FontSize', cKey = pre + 'TextColor';
+    const fEl = document.getElementById(fKey), cEl = document.getElementById(cKey), rs = document.getElementById(cKey + 'Reset');
+    const sync = ()=>{ fEl.value = game.settings[fKey] == null ? DEFAULT_FONT_SIZE : game.settings[fKey]; cEl.value = game.settings[cKey] || dflt; rs.classList.toggle('on', !!game.settings[cKey]); };
+    fontColorSync.push(sync); sync();
+    fEl.addEventListener('input', ()=>{ game.settings[fKey] = Math.max(0, parseFloat(fEl.value||'0')); renderStage(); });
+    cEl.addEventListener('input', ()=>{ game.settings[cKey] = cEl.value; sync(); renderStage(); });
+    rs.addEventListener('click', ()=>{ game.settings[cKey] = ''; sync(); renderStage(); });
   });
   const icEl = document.getElementById('iconColumns');
   icEl.value = game.settings.iconColumns || 2;
   icEl.addEventListener('input', ()=>{ game.settings.iconColumns = Math.max(1, parseInt(icEl.value||'2',10)); renderStage(); });
 
-  const segWrong = document.getElementById('segWrongEndsRound');
-  segWrong.querySelectorAll('button').forEach(btn=>{
-    btn.classList.toggle('active', (btn.dataset.v==='true') === game.settings.wrongEndsRound);
-    btn.addEventListener('click', ()=>{
-      game.settings.wrongEndsRound = (btn.dataset.v==='true');
-      segWrong.querySelectorAll('button').forEach(b=> b.classList.toggle('active', b===btn));
-    });
-  });
   const tintEl = document.getElementById('showTint');
   tintEl.checked = game.settings.showCorrectWrongTint;
   tintEl.addEventListener('change', ()=> game.settings.showCorrectWrongTint = tintEl.checked);
@@ -954,11 +918,9 @@ function onPlayModeChanged(){
   syncCanvasUi(); renderStage(); renderRounds();
 }
 function updateFlatPointsVisibility(){
-  document.getElementById('flatPointsField').style.display = game.settings.scoringMode === 'flat' ? '' : 'none';
+  document.getElementById('flatPoints').style.display = game.settings.scoringMode === 'flat' ? '' : 'none';
 }
 function updateAnswerModeHints(){
-  document.getElementById('hintOrderedSeq').style.display = game.settings.answerMode==='OrderedSequence' ? '' : 'none';
-  document.getElementById('hintSumToTarget').style.display = game.settings.answerMode==='SumToTarget' ? '' : 'none';
   renderRounds(); // hiện/ẩn nút ↑↓ + số thứ tự theo đúng mode hiện tại
 }
 
@@ -2083,7 +2045,7 @@ document.getElementById('btnExport').addEventListener('click', doExport);
 // không có chỗ lưu nào khác ngoài Export, đây là cách nhanh nhất để tạo 1 BIẾN THỂ mới mà không
 // phải chỉnh lại từ đầu.
 // ─────────────────────────────────────────────────────────────────
-const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:0, answerFontSize:0, questionTextColor:"", answerTextColor:"", iconColumns:2 };
+const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 };
 const DEFAULT_LAYOUT = { spawnFlow:{enabled:false,direction:"BottomToTop",itemWPct:15,itemHPct:15,speedPct:25,spawnIntervalSec:1,maxConcurrent:4}, background:null, backgroundAudio:null, qFrame:null, slotFrames:[], layerOrder:[], decorations:[] };
 const DEFAULT_EFFECTS = { onIdle:newActionFx(), onCorrectTap:newActionFx(), onWrongTap:newActionFx(), onCorrectRemove:newActionFx() };
 
@@ -2187,21 +2149,11 @@ function syncUiFromGame(keepSel){
   // đầu mỗi lần, an toàn gọi lại nhiều lần).
   document.getElementById('gameId').value = game.meta.gameId;
   document.getElementById('gameDisplayName').value = game.meta.displayName;
-  document.getElementById('gameCategory').value = game.meta.category;
-  renderSeg('segPlayMode','playMode');
-  renderSeg('segAnswerMode','answerMode');
-  document.getElementById('hintSumToTarget').style.display = game.settings.answerMode==='SumToTarget' ? '' : 'none';
-  renderSeg('segScoring','scoringMode');
-  renderSeg('segCountdown','countdownMode');
+  Object.keys(cycles).forEach(renderCycle);
+  document.getElementById('selAnswerMode').value = game.settings.answerMode;
   document.getElementById('flatPoints').value = game.settings.flatPoints;
-  document.getElementById('segWrongEndsRound').querySelectorAll('button').forEach(b=>
-    b.classList.toggle('active', (b.dataset.v==='true') === game.settings.wrongEndsRound));
   document.getElementById('showTint').checked = game.settings.showCorrectWrongTint;
-  document.getElementById('questionAudioOnly').checked = game.settings.questionAudioOnly;
-  document.getElementById('questionFontSize').value = game.settings.questionFontSize || 0;
-  document.getElementById('answerFontSize').value = game.settings.answerFontSize || 0;
-  document.getElementById('questionTextColor').value = game.settings.questionTextColor || '#ffffff';
-  document.getElementById('answerTextColor').value = game.settings.answerTextColor || '#23243a';
+  fontColorSync.forEach(f=> f());
   document.getElementById('hasTargetScore').checked = game.settings.hasTargetScore;
   document.getElementById('targetScore').value = game.settings.targetScore;
   document.getElementById('targetScore').style.display = game.settings.hasTargetScore ? '' : 'none';
@@ -2267,6 +2219,7 @@ async function importGamePackage(file){
   game.schemaVersion = 2;
   game.meta = Object.assign({ gameId:'', displayName:'', category:'' }, pkg.meta);
   game.settings = Object.assign({}, DEFAULT_SETTINGS, pkg.settings);
+  game.settings.questionAudioOnly = false; // bỏ ô tick: câu hỏi không có chữ/ảnh thì tự chỉ phát âm thanh
   game.layout = norm.layout;
   game.effects = {
     onIdle: Object.assign({}, DEFAULT_EFFECTS.onIdle, pkg.effects && pkg.effects.onIdle),
@@ -2502,7 +2455,14 @@ function hasFx(f){ return !!(f && ((f.effects && f.effects.some(s=>s.type!=='Non
 /// (Ghi đè = có ≥1 hiệu ứng — kể cả "Không có" để cố ý TẮT hiệu ứng chung — hoặc có âm thanh riêng.)
 function effFx(a, key){ const o = a && a.fx && a.fx[key]; return (o && ((o.effects && o.effects.length) || o.sound)) ? o : game.effects[key]; }
 function doWrong(side, el){ runActionFx(side, el, effFx(el._ans,'onWrongTap'), false); fireItems(side, 'onWrong'); }
-function doPartial(side, el){ runCorrectRemove(side, el, effFx(el._ans,'onCorrectRemove')); fireItems(side, 'onPartial'); }
+function doPartial(side, el){
+  const fx = effFx(el._ans,'onCorrectRemove');
+  runCorrectRemove(side, el, fx);
+  // Ô đúng-chưa-xong ẩn NGAY, chỉ còn bản sao chạy hiệu ứng (Mờ dần/Bay...) — trước đây ở vài chế độ ô gốc vẫn đứng nguyên
+  // nên "mờ dần rồi biến mất" nhìn như không có tác dụng (bản sao mờ chồng lên ô gốc còn nguyên).
+  if (hasRealFx(fx)) el.style.visibility = 'hidden';
+  fireItems(side, 'onPartial');
+}
 
 /// Phản hồi của ITEM (nhân vật trang trí) theo sự kiện — chỉ ở bên vừa trả lời.
 function fireItems(side, trig){
@@ -2579,7 +2539,7 @@ function renderQuestion(side, round){
   const layer = document.querySelector('#ptStage .pt-qlayer');
   const host = shared ? layer : s.half;
   Array.from(host.querySelectorAll('.pt-qs')).forEach(n=>{ stopIdleOnElement(n); n.remove(); });
-  if (game.settings.questionAudioOnly) return; // chỉ phát âm thanh — ẩn hẳn chữ/ảnh câu hỏi
+
   const W = host.clientWidth, H = host.clientHeight;
   const pos = positionsFor(round.qGroup, 'left' === side || shared ? 'left' : side);
   const fs = game.settings.questionFontSize;
@@ -3420,6 +3380,14 @@ function playSoundAsset(name){
   if (!assetFiles[name]) return;
   try{ const a = new Audio(assetFiles[name].url); a.play().catch(()=>{}); }catch(e){}
 }
+/// Đặt transition rồi ÉP trình duyệt tính style khung ĐẦU (reflow) trước khi đổi sang giá trị đích. Thiếu bước này,
+/// phần tử vừa được chèn/vừa đặt transition NHẢY thẳng tới giá trị cuối (mờ/bay không có chuyển động) — lỗi gặp ở
+/// "Mờ dần biến mất" và các hiệu ứng bay trên bản sao đáp án.
+function runTransition(el, transition, apply){
+  el.style.transition = transition;
+  void el.offsetWidth;
+  apply();
+}
 function runSingleEffect(el, type, p){
   const dur = (p.duration||0.3)*1000;
   const start = performance.now();
@@ -3442,8 +3410,7 @@ function runSingleEffect(el, type, p){
       requestAnimationFrame(loop);
     }; requestAnimationFrame(loop);
   } else if (type==='FadeOut'){
-    el.style.transition = `opacity ${p.duration||0.25}s linear`;
-    requestAnimationFrame(()=> el.style.opacity='0');
+    runTransition(el, `opacity ${p.duration||0.25}s linear`, ()=>{ el.style.opacity='0'; });
   }
   // FlyOff/FlyTo/Breathing trên chính nút (không clone) ít dùng thực tế — mô phỏng đủ qua runCorrectRemove bên dưới
 }
@@ -3477,6 +3444,9 @@ function runCorrectRemove(side, el, fx){
     clone.style.height = rect.height+'px';
     clone.style.pointerEvents='none';
     clone.style.zIndex = zOf('collect');
+    // Bản sao hiệu ứng KHÔNG thuộc vòng đời ô đáp án: đánh dấu để lockAllSlots/stopIdleOnElement/startIdleEffect bỏ qua,
+    // nếu không "khoá ô" sau khi chạm sẽ reset transform của bản sao giữa chừng → Bay đi/Bay tới không bay, chỉ mờ tại chỗ.
+    clone.dataset.collected = '1';
     el.parentElement.appendChild(clone);
     const p = mirrorForSide(side, spec.type, spec.effectParams||{});
     const dur = (p.duration||0.45)*1000;
@@ -3486,8 +3456,7 @@ function runCorrectRemove(side, el, fx){
       const rad = (p.angleDeg||90) * Math.PI/180;
       const dx = Math.cos(rad)*dist, dy = -Math.sin(rad)*dist;
       const endScale = Math.max(0.05, p.scale||0.4);
-      clone.style.transition = `transform ${dur}ms ease-out, opacity ${dur}ms ease-out`;
-      requestAnimationFrame(()=>{ clone.style.transform = `translate(${dx}px, ${dy}px) scale(${endScale})`; clone.style.opacity='0'; });
+      runTransition(clone, `transform ${dur}ms ease-out, opacity ${dur}ms ease-out`, ()=>{ clone.style.transform = `translate(${dx}px, ${dy}px) scale(${endScale})`; clone.style.opacity='0'; });
     } else if (spec.type==='FlyTo'){
       const stageEl = el.closest('.pt-half');
       const stageRect = stageEl.getBoundingClientRect();
@@ -3495,8 +3464,7 @@ function runCorrectRemove(side, el, fx){
       const targetPxY = stageRect.top + (p.targetYPct||50)/100*stageRect.height;
       const dx = targetPxX - (rect.left+rect.width/2), dy = targetPxY - (rect.top+rect.height/2);
       const endScale = Math.max(0.05, p.scale||0.3);
-      clone.style.transition = `transform ${dur}ms ease-out, opacity ${dur}ms ease-out`;
-      requestAnimationFrame(()=>{ clone.style.transform = `translate(${dx}px, ${dy}px) scale(${endScale})`; clone.style.opacity='0'; });
+      runTransition(clone, `transform ${dur}ms ease-out, opacity ${dur}ms ease-out`, ()=>{ clone.style.transform = `translate(${dx}px, ${dy}px) scale(${endScale})`; clone.style.opacity='0'; });
     } else if (spec.type==='FlyToStay'){
       // Bay tới Ô TIẾP THEO trong "Vùng thu thập" rồi Ở LẠI VĨNH VIỄN (không mờ/không xoá) — khác
       // hẳn FlyTo/FlyOff. Chưa cấu hình collectSlots thì đứng yên tại chỗ (không bay đi đâu).
@@ -3535,8 +3503,7 @@ function runCorrectRemove(side, el, fx){
         const targetW = slot.wPct/100*stageRect.width, targetH = slot.hPct/100*stageRect.height;
         const dx = targetCenterX - (rect.left+rect.width/2), dy = targetCenterY - (rect.top+rect.height/2);
         const scaleX = targetW/rect.width, scaleY = targetH/rect.height;
-        clone.style.transition = `transform ${dur}ms ease-out`;
-        requestAnimationFrame(()=>{ clone.style.transform = `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY})`; });
+        runTransition(clone, `transform ${dur}ms ease-out`, ()=>{ clone.style.transform = `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY})`; });
         if (fillByValueOn(roundOf(side))){
           // Thẻ đáp án bay tới rồi biến mất, thay bằng các ô SÁNG LÊN (đúng số ô = giá trị đáp án) —
           // nhìn vào thanh biết ngay đã đầy tới ô mấy. Ô sáng giữ nguyên tới hết round.
@@ -3565,8 +3532,7 @@ function runCorrectRemove(side, el, fx){
         s.collectedEls.push(clone);
       }
     } else if (spec.type==='FadeOut'){
-      clone.style.transition = `opacity ${dur}ms linear`;
-      requestAnimationFrame(()=> clone.style.opacity='0');
+      runTransition(clone, `opacity ${dur}ms linear`, ()=>{ clone.style.opacity='0'; });
     } else {
       runSingleEffect(clone, spec.type, p);
     }
@@ -3708,8 +3674,7 @@ function runSingleEffectTracked(el, type, p){
     };
     el._idleTimers.push(requestAnimationFrame(loop));
   } else if (type==='FadeOut'){
-    el.style.transition = `opacity ${p.duration||0.25}s linear`;
-    requestAnimationFrame(()=>{ if (!el._idleStopped) el.style.opacity='0'; });
+    runTransition(el, `opacity ${p.duration||0.25}s linear`, ()=>{ if (!el._idleStopped) el.style.opacity='0'; });
   }
 }
 function lerp(a,b,t){ return a+(b-a)*t; }
@@ -3757,11 +3722,30 @@ document.addEventListener('keydown', (e)=>{
 // ─────────────────────────────────────────────────────────────────
 fitEditorStage();
 initSettingsPanel();
+// Ghi chú (.hint) tĩnh của các mục còn lại trong cột trái: ẩn mặc định, bấm "?" cạnh tiêu đề để xem (đồng bộ với "Cài đặt chung").
+document.querySelectorAll('#colSettings details.panel-section').forEach(d=>{
+  if (d.querySelector('#settingsHelp')) return;
+  const hints = Array.from(d.querySelectorAll('.panel-body .hint')).filter(h=> !h.closest('#fxList,#decoList,#poolList,#layerPanel'));
+  if (!hints.length) return;
+  hints.forEach(h=>{ h.style.display = 'none'; });
+  const q = document.createElement('button'); q.type = 'button'; q.className = 'help-q'; q.textContent = '?'; q.title = 'Xem ghi chú';
+  q.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const show = hints[0].style.display === 'none';
+    hints.forEach(h=>{ h.style.display = show ? '' : 'none'; });
+  });
+  d.querySelector('summary').appendChild(q);
+});
+// Các mục cột Cài đặt mặc định ĐÓNG (gọn); nhớ mục nào user đã mở cho lần sau (chỉ per-viewer, localStorage có thể bị chặn).
+document.querySelectorAll('details.panel-section').forEach(d=>{
+  const key = 'gb.open.' + (d.querySelector('summary').firstChild.textContent || '').trim();
+  try { if (localStorage.getItem(key) === '1') d.open = true; } catch(e){}
+  d.addEventListener('toggle', ()=>{ try { localStorage.setItem(key, d.open ? '1' : '0'); } catch(e){} });
+});
 syncCanvasUi();
 renderPoolList();
 renderRounds();
 })();
-</script>})();
 </script>
 </body>
 </html>
