@@ -33,3 +33,6 @@ Assets/StreamingAssets/face_detection_yunet.onnx -filter -diff -merge
 Assets/StreamingAssets/face_recognition_sface.onnx -filter -diff -merge
 NativePlugins/FaceEnrollAndroidLib/faceenroll/src/main/assets/face_detection_yunet.onnx -filter -diff -merge
 NativePlugins/FaceEnrollAndroidLib/faceenroll/src/main/assets/face_recognition_sface.onnx -filter -diff -merge
+
+# Script shell luôn LF (CRLF làm sh lỗi)
+*.sh text eol=lf
