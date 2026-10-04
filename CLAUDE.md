@@ -3,6 +3,8 @@
 Derived from: `EduGame/edu-game` (EduXplore v1).
 Unity 2022.3.62f1 · IL2CPP · Android primary target.
 
+> **Bàn giao việc giữa agent**: xem `handoff/README.md` (quy ước + bảng trạng thái) TRƯỚC khi làm việc được giao.
+
 ## Deployment context
 
 **Floor projection setup** — projector chiếu xuống sàn nhà, người chơi đứng/nhảy tương tác.

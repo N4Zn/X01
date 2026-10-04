@@ -22,7 +22,7 @@ public class GameSettings : Singleton<GameSettings>
     public int GameTime { get; set; }           // seconds: 60, 90, 120, or custom
     /// <summary>DEPRECATED — thời gian mỗi câu giờ KHÔNG giới hạn (yêu cầu 2026-10-03, Control panel
     /// không còn tham số này). Field giữ lại chỉ để code cũ còn compile; xem
-    /// Assets/Game/Scripts/UIScripts/Common/GAME_SETTINGS_HANDOFF.md việc B7 (gỡ dần ở từng controller).</summary>
+    /// handoff/2026-10-04-game-settings.md việc B7 (gỡ dần ở từng controller).</summary>
     public int QuestionTimeout { get; set; }
     public float RoundEndDelay { get; set; }    // seconds delay between questions/rounds: 1-4
 

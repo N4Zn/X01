@@ -696,7 +696,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     IEnumerator IndependentRoundCountdown(Team team)
     {
         // TODO(handoff C8b): khi GameSettings.WaitForClear bật, chờ RIÊNG nửa màn hình của `team`
-        // sạch (FloorZoneClearer.Await(halfRect, ...)) trước khi đếm — xem GAME_SETTINGS_HANDOFF.md.
+        // sạch (FloorZoneClearer.Await(halfRect, ...)) trước khi đếm — xem handoff/2026-10-04-game-settings.md.
         var text = team == Team.Left ? leftCountdownText : rightCountdownText;
         if (text != null) text.gameObject.SetActive(true);
         for (int i = 3; i >= 1; i--)
