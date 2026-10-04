@@ -122,7 +122,15 @@ public class ControlActivity extends Activity {
     private String selectedScene = null;      // sceneName Unity thật (Start dùng cái này)
     private String selectedGameName = null;   // tên game/variant đang chọn hoặc vừa chơi
     private int compStudentIndex = 0;
-    private String rosterSortKey = "total";
+    private String rosterSortKey = "score";
+    /** Ô chọn kiểu điểm ở tab Lớp học (chạm để đổi vòng): 0 = Tất cả các môn, 1 = Môn đang chọn (mặc định),
+     *  2 = Phần (học phần) của game đang chọn — kiểu 2 chỉ có khi đã chọn game. */
+    private int rosterScope = 1;
+    private TextView scopeBtn;
+    private long sessionId = 0;               // mốc thời gian lần Start hiện tại — gom các round thành 1 ván
+    private String historyStudent;            // học sinh đang xem ở tab Lịch sử (ClassRepo.Student.name)
+    private final java.util.Set<Long> openSessions = new java.util.HashSet<>();
+    private final java.util.concurrent.ExecutorService scoreExec = java.util.concurrent.Executors.newSingleThreadExecutor();
     private int rosterSortDir = -1;
     private boolean paused = false;
     private boolean unityStarted = false;
@@ -197,7 +205,27 @@ public class ControlActivity extends Activity {
         settingsStore = new SettingsStore(getExternalFilesDir(null));
         settingsStore.load();
         ((TextView) findViewById(R.id.comp_note)).setText(
-                "Điểm học phần = số câu đúng / tổng số câu đã chơi trong học phần đó (thang 100) — công thức tạm, sẽ tinh chỉnh sau.");
+                "Điểm học phần = số round đúng / số round đã chơi, tính trên 50 round gần nhất (thang 100). "
+                + "Điểm môn = trung bình các học phần đã chơi; môn/học phần chưa chơi không tính vào trung bình.");
+
+        // Ô chọn kiểu điểm của bảng học sinh: chạm 1 lần đổi sang kiểu kế tiếp (Tất cả → Môn → Phần → Tất cả ...).
+        scopeBtn = new TextView(this);
+        scopeBtn.setTextSize(13f);
+        scopeBtn.setTypeface(scopeBtn.getTypeface(), android.graphics.Typeface.BOLD);
+        scopeBtn.setTextColor(UiUtil.ContextColor(this, R.color.accent));
+        scopeBtn.setGravity(Gravity.CENTER_VERTICAL);
+        scopeBtn.setPadding(UiUtil.dp(this, 14), UiUtil.dp(this, 8), UiUtil.dp(this, 14), UiUtil.dp(this, 8));
+        scopeBtn.setBackground(UiUtil.pill(UiUtil.ContextColor(this, R.color.accent_dim), UiUtil.ContextColor(this, R.color.accent), 1, this));
+        LinearLayout.LayoutParams scopeLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        scopeLp.setMargins(UiUtil.dp(this, 12), UiUtil.dp(this, 10), UiUtil.dp(this, 12), UiUtil.dp(this, 4)); // cùng lề với các strip/header bên dưới
+        scopeBtn.setLayoutParams(scopeLp);
+        scopeBtn.setOnClickListener(v -> {
+            int next = (rosterScope + 1) % 3;
+            if (next == 2 && !phanScopeAvailable()) next = 0;
+            rosterScope = next;
+            renderRoster();
+        });
+        panelRoster.addView(scopeBtn, 0);
 
         buildReportTabs();
         renderAll(); // lớp/điểm nạp ở luồng nền trong onResume() rồi vẽ lại
@@ -341,6 +369,9 @@ public class ControlActivity extends Activity {
                         renderAll();
                     });
         });
+
+        findViewById(R.id.category_box).setOnClickListener(v -> categoryTrigger.performClick());
+        findViewById(R.id.class_box).setOnClickListener(v -> classTrigger.performClick());
 
         List<String> classLabels = roster.classes;
         int classIdx = classKey == null ? -1 : classLabels.indexOf(classKey);
@@ -624,7 +655,7 @@ public class ControlActivity extends Activity {
 
     private List<Row> classRows() {
         List<Row> out = new ArrayList<>();
-        for (ClassRepo.Student s : roster.inClass(classKey)) out.add(new Row(s, scoreStore.phanTotals(s.name)));
+        for (ClassRepo.Student s : roster.inClass(classKey)) out.add(new Row(s, scoreStore.phanScores(s.name)));
         return out;
     }
 
@@ -645,14 +676,46 @@ public class ControlActivity extends Activity {
         return n == 0 ? -1 : Math.round(sum / (float) n);
     }
 
-    /** Điểm tổng = trung bình các học phần đã chơi (mỗi học phần 1 phiếu); -1 = chưa chơi gì. */
+    /** Điểm tổng = trung bình các MÔN đã có điểm (môn chưa chơi không tính); -1 = chưa chơi gì. */
     private int totalScore(Row r) {
         int sum = 0, n = 0;
-        for (int[] t : r.phan.values()) {
-            int sc = ScoreStore.scorePct(t[0], t[1]);
+        for (int c = 0; c < categoryNames.length; c++) {
+            int sc = categoryScore(r, c);
             if (sc >= 0) { sum += sc; n++; }
         }
         return n == 0 ? -1 : Math.round(sum / (float) n);
+    }
+
+    /** Điểm 1 học phần (50 round gần nhất); -1 = chưa chơi học phần đó. */
+    private int phanScore(Row r, String phan) {
+        int[] t = phan == null ? null : r.phan.get(phan);
+        return t == null ? -1 : ScoreStore.scorePct(t[0], t[1]);
+    }
+
+    /** Học phần của game đang chọn (null = chưa chọn game). */
+    private String currentPhan() {
+        if (selectedGameName == null) return null;
+        String p = phanByGame.get(selectedGameName);
+        return p != null ? p : selectedGameName;
+    }
+
+    private boolean phanScopeAvailable() { return currentPhan() != null; }
+
+    private String scopeLabel() {
+        switch (rosterScope) {
+            case 0: return "Tất cả các môn";
+            case 2: return "Phần " + currentPhan();
+            default: return "Môn " + (categoryNames.length > domain ? categoryNames[domain] : "—");
+        }
+    }
+
+    /** Điểm theo kiểu đang chọn ở ô chọn; -1 = chưa có điểm (nơi hiển thị in 0, KHÔNG đưa vào trung bình). */
+    private int scopeScore(Row r) {
+        switch (rosterScope) {
+            case 0: return totalScore(r);
+            case 2: return phanScore(r, currentPhan());
+            default: return categoryScore(r, domain);
+        }
     }
 
     /** Môn có điểm thấp nhất trong các môn đã có điểm; -1 nếu chưa có môn nào. */
@@ -671,8 +734,11 @@ public class ControlActivity extends Activity {
         return tv;
     }
 
-    // ── Tab "Lớp học": Tên + 1 cột môn đang chọn + [Lượt] + Tổng ────────────────────────────
+    // ── Tab "Lớp học": Tên + 1 cột Điểm (theo ô chọn Tất cả/Môn/Phần) + [Lượt] ───────────────────
     private void renderRoster() {
+        if (rosterScope == 2 && !phanScopeAvailable()) rosterScope = 1;
+        scopeBtn.setText("Điểm theo:  " + scopeLabel() + "   ⟳");
+
         List<Row> all = classRows();
         List<Row> played = new ArrayList<>();
         List<String> notPlayedNames = new ArrayList<>();
@@ -688,21 +754,17 @@ public class ControlActivity extends Activity {
         gamePreviewStrip.setVisibility(showGameCol ? View.VISIBLE : View.GONE);
         if (showGameCol) gamePreviewStrip.setText("Đang xem số lượt đã chơi " + displayNameOf(selectedGameName) + " — cột \"Lượt\".");
 
-        // header
         rosterHeader.removeAllViews();
         rosterHeader.addView(headerCell("Học sinh", "name", new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.4f)));
-        String catLabel = domain < categoryNames.length ? categoryNames[domain] : "Môn";
-        rosterHeader.addView(headerCell(catLabel, "cat", new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.3f)));
+        rosterHeader.addView(headerCell("Điểm", "score", new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.6f)));
         if (showGameCol) rosterHeader.addView(headerCell("Lượt", null, new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT)));
-        rosterHeader.addView(headerCell("Tổng", "total", new LinearLayout.LayoutParams(UiUtil.dp(this, 50), ViewGroup.LayoutParams.WRAP_CONTENT)));
 
         List<Row> rows = new ArrayList<>(played);
         final int dir = rosterSortDir;
         java.util.Collections.sort(rows, (a, b) -> {
             int cmp;
             if ("name".equals(rosterSortKey)) cmp = a.s.display.compareTo(b.s.display);
-            else if ("total".equals(rosterSortKey)) cmp = Integer.compare(totalScore(a), totalScore(b));
-            else cmp = Integer.compare(categoryScore(a, domain), categoryScore(b, domain));
+            else cmp = Integer.compare(scopeScore(a), scopeScore(b));
             return cmp * dir;
         });
 
@@ -738,15 +800,12 @@ public class ControlActivity extends Activity {
             nameCell.addView(nm);
             row.addView(nameCell);
 
-            int catScore = categoryScore(s, domain);
-            View catCell;
-            if (catScore < 0) {
-                catCell = UiUtil.label(this, "—", 12f, R.color.text_faint, false);
-            } else {
-                catCell = UiUtil.makeBarCell(this, catScore, weakestCategory(s) == domain);
-            }
-            catCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.3f));
-            row.addView(catCell);
+            // Chưa có điểm ở phạm vi đang chọn → hiện 0 (nhưng không bị tính vào trung bình ở nơi khác).
+            int sc = scopeScore(s);
+            boolean weakest = rosterScope == 1 && sc >= 0 && weakestCategory(s) == domain;
+            View scoreCell = UiUtil.makeBarCell(this, Math.max(0, sc), weakest);
+            scoreCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.6f));
+            row.addView(scoreCell);
 
             if (showGameCol) {
                 int plays = scoreStore.plays(s.s.name, selectedGameName);
@@ -755,12 +814,6 @@ public class ControlActivity extends Activity {
                 gameCell.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT));
                 row.addView(gameCell);
             }
-
-            int total = totalScore(s);
-            TextView totalCell = UiUtil.label(this, total < 0 ? "—" : String.valueOf(total), 14f, R.color.text, true);
-            totalCell.setGravity(Gravity.END);
-            totalCell.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 50), ViewGroup.LayoutParams.WRAP_CONTENT));
-            row.addView(totalCell);
 
             row.setOnClickListener(v -> {
                 compStudentIndex = played.indexOf(s);
@@ -831,7 +884,7 @@ public class ControlActivity extends Activity {
         Row r = played.get(Math.min(compStudentIndex, played.size() - 1));
         compName.setText(r.s.display);
         int total = totalScore(r);
-        compFlags.setText(total < 0 ? "" : "Điểm trung bình các học phần: " + total);
+        compFlags.setText(total < 0 ? "" : "Điểm trung bình các môn đã chơi: " + total);
 
         // Chỉ liệt kê học phần ĐÃ CHƠI; học phần điểm thấp nhất tô đỏ (chỉ khi có ≥2 học phần để so).
         List<Map.Entry<String, int[]>> entries = new ArrayList<>();
@@ -865,35 +918,123 @@ public class ControlActivity extends Activity {
         }
     }
 
-    // ── Tab "Lịch sử": các ván gần đây của học sinh trong lớp đang chọn (dữ liệu thật) ────────
+    // ── Tab "Lịch sử": chọn 1 học sinh → các ván theo ngày → bấm 1 ván để xem TỪNG CÂU ────────
     private void renderHistory() {
         historyBody.removeAllViews();
-        java.util.Set<String> names = new java.util.HashSet<>();
-        java.util.Map<String, String> displayByName = new java.util.HashMap<>();
-        for (ClassRepo.Student s : roster.inClass(classKey)) { names.add(s.name); displayByName.put(s.name, s.display); }
+        List<ClassRepo.Student> studs = roster.inClass(classKey);
+        if (studs.isEmpty()) { historyBody.addView(emptyNote("Lớp này chưa có học sinh.")); return; }
 
-        List<ScoreStore.Record> recent = scoreStore.recent(names, 50);
-        if (recent.isEmpty()) { historyBody.addView(emptyNote("Chưa có ván chơi nào của lớp này.")); return; }
-        java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.US);
-        for (ScoreStore.Record rec : recent) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(0, UiUtil.dp(this, 8), 0, UiUtil.dp(this, 8));
-            row.addView(cellText(fmt.format(new java.util.Date(rec.time)), 84, R.color.text_faint));
-            row.addView(cellText(displayByName.get(rec.name), 0, R.color.text));
-            row.addView(cellText(displayNameOf(rec.game), 0, R.color.text_dim));
-            int pct = ScoreStore.scorePct(rec.correct, rec.answered);
-            TextView mark = cellText(rec.correct + "/" + rec.answered, 44, pct >= 50 ? R.color.good : R.color.bad);
+        ClassRepo.Student picked = null;
+        for (ClassRepo.Student st : studs) if (st.name.equals(historyStudent)) picked = st;
+        if (picked == null) {
+            for (ClassRepo.Student st : studs) if (picked == null && !scoreStore.roundsOf(st.name).isEmpty()) picked = st;
+            if (picked == null) picked = studs.get(0);
+            historyStudent = picked.name;
+        }
+
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+        hs.setHorizontalScrollBarEnabled(false);
+        LinearLayout chips = new LinearLayout(this);
+        chips.setOrientation(LinearLayout.HORIZONTAL);
+        for (ClassRepo.Student st : studs) {
+            boolean sel = st.name.equals(historyStudent);
+            TextView chip = UiUtil.label(this, st.display, 12.5f, sel ? R.color.accent : R.color.text_dim, true);
+            chip.setPadding(UiUtil.dp(this, 12), UiUtil.dp(this, 7), UiUtil.dp(this, 12), UiUtil.dp(this, 7));
+            chip.setBackground(sel
+                    ? UiUtil.pill(UiUtil.ContextColor(this, R.color.accent_dim), UiUtil.ContextColor(this, R.color.accent), 1, this)
+                    : UiUtil.pill(UiUtil.ContextColor(this, R.color.panel2), 0, 0, this));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = UiUtil.dp(this, 6);
+            chip.setLayoutParams(lp);
+            chip.setOnClickListener(v -> { historyStudent = st.name; renderHistory(); });
+            chips.addView(chip);
+        }
+        hs.addView(chips);
+        LinearLayout.LayoutParams hsLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hsLp.bottomMargin = UiUtil.dp(this, 10);
+        historyBody.addView(hs, hsLp);
+
+        List<ScoreStore.Record> rounds = scoreStore.roundsOf(historyStudent); // mới trước
+        if (rounds.isEmpty()) { historyBody.addView(emptyNote(picked.display + " chưa có câu nào được ghi lại.")); return; }
+
+        // gom theo ván (session), giữ thứ tự mới → cũ
+        Map<Long, List<ScoreStore.Record>> bySession = new LinkedHashMap<>();
+        for (ScoreStore.Record r : rounds) {
+            List<ScoreStore.Record> l = bySession.get(r.session);
+            if (l == null) { l = new ArrayList<>(); bySession.put(r.session, l); }
+            l.add(r);
+        }
+        java.text.SimpleDateFormat dayFmt = new java.text.SimpleDateFormat("EEEE dd/MM/yyyy", new java.util.Locale("vi"));
+        java.text.SimpleDateFormat timeFmt = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US);
+        String lastDay = null;
+        for (Map.Entry<Long, List<ScoreStore.Record>> e : bySession.entrySet()) {
+            final long sid = e.getKey();
+            List<ScoreStore.Record> sr = e.getValue();               // mới → cũ
+            ScoreStore.Record first = sr.get(sr.size() - 1);          // câu đầu tiên của ván
+            String day = dayFmt.format(new java.util.Date(first.time));
+            if (!day.equals(lastDay)) {
+                lastDay = day;
+                TextView dh = UiUtil.label(this, day, 12f, R.color.text_faint, true);
+                dh.setPadding(0, UiUtil.dp(this, 10), 0, UiUtil.dp(this, 4));
+                historyBody.addView(dh);
+            }
+            int ok = 0; float totalSec = 0;
+            for (ScoreStore.Record r : sr) { if (r.correct) ok++; totalSec += r.sec; }
+            boolean open = openSessions.contains(sid);
+
+            LinearLayout head = new LinearLayout(this);
+            head.setOrientation(LinearLayout.HORIZONTAL);
+            head.setGravity(Gravity.CENTER_VERTICAL);
+            head.setPadding(UiUtil.dp(this, 8), UiUtil.dp(this, 9), UiUtil.dp(this, 8), UiUtil.dp(this, 9));
+            head.setBackground(UiUtil.pill(UiUtil.ContextColor(this, R.color.panel2), 0, 0, this));
+            head.addView(cellText(timeFmt.format(new java.util.Date(first.time)), 48, R.color.text_faint));
+            head.addView(cellText(displayNameOf(first.game), 0, R.color.text));
+            TextView mark = cellText(ok + "/" + sr.size(), 52, ok * 2 >= sr.size() ? R.color.good : R.color.bad);
             mark.setGravity(Gravity.CENTER);
-            row.addView(mark);
-            TextView rt = cellText(String.format(java.util.Locale.US, "%.1fs", rec.avgTime), 56, R.color.text_dim);
-            rt.setGravity(Gravity.END);
-            row.addView(rt);
-            historyBody.addView(row);
-            View divider = new View(this);
-            divider.setBackgroundColor(UiUtil.ContextColor(this, R.color.border_soft));
-            historyBody.addView(divider, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 1)));
+            head.addView(mark);
+            TextView avg = cellText(String.format(java.util.Locale.US, "%.1fs", totalSec / sr.size()), 52, R.color.text_dim);
+            avg.setGravity(Gravity.END);
+            head.addView(avg);
+            head.addView(cellText(open ? "▾" : "▸", 22, R.color.accent));
+            head.setOnClickListener(v -> {
+                if (!openSessions.remove(sid)) openSessions.add(sid);
+                renderHistory();
+            });
+            LinearLayout.LayoutParams headLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            headLp.bottomMargin = UiUtil.dp(this, 4);
+            historyBody.addView(head, headLp);
+
+            if (!open) continue;
+            for (int i = sr.size() - 1; i >= 0; i--) {                // cũ → mới = đúng thứ tự câu
+                ScoreStore.Record r = sr.get(i);
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setPadding(UiUtil.dp(this, 14), UiUtil.dp(this, 7), UiUtil.dp(this, 8), UiUtil.dp(this, 7));
+
+                LinearLayout left = new LinearLayout(this);
+                left.setOrientation(LinearLayout.VERTICAL);
+                left.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                String q = r.question == null || r.question.isEmpty() ? "Câu hỏi media" : r.question;
+                left.addView(UiUtil.label(this, "Câu " + r.round + ": " + q, 12.5f, R.color.text, true));
+                left.addView(UiUtil.label(this, "Chọn: " + (r.answer == null || r.answer.isEmpty() ? "—" : r.answer),
+                        12f, r.correct ? R.color.good : R.color.bad, false));
+                if (!r.correct && r.correctAnswer != null && !r.correctAnswer.isEmpty())
+                    left.addView(UiUtil.label(this, "Đúng: " + r.correctAnswer, 12f, R.color.text_dim, false));
+                row.addView(left);
+
+                LinearLayout right = new LinearLayout(this);
+                right.setOrientation(LinearLayout.VERTICAL);
+                right.setGravity(Gravity.END);
+                right.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 64), ViewGroup.LayoutParams.WRAP_CONTENT));
+                right.addView(UiUtil.label(this, r.correct ? "✓ Đúng" : "✗ Sai", 12f, r.correct ? R.color.good : R.color.bad, true));
+                right.addView(UiUtil.label(this, String.format(java.util.Locale.US, "%.1fs", r.sec), 11.5f, R.color.text_dim, false));
+                row.addView(right);
+                historyBody.addView(row);
+
+                View divider = new View(this);
+                divider.setBackgroundColor(UiUtil.ContextColor(this, R.color.border_soft));
+                historyBody.addView(divider, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UiUtil.dp(this, 1)));
+            }
         }
     }
 
@@ -1078,6 +1219,7 @@ public class ControlActivity extends Activity {
 
     private void onStartClicked() {
         if (selectedScene == null) return;
+        sessionId = System.currentTimeMillis(); // mỗi lần Start = 1 ván mới trong lịch sử
 
         if (!unityStarted) {
             dismissLogoPresentation(); // nhường display phụ lại cho Unity
@@ -1140,14 +1282,13 @@ public class ControlActivity extends Activity {
         // hết game tự nhiên không hề thấy nút Chơi lại).
         // Ghi kết quả ván vừa xong (Stop tay / hết giờ tự nhiên đều qua đây) — chỉ khi đang "playing", để
         // OnGameEnded gọi thêm lần nữa (vd bấm nút trên ScoreScene) không ghi trùng.
-        if ("playing".equals(scene)) recordSession();
         scene = "ended";
+        // Các round cuối có thể còn nằm trong hàng đợi ghi — vẽ lại thêm 1 lần sau khi hàng đợi xong.
+        scoreExec.execute(() -> runOnUiThread(() -> { if (!"playing".equals(scene)) renderReportZone(); }));
         Log.i(TAG, "backToMenu: scene=ended, renderAll()");
         renderAll();
     }
 
-    /** Lưu kết quả ván vừa chơi: mỗi người chơi đã nhận diện được = 1 dòng (đúng/đã chơi) gắn với game + học phần
-     *  của game đó. Số liệu lấy từ lần push gần nhất của Unity (≤1s trước; hết giờ tự nhiên thì Unity ép push cuối). */
     private void renderSettings() {
         settingsBody.removeAllViews();
         settingsBody.addView(UiUtil.label(this, "CÀI ĐẶT CHUNG", 16f, R.color.text, true));
@@ -1337,24 +1478,6 @@ public class ControlActivity extends Activity {
         }
     }
 
-    private void recordSession() {
-        if (selectedGameName == null) return;
-        String game = selectedGameName;
-        String phan = phanByGame.containsKey(game) ? phanByGame.get(game) : game;
-        long now = System.currentTimeMillis();
-        List<ScoreStore.Record> recs = new ArrayList<>();
-        List<LivePlayer> all = new ArrayList<>(liveLeftPlayers);
-        all.addAll(liveRightPlayers);
-        for (LivePlayer p : all) {
-            if (p.answered <= 0 || p.name == null || p.name.isEmpty()) continue;
-            recs.add(new ScoreStore.Record(now, p.name, game, phan, p.correct, p.answered, p.avgTime));
-        }
-        if (recs.isEmpty()) return;
-        new Thread(() -> {
-            scoreStore.add(recs);
-            runOnUiThread(() -> { if (!"playing".equals(scene)) renderReportZone(); });
-        }, "score-save").start();
-    }
 
     private static void sendToUnity(String method, String message) {
         try {
@@ -1416,6 +1539,30 @@ public class ControlActivity extends Activity {
             Log.e(TAG, "parseLivePlayers failed: " + e);
         }
         return out;
+    }
+
+    /** Gọi từ Unity (GameControlBridge.PushRound, qua PlayerRecognitionService.LogRound) MỖI KHI 1 học sinh trả
+     *  lời xong 1 câu/round. JSON {"name","recognized","game","slot","round","questionId","question","answer",
+     *  "correctAnswer","correct","sec"}. Chỉ lưu người đã nhận diện được. Ghi tuần tự ở 1 luồng nền (giữ đúng thứ tự). */
+    public static void OnRound(String json) {
+        final ControlActivity a = sInstance;
+        if (a == null || json == null) return;
+        try {
+            JSONObject o = new JSONObject(json);
+            if (!o.optBoolean("recognized", false)) return;
+            String name = o.optString("name", "");
+            if (name.isEmpty() || "?".equals(name)) return;
+            String game = o.optString("game", "");
+            if (!a.phanByGame.containsKey(game) && a.selectedGameName != null) game = a.selectedGameName;
+            String phan = a.phanByGame.containsKey(game) ? a.phanByGame.get(game) : game;
+            if (a.sessionId == 0) a.sessionId = System.currentTimeMillis();
+            final ScoreStore.Record r = new ScoreStore.Record(System.currentTimeMillis(), a.sessionId, name, game, phan,
+                    o.optInt("round"), o.optString("questionId"), o.optString("question"), o.optString("answer"),
+                    o.optString("correctAnswer"), o.optBoolean("correct"), (float) o.optDouble("sec", 0));
+            a.scoreExec.execute(() -> a.scoreStore.addRound(r));
+        } catch (Exception e) {
+            Log.e(TAG, "OnRound lỗi: " + e);
+        }
     }
 
     /** Gọi từ Unity (GameControlBridge.PushGameEnded) lúc hết giờ/hết vòng tự nhiên. */

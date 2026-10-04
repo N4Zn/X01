@@ -18,7 +18,7 @@ GameObject `GameControlBridge` (`Assets/Game/Scripts/UIScripts/Common/GameContro
 GameObject `CalibControlBridge` (`UIScripts/Calib/CalibControlBridge.cs`): `OnStartCalibRequested`, `OnStartSequentialRequested`, `OnCaptureStepRequested`, `OnStepBackRequested`, `OnCandidateChosen` (payload = chỉ số ứng viên), `OnSaveRequested`, `OnExitRequested`.
 
 ## Unity → Java: `AndroidJavaClass("com.eduxplore.control.ControlActivity").CallStatic`
-`UpdateReport(...)` (điểm + thời gian, throttle 1 lần/giây), `UpdateLivePlayers(leftJson, rightJson)`, `OnGameEnded()` (hết giờ tự nhiên → ControlActivity quay Menu). Calib gọi ngược `com.eduxplore.control.CalibActivity`.
+`OnRound(json)` (MỖI câu/round vừa trả lời — xem bên dưới), `UpdateReport(...)` (điểm + thời gian, throttle 1 lần/giây), `UpdateLivePlayers(leftJson, rightJson)`, `OnGameEnded()` (hết giờ tự nhiên → ControlActivity quay Menu). Calib gọi ngược `com.eduxplore.control.CalibActivity`.
 
 ## Intent extras (cold-boot, đọc 1 lần ở `ControlBridge.Init`)
 - `com.eduxplore.control.SCENE_NAME`, `com.eduxplore.control.GAME_NAME` (định danh nội bộ `name`, không phải `displayName`)
@@ -36,3 +36,17 @@ Nguồn: `ui/SettingsStore.java` (lưu `/sdcard/EduXplore/game_settings.json`); 
 | `waitForClear` | int | 1 bật (mặc định), 0 tắt, -1 không đổi | OR với cờ riêng từng scene |
 
 Quy tắc: field vắng hoặc âm (`gameTime` ≤ 0, `flowSpeed` ≤ 0) = **không đổi**. Thêm field mới: thêm cả vào `SettingsStore.java`, `GameSettings.Dto` và bảng này, mặc định -1 ở Dto.
+
+## Unity → Java: `OnRound(json)` (từng câu, 2026-10-04)
+Gửi từ `PlayerRecognitionService.LogRound` → `GameControlBridge.PushRound` (điểm chèn chung của mọi game; game cũ gọi `LogRound` trực tiếp cũng được phủ). ControlActivity lưu vào `/sdcard/EduXplore/class_rounds.jsonl` (`ui/ScoreStore.java`).
+
+| Field | Ý nghĩa |
+|---|---|
+| `name`, `recognized` | tên học sinh nhận diện; `recognized=false` (Player_1...) thì bị bỏ qua |
+| `game` | định danh game (`GameSessionManager.ResolveActiveGameName`); không có trong registry thì dùng game đang chọn |
+| `slot` | `left`/`right` |
+| `round`, `questionId` | số thứ tự câu; id câu hỏi (`QuestionData.id`, GenericGame = `<gameId>_<chỉ số round>`) |
+| `question`, `answer`, `correctAnswer` | chữ đọc được; câu hỏi chỉ ảnh/âm thanh → `"Câu hỏi media"` (override `DescribeQuestionForLog`/`DescribeAnswerForLog`/`DescribeCorrectForLog` ở `MiniGameControllerBase`) |
+| `correct`, `sec` | đúng/sai, số giây trả lời |
+
+Điểm: học phần = round đúng / round đã chơi trong **50 round gần nhất** của học sinh ở học phần đó; môn = TB các học phần đã có điểm; "Tất cả" = TB các môn đã có điểm (chưa chơi hiện 0 nhưng không tính vào TB).

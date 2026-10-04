@@ -170,7 +170,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     /// recognized for that slot. Safe to call even if RecognizeSlot was never called for this slot
     /// (falls back to the current GameSessionManager display name).
     /// </summary>
-    public void LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec)
+    public void LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "")
     {
         string name = (slot == 0 || slot == 1) ? _lastName[slot] : null;
         bool recognized = (slot == 0 || slot == 1) && _lastRecognized[slot];
@@ -198,10 +198,14 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             round               = round,
             question            = question ?? "",
             answer              = answer ?? "",
+            correctAnswer       = correctAnswer ?? "",
             correct             = correct,
             answerTimeSec       = (float)Math.Round(answerTimeSec, 2),
         });
         WriteLogNow();
+        // Đẩy từng round sang ControlActivity (tính điểm 50 round gần nhất + lịch sử chi tiết từng câu).
+        GameControlBridge.Instance?.PushRound(name, recognized, _currentGameName ?? "Unknown", slot == 0 ? "left" : "right",
+            round, questionId ?? "", question ?? "", answer ?? "", correctAnswer ?? "", correct, (float)Math.Round(answerTimeSec, 2));
     }
 
     /// <summary>Điểm/số liệu gộp theo TỪNG người chơi thật (tên nhận diện được) trong 1 bên
@@ -289,6 +293,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         public int    round;               // -1 for "recognition" entries
         public string question;
         public string answer;
+        public string correctAnswer;       // đáp án đúng (rỗng nếu game chưa cung cấp)
         public bool   correct;
         public float  answerTimeSec;       // -1 for "recognition" entries
     }

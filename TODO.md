@@ -29,3 +29,8 @@
 - [ ] GenericGameBuilder: Safari chưa chơi thử được — (2026-10-04)
 
 ## Đóng băng (không làm cho tới khi user mở lại) — xem `handoff/FROZEN.txt`
+
+## Điểm theo round + lịch sử chi tiết (2026-10-04)
+- [ ] Compile Unity (PlayerRecognitionService/GameControlBridge/MiniGameControllerBase/GenericGameController) + build APK + test K02: round có về ControlActivity không, `class_rounds.jsonl` có ghi không.
+- [ ] Kiểm tra nội dung câu hỏi ở Lịch sử với game generic thật (chữ/icon/"Câu hỏi media") và game cũ (TestTongHop... `LogRound` truyền `correctAnswer` rỗng nên không hiện dòng "Đúng:").
+- [ ] Nút "Chơi lại đúng câu hỏi này" từ Lịch sử: `questionId` đã được lưu; còn thiếu phần Unity ép câu đầu tiên = id đó (GenericGame: pool theo id; game CSV: tra theo id) + message Java→Unity.

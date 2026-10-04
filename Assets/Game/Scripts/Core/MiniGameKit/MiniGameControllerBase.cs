@@ -588,9 +588,10 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         int round = playMode == MiniGamePlayMode.Independent
             ? (team == Team.Left ? _leftRoundIndex : _rightRoundIndex)
             : _roundIndex;
-        string questionDesc = DescribeQuestion(q);
-        string answerDesc = DescribeAnswer(q, playerAnswer);
-        PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec);
+        string questionDesc = DescribeQuestionForLog(q);
+        string answerDesc = DescribeAnswerForLog(q, playerAnswer);
+        string correctDesc = DescribeCorrectForLog(q);
+        PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec, correctDesc, q != null ? q.id : "");
 
         // Track E: đồng bộ Google Sheet liên tục — điểm chèn DUY NHẤT này phủ được mọi game
         // dựng trên MiniGameKit (không cần sửa từng subclass). Xem SheetsSyncManager.
@@ -615,6 +616,15 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             {"responseTimeSec", System.Math.Round(answerTimeSec, 2)},
         });
     }
+
+    // Mô tả để ghi log + hiện ở Lịch sử trên ControlActivity. Game có nội dung câu hỏi riêng (vd GenericGame:
+    // câu hỏi là các slot, QuestionData.questionMediaValue rỗng) override 3 hàm này.
+    protected virtual string DescribeQuestionForLog(QuestionData q)
+        => q != null && q.questionType == QuestionType.Choose && q.questionMediaType != QuestionMediaType.Text
+            ? "Câu hỏi media" : DescribeQuestion(q);
+    protected virtual string DescribeAnswerForLog(QuestionData q, int[] playerAnswer) => DescribeAnswer(q, playerAnswer);
+    /// <summary>Đáp án đúng, dạng chữ. Rỗng = không biết/không áp dụng.</summary>
+    protected virtual string DescribeCorrectForLog(QuestionData q) => DescribeAnswer(q, q != null ? q.correctAnswers : null);
 
     static string DescribeQuestion(QuestionData q)
     {

@@ -30,24 +30,35 @@
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="6dp">
 
-                <TextView
-                    android:id="@+id/category_trigger"
+                <!-- Khung bo góc nổi bật (to hơn 1.2x bản cũ: chữ 17→20sp, padding 8x4→12x7dp). Bấm cả khung = mở dropdown. -->
+                <LinearLayout
+                    android:id="@+id/category_box"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textColor="@color/text"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    android:gravity="center_vertical" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_top_trigger"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="▾"
-                    android:textColor="@color/text_dim"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/category_trigger"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/text"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:gravity="center_vertical" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="▾"
+                        android:textColor="@color/accent"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <View
@@ -64,34 +75,44 @@
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="6dp">
 
-                <TextView
+                <LinearLayout
+                    android:id="@+id/class_box"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Lớp"
-                    android:textColor="@color/text_faint"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginEnd="12dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_top_trigger"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp">
 
-                <TextView
-                    android:id="@+id/class_trigger"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="90dp"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textColor="@color/text"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    android:gravity="center_vertical" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lớp"
+                        android:textColor="@color/text_faint"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="12dp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="▾"
-                    android:textColor="@color/text_dim"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/class_trigger"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="108dp"
+                        android:textColor="@color/text"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:gravity="center_vertical" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="▾"
+                        android:textColor="@color/accent"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <ImageView

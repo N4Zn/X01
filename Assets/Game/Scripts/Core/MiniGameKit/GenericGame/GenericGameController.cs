@@ -271,6 +271,65 @@ public class GenericGameController : MiniGameControllerBase
         return q;
     }
 
+    // ── Mô tả câu hỏi/đáp án để ghi log + xem ở Lịch sử trên ControlActivity ─────────────────
+    // QuestionData của GenericGame không mang nội dung câu hỏi (câu hỏi là các slot của round) nên phải tự mô tả.
+
+    /// <summary>Slot → chữ đọc được: có icon → "tênIcon ×số lượng"; có chữ → chữ; chỉ có ảnh → "[ảnh] tên file".</summary>
+    static string DescribeSlot(SlotSpec s, string resolvedImage)
+    {
+        if (s == null) return "";
+        string text = (s.text ?? "").Trim();
+        if (!string.IsNullOrEmpty(s.icon))
+            return $"{Path.GetFileNameWithoutExtension(s.icon)} ×{(text.Length > 0 ? text : "1")}";
+        if (text.Length > 0) return text;
+        string img = !string.IsNullOrEmpty(s.image) ? s.image : resolvedImage;
+        return string.IsNullOrEmpty(img) ? "·" : "[ảnh] " + Path.GetFileNameWithoutExtension(img);
+    }
+
+    string DescribeAnswerSlot(RoundRuntime rr, int i)
+    {
+        var slots = rr.spec.answers != null ? rr.spec.answers.slots : null;
+        if (slots == null || i < 0 || i >= slots.Length) return i.ToString();
+        return DescribeSlot(slots[i], rr.answerImages != null && i < rr.answerImages.Length ? rr.answerImages[i] : null);
+    }
+
+    protected override string DescribeQuestionForLog(QuestionData q)
+    {
+        if (q == null || !_rounds.TryGetValue(q.id, out var rr)) return base.DescribeQuestionForLog(q);
+        // Chỉ ghi phần ĐỌC ĐƯỢC (chữ, "tênIcon ×số lượng"); câu hỏi chỉ có ảnh/âm thanh → "Câu hỏi media".
+        var parts = new List<string>();
+        var qs = rr.spec.question != null ? rr.spec.question.slots : null;
+        if (qs != null)
+            foreach (var sl in qs)
+            {
+                if (sl == null) continue;
+                string text = (sl.text ?? "").Trim();
+                if (!string.IsNullOrEmpty(sl.icon)) parts.Add($"{Path.GetFileNameWithoutExtension(sl.icon)} ×{(text.Length > 0 ? text : "1")}");
+                else if (text.Length > 0) parts.Add(text);
+            }
+        if (_package.settings.answerMode == "SumToTarget") parts.Add($"mục tiêu tổng {q.sumTarget}");
+        return parts.Count == 0 ? "Câu hỏi media" : string.Join(" | ", parts);
+    }
+
+    protected override string DescribeAnswerForLog(QuestionData q, int[] playerAnswer)
+    {
+        if (q == null || playerAnswer == null || playerAnswer.Length == 0 || !_rounds.TryGetValue(q.id, out var rr))
+            return base.DescribeAnswerForLog(q, playerAnswer);
+        var parts = new List<string>();
+        foreach (int i in playerAnswer) parts.Add(DescribeAnswerSlot(rr, i));
+        return string.Join(_package.settings.answerMode == "OrderedSequence" ? " → " : ", ", parts);
+    }
+
+    protected override string DescribeCorrectForLog(QuestionData q)
+    {
+        if (q == null || !_rounds.TryGetValue(q.id, out var rr)) return base.DescribeCorrectForLog(q);
+        if (_package.settings.answerMode == "SumToTarget") return $"tổng = {q.sumTarget}";
+        if (q.correctAnswers == null || q.correctAnswers.Length == 0) return "";
+        var parts = new List<string>();
+        foreach (int i in q.correctAnswers) parts.Add(DescribeAnswerSlot(rr, i));
+        return string.Join(_package.settings.answerMode == "OrderedSequence" ? " → " : ", ", parts);
+    }
+
     /// <summary>File ảnh nền của 1 slot đáp án: imagePool (random 1 ảnh trong tập) → ảnh riêng của slot → ảnh nền chung của nhóm → null.
     /// Chốt 1 LẦN lúc dựng pool (cùng round trong cùng phiên chơi luôn thấy đúng ảnh đó), khớp web (random 1 lần/round khi mở Chơi thử).</summary>
     string ResolveSlotImageFile(SlotSpec s, GroupSpec g)

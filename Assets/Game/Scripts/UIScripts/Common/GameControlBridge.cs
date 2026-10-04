@@ -234,6 +234,38 @@ public class GameControlBridge : Singleton<GameControlBridge>
 #endif
     }
 
+    [System.Serializable] class RoundDto
+    {
+        public string name, game, slot, questionId, question, answer, correctAnswer;
+        public int round; public bool correct, recognized; public float sec;
+    }
+
+    /// <summary>Đẩy TỪNG câu/round vừa trả lời sang ControlActivity (ScoreStore lưu từng round để tính điểm
+    /// 50 round gần nhất + xem lịch sử chi tiết từng câu). Gọi từ PlayerRecognitionService.LogRound — điểm
+    /// chèn chung của mọi game. `recognized`=false (tên mặc định Player_1...) thì ControlActivity bỏ qua.</summary>
+    public void PushRound(string name, bool recognized, string game, string slot, int round,
+        string questionId, string question, string answer, string correctAnswer, bool correct, float sec)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            string json = JsonUtility.ToJson(new RoundDto
+            {
+                name = name, recognized = recognized, game = game, slot = slot, round = round,
+                questionId = questionId, question = question, answer = answer, correctAnswer = correctAnswer, correct = correct, sec = sec
+            });
+            using (var controlActivityClass = new AndroidJavaClass(ControlActivityClass))
+            {
+                controlActivityClass.CallStatic("OnRound", json);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameControlBridge] PushRound lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
+    }
+
     [System.Serializable] class LivePlayerDto { public string name; public int correct; public int answered; public float avgTime; public float avgCorrectTime; }
     [System.Serializable] class LivePlayerListDto { public System.Collections.Generic.List<LivePlayerDto> players; }
 
