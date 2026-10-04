@@ -34,6 +34,46 @@ public class FloorZoneClearer : MonoBehaviour, IPointerClickHandler
     }
 
     /// <summary>
+    /// Await specific side (Left/Right) of a root RectTransform.
+    /// </summary>
+    public static FloorZoneClearer AwaitSide(Team team, RectTransform root, Action onDone)
+    {
+        var go = new GameObject($"_FloorZoneClearer_{team}");
+        var rt = go.AddComponent<RectTransform>();
+        rt.SetParent(root, false);
+
+        if (team == Team.Left)
+        {
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+        }
+        else
+        {
+            rt.anchorMin = new Vector2(0.5f, 0f);
+            rt.anchorMax = new Vector2(1f, 1f);
+        }
+
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        rt.SetAsLastSibling();
+
+        var cv = go.AddComponent<Canvas>();
+        cv.overrideSorting = true;
+        cv.sortingOrder = 20;
+        go.AddComponent<GraphicRaycaster>();
+
+        var img = go.AddComponent<Image>();
+        img.color = Color.clear;
+
+        BuildLabel(rt, 0f, 1f);
+
+        var c = go.AddComponent<FloorZoneClearer>();
+        c._onDone = onDone;
+        c._lastClickTime = Time.time;
+        c.StartCoroutine(c.Run());
+        return c;
+    }
+
+    /// <summary>
     /// Zone clearer toàn màn hình — 2 nhãn trái/phải (1 nửa mỗi bên).
     /// Bất kỳ click nào đều reset timer. Sau EXIT_DELAY giây không click → gọi onDone.
     /// </summary>
@@ -63,6 +103,36 @@ public class FloorZoneClearer : MonoBehaviour, IPointerClickHandler
         c._lastClickTime = Time.time;
         c.StartCoroutine(c.Run());
         return c;
+    }
+
+    /// <summary>
+    /// Chờ clear nếu GameSettings.WaitForClear bật, ngược lại gọi callback ngay.
+    /// </summary>
+    public static void AwaitIfEnabled(RectTransform root, Action onDone)
+    {
+        if (GameSettings.Instance != null && GameSettings.Instance.WaitForClear)
+        {
+            AwaitBothSides(root, onDone);
+        }
+        else
+        {
+            onDone?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Chờ clear 1 bên nếu GameSettings.WaitForClear bật, ngược lại gọi callback ngay.
+    /// </summary>
+    public static void AwaitSideIfEnabled(Team team, RectTransform root, Action onDone)
+    {
+        if (GameSettings.Instance != null && GameSettings.Instance.WaitForClear)
+        {
+            AwaitSide(team, root, onDone);
+        }
+        else
+        {
+            onDone?.Invoke();
+        }
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────

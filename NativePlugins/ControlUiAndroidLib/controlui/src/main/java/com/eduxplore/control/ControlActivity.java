@@ -11,14 +11,21 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.InputType;
 
 import com.eduxplore.control.ui.ClassRepo;
 import com.eduxplore.control.ui.ScoreStore;
+import com.eduxplore.control.ui.SettingsStore;
 import com.eduxplore.control.ui.UiUtil;
 
 import org.json.JSONArray;
@@ -55,6 +62,7 @@ public class ControlActivity extends Activity {
 
     public static final String EXTRA_SCENE_NAME = "com.eduxplore.control.SCENE_NAME";
     public static final String EXTRA_GAME_NAME = "com.eduxplore.control.GAME_NAME";
+    public static final String EXTRA_SETTINGS_JSON = "com.eduxplore.control.SETTINGS_JSON";
 
     private static final String GAME_REGISTRY_ASSET = "game_registry.json";
     private static final String UNITY_GAME_OBJECT = "GameControlBridge";
@@ -101,6 +109,8 @@ public class ControlActivity extends Activity {
     private TextView compName, compFlags;
     private LinearLayout liveSideLeft, liveSideRight;
     private LinearLayout summaryCard;
+    private ScrollView panelSettings;
+    private LinearLayout settingsBody;
 
     // ── State ────────────────────────────────────────────────────────────────
     private String scene = "select"; // select | playing | ended
@@ -108,6 +118,7 @@ public class ControlActivity extends Activity {
     private String classKey; // tên lớp đang chọn (null = chưa có lớp nào)
     private ClassRepo.Snapshot roster = new ClassRepo.Snapshot();
     private ScoreStore scoreStore;
+    private SettingsStore settingsStore;
     private String selectedScene = null;      // sceneName Unity thật (Start dùng cái này)
     private String selectedGameName = null;   // tên game/variant đang chọn hoặc vừa chơi
     private int compStudentIndex = 0;
@@ -166,6 +177,8 @@ public class ControlActivity extends Activity {
         panelHistory = findViewById(R.id.panel_history);
         panelLive = findViewById(R.id.panel_live);
         panelSummary = findViewById(R.id.panel_summary);
+        panelSettings = (ScrollView) findViewById(R.id.panel_settings);
+        settingsBody = (LinearLayout) panelSettings.getChildAt(0);
         gamePreviewStrip = findViewById(R.id.game_preview_strip);
         notPlayedStrip = findViewById(R.id.notplayed_strip);
         rosterHeader = findViewById(R.id.roster_header);
@@ -181,6 +194,8 @@ public class ControlActivity extends Activity {
 
         loadGameRegistry();
         scoreStore = new ScoreStore(getExternalFilesDir(null));
+        settingsStore = new SettingsStore(getExternalFilesDir(null));
+        settingsStore.load();
         ((TextView) findViewById(R.id.comp_note)).setText(
                 "Điểm học phần = số câu đúng / tổng số câu đã chơi trong học phần đó (thang 100) — công thức tạm, sẽ tinh chỉnh sau.");
 
@@ -556,7 +571,7 @@ public class ControlActivity extends Activity {
     private String reportTab = "roster"; // roster | competency | history | summary
 
     private void buildReportTabs() {
-        String[] tabs = {"roster:Lớp học", "competency:Năng lực", "history:Lịch sử"};
+        String[] tabs = {"roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt"};
         for (String t : tabs) {
             String[] p = t.split(":");
             TextView tab = new TextView(this);
@@ -583,7 +598,9 @@ public class ControlActivity extends Activity {
         panelHistory.setVisibility("history".equals(view) ? View.VISIBLE : View.GONE);
         panelLive.setVisibility("live".equals(view) ? View.VISIBLE : View.GONE);
         panelSummary.setVisibility("summary".equals(view) ? View.VISIBLE : View.GONE);
+        panelSettings.setVisibility("settings".equals(view) ? View.VISIBLE : View.GONE);
         if ("summary".equals(view)) renderSummary();
+        if ("settings".equals(view)) renderSettings();
     }
 
     private void renderReportZone() {
@@ -1070,6 +1087,9 @@ public class ControlActivity extends Activity {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.putExtra(EXTRA_SCENE_NAME, selectedScene);
             intent.putExtra(EXTRA_GAME_NAME, selectedGameName);
+            try {
+                intent.putExtra(EXTRA_SETTINGS_JSON, settingsStore.toJson().toString());
+            } catch (Exception ignored) {}
 
             if (secondary == null) {
                 Log.i(TAG, "onStartClicked: không có display phụ — chạy display 0 (fallback 1-display)");
@@ -1128,6 +1148,195 @@ public class ControlActivity extends Activity {
 
     /** Lưu kết quả ván vừa chơi: mỗi người chơi đã nhận diện được = 1 dòng (đúng/đã chơi) gắn với game + học phần
      *  của game đó. Số liệu lấy từ lần push gần nhất của Unity (≤1s trước; hết giờ tự nhiên thì Unity ép push cuối). */
+    private void renderSettings() {
+        settingsBody.removeAllViews();
+        settingsBody.addView(UiUtil.label(this, "CÀI ĐẶT CHUNG", 16f, R.color.text, true));
+        
+        // 1. Thời gian game
+        settingsBody.addView(buildSeekBarSetting("Thời gian game (giây)", 10, 600, settingsStore.gameTime, val -> {
+            settingsStore.gameTime = val;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
+        // 2. Chờ chuyển round
+        settingsBody.addView(buildSeekBarSetting("Chờ chuyển round (giây)", 1, 4, (int)settingsStore.roundEndDelay, val -> {
+            settingsStore.roundEndDelay = (float)val;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
+        // 3. Tốc độ flow (Slider 0.1 - 5.0, step 0.1 + EditText)
+        settingsBody.addView(buildFlowSpeedSetting());
+
+        // 4. Âm lượng nhạc
+        settingsBody.addView(buildVolumeSetting("Âm lượng nhạc nền", settingsStore.musicVolume, val -> {
+            settingsStore.musicVolume = val;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
+        // 5. Âm lượng hiệu ứng (SFX)
+        settingsBody.addView(buildVolumeSetting("Âm lượng hiệu ứng (SFX)", settingsStore.sfxVolume, val -> {
+            settingsStore.sfxVolume = val;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
+        // 6. Chờ clear mới chuyển round
+        settingsBody.addView(buildCheckboxSetting("Chờ clear mới chuyển round", settingsStore.waitForClear == 1, checked -> {
+            settingsStore.waitForClear = checked ? 1 : 0;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+    }
+
+    private View buildSeekBarSetting(String label, int min, int max, int current, final UiUtil.OnPick onPick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.addView(UiUtil.label(this, label, 13f, R.color.text_dim, false));
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        top.addView(spacer);
+        TextView valTxt = UiUtil.label(this, String.valueOf(current), 13f, R.color.accent, true);
+        top.addView(valTxt);
+        row.addView(top);
+
+        SeekBar sb = new SeekBar(this);
+        sb.setMax(max - min);
+        sb.setProgress(current - min);
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int val = min + progress;
+                valTxt.setText(String.valueOf(val));
+                if (fromUser) onPick.onPick(val);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        row.addView(sb);
+        return row;
+    }
+
+    private View buildFlowSpeedSetting() {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
+
+        row.addView(UiUtil.label(this, "Tốc độ flow (0.1x - 5.0x)", 13f, R.color.text_dim, false));
+
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setGravity(Gravity.CENTER_VERTICAL);
+
+        SeekBar sb = new SeekBar(this);
+        sb.setMax(49); // 0 to 49 -> 0.1 to 5.0
+        sb.setProgress(Math.round((settingsStore.flowSpeed - 0.1f) * 10f));
+        sb.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        EditText et = new EditText(this);
+        et.setText(String.format(java.util.Locale.US, "%.1f", settingsStore.flowSpeed));
+        et.setTextSize(13f);
+        et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        et.setGravity(Gravity.CENTER);
+        et.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 60), ViewGroup.LayoutParams.WRAP_CONTENT));
+        
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) return;
+                float val = 0.1f + progress / 10f;
+                et.setText(String.format(java.util.Locale.US, "%.1f", val));
+                settingsStore.flowSpeed = val;
+                settingsStore.save();
+                syncSettingsToUnity();
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        et.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                try {
+                    float val = Float.parseFloat(s.toString());
+                    if (val < 0.1f) val = 0.1f;
+                    if (val > 5.0f) val = 5.0f;
+                    int progress = Math.round((val - 0.1f) * 10f);
+                    if (sb.getProgress() != progress) {
+                        sb.setProgress(progress);
+                        settingsStore.flowSpeed = val;
+                        settingsStore.save();
+                        syncSettingsToUnity();
+                    }
+                } catch (Exception ignored) {}
+            }
+        });
+
+        controls.addView(sb);
+        controls.addView(et);
+        row.addView(controls);
+        return row;
+    }
+
+    private View buildVolumeSetting(String label, float current, final VolumeCallback cb) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.addView(UiUtil.label(this, label, 13f, R.color.text_dim, false));
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        top.addView(spacer);
+        TextView valTxt = UiUtil.label(this, Math.round(current * 100) + "%", 13f, R.color.accent, true);
+        top.addView(valTxt);
+        row.addView(top);
+
+        SeekBar sb = new SeekBar(this);
+        sb.setMax(100);
+        sb.setProgress(Math.round(current * 100));
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                valTxt.setText(progress + "%");
+                if (fromUser) cb.onVolumeChanged(progress / 100f);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        row.addView(sb);
+        return row;
+    }
+
+    private View buildCheckboxSetting(String label, boolean current, final CheckboxCallback cb) {
+        CheckBox cbView = new CheckBox(this);
+        cbView.setText(label);
+        cbView.setChecked(current);
+        cbView.setTextSize(13f);
+        cbView.setTextColor(UiUtil.ContextColor(this, R.color.text));
+        cbView.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
+        cbView.setOnCheckedChangeListener((buttonView, isChecked) -> cb.onCheckedChanged(isChecked));
+        return cbView;
+    }
+
+    private interface VolumeCallback { void onVolumeChanged(float val); }
+    private interface CheckboxCallback { void onCheckedChanged(boolean checked); }
+
+    private void syncSettingsToUnity() {
+        if (!unityStarted) return;
+        try {
+            String json = settingsStore.toJson().toString();
+            sendToUnity("OnSettingsChanged", json);
+        } catch (Exception e) {
+            Log.e(TAG, "syncSettingsToUnity lỗi: " + e);
+        }
+    }
+
     private void recordSession() {
         if (selectedGameName == null) return;
         String game = selectedGameName;

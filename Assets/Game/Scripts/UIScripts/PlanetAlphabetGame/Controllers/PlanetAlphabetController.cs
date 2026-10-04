@@ -171,7 +171,7 @@ public class PlanetAlphabetController : MonoBehaviour
         gameView.ShowBoxes(playerIndex, _model.Values[playerIndex]);
         gameView.SetPlayerInteractable(playerIndex, true);
         MusicManager.Instance?.PlayQuestionSfx();
-        StartQuestionTimeout(playerIndex);
+        // StartQuestionTimeout(playerIndex); // Gỡ QuestionTimeout
     }
 
     private void StartQuestionTimeout(int playerIndex)
@@ -241,7 +241,7 @@ public class PlanetAlphabetController : MonoBehaviour
             }
             else
             {
-                StartQuestionTimeout(playerIndex);
+                // StartQuestionTimeout(playerIndex); // Gỡ QuestionTimeout
             }
         }
         else
@@ -274,6 +274,13 @@ public class PlanetAlphabetController : MonoBehaviour
 
         PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
+        FloorZoneClearer.AwaitSideIfEnabled((Team)playerIndex, gameView.GetComponent<RectTransform>(), () => {
+            if (gameObject.activeInHierarchy) StartCoroutine(PostClearLoadNextRound(playerIndex));
+        });
+    }
+
+    private IEnumerator PostClearLoadNextRound(int playerIndex)
+    {
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {
@@ -283,7 +290,13 @@ public class PlanetAlphabetController : MonoBehaviour
         }
         gameView.HideCountdown(playerIndex);
 
-        LoadNewRound(playerIndex);
+        _model.GenerateRound(playerIndex);
+        _roundIndex[playerIndex]++;
+        _questionShownTime[playerIndex] = Time.time;
+        gameView.HideFeedback(playerIndex);
+        gameView.ShowBoxes(playerIndex, _model.Values[playerIndex]);
+        gameView.SetPlayerInteractable(playerIndex, true);
+        MusicManager.Instance?.PlayQuestionSfx();
     }
 
     private IEnumerator ResetRoundForPlayer(int playerIndex)
@@ -296,6 +309,13 @@ public class PlanetAlphabetController : MonoBehaviour
 
         PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
+        FloorZoneClearer.AwaitSideIfEnabled((Team)playerIndex, gameView.GetComponent<RectTransform>(), () => {
+            if (gameObject.activeInHierarchy) StartCoroutine(PostClearResetRound(playerIndex));
+        });
+    }
+
+    private IEnumerator PostClearResetRound(int playerIndex)
+    {
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {
@@ -305,6 +325,12 @@ public class PlanetAlphabetController : MonoBehaviour
         }
         gameView.HideCountdown(playerIndex);
 
-        LoadNewRound(playerIndex);
+        _model.GenerateRound(playerIndex);
+        _roundIndex[playerIndex]++;
+        _questionShownTime[playerIndex] = Time.time;
+        gameView.HideFeedback(playerIndex);
+        gameView.ShowBoxes(playerIndex, _model.Values[playerIndex]);
+        gameView.SetPlayerInteractable(playerIndex, true);
+        MusicManager.Instance?.PlayQuestionSfx();
     }
 }

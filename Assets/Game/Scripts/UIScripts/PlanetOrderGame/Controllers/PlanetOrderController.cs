@@ -20,10 +20,7 @@ public class PlanetOrderController : MonoBehaviour
     private PlanetOrderModel _model;
     private Coroutine _p1FeedbackCoroutine;
     private Coroutine _p2FeedbackCoroutine;
-    private Coroutine _p1TimeoutCoroutine;
-    private Coroutine _p2TimeoutCoroutine;
     private float _feedbackDelay = 1.5f;
-    private float _questionTimeout = 10f;
     private readonly int[] _roundIndex = new int[2];
     private readonly float[] _questionShownTime = new float[2];
 
@@ -35,7 +32,6 @@ public class PlanetOrderController : MonoBehaviour
 
         _model = new PlanetOrderModel();
 
-        if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
         if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
         gameView.InitView();
@@ -174,44 +170,11 @@ public class PlanetOrderController : MonoBehaviour
         gameView.ShowBoxes(playerIndex, _model.Values[playerIndex]);
         gameView.SetPlayerInteractable(playerIndex, true);
         MusicManager.Instance?.PlayQuestionSfx();
-        StartQuestionTimeout(playerIndex);
-    }
-
-    private void StartQuestionTimeout(int playerIndex)
-    {
-        if (playerIndex == 0)
-        { if (_p1TimeoutCoroutine != null) StopCoroutine(_p1TimeoutCoroutine); _p1TimeoutCoroutine = StartCoroutine(QuestionTimeoutCoroutine(playerIndex)); }
-        else
-        { if (_p2TimeoutCoroutine != null) StopCoroutine(_p2TimeoutCoroutine); _p2TimeoutCoroutine = StartCoroutine(QuestionTimeoutCoroutine(playerIndex)); }
-    }
-
-    private void CancelQuestionTimeout(int playerIndex)
-    {
-        if (playerIndex == 0 && _p1TimeoutCoroutine != null) { StopCoroutine(_p1TimeoutCoroutine); _p1TimeoutCoroutine = null; }
-        if (playerIndex == 1 && _p2TimeoutCoroutine != null) { StopCoroutine(_p2TimeoutCoroutine); _p2TimeoutCoroutine = null; }
-    }
-
-    private IEnumerator QuestionTimeoutCoroutine(int playerIndex)
-    {
-        yield return new WaitForSeconds(_questionTimeout);
-        if (GetState() != PlanetOrderState.Playing) yield break;
-
-        MusicManager.Instance?.PlayWrongSfx();
-        gameView.ShowFeedback(playerIndex, false);
-        gameView.SetPlayerInteractable(playerIndex, false);
-        string question = string.Join(",", _model.Values[playerIndex]);
-        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], question, "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
-        if (playerIndex == 0)
-        { if (_p1FeedbackCoroutine != null) StopCoroutine(_p1FeedbackCoroutine); _p1FeedbackCoroutine = StartCoroutine(LoadNextRoundForPlayer(playerIndex)); }
-        else
-        { if (_p2FeedbackCoroutine != null) StopCoroutine(_p2FeedbackCoroutine); _p2FeedbackCoroutine = StartCoroutine(LoadNextRoundForPlayer(playerIndex)); }
     }
 
     private void OnBoxTapped(int playerIndex, int boxIndex)
     {
         if (GetState() != PlanetOrderState.Playing) return;
-
-        CancelQuestionTimeout(playerIndex);
 
         bool correct = _model.CheckTap(playerIndex, boxIndex);
         string question = string.Join(",", _model.Values[playerIndex]);
@@ -246,8 +209,7 @@ public class PlanetOrderController : MonoBehaviour
             }
             else
             {
-                // Partial progress â€” restart timeout so player still has a deadline for next tap
-                StartQuestionTimeout(playerIndex);
+                // Partial progress - no timeout restart needed
             }
         }
         else
@@ -282,6 +244,13 @@ public class PlanetOrderController : MonoBehaviour
 
         PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
+        FloorZoneClearer.AwaitSideIfEnabled((Team)playerIndex, gameView.GetComponent<RectTransform>(), () => {
+            if (gameObject.activeInHierarchy) StartCoroutine(PostClearLoadNextRound(playerIndex));
+        });
+    }
+
+    private IEnumerator PostClearLoadNextRound(int playerIndex)
+    {
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {
@@ -304,6 +273,13 @@ public class PlanetOrderController : MonoBehaviour
 
         PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
+        FloorZoneClearer.AwaitSideIfEnabled((Team)playerIndex, gameView.GetComponent<RectTransform>(), () => {
+            if (gameObject.activeInHierarchy) StartCoroutine(PostClearResetRound(playerIndex));
+        });
+    }
+
+    private IEnumerator PostClearResetRound(int playerIndex)
+    {
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {

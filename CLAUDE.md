@@ -318,6 +318,10 @@ Yêu cầu: mọi đường audio (HDMI, loa, USB, BT...) đều max, tắt cả
   Đã verify sau reboot: mọi stream × mọi device = 15/15, `SAFE_MEDIA_VOLUME_INACTIVE`.
 - HDMI không có gain riêng ở mixer phần cứng (`tinymix`) — âm lượng HDMI chỉ chỉnh bằng phần mềm.
 
+### Cài đặt game trong ControlActivity (2026-10-04)
+
+Tab "Cài đặt" của `ControlActivity` thay panel setting cũ trên Unity: thời gian game, chờ chuyển round (1–4s), tốc độ flow (0.1–5x, slider + ô số), nhạc, SFX, ô tick "chờ clear mới chuyển round" (mặc định BẬT, áp mọi game kể cả Independent). Thời gian mỗi câu: bỏ (không giới hạn). Lưu `/sdcard/EduXplore/game_settings.json` (`ui/SettingsStore.java`). Gửi Unity: đang sống → `UnitySendMessage("GameControlBridge","OnSettingsChanged",json)`; cold-boot → Intent extra `com.eduxplore.control.SETTINGS_JSON` (`ControlBridge.Init`). Unity phía nhận: `GameSettings.ApplyJson` (field vắng/âm = không đổi). Chờ clear: Base `TransitionCountdown`/`IndependentPlayerLoop` + `FloorZoneClearer.AwaitIfEnabled/AwaitSide`. Flow: `SpawnFlowDisplay`, `LaneTrack`. Chi tiết + trạng thái: `handoff/2026-10-04-game-settings.md`. **7 game đóng băng** (AddUp, NumberAddUp, PathFinder, TrainPath, Monopoly, RiverCross, Balloon): không đụng, xem `handoff/FROZEN.txt` + `AGENTS.md`.
+
 ### Stop/Start — KHÔNG destroy UnityPlayerActivity (gotcha quan trọng)
 
 **Unity tự gọi `Process.killProcess()` cả process (dùng chung với `ControlActivity`) khi

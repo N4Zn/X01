@@ -23,15 +23,12 @@ public class TongHopGameController : MonoBehaviour
     // Coroutine reference for feedback delay
     private Coroutine _p1FeedbackCoroutine;
     private Coroutine _p2FeedbackCoroutine;
-    private Coroutine _p1TimeoutCoroutine;
-    private Coroutine _p2TimeoutCoroutine;
 
     // Whether each player has answered current round
     private bool _p1Answered = false;
     private bool _p2Answered = false;
 
     private float _feedbackDelay = 1.5f;
-    private float _questionTimeout = 10f;
     private readonly int[] _roundIndex = new int[2];
     private readonly float[] _questionShownTime = new float[2];
 
@@ -63,7 +60,6 @@ public class TongHopGameController : MonoBehaviour
 
         _gameModel = new TongHopGameModel();
 
-        if (GameSettings.Instance != null) _questionTimeout = GameSettings.Instance.QuestionTimeout;
         if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
         gameView.InitView();
@@ -326,7 +322,6 @@ public class TongHopGameController : MonoBehaviour
         gameView.SetPlayerAnswersInteractable(playerIndex, true);
         _questionShownTime[playerIndex] = Time.time;
         _roundIndex[playerIndex]++;
-        StartQuestionTimeout(playerIndex);
     }
 
     string DescribeQuestion(int playerIndex)
@@ -341,34 +336,7 @@ public class TongHopGameController : MonoBehaviour
         return $"{sa} + {sb} = {sc}";
     }
 
-    private void StartQuestionTimeout(int playerIndex)
-    {
-        if (playerIndex == 0)
-        { if (_p1TimeoutCoroutine != null) StopCoroutine(_p1TimeoutCoroutine); _p1TimeoutCoroutine = StartCoroutine(QuestionTimeoutCoroutine(playerIndex)); }
-        else
-        { if (_p2TimeoutCoroutine != null) StopCoroutine(_p2TimeoutCoroutine); _p2TimeoutCoroutine = StartCoroutine(QuestionTimeoutCoroutine(playerIndex)); }
-    }
 
-    private void CancelQuestionTimeout(int playerIndex)
-    {
-        if (playerIndex == 0 && _p1TimeoutCoroutine != null) { StopCoroutine(_p1TimeoutCoroutine); _p1TimeoutCoroutine = null; }
-        if (playerIndex == 1 && _p2TimeoutCoroutine != null) { StopCoroutine(_p2TimeoutCoroutine); _p2TimeoutCoroutine = null; }
-    }
-
-    private IEnumerator QuestionTimeoutCoroutine(int playerIndex)
-    {
-        yield return new WaitForSeconds(_questionTimeout);
-        if (GetCurrentState() != TongHopSceneState.Playing) yield break;
-        bool answered = playerIndex == 0 ? _p1Answered : _p2Answered;
-        if (answered) yield break;
-
-        if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
-        MusicManager.Instance?.PlayWrongSfx();
-        gameView.ShowFeedback(playerIndex, false);
-        gameView.SetPlayerAnswersInteractable(playerIndex, false);
-        PlayerRecognitionService.Instance.LogRound(playerIndex, _roundIndex[playerIndex], DescribeQuestion(playerIndex), "(timeout)", false, Time.time - _questionShownTime[playerIndex]);
-        ScheduleNextQuestion(playerIndex);
-    }
 
     private void UpdateTimer()
     {
@@ -421,7 +389,6 @@ public class TongHopGameController : MonoBehaviour
 
         if (result == 0) // Wrong
         {
-            CancelQuestionTimeout(playerIndex);
             if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
 
             MusicManager.Instance?.PlayWrongSfx();
@@ -452,7 +419,6 @@ public class TongHopGameController : MonoBehaviour
         }
         else if (result == 2) // Fully Correct
         {
-            CancelQuestionTimeout(playerIndex);
             if (playerIndex == 0) _p1Answered = true; else _p2Answered = true;
 
             MusicManager.Instance?.PlayCorrectSfx();
@@ -506,6 +472,13 @@ public class TongHopGameController : MonoBehaviour
 
         PlayerRecognitionService.Instance.RecognizeSlot(playerIndex, _ => RefreshPlayerNames());
 
+        FloorZoneClearer.AwaitSideIfEnabled((Team)playerIndex, gameView.GetComponent<RectTransform>(), () => {
+            if (gameObject.activeInHierarchy) StartCoroutine(PostClearLoadNextQuestion(playerIndex));
+        });
+    }
+
+    private IEnumerator PostClearLoadNextQuestion(int playerIndex)
+    {
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {

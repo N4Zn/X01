@@ -27,6 +27,9 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - Unity đã theo `collect.mirror` (`CollectFlipsFor` trong controller; SCHEMA.md/capabilities.json đã cập nhật).
 - Code Unity mới chỉ compile-check bằng Roslyn (0 lỗi), **chưa chạy trong Editor**: cần test round/collect/mirror/icon grid.
 
+## Wait-to-do (làm sau, chưa ưu tiên)
+- [ ] **Safari: chưa chơi thử (Play/preview) được** — builder chạy trên trình duyệt Safari không vào được chế độ chơi thử. Chưa điều tra nguyên nhân (nghi: autoplay audio bị chặn, `requestAnimationFrame`/API chưa hỗ trợ, hoặc cú pháp JS/CSS Safari không nhận). Khi làm: test trên Safari thật (macOS/iOS), mở Web Inspector xem lỗi Console. Hiện dùng Chrome/Edge.
+
 ## Lưu ý kỹ thuật
 - Test web: click DOM + `javascript_tool`; browser pane ẩn nên polyfill `requestAnimationFrame` bằng setTimeout; server local `node srv.js` cổng 8765.
 - Unity JsonUtility không có dict/null int; field class luôn được khởi tạo mặc định → "có override" xét theo nội dung.

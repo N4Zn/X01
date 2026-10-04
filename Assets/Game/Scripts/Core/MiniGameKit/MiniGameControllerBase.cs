@@ -653,10 +653,22 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             }
 
             roundCount++;
-            if (useIndependentRoundCountdown && roundCount > 1)
+            if (roundCount > 1)
             {
-                yield return IndependentRoundCountdown(team);
-                if (!_independentRunning) yield break;
+                bool waitClear = waitForZoneClearBeforeCountdown || (GameSettings.Instance != null && GameSettings.Instance.WaitForClear);
+                if (waitClear && hud != null)
+                {
+                    bool cleared = false;
+                    FloorZoneClearer.AwaitSide(team, hud.transform.root as RectTransform, () => cleared = true);
+                    yield return new WaitUntil(() => cleared || !_independentRunning);
+                    if (!_independentRunning) yield break;
+                }
+
+                if (useIndependentRoundCountdown)
+                {
+                    yield return IndependentRoundCountdown(team);
+                    if (!_independentRunning) yield break;
+                }
             }
 
             QuestionData q = PullNextQuestion();
@@ -695,14 +707,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     /// TransitionCountdown() của Combined mode).</summary>
     IEnumerator IndependentRoundCountdown(Team team)
     {
-        // TODO(handoff C8b): khi GameSettings.WaitForClear bật, chờ RIÊNG nửa màn hình của `team`
-        // sạch (FloorZoneClearer.Await(halfRect, ...)) trước khi đếm — xem handoff/2026-10-04-game-settings.md.
         var text = team == Team.Left ? leftCountdownText : rightCountdownText;
         if (text != null) text.gameObject.SetActive(true);
         for (int i = 3; i >= 1; i--)
         {
             if (text != null) text.text = $"Next in {i}";
             yield return new WaitForSeconds(1f);
+            if (!_independentRunning) break;
         }
         if (text != null) text.gameObject.SetActive(false);
     }

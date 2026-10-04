@@ -47,7 +47,7 @@ Android Studio agent, user sẽ review lại.
 - C9. Game cũ: trước khi sang câu/round kế, nếu `GameSettings.Instance.WaitForClear` thì `FloorZoneClearer.AwaitBothSides(canvasRoot, cb)` rồi mới chạy delay `RoundEndDelay`. Mẫu chuẩn: `TestTongHopController` (+ `AnswerDisplayManager.ZoneCleared`, tức SolarQuiz đã làm). Nên viết 1 helper dùng chung (vd `FloorZoneClearer.AwaitIfEnabled(root, cb)` gọi cb ngay nếu setting tắt) để khỏi lặp 17 lần. **Chỉ làm game KHÔNG nằm trong blacklist** (user chọn bên dưới).
 
 ### D. Tốc độ flow các game ngoài GenericGame
-- `BalloonGameController`/`BalloonGameConfig` (`speedBase`), `LaneDash` (`baseSpeed`, `spawnInterval`): nhân hệ số `GameSettings.FlowSpeed`. Chưa grep hết game spawn liên tục khác — rà thêm.
+- (Balloon ĐÓNG BĂNG — bỏ qua) `LaneDash` (`baseSpeed`, `spawnInterval`): nhân hệ số `GameSettings.FlowSpeed`. Chưa grep hết game spawn liên tục khác — rà thêm.
 - Quyết định mở: `SpawnFlowDisplay` hiện CHỈ nhân tốc độ trôi (giữ nguyên `spawnIntervalSec`). Muốn "nhanh hơn thì dày hơn" thì chia `_spawnIntervalSec / FlowSpeed`.
 
 ### E. Cuối
@@ -69,23 +69,40 @@ QT = số chỗ dùng `QuestionTimeout`; DELAY = số chỗ dùng `RoundEndDelay
 | Game (registry) | Scene / Controller | QT | DELAY |
 |---|---|---|---|
 | AddNumber, AddNumber5 | AddNumberGame / AddNumberGameController | 9 (đã comment tắt) | 3 |
-| (AddUp) | AddUpGame / AddUpGameController | 8 | 3 |
-| (NumberAddUp) | NumberAddUpGame / NumberAddUpGameController | 8 | 3 |
+| ❄ AddUp — ĐÓNG BĂNG, bỏ qua | | |
+| ❄ NumberAddUp — ĐÓNG BĂNG, bỏ qua | | |
 | SoDem | SoDemGame / SoDemController | 0 | 3 |
 | Numbers | NumbersGame / NumbersController | 0 | 3 |
 | ChuCai | ChuCaiGame / ChuCaiController | 0 | 3 |
 | ListenSelect | ListenGame / ListenSelectController | 0 | 3 |
-| SoDem2, ChuCai2 | BalloonGame / BalloonGameController (+ flow D) | 0 | 1 |
-| PathFinder | PathFinderGame / PathFinderGameController | 10 | 3 |
+| ❄ SoDem2, ChuCai2 (Balloon) — ĐÓNG BĂNG, bỏ qua | | |
+| ❄ PathFinder — ĐÓNG BĂNG, bỏ qua | | |
 | PlanetOrder | PlanetOrderGame / PlanetOrderController | 9 | 4 |
 | PlanetAlphabet | PlanetAlphabetGame / PlanetAlphabetController | 9 | 4 |
-| TrainPath | TrainPathGame / TrainPathGameController | 10 | 3 |
+| ❄ TrainPath — ĐÓNG BĂNG, bỏ qua | | |
 | TongHop | TongHopGame / TongHopGameController | 9 | 3 |
 | Counting, Counting5, Fruit, Animal, WaterAnimal, Things, SaveEnvironment, SolarQuizEn/Vi, SolarOrder(2), TestTongHop | TestTongHopGame / TestTongHopController | 0 | 1 — **đã có chờ clear (SolarQuiz)**, chỉ cần nối `WaitForClear` |
-| RiverCross | RiverCrossGame / RiverCrossController | 0 | 0 (chỉ dùng GameTime) |
+| ❄ RiverCross — ĐÓNG BĂNG, bỏ qua | | |
 | LaneDash | LaneDashGame / LaneDashController | 0 | 0 (arcade; flow D) |
-| Monopoly | MonopolyGame / MonopolyGameController | 2 | 0 |
+| ❄ Monopoly — ĐÓNG BĂNG, bỏ qua | | |
 | SaveTheAstronaut | SaveTheAstronautGame / SaveTheAstronautController | 0 | 0 |
 
 Game đã kế thừa Base (được chờ clear tự động qua Base): GenericGame (mọi game import từ zip), DemQua, FamilyMember,
 FamilySpelling, HaiQua, SentenceBuilder, WhoIsIt, WordHuntMaze.
+
+## Kết quả
+- **A1**: `SettingsStore.java` (đã xong). Lưu tại `/sdcard/EduXplore/game_settings.json`.
+- **A2**: UI `ControlActivity` (đã xong). Gồm 5 mục: Game Time, Round Delay, Flow Speed (Slider 0.1-5.0 + EditText), Volume (Music/SFX), Wait For Clear (Checkbox).
+- **A3**: Gửi JSON qua `UnitySendMessage` (đã xong) trong `onProgressChanged`, `afterTextChanged`, `onCheckedChanged`. Gửi qua Intent extra `SETTINGS_JSON` (đã xong).
+- **A4**: `controlui-release.aar` (đã build và copy đè).
+- **B7**: Đã gỡ `questionTimeout` (set về 0f hoặc xoá dòng ép cứng) tại: `SoDem`, `Numbers`, `ChuCai`, `ListenSelect`, `PlanetOrder`, `PlanetAlphabet`, `TongHop`, `AddNumber`, `DemQua`, `HaiQua`, `FamilySpelling`, `SentenceBuilder`, `WhoIsIt`. Game `SaveTheAstronaut` và `LaneDash` vốn không dùng timeout.
+- **C8b**: `MiniGameControllerBase.IndependentPlayerLoop` (đã xong). Đã tách chờ clear (AwaitSide) ra khỏi đếm ngược 3,2,1. Chờ clear chạy trước khi pull câu hỏi từ round 2. Trả lại text "Next in {i}".
+- **C9**: Đã gắn `FloorZoneClearer.AwaitIfEnabled` cho các game arcade/cũ: `SoDem`, `Numbers`, `ChuCai`, `ListenSelect`, `PlanetOrder`, `PlanetAlphabet`, `TongHop`, `AddNumber`, `TestTongHop` (Counting, SolarQuiz...), `SaveTheAstronaut`.
+- **D**: `LaneDash` (đã xong). Tốc độ track và interval spawn đã nhân/chia hệ số `FlowSpeed`. `SpawnFlowDisplay` (đã xong).
+
+**Ghi chú**: Tất cả code C# chưa compile.
+**Frozen check**: `AddUp`, `NumberAddUp`, `PathFinder`, `TrainPath`, `Monopoly`, `RiverCross`, `Balloon` hoàn toàn không bị sửa đổi (đã check qua `git status`).
+
+## Câu hỏi
+- Cần kiểm tra thực tế `waitForZoneClearBeforeCountdown` trong Unity Editor để xem có bị chồng lấp với `GameSettings.WaitForClear` không (hiện tại logic là OR).
+- `questionTimeout = 0f` trong code C# đảm bảo không chạy coroutine, nhưng nếu prefab có giá trị > 0 thì `Start()` của Base vẫn có thể log cảnh báo nếu không cẩn thận (đã check logic Base).

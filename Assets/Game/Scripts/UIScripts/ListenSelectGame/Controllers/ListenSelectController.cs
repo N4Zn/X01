@@ -253,6 +253,13 @@ public class ListenSelectController : MonoBehaviour
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
 
+        FloorZoneClearer.AwaitIfEnabled(gameView.GetComponent<RectTransform>(), () => {
+            if (gameObject.activeInHierarchy) StartCoroutine(PostClearNextRound());
+        });
+    }
+
+    private IEnumerator PostClearNextRound()
+    {
         int countSeconds = Mathf.Max(0, Mathf.RoundToInt(_feedbackDelay) - 1);
         for (int i = countSeconds; i >= 1; i--)
         {

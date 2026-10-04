@@ -1,0 +1,9 @@
+# Game ĐÓNG BĂNG (user chốt 2026-10-04) — KHÔNG sửa, KHÔNG đọc để sửa, KHÔNG hỏi lại, KHÔNG nhắc trong báo cáo.
+# Mỗi dòng = 1 regex (grep -E) khớp đường dẫn file. Muốn mở lại: user yêu cầu, rồi xoá dòng ở đây.
+(^|/)AddUpGame[/.]
+(^|/)NumberAddUpGame[/.]
+(^|/)PathFinderGame[/.]
+(^|/)TrainPathGame[/.]
+(^|/)MonopolyGame[/.]
+(^|/)RiverCrossGame[/.]
+(^|/)BalloonGame[/.]

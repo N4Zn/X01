@@ -88,11 +88,20 @@ public class LaneTrack : MonoBehaviour
     /// mật độ spawn (spawnInterval hiệu lực) — xem EffectiveMaxSpeed()/EffectiveSpawnInterval().</summary>
     public void SetLevel(int level) => _level = Mathf.Clamp(level, 0, _cfg.maxLevel);
 
-    float EffectiveMaxSpeed() => _cfg.maxSpeed + _level * _cfg.levelMaxSpeedBonus;
+    float EffectiveMaxSpeed()
+    {
+        float flow = GameSettings.Instance != null ? GameSettings.Instance.FlowSpeed : 1f;
+        return (_cfg.maxSpeed + _level * _cfg.levelMaxSpeedBonus) * flow;
+    }
 
-    float EffectiveSpawnInterval() => Mathf.Max(
-        _cfg.minSpawnInterval,
-        _cfg.spawnInterval * Mathf.Pow(_cfg.levelSpawnIntervalMultiplier, _level));
+    float EffectiveSpawnInterval()
+    {
+        float flow = GameSettings.Instance != null ? GameSettings.Instance.FlowSpeed : 1f;
+        float baseInterval = Mathf.Max(
+            _cfg.minSpawnInterval,
+            _cfg.spawnInterval * Mathf.Pow(_cfg.levelSpawnIntervalMultiplier, _level));
+        return baseInterval / flow;
+    }
 
     // ── Update ────────────────────────────────────────────────────────────────
 
@@ -112,11 +121,12 @@ public class LaneTrack : MonoBehaviour
 
         _elapsedRunning += Time.deltaTime;
         bool boosting = _boostTimer > 0f;
+        float flow = GameSettings.Instance != null ? GameSettings.Instance.FlowSpeed : 1f;
         float maxSpeed = EffectiveMaxSpeed();
         float speedCap = boosting ? maxSpeed * _cfg.horseBoostMultiplier : maxSpeed;
-        float baseTarget = _cfg.baseSpeed + _cfg.rampPerSecond * _elapsedRunning;
+        float baseTarget = (_cfg.baseSpeed + _cfg.rampPerSecond * _elapsedRunning) * flow;
         float targetSpeed = Mathf.Min(boosting ? baseTarget * _cfg.horseBoostMultiplier : baseTarget, speedCap);
-        _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, _cfg.recoverAccel * Time.deltaTime);
+        _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, _cfg.recoverAccel * flow * Time.deltaTime);
 
         float delta = _currentSpeed * Time.deltaTime;
         _distanceMeters += delta;

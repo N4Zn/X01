@@ -13,4 +13,7 @@
 
 | Việc | File | Trạng thái | Giao cho |
 |---|---|---|---|
-| Cài đặt game chuyển sang ControlActivity (khung Unity đã xong) | [2026-10-04-game-settings.md](2026-10-04-game-settings.md) | TODO (phần A Android, B7, C8b/C9, D) | Android Studio agent |
+| Cài đặt game chuyển sang ControlActivity (khung Unity đã xong) | [2026-10-04-game-settings.md](2026-10-04-game-settings.md) | DONE (Claude Code đã review code 2026-10-04; còn: compile Unity + test K02) | Android Studio agent |
+
+## Quy tắc tự động
+Quy tắc chung cho mọi agent (game đóng băng, nơi ghi kết quả, không hỏi lại) nằm ở `../AGENTS.md`; danh sách game đóng băng: `FROZEN.txt`; kiểm tra: `sh handoff/check-frozen.sh`.
