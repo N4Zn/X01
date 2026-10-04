@@ -14,7 +14,7 @@
 - [ ] Merge `scorescene-mvp-tiachop` → `main` (cách 1: `commit-tree` hoặc merge --allow-unrelated-histories -X theirs; squash khi về sau) — (2026-10-04)
 - [ ] Khôi phục lại `ProjectSettings/EditorBuildSettings.asset` nếu scene lại bị bỏ tick — (2026-10-04)
 - [x] Tách `CLAUDE.md` 52KB → gốc 6.9KB + `docs/` + CLAUDE.md lồng (2026-10-04)
-- [ ] ADR + `docs/contracts/` (JSON settings, UnitySendMessage) — (2026-10-04)
+- [x] ADR + `docs/contracts/` (2026-10-04)
 - [ ] Pre-push build check + CI nhẹ (check-frozen, build aar). `Tools/build-aar.sh` đã có (2026-10-04); Unity batch compile chưa có
 
 ## Calib / LiDAR (từ CLAUDE.md)

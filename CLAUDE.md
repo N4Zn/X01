@@ -93,6 +93,8 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Log/report/Google Sheets | `docs/sheets-report.md` |
 | Import zip GenericGame, scene riêng | `docs/generic-game-import.md`, `WebTools/GenericGameBuilder/CLAUDE.md` |
 | Build `.aar` (Android modules) | `/build-aar` hoặc `sh Tools/build-aar.sh changed`, `handoff/build-aar.md` |
+| Giao thức Java↔Unity (message, JSON settings) | `docs/contracts/java-unity-bridge.md` |
+| Vì sao kiến trúc như vậy | `docs/adr/` |
 | Giao việc / quy tắc agent | `AGENTS.md`, `handoff/README.md` |
 | Việc đang dở | `TODO.md` · nhật ký theo ngày: `notes/YYYY-MM.md` (không tự đọc) |
 
