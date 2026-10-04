@@ -29,6 +29,7 @@
 - [ ] GenericGameBuilder: Safari chưa chơi thử được — (2026-10-04)
 
 ## Đóng băng (không làm cho tới khi user mở lại) — xem `handoff/FROZEN.txt`
+- [ ] HaiQua: tạm bỏ (2026-10-05), mở lại sau khi update scene: bỏ `// DISABLED` ở `GameRegistry.cs`, thêm lại dòng json, xoá 2 dòng HaiQua ở `FROZEN.txt`, build lại aar — (2026-10-05)
 
 ## Điểm theo round + lịch sử chi tiết (2026-10-04)
 - [ ] Compile Unity (PlayerRecognitionService/GameControlBridge/MiniGameControllerBase/GenericGameController) + build APK + test K02: round có về ControlActivity không, `class_rounds.jsonl` có ghi không.
@@ -41,3 +42,4 @@
 - [ ] Mở Unity: compile (CountdownStyle.cs + sửa MiniGameControllerBase/GenericGameController/10 View cũ), chơi DemQua xem có "Next in Ns" giữa round, kiểm tra chữ countdown trắng/cỡ 56 ở HaiQua, FamilyMember, TestTongHop, 1 game generic.
 - [ ] Test màu chữ câu hỏi/đáp án: chọn màu trong web builder → Export → import Unity → chữ đúng màu (web: ô màu dưới ô cỡ chữ).
 - [ ] PlanetOrderDisplay giữ countdown chữ tối trên nền trắng (cố ý); SaveTheAstronaut/LaneDash giữ số 3-2-1 to 120 (đã trắng) — đổi nếu muốn đồng bộ hẳn.
+- [ ] Quyết `Editor/GameControlBridgeTester.cs` (giữ/bỏ) và xác nhận xoá scene `ThuNghiem12.unity` (đang `D` chưa commit) — (2026-10-05)
