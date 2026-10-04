@@ -23,3 +23,10 @@ Danh sách (regex theo đường dẫn) ở `handoff/FROZEN.txt`: AddUp, NumberA
 
 ## 4. File lớn
 - File mới `.mp4/.mov/.onnx/.psd` tự vào Git LFS (`.gitattributes`). Không commit file > 50MB dạng thường; không xoá các dòng `-filter` trong `.gitattributes`.
+
+## 5. Build `.aar` (Android modules)
+Sửa mã trong `NativePlugins/{ControlUiAndroidLib,LidarNativeAndroidLib,FaceEnrollAndroidLib}` (kể cả `game_registry.json`) thì **phải** build lại và copy aar vào `Assets/Plugins/Android/` bằng một lệnh, KHÔNG tự build tay:
+```
+sh Tools/build-aar.sh changed          # tự phát hiện module đổi; thêm --check-only để chỉ kiểm tra
+```
+Script kiểm tra JDK/SDK/JSON/check-frozen, build, kiểm tra cấu trúc aar, copy; thoát 0 = OK, lỗi ghi ở `build-aar.log`. aar nằm trong LFS; commit đúng file aar vừa build. Claude Code dùng `/build-aar`. Việc giao chỉ gồm "build aar": theo `handoff/build-aar.md`, không cần task file riêng.

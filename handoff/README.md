@@ -14,6 +14,7 @@
 | Việc | File | Trạng thái | Giao cho |
 |---|---|---|---|
 | Cài đặt game chuyển sang ControlActivity (khung Unity đã xong) | [2026-10-04-game-settings.md](2026-10-04-game-settings.md) | DONE (Claude Code đã review code 2026-10-04; còn: compile Unity + test K02) | Android Studio agent |
+| Build aar (việc thường trực: "build aar") | [build-aar.md](build-aar.md) | STANDING | bất kỳ agent, hoặc `/build-aar` |
 
 ## Quy tắc tự động
 Quy tắc chung cho mọi agent (game đóng băng, nơi ghi kết quả, không hỏi lại) nằm ở `../AGENTS.md`; danh sách game đóng băng: `FROZEN.txt`; kiểm tra: `sh handoff/check-frozen.sh`.

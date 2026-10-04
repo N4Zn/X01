@@ -110,3 +110,4 @@ libdecor-*
 
 # Cấu hình riêng từng máy của Claude Code
 .claude/settings.local.json
+build-aar.log
