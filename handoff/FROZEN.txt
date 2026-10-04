@@ -7,3 +7,5 @@
 (^|/)MonopolyGame[/.]
 (^|/)RiverCrossGame[/.]
 (^|/)BalloonGame[/.]
+(^|/)HaiQuaGame[/.]
+(^|/)HaiQuaGameSceneBuilder\.

@@ -3,7 +3,7 @@
 Trả lời bằng tiếng Việt. Đọc `CLAUDE.md` + `handoff/README.md` trước khi làm việc được giao.
 
 ## 1. Game ĐÓNG BĂNG — tuyệt đối không đụng, không hỏi
-Danh sách (regex theo đường dẫn) ở `handoff/FROZEN.txt`: AddUp, NumberAddUp, PathFinder, TrainPath, Monopoly, RiverCross, Balloon (SoDem2/ChuCai2).
+Danh sách (regex theo đường dẫn) ở `handoff/FROZEN.txt`: AddUp, NumberAddUp, PathFinder, TrainPath, Monopoly, RiverCross, Balloon (SoDem2/ChuCai2), HaiQua (từ 2026-10-05, chờ update scene).
 - KHÔNG sửa, KHÔNG đề xuất sửa, KHÔNG hỏi "có cần làm thêm Monopoly/Balloon... không?", KHÔNG nhắc trong báo cáo (trừ khi user tự hỏi).
 - Các bảng/danh sách trong file việc có liệt kê game đóng băng chỉ để tham khảo → BỎ QUA dòng đó.
 - Trước khi commit: `sh handoff/check-frozen.sh` phải thoát 0 (hook pre-commit cũng chặn). Lỡ sửa nhầm → `git checkout HEAD -- <file>`.

@@ -104,8 +104,8 @@ public static class GameRegistry
         // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
         Set(0, 6, "Numbers",    "Nhận biết số",         "NumbersGame",     Engine.ListenGame);
 
-        Set(0, 7, "HaiQua",         "Hái quả",                    "HaiQuaGame", Engine.MiniGameKit, group: "Đếm");
-        Set(0, 8, "DemQua",        "Đếm quả",                    "DemQuaGame", Engine.MiniGameKit, group: "Đếm");
+        // DISABLED 2026-10-05 (chưa mở lại, đừng đụng): Set(0, 7, "HaiQua",         "Hái quả",                    "HaiQuaGame", Engine.MiniGameKit, group: "Đếm");
+        Set(0, 8, "DemQua",        "Đếm quả",                  "DemQuaGame", Engine.MiniGameKit, group: "Đếm");
 
         // ── Category 1: Tiếng Việt ───────────────────────────────────────────
         // 2026-09-18: soi lại asset/audio thật thì ListenSelect/FamilySpellingJump/WordHuntMaze/
