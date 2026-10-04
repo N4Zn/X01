@@ -15,7 +15,7 @@
 - [ ] Khôi phục lại `ProjectSettings/EditorBuildSettings.asset` nếu scene lại bị bỏ tick — (2026-10-04)
 - [x] Tách `CLAUDE.md` 52KB → gốc 6.9KB + `docs/` + CLAUDE.md lồng (2026-10-04)
 - [x] ADR + `docs/contracts/` (2026-10-04)
-- [ ] Pre-push build check + CI nhẹ (check-frozen, build aar). `Tools/build-aar.sh` đã có (2026-10-04); Unity batch compile chưa có
+- [ ] Pre-push build check local + Unity batch compile (CI nhẹ đã có: .github/workflows/check.yml; `Tools/check-docs.sh`; `Tools/build-aar.sh`)
 
 ## Calib / LiDAR (từ CLAUDE.md)
 - [ ] Wiring Launcher: `CALIB_COMPONENT` trỏ `CalibActivity` — (2026-09-17)

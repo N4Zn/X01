@@ -1,0 +1,18 @@
+name: check
+on:
+  pull_request:
+  push:
+    branches: [main, 'agent/**']
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Game đóng băng không bị sửa
+        if: github.event_name == 'pull_request'
+        run: sh handoff/check-frozen.sh --range "origin/${{ github.base_ref }}...HEAD"
+      - name: Link tài liệu
+        run: sh Tools/check-docs.sh
+      - name: JSON registry hợp lệ
+        run: python3 -c "import json;json.load(open('NativePlugins/ControlUiAndroidLib/controlui/src/main/assets/game_registry.json',encoding='utf-8'))"
