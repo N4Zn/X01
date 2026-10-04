@@ -6,6 +6,7 @@
     {"name": "AddNumber5", "displayName": "Cộng trong phạm vi 5", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "AddNumber", "displayName": "Cộng trong phạm vi 10", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "SoDem", "displayName": "Số đếm", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
+    {"name": "DemQua", "displayName": "Đếm quả", "group": "Đếm", "sceneName": "DemQuaGame", "category": 0},
     {"name": "Numbers", "displayName": "Nhận biết số", "sceneName": "NumbersGame", "category": 0},
 
 
