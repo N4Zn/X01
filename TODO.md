@@ -13,7 +13,7 @@
 ## Git / hạ tầng
 - [ ] Merge `scorescene-mvp-tiachop` → `main` (cách 1: `commit-tree` hoặc merge --allow-unrelated-histories -X theirs; squash khi về sau) — (2026-10-04)
 - [ ] Khôi phục lại `ProjectSettings/EditorBuildSettings.asset` nếu scene lại bị bỏ tick — (2026-10-04)
-- [ ] Tách `CLAUDE.md` 52KB: gốc ≤8KB + CLAUDE.md lồng theo thư mục + `docs/` — (2026-10-04)
+- [x] Tách `CLAUDE.md` 52KB → gốc 6.9KB + `docs/` + CLAUDE.md lồng (2026-10-04)
 - [ ] ADR + `docs/contracts/` (JSON settings, UnitySendMessage) — (2026-10-04)
 - [ ] Script kiểm tra build (Gradle assemble + Unity batch compile) gắn pre-push; CI nhẹ — (2026-10-04)
 
