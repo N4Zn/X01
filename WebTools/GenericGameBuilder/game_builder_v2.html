@@ -79,17 +79,17 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
 .panel-section:last-of-type{border-bottom:none;}
 .panel-section > summary{
   font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-dim); font-weight:700;
-  cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; padding:2px 0;
+  cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:flex-start; padding:2px 0;
 }
 .panel-section > summary::-webkit-details-marker{display:none;}
-.panel-section > summary::after{content:'▾'; font-size:11px; transition:transform .15s; color:var(--text-dim);}
+.panel-section > summary::after{margin-left:auto; content:'▾'; font-size:11px; transition:transform .15s; color:var(--text-dim);}
 .panel-section:not([open]) > summary::after{transform:rotate(-90deg);}
 .panel-section > .panel-body{padding-top:12px;}
 .seg{display:flex; background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:3px; gap:3px;}
 .seg button{flex:1; border:none; background:transparent; padding:7px 6px; border-radius:6px; font-size:12.5px; font-weight:600; color:var(--text-dim); cursor:pointer;}
 .seg button.active{background:var(--panel); color:var(--accent); box-shadow:var(--shadow);}
 .hint{font-size:11.5px; color:var(--text-dim); margin-top:4px; line-height:1.4;}
-.help-q{margin-left:6px; width:20px; height:20px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--accent); font-weight:800; font-size:12px; line-height:1; cursor:pointer; padding:0;}
+.help-q{margin-right:8px; flex:none; width:20px; height:20px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--accent); font-weight:800; font-size:12px; line-height:1; cursor:pointer; padding:0;}
 .help-q:hover{background:var(--accent-soft);}
 .help-panel{max-height:46vh; overflow-y:auto; background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; margin-bottom:10px; font-size:11.5px; color:var(--text-dim); line-height:1.45;}
 .help-panel ul{margin:0; padding-left:16px;}
@@ -297,7 +297,7 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
     <!-- ── Settings + Effects ───────────────────────────────── -->
     <div class="col" id="colSettings">
       <details class="panel-section">
-        <summary>Cài đặt chung <button type="button" class="help-q" id="btnSettingsHelp" title="Xem ghi chú">?</button></summary>
+        <summary><button type="button" class="help-q" id="btnSettingsHelp" title="Xem ghi chú">?</button>Cài đặt chung</summary>
         <div class="panel-body">
         <div class="help-panel" id="settingsHelp" style="display:none">
           <ul>
@@ -3734,11 +3734,11 @@ document.querySelectorAll('#colSettings details.panel-section').forEach(d=>{
     const show = hints[0].style.display === 'none';
     hints.forEach(h=>{ h.style.display = show ? '' : 'none'; });
   });
-  d.querySelector('summary').appendChild(q);
+  d.querySelector('summary').prepend(q);
 });
 // Các mục cột Cài đặt mặc định ĐÓNG (gọn); nhớ mục nào user đã mở cho lần sau (chỉ per-viewer, localStorage có thể bị chặn).
 document.querySelectorAll('details.panel-section').forEach(d=>{
-  const key = 'gb.open.' + (d.querySelector('summary').firstChild.textContent || '').trim();
+  const key = 'gb.open.' + (d.querySelector('summary').textContent.replace('?','')).trim();
   try { if (localStorage.getItem(key) === '1') d.open = true; } catch(e){}
   d.addEventListener('toggle', ()=>{ try { localStorage.setItem(key, d.open ? '1' : '0'); } catch(e){} });
 });
