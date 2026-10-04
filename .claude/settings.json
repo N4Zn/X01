@@ -1,10 +1,10 @@
 {
   "hooks": {
     "Stop": [
-      { "hooks": [ { "type": "command", "command": "sh tools/autosave.sh" } ] }
+      { "hooks": [ { "type": "command", "command": "sh Tools/autosave.sh" } ] }
     ],
     "SessionEnd": [
-      { "hooks": [ { "type": "command", "command": "sh tools/autosave.sh --force" } ] }
+      { "hooks": [ { "type": "command", "command": "sh Tools/autosave.sh --force" } ] }
     ]
   }
 }

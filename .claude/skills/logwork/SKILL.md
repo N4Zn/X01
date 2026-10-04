@@ -13,7 +13,7 @@ Gọi skill = user đồng ý **push nhánh hiện tại** (không bao giờ `ma
 - File mới > 50MB không thuộc LFS → báo user, KHÔNG commit file đó.
 
 ## Bước 2 — Commit local
-- `sh tools/autosave.sh --force` để lưu mọi thứ đang dở dạng `wip:`.
+- `sh Tools/autosave.sh --force` để lưu mọi thứ đang dở dạng `wip:`.
 - Nếu thay đổi chia được thành nhóm rõ (vd: Android / Unity / docs), ưu tiên commit riêng từng nhóm với message tiếng Việt không dấu hoặc có dấu ngắn gọn, thay vì 1 commit `wip:` duy nhất. Đừng gom thay đổi không liên quan của Unity tự sinh (vd `DOTweenSettings.asset`, `EditorBuildSettings.asset`) vào commit nghiệp vụ; hỏi user nếu nghi ngờ.
 
 ## Bước 3 — Gom việc đã làm
