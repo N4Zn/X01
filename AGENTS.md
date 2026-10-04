@@ -16,5 +16,10 @@ Danh sách (regex theo đường dẫn) ở `handoff/FROZEN.txt`: AddUp, NumberA
 - Tin nhắn cuối chỉ cần 1–3 dòng: "xong, xem handoff/<file> mục Kết quả".
 
 ## 3. Phạm vi
+- Mỗi việc có `scope:` trong front matter của file việc (mẫu: `handoff/TEMPLATE.md`). CHỈ sửa đường dẫn trong scope; trước khi báo xong chạy `sh handoff/check-scope.sh handoff/<file việc>` phải thoát 0.
+- Làm trên nhánh `agent/<tên-việc>` (worktree riêng: `sh handoff/new-agent-worktree.sh <tên-việc>`), KHÔNG làm trực tiếp trên nhánh của user.
 - Chỉ sửa file thuộc việc được giao. Không `git checkout/merge/push main`, không xoá file ngoài phạm vi.
 - Không sửa `CLAUDE.md`, `AGENTS.md`, `handoff/FROZEN.txt` (Claude Code/user quản lý). Muốn bổ sung kiến thức vào CLAUDE.md → ghi đề xuất vào mục "Kết quả".
+
+## 4. File lớn
+- File mới `.mp4/.mov/.onnx/.psd` tự vào Git LFS (`.gitattributes`). Không commit file > 50MB dạng thường; không xoá các dòng `-filter` trong `.gitattributes`.

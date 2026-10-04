@@ -17,3 +17,8 @@
 
 ## Quy tắc tự động
 Quy tắc chung cho mọi agent (game đóng băng, nơi ghi kết quả, không hỏi lại) nằm ở `../AGENTS.md`; danh sách game đóng băng: `FROZEN.txt`; kiểm tra: `sh handoff/check-frozen.sh`.
+
+## Giao việc mới
+1. Copy `TEMPLATE.md` → `handoff/<yyyy-mm-dd>-<tên>.md`, điền front matter (`scope:` là allowlist đường dẫn).
+2. Tạo worktree + nhánh riêng: `sh handoff/new-agent-worktree.sh <tên>` rồi mở Android Studio ở thư mục đó.
+3. Agent xong → `check-scope.sh` + `check-frozen.sh` thoát 0 → REVIEW. Claude Code review → merge nhánh `agent/<tên>` (squash) vào nhánh làm việc.
