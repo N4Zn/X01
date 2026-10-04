@@ -29,6 +29,7 @@ import java.util.Map;
 public final class ScoreStore {
     private static final String TAG = "ScoreStore";
     private static final String FILE_NAME = "class_rounds.jsonl";
+    private static final String ARCHIVE_NAME = "class_rounds_archive.jsonl";
     private static final String LEGACY_FILE_NAME = "class_scores.json";
     private static final int MAX_RECORDS = 20000;
     /** Số round gần nhất (của 1 học sinh, trong 1 học phần) được tính vào điểm. */
@@ -91,11 +92,21 @@ public final class ScoreStore {
         }
         if (records.size() > MAX_RECORDS) {
             int drop = records.size() - MAX_RECORDS;
-            List<Record> keep = new ArrayList<>(records.subList(drop, records.size()));
-            records.clear(); byName.clear();
-            for (Record r : keep) index(r);
-            rewriteAll();
+            // Không bao giờ xoá lịch sử: phần cũ chuyển sang class_rounds_archive.jsonl (cùng thư mục), chỉ khi
+            // chuyển xong mới cắt bớt file chính. Ghi archive lỗi → giữ nguyên, lần mở sau thử lại.
+            if (archiveOld(f, records.subList(0, drop))) {
+                List<Record> keep = new ArrayList<>(records.subList(drop, records.size()));
+                records.clear(); byName.clear();
+                for (Record r : keep) index(r);
+                rewriteAll();
+            }
         }
+    }
+
+    private static boolean archiveOld(File dataFile, List<Record> old) {
+        StringBuilder sb = new StringBuilder();
+        for (Record r : old) { String l = toLine(r); if (l != null) sb.append(l).append('\n'); }
+        return appendTo(new File(dataFile.getParentFile(), ARCHIVE_NAME), sb.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private void index(Record r) {
