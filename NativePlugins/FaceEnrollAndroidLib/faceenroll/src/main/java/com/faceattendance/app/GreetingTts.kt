@@ -97,12 +97,12 @@ class GreetingTts(context: Context) {
         private val TEMPLATES = listOf(
             Triple("single", "normal", "Chào bạn {name}, chúc bạn một {time_of_day} vui vẻ"),
             Triple("single", "normal", "Xin chào bạn {name}, rất vui được gặp bạn hôm nay"),
-            Triple("single", "normal", "Xin chào bạn {name}, hôm nay bạn có khỏe không?"),
+            Triple("single", "normal", "Chào bạn {name}, cảm ơn bạn đã đến, hôm nay mình chơi thật vui nhé"),
             Triple("single", "temperature", "Chào bạn {name}, nhiệt độ hôm nay khoảng {temp} độ"),
-            Triple("pair", "normal", "Chào {parts}. Chúc mọi người một ngày mới vui vẻ"),
-            Triple("pair", "normal", "Chào {parts}, rất vui được gặp mọi người hôm nay"),
+            Triple("pair", "normal", "Chào {parts}. Chúc các bạn một ngày học tập vui vẻ"),
+            Triple("pair", "normal", "Chào {parts}, rất vui được gặp các bạn hôm nay"),
             Triple("pair", "temperature", "Chào {parts}. Nhiệt độ Hà Nội hiện tại khoảng {temp} độ"),
-            Triple("pair", "weather", "Chào {parts}. {condition}"),
+            Triple("pair", "normal", "Chào {parts}, cảm ơn các bạn đã đến, hôm nay chúng mình chơi thật vui nhé"),
         )
     }
 
@@ -200,8 +200,6 @@ class GreetingTts(context: Context) {
 
     // ---- Greeting text ----
 
-    private fun honorific(gender: String) = if (gender == "nu") "chị" else "anh"
-
     private fun timeOfDayPhrase(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 4..10 -> "buổi sáng"
         in 11..12 -> "buổi trưa"
@@ -217,7 +215,7 @@ class GreetingTts(context: Context) {
 
     /** All health-reminder sentences that currently apply (rain, heat, high UV, humidity
      * making it feel hotter, strong wind) - usually one or two, sometimes none. [subject] is
-     * "anh"/"chị" for one person or "mọi người" for two. */
+     * "bạn" for one person or "các bạn" for two. */
     private fun weatherConditionSentences(subject: String): List<String> {
         val w = weather ?: return emptyList()
         val period = periodTodayPhrase()
@@ -279,13 +277,12 @@ class GreetingTts(context: Context) {
         )
         val subject: String
         if (kind == "single") {
-            val (name, gender) = people[0]
-            context["h"] = honorific(gender)
-            context["name"] = name
-            subject = context["h"]!!
+            context["h"] = "bạn"
+            context["name"] = people[0].first
+            subject = "bạn"
         } else {
-            context["parts"] = people.joinToString(" và ") { (n, g) -> "${honorific(g)} $n" }
-            subject = "mọi người"
+            context["parts"] = "các bạn " + people.joinToString(" và ") { it.first }
+            subject = "các bạn"
         }
         val conditions = weatherConditionSentences(subject)
         context["condition"] = if (conditions.isNotEmpty()) conditions.random() else ""
