@@ -27,6 +27,8 @@ sh Tools/build-aar.sh changed --commit            # tự phát hiện module đ�
 - Chỉ xem trước: `sh Tools/build-aar.sh changed --check-only`.
 
 ## Kết quả mong đợi
-_lần chạy 2026-10-05 01:12_ (module:controlui)
+_lần chạy 2026-10-05 10:08_ (module:controlui lidarlib faceenroll)
 
 - controlui: aar đã đổi → commit `aar: rebuild controlui`.
+- lidarlib: aar đã đổi → commit `aar: rebuild lidarlib`.
+- faceenroll: aar đã đổi → commit `aar: rebuild faceenroll`.
