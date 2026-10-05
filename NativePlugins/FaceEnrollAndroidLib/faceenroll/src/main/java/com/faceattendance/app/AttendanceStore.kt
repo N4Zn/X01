@@ -33,6 +33,18 @@ class AttendanceStore(private val context: Context) {
         const val ROLLING_SAMPLES = 5
         const val MAX_SAMPLES_PER_PERSON = PERMANENT_SAMPLES + ROLLING_SAMPLES
         const val RECENT_PEOPLE_SHOWN = 5
+
+        /** Lớp học sinh test (các bạn đã enroll từ trước khi có danh sách lớp thật). */
+        const val DEV_CLASS = "Dev"
+        const val CLASS_5_TUOI = "5 tuổi"
+        /** Danh sách 5 tuổi ban đầu (tên thật, giới tính) — chỉ dùng để khởi tạo 1 lần ở migrateLegacyRosterIfNeeded(). */
+        val DEFAULT_5_TUOI = listOf(
+            "Ngô Quốc An" to "nam", "Nguyễn Đăng Bách" to "nam", "Nguyễn Ngọc Bảo Châu" to "nam",
+            "Nguyễn Phương Linh" to "nu", "Nguyễn Hà Linh Phương" to "nu", "Phạm Minh Ngọc" to "nam",
+            "Đào Khánh Ngọc" to "nu", "Trần Bảo Vy" to "nu", "Trương Thảo Vy" to "nu",
+            "Nguyễn Anh Khôi" to "nam", "Doãn Minh Trí" to "nam", "Đinh Nguyễn Cát Tường" to "nam",
+            "Tạ Ngọc Khuê" to "nu", "Vũ Đình Khánh" to "nam", "Nguyễn Hòa Vũ" to "nam", "Đặng Tâm Như" to "nu"
+        )
     }
 
     private val enrolled = LinkedHashMap<String, MutableList<Sample>>()
@@ -75,13 +87,36 @@ class AttendanceStore(private val context: Context) {
     val personLog = LinkedHashMap<String, PersonLogEntry>()
     val recentNames = mutableListOf<String>()
 
+    // roster.json — xem khối chú thích 'roster.json' bên dưới. Phải khai báo TRƯỚC init {}.
+    private val rosterFile = File(sharedDir, "roster.json")
+    private val migrationMarker = File(sharedDir, ".roster_migration_v1")
+    private val rosterPrefs = context.getSharedPreferences("roster_sync", Context.MODE_PRIVATE)
+
+    /** Lỗi nạp roster.json lần mở gần nhất (null = ổn hoặc không có file). */
+    var rosterImportError: String? = null
+        private set
+    /** Số học sinh MỚI được thêm từ roster.json lần mở gần nhất. */
+    var rosterAddedCount = 0
+        private set
+
     init {
         enrolledPhotosDir.mkdirs()
         snapshotDir.mkdirs()
         loadPersisted()
+        migrateLegacyRosterIfNeeded()
+        importRosterIfChanged()
     }
 
     private fun loadPersisted() {
+        // classes.json đọc TRƯỚC: thứ tự lớp (và lớp rỗng) theo file này; enrolled.json chỉ bổ sung lớp còn thiếu.
+        if (classesFile.exists()) {
+            try {
+                val arr = org.json.JSONArray(classesFile.readText())
+                for (i in 0 until arr.length()) knownClasses.add(arr.getString(i))
+            } catch (e: Exception) {
+                android.util.Log.e("FaceAttendance", "Failed to load classes.json", e)
+            }
+        }
         if (!enrolledFile.exists()) return
         try {
             val arr = org.json.JSONArray(enrolledFile.readText())
@@ -123,14 +158,6 @@ class AttendanceStore(private val context: Context) {
         } catch (e: Exception) {
             android.util.Log.e("FaceAttendance", "Failed to load persisted enrollments", e)
         }
-        if (classesFile.exists()) {
-            try {
-                val arr = org.json.JSONArray(classesFile.readText())
-                for (i in 0 until arr.length()) knownClasses.add(arr.getString(i))
-            } catch (e: Exception) {
-                android.util.Log.e("FaceAttendance", "Failed to load classes.json", e)
-            }
-        }
     }
 
     private fun persist() {
@@ -162,6 +189,7 @@ class AttendanceStore(private val context: Context) {
         } catch (e: Exception) {
             android.util.Log.e("FaceAttendance", "persist failed: ${e.message}", e)
         }
+        writeRoster()
         // Game merged into the same APK/package (Track A) — FaceDatabase.load() in the game's
         // runtime already checks context.getExternalFilesDir(null)/enrolled.json first, which
         // is the SAME directory this class also writes to via context.getExternalFilesDir(null)
@@ -177,6 +205,152 @@ class AttendanceStore(private val context: Context) {
             classesFile.writeText(arr.toString())
         } catch (e: Exception) {
             android.util.Log.e("FaceAttendance", "persistClasses failed: ${e.message}", e)
+        }
+        writeRoster()
+    }
+
+    // ──────────────────────────  roster.json (sửa/xem danh sách lớp bằng tay)  ──────────────────────────
+    //
+    // /sdcard/EduXplore/roster.json = bản DỄ ĐỌC/DỄ SỬA của danh sách lớp + học sinh (không có embedding/ảnh,
+    // khác enrolled.json 45KB+). Định dạng:
+    //   {"version":1,"classes":[{"name":"5 tuổi","students":[
+    //       {"name":"Ngô Quốc An","alias":"Quốc An","gender":"nam","birthdate":"2020-05-01"}, ...]}]}
+    // • App GHI file này sau MỖI thay đổi (persist) -> `adb pull` ra xem/sửa.
+    // • App NẠP file này mỗi lần mở AttendanceStore NẾU file khác lần app ghi gần nhất (so mtime) -> `adb push` vào là
+    //   có hiệu lực ở lần mở Quản lý lớp kế tiếp. Nạp = THÊM/CẬP NHẬT (lớp, học sinh mới, alias, giới tính, ngày sinh,
+    //   chuyển lớp); KHÔNG BAO GIỜ xoá học sinh/ảnh/enroll — muốn xoá thì dùng app. name = khoá, không đổi tên qua file.
+    // • "gender": nam|nu (nhận cả Nam/Nữ). "alias"/"birthdate" tuỳ chọn. Field thừa (vd "samples") bị bỏ qua.
+    // • Lỗi cú pháp -> không nạp, giữ nguyên file (app KHÔNG ghi đè khi đang lỗi), lỗi ở [rosterImportError].
+
+    private fun writeRoster() {
+        if (rosterImportError != null) return // file đang lỗi cú pháp -> không đè mất bản người dùng đang sửa
+        try {
+            val classes = org.json.JSONArray()
+            for (c in knownClasses) {
+                val studs = org.json.JSONArray()
+                for ((name, samples) in enrolled) {
+                    if (name in testGalleryNames || classNames[name] != c) continue
+                    val o = org.json.JSONObject()
+                    o.put("name", name)
+                    aliasNames[name]?.let { o.put("alias", it) }
+                    o.put("gender", genders[name] ?: "nam")
+                    birthdates[name]?.let { o.put("birthdate", it) }
+                    o.put("samples", samples.size) // chỉ để xem; bỏ qua khi nạp
+                    studs.put(o)
+                }
+                classes.put(org.json.JSONObject().put("name", c).put("students", studs))
+            }
+            val root = org.json.JSONObject().put("version", 1).put("classes", classes)
+            rosterFile.parentFile?.mkdirs()
+            rosterFile.writeText(root.toString(2))
+            rosterPrefs.edit().putLong("mtime", rosterFile.lastModified()).apply()
+        } catch (e: Exception) {
+            android.util.Log.e("FaceAttendance", "writeRoster failed: ${e.message}", e)
+        }
+    }
+
+    /** Áp 1 roster JSON vào bộ nhớ (chưa persist). Trả về true nếu có gì thay đổi. */
+    private fun applyRosterJson(root: org.json.JSONObject): Boolean {
+        val classes = root.getJSONArray("classes")
+        var changed = false
+        for (i in 0 until classes.length()) {
+            val co = classes.getJSONObject(i)
+            val cname = co.getString("name").trim()
+            if (cname.isEmpty()) continue
+            if (knownClasses.add(cname)) changed = true
+            val studs = co.optJSONArray("students") ?: continue
+            for (j in 0 until studs.length()) {
+                val so = studs.getJSONObject(j)
+                val name = so.getString("name").trim()
+                if (name.isEmpty()) continue
+                val isNew = name !in enrolled
+                if (isNew) { enrolled[name] = mutableListOf(); rosterAddedCount++; changed = true }
+                if (classNames[name] != cname) { classNames[name] = cname; changed = true }
+                if (so.has("alias") && !so.isNull("alias")) {
+                    val a = so.getString("alias").trim()
+                    val want = if (a.isEmpty() || a == name) null else a
+                    if (aliasNames[name] != want) { if (want == null) aliasNames.remove(name) else aliasNames[name] = want; changed = true }
+                } else if (isNew) {
+                    defaultAliasFor(name).takeIf { it != name }?.let { aliasNames[name] = it }
+                }
+                if (so.has("gender") && !so.isNull("gender")) {
+                    val g = when (so.getString("gender").trim().lowercase()) {
+                        "nu", "nữ", "female", "f" -> "nu"
+                        "nam", "male", "m" -> "nam"
+                        else -> null
+                    }
+                    if (g != null && genders[name] != g) { genders[name] = g; changed = true }
+                } else if (isNew) genders[name] = "nam"
+                if (so.has("birthdate") && !so.isNull("birthdate")) {
+                    parseBirthdate(so.getString("birthdate"))?.let { if (birthdates[name] != it) { birthdates[name] = it; changed = true } }
+                }
+            }
+        }
+        return changed
+    }
+
+    /** "yyyy-MM-dd" hoặc "dd/MM/yyyy" -> ISO; sai định dạng -> null (bỏ qua). */
+    private fun parseBirthdate(raw: String): String? {
+        val t = raw.trim()
+        Regex("""(\d{4})-(\d{1,2})-(\d{1,2})""").matchEntire(t)?.let {
+            return "%04d-%02d-%02d".format(it.groupValues[1].toInt(), it.groupValues[2].toInt(), it.groupValues[3].toInt())
+        }
+        Regex("""(\d{1,2})/(\d{1,2})/(\d{4})""").matchEntire(t)?.let {
+            return "%04d-%02d-%02d".format(it.groupValues[3].toInt(), it.groupValues[2].toInt(), it.groupValues[1].toInt())
+        }
+        return null
+    }
+
+    private fun importRosterIfChanged() {
+        rosterImportError = null
+        rosterAddedCount = 0
+        if (!rosterFile.exists()) return
+        if (rosterFile.lastModified() == rosterPrefs.getLong("mtime", -1L)) return // chính app vừa ghi, không có gì mới
+        try {
+            val changed = applyRosterJson(org.json.JSONObject(rosterFile.readText()))
+            android.util.Log.i("FaceAttendance", "roster.json nạp xong: changed=$changed, thêm mới=$rosterAddedCount")
+            persist()          // ghi enrolled.json + (qua writeRoster) chuẩn hoá lại roster.json, cập nhật mtime đã biết
+            persistClasses()
+        } catch (e: Exception) {
+            rosterImportError = e.message ?: e.toString()
+            android.util.Log.e("FaceAttendance", "roster.json lỗi, không nạp: $e")
+        }
+    }
+
+    /** Dọn 1 lần dữ liệu mock cũ (2026-10-05): bỏ 3 lớp giả Mầm/Chồi/Lá + 2 lớp rác "a"/"cây" cùng các học
+     * sinh giả (không có mẫu enroll) trong đó; ai đã enroll thật (có mẫu) thì chuyển vào lớp "Dev" (học sinh
+     * test); tạo lớp "5 tuổi" với 16 học sinh (chưa có ảnh) nếu chưa có roster.json riêng. Có marker file nên
+     * chỉ chạy 1 lần/máy. */
+    private fun migrateLegacyRosterIfNeeded() {
+        if (migrationMarker.exists()) return
+        val legacy = setOf("Lớp Mầm", "Lớp Chồi", "Lớp Lá", "a", "cây")
+        for (name in enrolled.keys.toList()) {
+            if (name in testGalleryNames) continue
+            val cls = classNames[name]
+            if (cls != null && cls !in legacy) continue
+            if (enrolled[name].isNullOrEmpty()) {
+                if (cls == null) continue // placeholder chưa gán lớp: không phải mock của mình, để yên
+                enrolled.remove(name); genders.remove(name); aliasNames.remove(name)
+                birthdates.remove(name); classNames.remove(name)
+            } else {
+                classNames[name] = DEV_CLASS
+            }
+        }
+        val others = knownClasses.filter { it !in legacy && it != DEV_CLASS && it != CLASS_5_TUOI }
+        knownClasses.clear()
+        knownClasses.add(CLASS_5_TUOI)
+        knownClasses.add(DEV_CLASS)
+        knownClasses.addAll(others)
+        if (!rosterFile.exists()) {
+            val studs = org.json.JSONArray()
+            for ((name, gender) in DEFAULT_5_TUOI) studs.put(org.json.JSONObject().put("name", name).put("gender", gender))
+            val cls = org.json.JSONArray().put(org.json.JSONObject().put("name", CLASS_5_TUOI).put("students", studs))
+            applyRosterJson(org.json.JSONObject().put("classes", cls))
+        }
+        persist()
+        persistClasses()
+        try { migrationMarker.writeText("1") } catch (e: Exception) {
+            android.util.Log.e("FaceAttendance", "không ghi được marker migration: $e")
         }
     }
 

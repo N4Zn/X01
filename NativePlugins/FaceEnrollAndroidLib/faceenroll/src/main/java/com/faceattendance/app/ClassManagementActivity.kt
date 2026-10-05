@@ -39,6 +39,10 @@ import java.util.Locale
 class ClassManagementActivity : AppCompatActivity() {
 
     private lateinit var attendanceStore: AttendanceStore
+    /** Điểm/lịch sử THẬT (đọc class_rounds.jsonl do ControlActivity ghi) — nạp lại mỗi onResume. */
+    private lateinit var scoreBook: ScoreBook
+    /** Điểm tổng theo tên thật, tính 1 lần/lần refreshAll() (sort + render đều dùng lại). */
+    private val scoreCache = HashMap<String, Int>()
 
     private lateinit var addClassBtn: TextView
     private lateinit var classRailList: LinearLayout
@@ -87,24 +91,23 @@ class ClassManagementActivity : AppCompatActivity() {
     private fun reversedWords(s: String): List<String> =
         s.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.asReversed()
 
-    /** Điểm GIẢ (mock) — deterministic theo tên (không random lại mỗi lần render), dùng để demo
-     * UI/UX sort "Điểm" trước khi có pipeline đọc điểm thật. FA app hiện không lưu/nhận điểm nào
-     * cả — điểm thật nằm hoàn toàn bên Unity (GameLogs/PlayerRecognitionService), chưa có đường
-     * dữ liệu nối sang app này. Thay thân hàm này bằng nguồn thật sau (vd đọc 1 file điểm được
-     * Unity ghi ra, tương tự cách enrolled.json được mirror hiện nay) — không cần đổi UI/sort
-     * logic ở dưới, chỉ đổi đúng hàm này. */
-    private fun mockScoreOf(name: String): Int {
-        val seed = name.fold(7) { acc, c -> acc * 31 + c.code }
-        return 35 + Math.floorMod(seed, 61) // 35..95, ổn định theo tên
-    }
+    /** Điểm tổng THẬT của 1 học sinh (trung bình các môn đã chơi, thang 100) — cùng công thức với
+     * ControlActivity, xem ScoreBook. -1 = chưa chơi gì → UI in "-" (KHÔNG phải 0). */
+    private fun scoreOf(name: String): Int = scoreCache.getOrPut(name) { scoreBook.totalScore(name) }
 
     /** Sắp theo tên thường gọi/tên thật/điểm (tuỳ sortMode), chiều tăng/giảm (tuỳ sortAscending)
      * — xem reversedWords() ở trên cho lý do so tên theo từng âm tiết từ cuối lên. */
     private fun sortedRoster(names: List<String>): List<String> {
         if (sortMode == "score") {
+            // Bạn chưa có điểm (-1) luôn nằm cuối, bất kể chiều sort; cùng điểm thì theo tên thường gọi.
             val cmp = Comparator<String> { a, b ->
-                val result = mockScoreOf(a).compareTo(mockScoreOf(b))
-                if (sortAscending) result else -result
+                val sa = scoreOf(a)
+                val sb = scoreOf(b)
+                when {
+                    (sa < 0) != (sb < 0) -> if (sa < 0) 1 else -1
+                    sa != sb -> if (sortAscending) sa.compareTo(sb) else sb.compareTo(sa)
+                    else -> vnCollator.compare(attendanceStore.aliasOf(a), attendanceStore.aliasOf(b))
+                }
             }
             return names.sortedWith(cmp)
         }
@@ -150,6 +153,7 @@ class ClassManagementActivity : AppCompatActivity() {
     private val cAccentDim  = Color.parseColor("#EFE9FB")
     private val cWarn       = Color.parseColor("#C98A1F")
     private val cGood       = Color.parseColor("#2F9E6E")
+    private val cBad        = Color.parseColor("#C0392B")
 
     private val cMale   = 0xFF3E7FD1.toInt() // xanh blue — nam
     private val cFemale = 0xFFD6336C.toInt() // hồng đậm — nữ (trước dùng tím nhạt, hơi trung tính)
@@ -166,58 +170,18 @@ class ClassManagementActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         attendanceStore = AttendanceStore(this)
-        seedDemoDataIfEmpty()
+        scoreBook = ScoreBook(this)
         setContentView(buildRoot())
         refreshAll()
+        reportRosterImport()
     }
 
-    /** Nhúng sẵn 1 danh sách lớp/học sinh giả định (Mầm/Chồi/Lá) để màn "Quản lý lớp" có nội
-     * dung xem ngay, không cần chụp ảnh tay từng bạn trước. Kiểm tra bằng 1 học sinh mốc (thay vì
-     * "chưa có lớp nào") — máy nào đã từng test tạo lớp/học sinh thật trước đó trong phiên này
-     * vẫn được nhúng thêm danh sách giả định, không bị guard chặn im lặng chỉ vì đã có SẴN dữ
-     * liệu khác. Mọi thao tác bên trong đều idempotent (ensurePlaceholder/setGender/setAlias/
-     * setClassName ghi đè cùng giá trị nếu gọi lại) nên an toàn khi hàm này chạy lại nhiều lần —
-     * guard ở đây chỉ để tránh ghi đĩa lãng phí mỗi lần mở màn hình, không phải để đảm bảo đúng.
-     * Học sinh giả định = 0 mẫu ảnh (hiện "Cần ảnh" như bình thường) vì không có ảnh thật để gán.
-     * TODO: cân nhắc bỏ/tắt hàm này trước khi build bản triển khai thật cho trường. */
-    private fun seedDemoDataIfEmpty() {
-        if (attendanceStore.classNameOf("Nguyễn Khánh Vy") != null) return
-        data class Seed(val real: String, val alias: String, val gender: String)
-        val mam = listOf(
-            Seed("Nguyễn Bảo An", "Bảo An", "nam"),
-            Seed("Trần Gia Hân", "Gia Hân", "nu"),
-        )
-        val choi = listOf(
-            Seed("Lê Minh Khôi", "Minh Khôi", "nam"),
-            Seed("Phạm Yến Nhi", "Yến Nhi", "nu"),
-            Seed("Vũ Đăng Khoa", "Đăng Khoa", "nam"),
-        )
-        // Danh sách lớp Lá — đồng bộ đúng bộ tên ví dụ đã dùng ở bản xem trước "Giao Diện K02".
-        val la = listOf(
-            Seed("Nguyễn Khánh Vy", "Khánh Vy", "nu"), Seed("Trần Nam Khang", "Nam Khang", "nam"),
-            Seed("Lê Bảo Châu", "Bảo Châu", "nu"), Seed("Phạm Tuấn Kiệt", "Tuấn Kiệt", "nam"),
-            Seed("Đỗ Thảo My", "Thảo My", "nu"), Seed("Vũ Minh An", "Minh An", "nam"),
-            Seed("Hoàng Gia Hân", "Gia Hân", "nu"), Seed("Bùi Bảo Ngọc", "Bảo Ngọc", "nu"),
-            Seed("Ngô Hoàng Long", "Hoàng Long", "nam"), Seed("Dương Thanh Trúc", "Thanh Trúc", "nu"),
-            Seed("Nguyễn Văn An", "Văn An", "nam"), Seed("Lê Văn An", "Văn An", "nam"),
-            Seed("Trần Ngọc Hà", "Ngọc Hà", "nu"), Seed("Phạm Quang Huy", "Quang Huy", "nam"),
-            Seed("Vũ Bảo Trâm", "Bảo Trâm", "nu"), Seed("Hoàng Minh Thư", "Minh Thư", "nu"),
-            Seed("Đặng Gia Bảo", "Gia Bảo", "nam"), Seed("Lý Khôi Nguyên", "Khôi Nguyên", "nam"),
-            Seed("Ngô Yến Nhi", "Yến Nhi", "nu"), Seed("Nguyễn Anh Thư", "Anh Thư", "nu"),
-            Seed("Trần Hải Đăng", "Hải Đăng", "nam"), Seed("Lê Tường Vy", "Tường Vy", "nu"),
-            Seed("Bùi Đăng Khoa", "Đăng Khoa", "nam"), Seed("Dương Phương Linh", "Phương Linh", "nu"),
-            Seed("Phạm Nhật Minh", "Nhật Minh", "nam"), Seed("Vũ Kim Ngân", "Kim Ngân", "nu"),
-            Seed("Đặng Quốc Bảo", "Quốc Bảo", "nam"), Seed("Hoàng Diệu Anh", "Diệu Anh", "nu"),
-            Seed("Lý Thiên Ân", "Thiên Ân", "nam"), Seed("Ngô Mai Chi", "Mai Chi", "nu"),
-        )
-        for ((className, roster) in listOf("Lớp Mầm" to mam, "Lớp Chồi" to choi, "Lớp Lá" to la)) {
-            attendanceStore.addClass(className)
-            for (s in roster) {
-                attendanceStore.ensurePlaceholder(s.real)
-                attendanceStore.setGender(s.real, s.gender)
-                attendanceStore.setAlias(s.real, s.alias)
-                attendanceStore.setClassName(s.real, className)
-            }
+    /** Báo kết quả nạp /sdcard/EduXplore/roster.json (xem AttendanceStore): lỗi cú pháp hoặc có học sinh mới. */
+    private fun reportRosterImport() {
+        attendanceStore.rosterImportError?.let {
+            Toast.makeText(this, "roster.json lỗi, chưa nạp: $it", Toast.LENGTH_LONG).show()
+        } ?: attendanceStore.rosterAddedCount.takeIf { it > 0 }?.let {
+            Toast.makeText(this, "Đã nạp roster.json: thêm $it học sinh mới", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -226,12 +190,15 @@ class ClassManagementActivity : AppCompatActivity() {
         // Quay lại từ MainActivity (vừa enroll/xoá/đổi tên...) — đọc lại dữ liệu từ đĩa và vẽ
         // lại toàn bộ (rail + nội dung lớp đang chọn).
         attendanceStore = AttendanceStore(this)
+        scoreBook = ScoreBook(this)
         refreshAll()
+        reportRosterImport()
     }
 
     /** Vẽ lại rail (danh sách lớp) + panel phải (học sinh của lớp đang chọn), giữ nguyên lựa
      * chọn hiện tại nếu lớp đó vẫn còn tồn tại; nếu không thì tự chọn lớp đầu tiên. */
     private fun refreshAll() {
+        scoreCache.clear()
         val classes = attendanceStore.allClassNames()
         if (currentClass !in classes) currentClass = classes.firstOrNull()
         renderClassRail(classes)
@@ -673,7 +640,7 @@ class ClassManagementActivity : AppCompatActivity() {
             container.addView(
                 listRow(
                     "${i + 1}", alias, if (alias != name) name else "—",
-                    mockScoreOf(name).toString(),
+                    ScoreBook.text(scoreOf(name)),
                     if (needsUpdate) "Cần thêm ảnh" else "${samples.size} ảnh",
                     warn = needsUpdate,
                     onClick = { openStudent(name) },
@@ -699,7 +666,7 @@ class ClassManagementActivity : AppCompatActivity() {
     /** emphasizeReal quyết định cột nào là "tên chính" (in đậm, màu chữ chính) — mặc định tên
      * thường gọi là chính; bấm nút sort "Tên thật" thì đảo lại, tên thật thành chính (xem
      * "click vào tên thường gọi/tên thật thì hiện thành tên chính" trong yêu cầu). emphasizeScore
-     * tô đậm/màu accent cột Điểm khi đang sort theo Điểm — cột Điểm là MOCK (xem mockScoreOf()). */
+     * tô đậm/màu accent cột Điểm khi đang sort theo Điểm — điểm thật, "-" = chưa có (xem scoreOf()). */
     private fun listRow(
         stt: String, alias: String, realName: String, score: String, note: String,
         header: Boolean = false, warn: Boolean = false, zebra: Boolean = false,
@@ -794,18 +761,16 @@ class ClassManagementActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 setPadding(0, px(4), 0, 0)
             })
-            // Chỉ hiện điểm (mock) khi đang sort theo Điểm — tránh rối card lúc sort theo tên,
-            // giống cách ControlActivity chỉ hiện cột "Lượt" khi đang xem 1 mini game cụ thể.
-            if (sortMode == "score") {
-                addView(TextView(this@ClassManagementActivity).apply {
-                    text = "${mockScoreOf(name)} điểm"
-                    setTextColor(cAccent)
-                    textSize = 11.5f
-                    setTypeface(typeface, Typeface.BOLD)
-                    gravity = Gravity.CENTER
-                    setPadding(0, px(2), 0, 0)
-                })
-            }
+            // Điểm tổng thật; "-" = chưa có điểm (chưa chơi), KHÔNG phải 0.
+            val score = scoreOf(name)
+            addView(TextView(this@ClassManagementActivity).apply {
+                text = if (score < 0) "Điểm: -" else "Điểm: $score"
+                setTextColor(if (sortMode == "score" || score >= 0) cAccent else cTextFaint)
+                textSize = 11.5f
+                setTypeface(typeface, Typeface.BOLD)
+                gravity = Gravity.CENTER
+                setPadding(0, px(2), 0, 0)
+            })
         }
     }
 
@@ -912,6 +877,163 @@ class ClassManagementActivity : AppCompatActivity() {
             }
         })
         return frame
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────  điểm / lịch sử (đọc từ ScoreBook)
+
+    private fun noteText(text: String): TextView = TextView(this).apply {
+        this.text = text
+        textSize = 12.5f
+        setTextColor(cTextFaint)
+        setPadding(0, px(14), 0, px(10))
+    }
+
+    /** 1 hàng "nhãn + thanh + điểm"; score < 0 → thanh rỗng + "-". */
+    private fun barRow(label: String, score: Int, bold: Boolean, indentDp: Int, low: Boolean = false): View =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(px(indentDp), px(if (bold) 8 else 5), 0, px(if (bold) 8 else 5))
+            addView(TextView(this@ClassManagementActivity).apply {
+                text = label
+                textSize = if (bold) 13f else 12f
+                if (bold) setTypeface(typeface, Typeface.BOLD)
+                setTextColor(if (low) cBad else if (bold) cText else cTextDim)
+                layoutParams = LinearLayout.LayoutParams(px(150), ViewGroup.LayoutParams.WRAP_CONTENT)
+            })
+            val v = score.coerceIn(0, 100)
+            addView(LinearLayout(this@ClassManagementActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                background = GradientDrawable().apply { setColor(cCardLine); cornerRadius = px(3).toFloat() }
+                layoutParams = LinearLayout.LayoutParams(0, px(6), 1f)
+                addView(View(this@ClassManagementActivity).apply {
+                    background = GradientDrawable().apply { setColor(if (low) cBad else cAccent); cornerRadius = px(3).toFloat() }
+                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, v.toFloat())
+                })
+                if (v < 100) addView(View(this@ClassManagementActivity).apply {
+                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, (100 - v).toFloat())
+                })
+            })
+            addView(TextView(this@ClassManagementActivity).apply {
+                text = ScoreBook.text(score)
+                textSize = 12f
+                setTextColor(cTextDim)
+                gravity = Gravity.END
+                layoutParams = LinearLayout.LayoutParams(px(30), ViewGroup.LayoutParams.WRAP_CONTENT).also { it.marginStart = px(6) }
+            })
+        }
+
+    /** Tab "Năng lực": điểm từng MÔN (chưa chơi = "-") + các học phần đã chơi trong môn (đúng/đã chơi). */
+    private fun buildCompetencyView(name: String): View {
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val phan = scoreBook.phanScores(name)
+        val total = scoreOf(name)
+        col.addView(TextView(this).apply {
+            text = if (total < 0) "Điểm trung bình: -  (chưa chơi môn nào)" else "Điểm trung bình các môn đã chơi: $total"
+            textSize = 13f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(cAccent)
+            setPadding(0, px(8), 0, px(6))
+        })
+        if (scoreBook.categoryNames.isEmpty()) { col.addView(noteText("Chưa đọc được danh sách môn học.")); return col }
+        col.addView(noteText("Điểm học phần = round đúng / round đã chơi trên 50 round gần nhất (thang 100). " +
+            "Điểm môn = trung bình các học phần đã chơi; môn chưa chơi hiện \"-\" và không tính vào trung bình.").apply { setPadding(0, 0, 0, px(6)); textSize = 11f })
+        scoreBook.categoryNames.forEachIndexed { ci, cat ->
+            val sc = scoreBook.categoryScore(phan, ci)
+            if (sc < 0 && cat == "Khác") return@forEachIndexed // môn "Khác" chỉ hiện khi có điểm
+            col.addView(barRow(cat, sc, bold = true, indentDp = 0))
+            val played = phan.filter { (p, t) -> t[1] > 0 && scoreBook.categoryOfPhan(p) == ci }
+            val minPct = played.values.minOfOrNull { ScoreBook.pct(it[0], it[1]) }
+            for ((p, t) in played) {
+                val pc = ScoreBook.pct(t[0], t[1])
+                col.addView(barRow("$p · ${t[0]}/${t[1]}", pc, bold = false, indentDp = 14, low = played.size > 1 && pc == minPct))
+            }
+        }
+        return col
+    }
+
+    /** Tab "Lịch sử": các ván (mới → cũ) gom theo ngày; bấm 1 ván để xem từng câu. */
+    private fun buildHistoryView(name: String, open: MutableSet<Long>, rerender: () -> Unit): View {
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val rounds = scoreBook.roundsOf(name) // mới trước
+        if (rounds.isEmpty()) { col.addView(noteText("Chưa có câu nào được ghi lại.")); return col }
+        val bySession = LinkedHashMap<Long, MutableList<ScoreBook.Round>>()
+        for (r in rounds) bySession.getOrPut(r.session) { ArrayList() }.add(r)
+        val dayFmt = java.text.SimpleDateFormat("EEEE dd/MM/yyyy", Locale("vi"))
+        val timeFmt = java.text.SimpleDateFormat("HH:mm", Locale.US)
+        var lastDay: String? = null
+        fun cell(text: String, wDp: Int, color: Int, bold: Boolean = false): TextView = TextView(this).apply {
+            this.text = text
+            textSize = 12.5f
+            setTextColor(color)
+            if (bold) setTypeface(typeface, Typeface.BOLD)
+            layoutParams = if (wDp > 0) LinearLayout.LayoutParams(px(wDp), ViewGroup.LayoutParams.WRAP_CONTENT)
+                           else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        for ((sid, sr) in bySession) {
+            val first = sr.last() // câu đầu tiên của ván (sr đang mới → cũ)
+            val day = dayFmt.format(java.util.Date(first.time))
+            if (day != lastDay) {
+                lastDay = day
+                col.addView(TextView(this).apply {
+                    text = day; textSize = 12f; setTypeface(typeface, Typeface.BOLD); setTextColor(cTextFaint)
+                    setPadding(0, px(10), 0, px(4))
+                })
+            }
+            val ok = sr.count { it.correct }
+            val avg = sr.sumOf { it.sec.toDouble() } / sr.size
+            val isOpen = sid in open
+            col.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(px(8), px(9), px(8), px(9))
+                background = GradientDrawable().apply { setColor(cAccentDim); cornerRadius = px(8).toFloat() }
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).also { it.bottomMargin = px(4) }
+                addView(cell(timeFmt.format(java.util.Date(first.time)), 44, cTextFaint))
+                addView(cell(scoreBook.displayNameOf(first.game), 0, cText))
+                addView(cell("$ok/${sr.size}", 46, if (ok * 2 >= sr.size) cGood else cBad, bold = true).apply { gravity = Gravity.CENTER })
+                addView(cell(String.format(Locale.US, "%.1fs", avg), 46, cTextDim).apply { gravity = Gravity.END })
+                addView(cell(if (isOpen) "▾" else "▸", 22, cAccent).apply { gravity = Gravity.END })
+                setOnClickListener { if (!open.remove(sid)) open.add(sid); rerender() }
+            })
+            if (!isOpen) continue
+            for (r in sr.asReversed()) { // cũ → mới = đúng thứ tự câu
+                col.addView(LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    setPadding(px(12), px(6), px(6), px(6))
+                    addView(LinearLayout(this@ClassManagementActivity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                        val q = if (r.question.isEmpty()) "Câu hỏi media" else r.question
+                        addView(TextView(this@ClassManagementActivity).apply { text = "Câu ${r.round}: $q"; textSize = 12.5f; setTypeface(typeface, Typeface.BOLD); setTextColor(cText) })
+                        addView(TextView(this@ClassManagementActivity).apply {
+                            text = "Chọn: " + (if (r.answer.isEmpty()) "—" else r.answer); textSize = 12f
+                            setTextColor(if (r.correct) cGood else cBad)
+                        })
+                        if (!r.correct && r.correctAnswer.isNotEmpty()) addView(TextView(this@ClassManagementActivity).apply {
+                            text = "Đúng: ${r.correctAnswer}"; textSize = 12f; setTextColor(cTextDim)
+                        })
+                    })
+                    addView(LinearLayout(this@ClassManagementActivity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        gravity = Gravity.END
+                        layoutParams = LinearLayout.LayoutParams(px(64), ViewGroup.LayoutParams.WRAP_CONTENT)
+                        addView(TextView(this@ClassManagementActivity).apply {
+                            text = if (r.correct) "✓ Đúng" else "✗ Sai"; textSize = 12f; setTypeface(typeface, Typeface.BOLD)
+                            setTextColor(if (r.correct) cGood else cBad)
+                        })
+                        addView(TextView(this@ClassManagementActivity).apply {
+                            text = String.format(Locale.US, "%.1fs", r.sec); textSize = 11.5f; setTextColor(cTextDim)
+                        })
+                    })
+                })
+                col.addView(View(this).apply {
+                    setBackgroundColor(cCardLine)
+                    layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(1))
+                })
+            }
+        }
+        return col
     }
 
     /** Panel xem/sửa 1 học sinh — dựng NGAY trong ClassManagementActivity, KHÔNG mở MainActivity
@@ -1064,18 +1186,54 @@ class ClassManagementActivity : AppCompatActivity() {
         }
         leftCol.addView(birthdateInput)
 
-        rightCol.addView(fieldLabel("ẢNH ĐÃ LƯU"))
         val photosContainer = FrameLayout(this)
         fun refreshPhotos() {
             photosContainer.removeAllViews()
             val samples = attendanceStore.samplesOf(currentName)
             photosContainer.addView(
-                if (samples.isEmpty()) emptyState("Chưa có ảnh nào — bấm \"Chụp ảnh mới\"/\"Từ ảnh có sẵn\" bên dưới.")
+                if (samples.isEmpty()) emptyState("Chưa có ảnh nào — bấm \"Chụp ảnh mới\" hoặc \"Từ ảnh có sẵn\" bên dưới (thêm đúng cho bạn này).")
                 else buildGrid(samples.mapIndexed { i, s -> photoThumbnail(currentName, i, s) { refreshPhotos() } }, 4)
             )
         }
         refreshPhotos()
-        rightCol.addView(photosContainer)
+
+        // Cột phải có 3 tab: Ảnh (đã lưu) / Năng lực (điểm từng môn, học phần) / Lịch sử (các ván → từng câu) —
+        // 2 tab sau lấy đúng số liệu thật như tab "Năng lực"/"Lịch sử" của ControlActivity.
+        val openSessions = HashSet<Long>()
+        val tabBar = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, px(6), 0, px(4)) }
+        val tabContent = FrameLayout(this)
+        var activeTab = "photos"
+        lateinit var renderTab: () -> Unit
+        val tabDefs = listOf("photos" to "Ảnh", "competency" to "Năng lực", "history" to "Lịch sử")
+        val tabViews = tabDefs.map { (key, label) ->
+            TextView(this).apply {
+                text = label
+                textSize = 13f
+                setTypeface(typeface, Typeface.BOLD)
+                setPadding(px(12), px(8), px(12), px(8))
+                setOnClickListener { activeTab = key; renderTab() }
+            }
+        }
+        tabViews.forEach { tabBar.addView(it) }
+        renderTab = {
+            tabDefs.forEachIndexed { i, (key, _) ->
+                val on = key == activeTab
+                tabViews[i].setTextColor(if (on) Color.WHITE else cAccent)
+                tabViews[i].background = GradientDrawable().apply {
+                    setColor(if (on) cAccent else Color.TRANSPARENT)
+                    cornerRadius = px(8).toFloat()
+                }
+            }
+            tabContent.removeAllViews()
+            when (activeTab) {
+                "photos" -> { refreshPhotos(); (photosContainer.parent as? ViewGroup)?.removeView(photosContainer); tabContent.addView(photosContainer) }
+                "competency" -> tabContent.addView(buildCompetencyView(currentName))
+                else -> tabContent.addView(buildHistoryView(currentName, openSessions) { renderTab() })
+            }
+        }
+        rightCol.addView(tabBar)
+        rightCol.addView(tabContent)
+        renderTab()
         body.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(0, px(6)) })
 
         lateinit var dialog: AlertDialog
