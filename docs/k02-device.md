@@ -105,6 +105,18 @@ KHÔNG giúp gì cho `requestPermission()` trên Android 10.
   `lidarlib-release.aar` (`gradlew :lidarlib:assembleRelease` trong `NativePlugins/LidarNativeAndroidLib`,
   cần `JAVA_HOME` = `C:\Program Files\Android\Android Studio\jbr`).
 
+### Chặn thanh thông báo (shade) ở Launcher (2026-10-05, K02 #2 đã verify sống)
+
+Overlay `TYPE_APPLICATION_OVERLAY` KHÔNG chặn được trên Android 10 (status bar nằm trên overlay) — đừng thử lại.
+Cách đang dùng: `cmd statusbar disable-for-setup true|false` (chỉ root/shell gọi được, không đụng SystemUI).
+- Cùng script boot `mirror_hdmi.sh.usbgrant`, **chỉ chạy 1 lần lúc boot** (không poll): đọc file cờ
+  `/data/media/0/Android/data/com.launcher.eduxplore[.debug]/files/shade_enabled`; có `1` → để mở, ngược lại
+  (mặc định) → chặn.
+- App Launcher (`D:\X_projects\Launcher`, màn Quản lý ứng dụng) có checkbox "Bật thanh thông báo" ghi cờ đó
+  (app không gọi được `su`). Cờ giữ qua reboot; **tick/bỏ tick xong phải reboot mới có hiệu lực**.
+- Mở/chặn tạm bằng adb không cần reboot: `adb shell cmd statusbar disable-for-setup false` / `true`.
+- Cài: push script như phần USB ở trên (bản cũ backup `/data/local/tmp/mirror_hdmi.sh.usbgrant.bak`).
+
 ### Audio K02 — max hết + tắt Safe Media Volume (2026-10-03, K02 #2)
 
 Yêu cầu: mọi đường audio (HDMI, loa, USB, BT...) đều max, tắt cảnh báo an toàn tai nghe.

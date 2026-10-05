@@ -2,7 +2,7 @@
 
 > **TL;DR**: K02 dùng 2 Activity/2 display: ControlActivity (Java View, display 0) điều khiển, UnityPlayerActivity (máy chiếu) chạy game. Stop KHÔNG destroy Unity; Start lần 2 gửi UnitySendMessage. Cài đặt game gửi bằng JSON.
 > **Đọc khi**: sửa NativePlugins/ControlUiAndroidLib, GameControlBridge/ControlBridge, tab Cài đặt, luồng Start/Pause/Stop, lớp/điểm/registry hiển thị.
-> **Cập nhật**: 2026-10-04 (tách nguyên văn từ CLAUDE.md gốc, chưa sửa nội dung)
+> **Cập nhật**: 2026-10-04 (2026-10-05: roster tab hiện cả lớp, settings; trước đó tách nguyên văn từ CLAUDE.md gốc)
 
 ## Track A — K02 dual-display + LiDAR touch (session "Dual display setup K02")
 
@@ -55,7 +55,7 @@ dùng `item.displayName` để vẽ danh sách chọn game, nhưng vẫn giữ `
 
 ### Cài đặt game trong ControlActivity (2026-10-04)
 
-Tab "Cài đặt" của `ControlActivity` thay panel setting cũ trên Unity: thời gian game, chờ chuyển round (1–4s), tốc độ flow (0.1–5x, slider + ô số), nhạc, SFX, ô tick "chờ clear mới chuyển round" (mặc định BẬT, áp mọi game kể cả Independent). Thời gian mỗi câu: bỏ (không giới hạn). Lưu `/sdcard/EduXplore/game_settings.json` (`ui/SettingsStore.java`). Gửi Unity: đang sống → `UnitySendMessage("GameControlBridge","OnSettingsChanged",json)`; cold-boot → Intent extra `com.eduxplore.control.SETTINGS_JSON` (`ControlBridge.Init`). Unity phía nhận: `GameSettings.ApplyJson` (field vắng/âm = không đổi). Chờ clear: Base `TransitionCountdown`/`IndependentPlayerLoop` + `FloorZoneClearer.AwaitIfEnabled/AwaitSide`. Flow: `SpawnFlowDisplay`, `LaneTrack`. Chi tiết + trạng thái: `handoff/2026-10-04-game-settings.md`. **7 game đóng băng** (AddUp, NumberAddUp, PathFinder, TrainPath, Monopoly, RiverCross, Balloon): không đụng, xem `handoff/FROZEN.txt` + `AGENTS.md`.
+Tab "Cài đặt" của `ControlActivity` thay panel setting cũ trên Unity: thời gian game, chờ chuyển round (0–6s, số nguyên), tốc độ flow (slider 0.1–5x + ô số nhập tự do, ngoài dải vẫn dùng số nhập), thời gian game (slider 10–600s + ô số nhập tự do, ≥ 1); ô số chỉ áp khi bấm Xong/rời ô; nhạc nền mặc định 50%, nhạc, SFX, ô tick "chờ clear mới chuyển round" (mặc định BẬT, áp mọi game kể cả Independent). Thời gian mỗi câu: bỏ (không giới hạn). Lưu `/sdcard/EduXplore/game_settings.json` (`ui/SettingsStore.java`). Gửi Unity: đang sống → `UnitySendMessage("GameControlBridge","OnSettingsChanged",json)`; cold-boot → Intent extra `com.eduxplore.control.SETTINGS_JSON` (`ControlBridge.Init`). Unity phía nhận: `GameSettings.ApplyJson` (field vắng/âm = không đổi). Chờ clear: Base `TransitionCountdown`/`IndependentPlayerLoop` + `FloorZoneClearer.AwaitIfEnabled/AwaitSide`. Flow: `SpawnFlowDisplay`, `LaneTrack`. Chi tiết + trạng thái: `handoff/2026-10-04-game-settings.md`. **7 game đóng băng** (AddUp, NumberAddUp, PathFinder, TrainPath, Monopoly, RiverCross, Balloon): không đụng, xem `handoff/FROZEN.txt` + `AGENTS.md`.
 
 ### Stop/Start — KHÔNG destroy UnityPlayerActivity (gotcha quan trọng)
 
@@ -82,3 +82,7 @@ Không sửa được từ code app. Vì vậy:
   chính chết bất ngờ rồi tự relaunch `ControlActivity`) — code có sẵn nhưng **đang tắt**
   (`ControlActivity.onCreate()`, dòng `startService(new Intent(this, WatchdogService.class))` bị
   comment) theo yêu cầu user lúc test. Bật lại khi cần.
+
+### Tab "Lớp học": hiện cả lớp, chưa có điểm = "-" (2026-10-05)
+
+Bảng liệt kê TẤT CẢ học sinh của lớp (kể cả bạn chưa chơi gì). Điểm theo phạm vi đang chọn (Tất cả/Môn/Phần): chưa có điểm hiện **"-"** (thanh rỗng), KHÔNG phải 0 và không đưa vào trung bình (điểm tổng = trung bình các môn ĐÃ có điểm). Sort theo điểm thì bạn chưa có điểm luôn nằm cuối. Bạn chưa chơi chưa bấm vào tab Năng lực được. Dải "Chưa chơi (n): ..." cũ đã bỏ.

@@ -11,6 +11,19 @@ LOG=/data/local/tmp/usbgrant_log.txt
 PKG=com.EduXplore.X01a
 DEX=/data/local/tmp/UsbGrant.dex
 echo "=== $(date) boot grant start" > $LOG
+
+# [STATUSBAR] 2026-10-05: chặn vuốt kéo thanh thông báo (cmd statusbar disable-for-setup, không
+# đụng SystemUI). Chỉ quyết định MỘT LẦN lúc boot: mặc định chặn; nếu app Launcher (Quản lý ứng
+# dụng > "Bật thanh thông báo") đã ghi cờ shade_enabled=1 thì để mở. Đổi cờ xong phải reboot.
+# Mở tạm không cần reboot: adb shell cmd statusbar disable-for-setup false
+SHADE=block
+for f in /data/media/0/Android/data/com.launcher.eduxplore/files/shade_enabled \
+         /data/media/0/Android/data/com.launcher.eduxplore.debug/files/shade_enabled; do
+  [ "$(cat $f 2>/dev/null)" = "1" ] && SHADE=allow
+done
+echo "shade: $SHADE" >> $LOG
+[ "$SHADE" = "block" ] && cmd statusbar disable-for-setup true >> $LOG 2>&1
+
 i=0
 while [ $i -lt 40 ]; do
   AUID=$(pm list packages -U $PKG 2>/dev/null | sed -n 's/.*uid:\([0-9]*\).*/\1/p')

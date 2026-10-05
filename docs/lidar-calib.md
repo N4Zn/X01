@@ -201,3 +201,6 @@ logcat trực tiếp (không đoán) phát hiện 3 lớp vấn đề chồng l�
    27.0.12077973 + CMake 3.22.1 có sẵn trên máy) và copy đè
    `Assets/Plugins/Android/libs/arm64-v8a/liblidar_unity.so` — **cần test lại cả touch thường
    (2 người chạm cùng lúc) lẫn calib** sau khi cài bản mới.
+
+### Tự bật Lidar khi vào game (2026-10-05)
+`LidarTouchBridge` lắng nghe `SceneManager.sceneLoaded`: scene nào không nằm trong `NonGameScenes` (Start/Menu/Home/Calib/CharacterSelect/TeamSelect/Score/FRTest) thì `SetTouchEnabled(true)`. Trước đây chỉ `MiniGameControllerBase` + `TestTongHopController` tự bật, game cũ khác để mặc định OFF nên không nhận chạm. Thêm scene không phải game mới → thêm tên vào `NonGameScenes`.

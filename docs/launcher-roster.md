@@ -2,7 +2,7 @@
 
 > **TL;DR**: Launcher là project Kotlin riêng ngoài repo, 2 hero card trỏ ComponentName vào ControlActivity/ClassManagementActivity. Quản lý lớp nằm ở NativePlugins/FaceEnrollAndroidLib.
 > **Đọc khi**: sửa Launcher (D:\X_projects\Launcher), ClassManagementActivity, enrolled.json/classes.json, hoặc đổi Activity entry point.
-> **Cập nhật**: 2026-10-04 (tách nguyên văn từ CLAUDE.md gốc, chưa sửa nội dung)
+> **Cập nhật**: 2026-10-04 (2026-10-05: hết mock, lớp Dev/5 tuổi, roster.json, điểm/lịch sử thật; trước đó tách nguyên văn từ CLAUDE.md gốc)
 
 ### Launcher — Home launcher thật của K02 (`D:\X_projects\Launcher`, 2026-09-16/17)
 
@@ -88,3 +88,16 @@ chuyển key qua mọi map: `enrolled`/`genders`/`classNames`/`lastLogged`/`pers
 > chỉ được cập nhật phần dữ liệu (`AttendanceStore.kt`: className/classes.json/rename) +
 > `MainActivity.kt` (intent extras, bulk picker) để 2 bản không lệch nhau, nhưng KHÔNG có màn
 > hình "Quản lý lớp" riêng — app đó vẫn chỉ có màn camera như cũ.
+
+### Hết mock, lớp Dev / 5 tuổi, roster.json, điểm thật (2026-10-05)
+
+- **Mock đã xoá**: `seedDemoDataIfEmpty()` (3 lớp Mầm/Chồi/Lá ~35 bạn giả) và `mockScoreOf()` không còn. `AttendanceStore.migrateLegacyRosterIfNeeded()` dọn **1 lần/máy** (marker `/sdcard/EduXplore/.roster_migration_v1`): xoá lớp Mầm/Chồi/Lá + lớp rác `a`/`cây` và các bạn giả (0 mẫu enroll) trong đó; ai đã enroll thật (có mẫu, kể cả không có ảnh) → lớp **`Dev`** (học sinh test); tạo lớp **`5 tuổi`** 16 bạn (`DEFAULT_5_TUOI`, chưa có ảnh, alias = 2 từ cuối tên) nếu chưa có `roster.json`. Thứ tự lớp: `5 tuổi`, `Dev`. Migration chỉ chạy khi có 1 `AttendanceStore` được tạo (mở Quản lý lớp hoặc màn camera) — ControlActivity mở trước vẫn thấy dữ liệu cũ tới lúc đó.
+- **`/sdcard/EduXplore/roster.json`** — bản dễ đọc/sửa của lớp + học sinh (khác `enrolled.json` chứa embedding): `{"version":1,"classes":[{"name":"5 tuổi","students":[{"name","alias","gender":"nam|nu","birthdate"}]}]}`. App GHI sau mỗi thay đổi (`adb pull` để xem); NẠP khi mở `AttendanceStore` nếu file khác lần app ghi gần nhất (so mtime) → `adb push` rồi mở lại Quản lý lớp. Nạp chỉ THÊM/CẬP NHẬT (lớp, học sinh mới, alias, giới tính, ngày sinh, chuyển lớp), **không bao giờ xoá** học sinh/ảnh/enroll (xoá bằng app); `name` là khoá, không đổi tên qua file; lỗi cú pháp → toast + không nạp + app không ghi đè file. Học sinh chưa gán lớp không xuất hiện trong file.
+- **Điểm/lịch sử trong Quản lý lớp**: `ScoreBook.kt` đọc `class_rounds.jsonl` (ControlActivity ghi) — cùng công thức `ScoreStore.java` (50 round gần nhất/học phần; môn = TB học phần đã chơi; tổng = TB môn đã có điểm; chưa chơi = **"-"**). Sửa công thức ở 1 nơi thì sửa nơi kia. Môn/học phần lấy từ `game_registry.json` (asset của aar controlui, gộp chung APK). Danh sách/thẻ học sinh hiện cột "Điểm" ("-" nếu chưa có); panel chi tiết học sinh có 3 tab **Ảnh / Năng lực / Lịch sử** (giống ControlActivity). Nút thêm ảnh cho đúng bạn đó (Chụp ảnh mới / Từ ảnh có sẵn) nằm cuối panel chi tiết.
+
+### Panel học sinh / ảnh mẫu (2026-10-05)
+- Ảnh mẫu lưu ở `/sdcard/EduXplore/enrolled_photos/<tên>/<tên>_<yyyyMMdd_HHmmss_SSS>.jpg`, CÙNG thư mục với `enrolled.json`/`classes.json`/`roster.json` → backup cả `/sdcard/EduXplore`. Ảnh cũ ở `getExternalFilesDir/enrolled_photos` tự chuyển sang lúc mở app (`migratePhotosToSharedDir`); đổi tên thật thì ảnh được chuyển theo.
+- Mẫu: tối đa **3** ảnh (permanent, chụp lúc lấy mẫu); `ROLLING_SAMPLES = 0` (trước 3 + 5) vì ảnh thêm sau dễ sai ánh sáng/nhầm người. Đủ 3 thì `addSample` TỪ CHỐI (toast), không tự thay/xoá — muốn đổi thì xoá bớt ở panel. Dữ liệu cũ đang >3 ảnh giữ nguyên, không tự cắt.
+- Xoá hết ảnh KHÔNG xoá học sinh (chỉ thành "Cần ảnh"); chỉ nút "Xóa học sinh" (hỏi xác nhận) mới xoá, kèm ảnh + embedding + lớp/alias/ngày sinh.
+- Sau xoá ảnh/học sinh, `AttendanceStore.verifyOnDisk` đọc lại `enrolled.json` để chắc embedding và ảnh đã mất cùng nhau (lệch → toast cảnh báo).
+- Panel là `Dialog` cao cố định 92% màn, footer (Xóa/Chụp ảnh/Thêm ảnh/Đóng/Lưu) luôn hiện; Enter ở tên thường gọi → tên thật → mở chọn ngày sinh.
