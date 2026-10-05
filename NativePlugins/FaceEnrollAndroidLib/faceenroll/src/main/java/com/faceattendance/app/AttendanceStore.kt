@@ -28,9 +28,10 @@ class AttendanceStore(private val context: Context) {
         // A single averaged centroid per person doesn't help separate near-identical faces
         // (e.g. twins) - a small cluster of real samples does, at least somewhat. The first
         // PERMANENT_SAMPLES collected are kept forever; beyond that only the ROLLING_SAMPLES
-        // most recent are kept (oldest rolling sample evicted first).
+        // most recent are kept. 2026-10-05: ROLLING = 0 (trước 5) — ảnh thêm sau có thể sai ánh sáng/nhầm
+        // người; trần = 3 mẫu lấy lúc enroll, quá trần thì addSample từ chối (xem addSample).
         const val PERMANENT_SAMPLES = 3
-        const val ROLLING_SAMPLES = 5
+        const val ROLLING_SAMPLES = 0
         const val MAX_SAMPLES_PER_PERSON = PERMANENT_SAMPLES + ROLLING_SAMPLES
         const val RECENT_PEOPLE_SHOWN = 5
 
@@ -76,7 +77,10 @@ class AttendanceStore(private val context: Context) {
     private val sharedDir = File("/sdcard/EduXplore").also { it.mkdirs() }
     private val enrolledFile = File(sharedDir, "enrolled.json")
     private val classesFile = File(sharedDir, "classes.json")
-    private val enrolledPhotosDir = File(context.getExternalFilesDir(null), "enrolled_photos")
+    // Ảnh mẫu nằm CÙNG phân vùng với enrolled.json (/sdcard/EduXplore/enrolled_photos/<tên>/<tên>_<thời gian>.jpg)
+    // để backup 1 thư mục /sdcard/EduXplore là đủ. Ảnh cũ ở getExternalFilesDir được chuyển sang
+    // đây lúc mở app (migratePhotosToSharedDir).
+    private val enrolledPhotosDir = File(sharedDir, "enrolled_photos")
     private val snapshotDir = File(context.getExternalFilesDir(null), "snapshots")
     private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
     private val displayTimeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
@@ -103,6 +107,7 @@ class AttendanceStore(private val context: Context) {
         enrolledPhotosDir.mkdirs()
         snapshotDir.mkdirs()
         loadPersisted()
+        migratePhotosToSharedDir()
         migrateLegacyRosterIfNeeded()
         importRosterIfChanged()
     }
@@ -414,6 +419,20 @@ class AttendanceStore(private val context: Context) {
         if (trimmed.isEmpty() || trimmed == oldName) return false
         if (trimmed in enrolled) return false
         val samples = enrolled.remove(oldName) ?: return false
+        // Ảnh lưu theo tên -> đổi tên thì chuyển ảnh sang thư mục/tên file mới (lỗi thì giữ đường dẫn cũ).
+        for (i in samples.indices) {
+            val s = samples[i]
+            val src = s.photo?.let { File(it) }?.takeIf { it.exists() } ?: continue
+            try {
+                val dst = newPhotoFile(trimmed)
+                if (src.renameTo(dst) || (src.copyTo(dst, overwrite = false).length() == src.length() && src.delete())) {
+                    samples[i] = Sample(s.embedding, dst.absolutePath)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FaceAttendance", "rename photo failed (${s.photo}): $e")
+            }
+        }
+        photoDirFor(oldName).takeIf { it.isDirectory && it.list().isNullOrEmpty() }?.delete()
         enrolled[trimmed] = samples
         genders[trimmed] = genders.remove(oldName) ?: "nam"
         classNames.remove(oldName)?.let { classNames[trimmed] = it }
@@ -437,12 +456,26 @@ class AttendanceStore(private val context: Context) {
         persist()
     }
 
+    /** Tên an toàn cho tên thư mục/file (bỏ ký tự cấm của hệ file, giữ nguyên dấu tiếng Việt). */
+    private fun safeFileName(name: String): String =
+        name.trim().replace(Regex("""[\\/:*?"<>|]"""), "_").ifEmpty { "_" }
+
+    private fun photoDirFor(name: String) = File(enrolledPhotosDir, safeFileName(name))
+
+    /** File ảnh mới của `name`: <tên>_<yyyyMMdd_HHmmss_SSS>.jpg — không trùng, đọc tên là biết của ai. */
+    private fun newPhotoFile(name: String): File {
+        val stamp = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+        val dir = photoDirFor(name).also { it.mkdirs() }
+        var f = File(dir, "${safeFileName(name)}_$stamp.jpg")
+        var n = 1
+        while (f.exists()) f = File(dir, "${safeFileName(name)}_${stamp}_${n++}.jpg")
+        return f
+    }
+
     /** Saves a face-crop Mat as a JPEG under enrolled_photos/<name>/ and returns its path. */
     private fun saveSamplePhoto(name: String, faceCrop: Mat?): String? {
         if (faceCrop == null || faceCrop.empty()) return null
-        val personDir = File(enrolledPhotosDir, name)
-        personDir.mkdirs()
-        val file = File(personDir, "${System.currentTimeMillis()}.jpg")
+        val file = newPhotoFile(name)
         val bmp = Bitmap.createBitmap(faceCrop.cols(), faceCrop.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(faceCrop, bmp)
         FileOutputStream(file).use { out -> bmp.compress(Bitmap.CompressFormat.JPEG, 90, out) }
@@ -453,27 +486,91 @@ class AttendanceStore(private val context: Context) {
         if (path != null) File(path).delete()
     }
 
-    /** Adds one embedding to a person's cluster - used both for fresh/supplementary enrollment
-     * and for samples confirmed via the ambiguous-match dialog. */
-    fun addSample(name: String, embedding: FloatArray, faceCrop: Mat?) {
-        val samples = enrolled.getOrPut(name) { mutableListOf() }
-        val photo = saveSamplePhoto(name, faceCrop)
-        samples.add(Sample(embedding, photo))
-        if (samples.size > MAX_SAMPLES_PER_PERSON) {
-            val removed = samples.removeAt(PERMANENT_SAMPLES)
-            deleteSamplePhoto(removed.photo)
+    /** Chuyển ảnh mẫu còn nằm ở thư mục cũ (getExternalFilesDir) sang /sdcard/EduXplore/enrolled_photos,
+     * cập nhật đường dẫn trong enrolled.json. Chạy mỗi lần mở, không làm gì nếu đã chuyển hết;
+     * ảnh không chuyển được (file mất, lỗi ghi) giữ nguyên đường dẫn cũ — KHÔNG xoá gì. */
+    private fun migratePhotosToSharedDir() {
+        var changed = false
+        val root = enrolledPhotosDir.absolutePath + File.separator
+        for ((name, samples) in enrolled) {
+            if (name in testGalleryNames) continue
+            for (i in samples.indices) {
+                val s = samples[i]
+                val old = s.photo ?: continue
+                if (old.startsWith(root)) continue
+                val src = File(old)
+                if (!src.exists()) continue
+                try {
+                    val dst = newPhotoFile(name)
+                    src.copyTo(dst, overwrite = false)
+                    if (dst.length() != src.length()) { dst.delete(); continue }
+                    samples[i] = Sample(s.embedding, dst.absolutePath)
+                    changed = true
+                    src.delete()
+                } catch (e: Exception) {
+                    android.util.Log.e("FaceAttendance", "migrate photo failed ($old): $e")
+                }
+            }
         }
-        testGalleryNames.remove(name)
-        persist()
+        if (changed) persist()
     }
 
-    fun deleteSample(name: String, index: Int) {
-        val samples = enrolled[name] ?: return
-        if (index >= samples.size) return
+    /** Đọc lại enrolled.json trên đĩa và so với bộ nhớ cho 1 học sinh: đủ số mẫu, đúng đường dẫn ảnh,
+     * và mọi file ảnh được tham chiếu đều còn. `expectGone` = học sinh phải không còn trong file. */
+    private fun verifyOnDisk(name: String, expectGone: Boolean = false): Boolean {
+        return try {
+            val arr = org.json.JSONArray(enrolledFile.readText())
+            var found: org.json.JSONObject? = null
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                if (o.getString("name") == name) { found = o; break }
+            }
+            if (expectGone) return found == null
+            val mem = enrolled[name] ?: return found == null
+            val disk = found ?: return false
+            val ds = disk.getJSONArray("samples")
+            if (ds.length() != mem.size) return false
+            for (j in 0 until ds.length()) {
+                val so = ds.getJSONObject(j)
+                val p = if (so.isNull("photo")) null else so.getString("photo")
+                if (p != mem[j].photo) return false
+                if (p != null && !File(p).exists()) return false
+            }
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FaceAttendance", "verifyOnDisk($name) failed: $e")
+            false
+        }
+    }
+
+    /** Adds one embedding to a person's cluster - used both for fresh/supplementary enrollment
+     * and for samples confirmed via the ambiguous-match dialog. */
+    fun addSample(name: String, embedding: FloatArray, faceCrop: Mat?): Boolean {
+        val samples = enrolled.getOrPut(name) { mutableListOf() }
+        // Đã đủ trần (hiện 3 = chỉ các mẫu lúc lấy mẫu) thì TỪ CHỐI, không tự thay/xoá mẫu cũ:
+        // muốn đổi ảnh thì xoá bớt ở panel học sinh trước. Không có chỗ nào tự thêm mẫu khi nhận diện.
+        if (samples.size >= MAX_SAMPLES_PER_PERSON) return false
+        val photo = saveSamplePhoto(name, faceCrop)
+        samples.add(Sample(embedding, photo))
+        testGalleryNames.remove(name)
+        persist()
+        return true
+    }
+
+    /** Xoá 1 mẫu (embedding + file ảnh) rồi kiểm tra lại enrolled.json trên đĩa. Học sinh KHÔNG bị
+     * xoá dù hết mẫu — chỉ chuyển sang "cần ảnh"; xoá học sinh phải dùng deleteEnrollment().
+     * Trả về true nếu dữ liệu trên đĩa đã khớp (embedding và ảnh đã mất cùng nhau). */
+    fun deleteSample(name: String, index: Int): Boolean {
+        val samples = enrolled[name] ?: return false
+        if (index !in samples.indices) return false
         val removed = samples.removeAt(index)
         deleteSamplePhoto(removed.photo)
-        if (samples.isEmpty()) enrolled.remove(name)
         persist()
+        if (verifyOnDisk(name)) return true
+        persist() // thử ghi lại 1 lần
+        return verifyOnDisk(name).also {
+            if (!it) android.util.Log.e("FaceAttendance", "deleteSample($name,$index): enrolled.json không khớp sau khi xoá")
+        }
     }
 
     fun samplesOf(name: String): List<Sample> = enrolled[name] ?: emptyList()
@@ -529,14 +626,21 @@ class AttendanceStore(private val context: Context) {
 
     fun representativePhoto(name: String): String? = enrolled[name]?.firstOrNull { it.photo != null }?.photo
 
-    fun deleteEnrollment(name: String) {
+    /** Xoá hẳn 1 học sinh: embedding, toàn bộ ảnh (cả thư mục ảnh của bạn đó), lớp, alias, ngày sinh.
+     * Trả về true nếu enrolled.json trên đĩa đã không còn bạn này. */
+    fun deleteEnrollment(name: String): Boolean {
         val samples = enrolled.remove(name) ?: emptyList()
         for (s in samples) deleteSamplePhoto(s.photo)
+        photoDirFor(name).takeIf { it.isDirectory && it.list().isNullOrEmpty() }?.delete()
         genders.remove(name)
         aliasNames.remove(name)
         birthdates.remove(name)
+        classNames.remove(name)
         lastLogged.remove(name)
+        personLog.remove(name)
+        recentNames.remove(name)
         persist()
+        return verifyOnDisk(name, expectGone = true)
     }
 
     fun enrolledCount() = enrolled.size

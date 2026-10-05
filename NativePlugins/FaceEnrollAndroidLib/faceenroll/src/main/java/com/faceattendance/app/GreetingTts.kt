@@ -95,10 +95,10 @@ class GreetingTts(context: Context) {
         // when that data isn't available yet). Placeholders: {h} {name} {parts} {time_of_day}
         // {temp} {condition}. Edit this list directly to add/change wording.
         private val TEMPLATES = listOf(
-            Triple("single", "normal", "Chào {h} {name}, chúc {h} một {time_of_day} vui vẻ"),
-            Triple("single", "normal", "Xin chào {h} {name}, rất vui được gặp {h} hôm nay"),
-            Triple("single", "temperature", "Chào {h} {name}, nhiệt độ Hà Nội hiện tại khoảng {temp} độ"),
-            Triple("single", "weather", "Chào {h} {name}. {condition}"),
+            Triple("single", "normal", "Chào bạn {name}, chúc bạn một {time_of_day} vui vẻ"),
+            Triple("single", "normal", "Xin chào bạn {name}, rất vui được gặp bạn hôm nay"),
+            Triple("single", "normal", "Xin chào bạn {name}, hôm nay bạn có khỏe không?"),
+            Triple("single", "temperature", "Chào bạn {name}, nhiệt độ hôm nay khoảng {temp} độ"),
             Triple("pair", "normal", "Chào {parts}. Chúc mọi người một ngày mới vui vẻ"),
             Triple("pair", "normal", "Chào {parts}, rất vui được gặp mọi người hôm nay"),
             Triple("pair", "temperature", "Chào {parts}. Nhiệt độ Hà Nội hiện tại khoảng {temp} độ"),

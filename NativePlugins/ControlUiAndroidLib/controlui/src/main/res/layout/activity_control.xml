@@ -262,7 +262,7 @@
                                 android:layout_marginTop="4dp"
                                 android:layout_marginBottom="6dp"
                                 android:textColor="@color/live"
-                                android:textSize="11sp" />
+                                android:textSize="13.2sp" />
 
                             <LinearLayout
                                 android:id="@+id/comp_score_list"

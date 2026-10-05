@@ -1028,8 +1028,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             // Cập nhật ảnh cho học sinh ĐÃ CÓ (từ panel chi tiết) — đã biết tên/tên gọi/giới
             // tính rồi, add thẳng mẫu vào đúng tên đó, không hỏi lại showEnrollNameDialog().
             val (emb, crop) = faces[index]
-            attendanceStore.addSample(target, emb, crop)
-            toastStatus("Đã thêm ảnh cho $target (${attendanceStore.samplesOf(target).size} mẫu)")
+            if (attendanceStore.addSample(target, emb, crop)) {
+                toastStatus("Đã thêm ảnh cho $target (${attendanceStore.samplesOf(target).size} mẫu)")
+            } else {
+                toastStatus("$target đã đủ ${AttendanceStore.MAX_SAMPLES_PER_PERSON} ảnh — xóa bớt ở panel học sinh trước khi thêm")
+            }
             enrollNextFace(faces, index + 1, onAllDone)
             return
         }

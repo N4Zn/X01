@@ -92,9 +92,9 @@ public final class UiUtil {
 
         TextView val = new TextView(ctx);
         val.setText(value < 0 ? "-" : String.valueOf(value));
-        val.setTextSize(11f);
+        val.setTextSize(13.2f); // x1.2 (2026-10-05) — số điểm hơi bé
         val.setTextColor(ContextColor(ctx, com.eduxplore.control.R.color.text_dim));
-        LinearLayout.LayoutParams valLp = new LinearLayout.LayoutParams(dp(ctx, 22), LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams valLp = new LinearLayout.LayoutParams(dp(ctx, 28), LinearLayout.LayoutParams.WRAP_CONTENT);
         valLp.gravity = Gravity.END;
         valLp.leftMargin = dp(ctx, 6);
         val.setLayoutParams(valLp);

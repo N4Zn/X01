@@ -121,6 +121,10 @@ public class ControlActivity extends Activity {
     private SettingsStore settingsStore;
     private String selectedScene = null;      // sceneName Unity thật (Start dùng cái này)
     private String selectedGameName = null;   // tên game/variant đang chọn hoặc vừa chơi
+    /** Danh sách game được dựng lại mỗi renderAll() (ScrollView mới) → nhớ vị trí cuộn để chọn game
+     *  ở dưới không bị kéo về đầu. Đổi môn thì reset về 0. */
+    private ScrollView gameListScroll = null;
+    private int gameListScrollY = 0;
     private int compStudentIndex = 0;
     private String rosterSortKey = "score";
     /** Ô chọn kiểu điểm ở tab Lớp học (chạm để đổi vòng): 0 = Tất cả các môn, 1 = Môn đang chọn (mặc định),
@@ -133,6 +137,8 @@ public class ControlActivity extends Activity {
     private final java.util.concurrent.ExecutorService scoreExec = java.util.concurrent.Executors.newSingleThreadExecutor();
     private int rosterSortDir = -1;
     private boolean paused = false;
+    /** Thời lượng ván cho màn Tổng kết: từ lúc bấm Start đến lúc kết thúc, trừ thời gian Pause. 0 = chưa có. */
+    private long gameStartMs = 0, gameEndMs = 0, pausedAtMs = 0, pausedAccumMs = 0;
     private boolean unityStarted = false;
     // Group nào đang thu gọn trong danh sách chọn game (vd "Đếm", "Cộng") — mặc định tất cả
     // đang mở (set rỗng = không group nào bị collapse).
@@ -366,6 +372,7 @@ public class ControlActivity extends Activity {
             UiUtil.showDropdown(this, categoryTrigger, labels, domain,
                     UiUtil.ContextColor(this, R.color.accent_dim), idx -> {
                         domain = idx; selectedGameName = null; selectedScene = null;
+                        gameListScrollY = 0;
                         renderAll();
                     });
         });
@@ -394,6 +401,8 @@ public class ControlActivity extends Activity {
 
     // ── ACTION ZONE (trái, nhỏ) — nội dung đổi theo scene ───────────────────────────────────
     private void renderActionZone() {
+        if (gameListScroll != null) gameListScrollY = gameListScroll.getScrollY();
+        gameListScroll = null;
         actionZone.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -415,6 +424,18 @@ public class ControlActivity extends Activity {
             list.setOrientation(LinearLayout.VERTICAL);
             scroll.addView(list);
             col.addView(scroll);
+            gameListScroll = scroll;
+            final int restoreY = gameListScrollY;
+            if (restoreY > 0) {
+                // Chờ layout xong (nội dung chưa đo lúc này) rồi mới cuộn về chỗ cũ, 1 lần.
+                scroll.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+                    @Override public boolean onPreDraw() {
+                        scroll.getViewTreeObserver().removeOnPreDrawListener(this);
+                        scroll.scrollTo(0, restoreY);
+                        return true;
+                    }
+                });
+            }
 
             List<GameItem> items = gamesByCategory.get(domain);
             if (items == null || items.isEmpty()) {
@@ -1055,7 +1076,7 @@ public class ControlActivity extends Activity {
         summaryCard.addView(UiUtil.label(this, selectedGameName != null ? displayNameOf(selectedGameName) : "—", 19f, R.color.text, true));
 
         String[][] rows = {
-                {"Thời lượng", "—"},
+                {"Thời lượng", durationText()},
                 {"Điểm Đội trái / Đội phải", liveLeftScore + " – " + liveRightScore},
         };
         for (String[] r : rows) {
@@ -1090,6 +1111,15 @@ public class ControlActivity extends Activity {
         summaryCard.addView(breakdownRow);
     }
 
+    /** "m:ss" của ván vừa xong; "—" nếu chưa có ván nào. Đang chơi thì tính tới hiện tại. */
+    private String durationText() {
+        if (gameStartMs <= 0) return "—";
+        long end = gameEndMs > 0 ? gameEndMs : System.currentTimeMillis();
+        long ms = Math.max(0, end - gameStartMs - pausedAccumMs);
+        long sec = ms / 1000;
+        return String.format(java.util.Locale.US, "%d:%02d", sec / 60, sec % 60);
+    }
+
     private LinearLayout buildSummaryPlayerColumn(String label, List<LivePlayer> players, int accentColorRes) {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -1112,8 +1142,11 @@ public class ControlActivity extends Activity {
             LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             rowLp.topMargin = UiUtil.dp(this, i == 0 ? 0 : 8);
             row.setLayoutParams(rowLp);
-            row.addView(UiUtil.label(this, (i + 1) + ". " + p.name + " — " + p.correct + " điểm", 12.5f, R.color.text, true));
-            row.addView(UiUtil.label(this, p.answered + " câu · " + p.correct + " đúng · TB " + String.format(java.util.Locale.US, "%.1f", p.avgTime) + "s", 10.5f, R.color.text_faint, false));
+            // Số CÂU ĐÚNG, không gọi là "điểm": điểm đội = câu đúng x điểm/câu của game (có game >1 điểm/câu) nên tổng
+            // câu đúng của các bạn không phải lúc nào cũng bằng điểm đội.
+            row.addView(UiUtil.label(this, (i + 1) + ". " + p.name + " — " + p.correct + "/" + p.answered + " câu đúng", 12.5f, R.color.text, true));
+            row.addView(UiUtil.label(this, "TB " + String.format(java.util.Locale.US, "%.1f", p.avgTime) + "s/câu"
+                    + (p.correct > 0 ? " · đúng TB " + String.format(java.util.Locale.US, "%.1f", p.avgCorrectTime) + "s" : ""), 10.5f, R.color.text_faint, false));
             col.addView(row);
         }
         return col;
@@ -1144,7 +1177,7 @@ public class ControlActivity extends Activity {
         nameRow.setLayoutParams(nameRowLp);
         side.addView(nameRow);
 
-        TextView score = UiUtil.label(this, scoreText, 30f, R.color.text, true);
+        TextView score = UiUtil.label(this, scoreText, 36f, R.color.text, true);
         LinearLayout.LayoutParams scoreLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         scoreLp.topMargin = UiUtil.dp(this, 10);
         score.setLayoutParams(scoreLp);
@@ -1214,6 +1247,7 @@ public class ControlActivity extends Activity {
     private void onStartClicked() {
         if (selectedScene == null) return;
         sessionId = System.currentTimeMillis(); // mỗi lần Start = 1 ván mới trong lịch sử
+        gameStartMs = sessionId; gameEndMs = 0; pausedAtMs = 0; pausedAccumMs = 0;
 
         if (!unityStarted) {
             dismissLogoPresentation(); // nhường display phụ lại cho Unity
@@ -1254,6 +1288,8 @@ public class ControlActivity extends Activity {
 
     private void onPauseClicked() {
         paused = !paused;
+        if (paused) pausedAtMs = System.currentTimeMillis();
+        else if (pausedAtMs > 0) { pausedAccumMs += System.currentTimeMillis() - pausedAtMs; pausedAtMs = 0; }
         sendToUnity(paused ? "OnPauseRequested" : "OnResumeRequested", "");
         renderActionZone();
     }
@@ -1262,6 +1298,7 @@ public class ControlActivity extends Activity {
         if (paused) sendToUnity("OnResumeRequested", "");
         sendToUnity("OnStopRequested", "");
         backToMenu();
+        paused = false;
     }
 
     /** Dùng chung cho Stop (bấm tay), OnGameEnded (game tự hết giờ), và nút "Bắt Đầu" trên
@@ -1276,6 +1313,11 @@ public class ControlActivity extends Activity {
         // hết game tự nhiên không hề thấy nút Chơi lại).
         // Ghi kết quả ván vừa xong (Stop tay / hết giờ tự nhiên đều qua đây) — chỉ khi đang "playing", để
         // OnGameEnded gọi thêm lần nữa (vd bấm nút trên ScoreScene) không ghi trùng.
+        if ("playing".equals(scene) && gameStartMs > 0) {
+            long now = System.currentTimeMillis();
+            if (paused && pausedAtMs > 0) { pausedAccumMs += now - pausedAtMs; pausedAtMs = 0; }
+            gameEndMs = now;
+        }
         scene = "ended";
         // Các round cuối có thể còn nằm trong hàng đợi ghi — vẽ lại thêm 1 lần sau khi hàng đợi xong.
         scoreExec.execute(() -> runOnUiThread(() -> { if (!"playing".equals(scene)) renderReportZone(); }));
@@ -1554,6 +1596,8 @@ public class ControlActivity extends Activity {
         activity.liveRightScore = rightScoreText;
         activity.runOnUiThread(() -> {
             if ("playing".equals(activity.scene)) activity.renderLive();
+            else if ("ended".equals(activity.scene) && activity.panelSummary != null
+                    && activity.panelSummary.getVisibility() == View.VISIBLE) activity.renderSummary(); // số liệu về muộn sau Stop
         });
     }
 
@@ -1568,6 +1612,8 @@ public class ControlActivity extends Activity {
         activity.liveRightPlayers = parseLivePlayers(rightJson);
         activity.runOnUiThread(() -> {
             if ("playing".equals(activity.scene)) activity.renderLive();
+            else if ("ended".equals(activity.scene) && activity.panelSummary != null
+                    && activity.panelSummary.getVisibility() == View.VISIBLE) activity.renderSummary(); // số liệu về muộn sau Stop
         });
     }
 
