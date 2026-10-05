@@ -76,7 +76,7 @@ public class NumbersController : MonoBehaviour
 
     protected void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opt)
     {
-        if (tutorialPanel != null)
+        if (tutorialPanel != null && TutorialPanel.Enabled)
         {
             tutorialPanel.OnStartGame += StartGame;
             tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Numbers\nListen to the number and choose the correct planet!");

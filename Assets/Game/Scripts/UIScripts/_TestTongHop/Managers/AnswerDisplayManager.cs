@@ -53,6 +53,11 @@ public class AnswerDisplayManager : MonoBehaviour
     /// <summary>true khi không có zone active hoặc người chơi đã bước ra đủ EXIT_DELAY.</summary>
     public bool ZoneCleared => _zoneCleared;
 
+    static bool WaitForClearEnabled => GameSettings.Instance == null || GameSettings.Instance.WaitForClear;
+
+    /// <summary>Canvas root để controller dựng FloorZoneClearer từng bên (Independent Play).</summary>
+    public RectTransform CanvasRoot => _canvasRoot;
+
     void Awake()
     {
         // Phải gắn vào Canvas root để phủ đúng toàn màn hình
@@ -100,7 +105,8 @@ public class AnswerDisplayManager : MonoBehaviour
             onResult(correct, team, answers);
             (_active as IRevealable)?.RevealCorrectAnswer(); // highlight đáp án đúng xanh cả 2 bên
             ClearEarlyLabels();
-            if (_canvasRoot != null)
+            // Tôn trọng cài đặt "Chờ clear mới chuyển round" (tắt → không chặn, _zoneCleared giữ true)
+            if (_canvasRoot != null && WaitForClearEnabled)
             {
                 _zoneCleared = false;
                 _activeZone  = FloorZoneClearer.AwaitBothSides(_canvasRoot,

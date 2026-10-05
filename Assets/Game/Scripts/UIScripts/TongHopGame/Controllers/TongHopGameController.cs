@@ -163,7 +163,7 @@ public class TongHopGameController : MonoBehaviour
     protected void StateMachineEnter_Tutorial(Enum previousState, Dictionary<string, object> options)
     {
         Debug.Log("NDL: TongHop - StateMachineEnter_Tutorial");
-        if (tutorialPanel != null)
+        if (tutorialPanel != null && TutorialPanel.Enabled)
         {
             tutorialPanel.OnStartGame += OnTutorialStartGame;
             if (tutorialClip != null)

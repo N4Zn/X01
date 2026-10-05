@@ -76,7 +76,7 @@ public class ChuCaiController : MonoBehaviour
 
     protected void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opt)
     {
-        if (tutorialPanel != null)
+        if (tutorialPanel != null && TutorialPanel.Enabled)
         {
             tutorialPanel.OnStartGame += StartGame;
             tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Chá»¯ CÃ¡i\nNghe Ã¢m thanh phÃ¡t ra vÃ  chá»n Ä‘Ãºng hÃ nh tinh!");

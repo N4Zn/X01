@@ -150,6 +150,18 @@ public class GameSessionManager : Singleton<GameSessionManager>
             Players[0].Score = p1Score;
             Players[1].Score = p2Score;
         }
+
+        // Điểm cuối cho màn Tổng kết trên ControlActivity: game cũ (không qua MiniGameControllerBase/
+        // TestTongHop) không đẩy report liên tục nên trước đây Tổng kết luôn 0 – 0. Game mới sẽ đẩy
+        // đè lại ngay sau đó bằng số của chính nó (Solo: bên phải = 0).
+        var bridge = GameControlBridge.Instance;
+        if (bridge != null)
+        {
+            bridge.PushReport(0, GetDisplayName1(), p1Score, GetDisplayName2(), p2Score);
+            bridge.PushPlayerBreakdown(
+                PlayerRecognitionService.Instance?.GetPlayerStats(0),
+                PlayerRecognitionService.Instance?.GetPlayerStats(1));
+        }
     }
 
     public string GetPlayer1Name()

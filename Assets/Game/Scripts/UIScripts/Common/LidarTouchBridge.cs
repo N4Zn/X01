@@ -182,6 +182,26 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         gameObject.name = "LidarTouchBridge"; // Singleton<T> đặt "(singleton) ..." — UnitySendMessage cần đúng tên này
         LoadConfig();
         LoadCalib();
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedAutoTouch;
+        AutoTouchForScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+    }
+
+    // Scene KHÔNG phải game: touch Lidar giữ nguyên (mặc định OFF, bật bằng nút cứng/Calib tự quản).
+    // Mọi scene khác coi là game → tự bật Lidar ON khi load, kể cả game cũ không kế thừa
+    // MiniGameControllerBase (trước đây chỉ Kit + TestTongHop tự bật nên game cũ không nhận chạm).
+    private static readonly HashSet<string> NonGameScenes = new HashSet<string>
+    {
+        "StartScene", "MenuScene", "HomeScene", "CalibScene",
+        "CharacterSelectScene", "TeamSelectScene", "ScoreScene", "FRTestGame"
+    };
+
+    private void OnSceneLoadedAutoTouch(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        => AutoTouchForScene(scene.name);
+
+    private void AutoTouchForScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName) || NonGameScenes.Contains(sceneName)) return;
+        SetTouchEnabled(true);
     }
 
     private string ConfigFilePath => Path.Combine(Application.persistentDataPath, ConfigFileName);

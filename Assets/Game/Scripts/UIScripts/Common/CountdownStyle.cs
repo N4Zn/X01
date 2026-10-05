@@ -40,8 +40,21 @@ public static class CountdownStyle
         t.enableAutoSizing = false;
         t.overflowMode = TextOverflowModes.Overflow;
         t.enableWordWrapping = false;
-        t.outlineColor = OutlineColor;
-        t.outlineWidth = 0.2f;
+        // Viền chữ chỉ là trang trí: TMP_Text.outlineWidth/outlineColor tạo material instance từ fontSharedMaterial,
+        // NÉM ArgumentNullException ("Parameter name: source") nếu text không có material (font asset/material bị
+        // thiếu trong scene — vd countdown của TestTongHopGame/Counting). Exception đó từng giết luôn coroutine
+        // PlayerLoop → game không hiện câu hỏi nào. Nên: tự vá material từ font, và nếu vẫn thiếu thì BỎ QUA viền.
+        if (t.fontSharedMaterial == null && t.font != null) t.fontSharedMaterial = t.font.material;
+        if (t.fontSharedMaterial == null) return;
+        try
+        {
+            t.outlineColor = OutlineColor;
+            t.outlineWidth = 0.2f;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("[CountdownStyle] không đặt được viền chữ: " + e.Message);
+        }
     }
 
     /// <summary>Chuỗi countdown chuẩn: "Start in 3s" / "Next in 3s".</summary>

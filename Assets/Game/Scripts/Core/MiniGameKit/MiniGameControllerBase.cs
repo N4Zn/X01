@@ -160,6 +160,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     float _lastReportPushTime;
 
+    /// <summary>Đẩy report NGAY (bỏ throttle 1s) — Stop tay gọi trước khi Pause để màn Tổng kết có số cuối chính xác.</summary>
+    public void ForcePushReport()
+    {
+        _lastReportPushTime = -999f;
+        PushReportIfDue();
+    }
+
     /// <summary>Đẩy report (thời gian còn lại, tổng điểm) sang ControlActivity mỗi giây —
     /// không đẩy mỗi frame để tránh gọi JNI quá dày. Xem GameControlBridge.PushReport().</summary>
     void PushReportIfDue()
@@ -223,7 +230,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     protected virtual void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opts)
     {
-        if (tutorialPanel != null)
+        if (tutorialPanel != null && TutorialPanel.Enabled)
         {
             tutorialPanel.OnStartGame += OnTutorialDone;
             if (tutorialClip != null) tutorialPanel.Show(tutorialClip, tutorialText);
@@ -399,7 +406,8 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         // Ẩn HẲN icon đúng/sai (không chờ tự fade) trước khi vào countdown — tránh chồng hình
         // icon ↔ "Next in Ns", đúng thứ tự: hiện icon ~1s → ẩn hết → mới hiện countdown.
         if (UseDefaultFeedbackFx) HideDefaultFeedbackIcons();
-        if (UseDefaultTransitionCountdown) yield return TransitionCountdown();
+        // Game tắt countdown (vd GenericGame countdownMode=none) VẪN phải chờ clear nếu setting bật
+        if (UseDefaultTransitionCountdown || WaitForClearEnabled) yield return TransitionCountdown();
         Fsm.StateMachineChange(MiniGameState.ShowQuestion);
     }
 
@@ -416,21 +424,27 @@ public abstract class MiniGameControllerBase : MonoBehaviour
              "Independent mode (xem UseIndependentRoundCountdown/IndependentRoundCountdown riêng).")]
     [SerializeField] protected bool waitForZoneClearBeforeCountdown = false;
 
+    bool WaitForClearEnabled => waitForZoneClearBeforeCountdown ||
+                                (GameSettings.Instance != null && GameSettings.Instance.WaitForClear);
+
     IEnumerator TransitionCountdown()
     {
-        int seconds = Mathf.Max(0, Mathf.RoundToInt(
+        // Game tắt countdown: chỉ chờ clear, không đếm "Next in Ns"
+        int seconds = !UseDefaultTransitionCountdown ? 0 : Mathf.Max(0, Mathf.RoundToInt(
             GameSettings.Instance != null ? GameSettings.Instance.RoundEndDelay : 2f));
-        if (seconds <= 0) yield break;
+        // Cờ riêng từng scene HOẶC setting tổng "chờ clear" (Control panel, mặc định BẬT).
+        // Chờ clear áp dụng KỂ CẢ khi RoundEndDelay = 0 (0 chỉ bỏ phần đếm "Next in Ns").
+        bool waitClear = waitForZoneClearBeforeCountdown ||
+                         (GameSettings.Instance != null && GameSettings.Instance.WaitForClear);
+        bool canWait = waitClear && hud != null;
+        if (seconds <= 0 && !canWait) yield break;
 
         // Combined/Solo rounds are synchronized (both sides transition together), so recognize
         // both slots at once here — headless (no camera preview/bounding box).
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshHudNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshHudNames());
 
-        // Cờ riêng từng scene HOẶC setting tổng "chờ clear" (Control panel, mặc định BẬT).
-        bool waitClear = waitForZoneClearBeforeCountdown ||
-                         (GameSettings.Instance != null && GameSettings.Instance.WaitForClear);
-        if (waitClear && hud != null)
+        if (canWait)
         {
             bool cleared = false;
             FloorZoneClearer.AwaitBothSides(hud.transform.root as RectTransform, () => cleared = true);

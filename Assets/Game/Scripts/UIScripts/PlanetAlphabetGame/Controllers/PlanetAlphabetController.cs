@@ -91,7 +91,7 @@ public class PlanetAlphabetController : MonoBehaviour
 
     protected void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opt)
     {
-        if (tutorialPanel != null)
+        if (tutorialPanel != null && TutorialPanel.Enabled)
         {
             tutorialPanel.OnStartGame += OnTutorialStart;
             tutorialPanel.ShowPlaceholder("HÆ°á»›ng dáº«n: Planet Alphabet\nNháº¥n cÃ¡c hÃ nh tinh theo thá»© tá»± báº£ng chá»¯ cÃ¡i!");

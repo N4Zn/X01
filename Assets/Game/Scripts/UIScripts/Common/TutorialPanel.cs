@@ -17,6 +17,10 @@ public class TutorialPanel : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Text titleText;
 
+    /// <summary>Có hiện màn hướng dẫn không — theo GameSettings.ShowTutorial, mặc định TẮT. Controller:
+    /// `if (tutorialPanel != null &amp;&amp; TutorialPanel.Enabled) {hiện} else StartGame();`</summary>
+    public static bool Enabled => GameSettings.Instance != null && GameSettings.Instance.ShowTutorial;
+
     /// <summary>Fired when user presses Start Game button.</summary>
     public event Action OnStartGame = delegate { };
 

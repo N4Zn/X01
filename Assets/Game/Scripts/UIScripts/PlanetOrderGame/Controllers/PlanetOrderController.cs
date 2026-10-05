@@ -90,7 +90,7 @@ public class PlanetOrderController : MonoBehaviour
 
     protected void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opt)
     {
-        if (tutorialPanel != null)
+        if (tutorialPanel != null && TutorialPanel.Enabled)
         {
             tutorialPanel.OnStartGame += OnTutorialStart;
             tutorialPanel.ShowPlaceholder("Huong dan: PlanetOrder");

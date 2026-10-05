@@ -149,6 +149,13 @@ public class TestTongHopController : MonoBehaviour
 
     /// <summary>Đẩy report (thời gian còn lại, tổng điểm) sang ControlActivity mỗi giây —
     /// cùng nhịp/API với MiniGameControllerBase.PushReportIfDue().</summary>
+    /// <summary>Đẩy report NGAY (bỏ throttle 1s) — Stop tay gọi trước khi Pause để màn Tổng kết có số cuối chính xác.</summary>
+    public void ForcePushReport()
+    {
+        _lastReportPushTime = -999f;
+        PushReportIfDue();
+    }
+
     void PushReportIfDue()
     {
         if (Time.time - _lastReportPushTime < 1f) return;
@@ -823,6 +830,17 @@ public class TestTongHopController : MonoBehaviour
 
             // 9. Ẩn icon
             HidePlayerFeedbackIcon(team);
+
+            // 9b. Chờ người chơi bước ra khỏi vùng bên mình (cài đặt "Chờ clear mới chuyển round")
+            bool sideCleared = false;
+            var clearRoot = answerDisplayManager.CanvasRoot;
+            if (clearRoot != null)
+                FloorZoneClearer.AwaitSideIfEnabled(team, clearRoot, () => sideCleared = true);
+            else
+                sideCleared = true;
+            yield return new WaitUntil(() => sideCleared ||
+                GetCurrentState() == TestTongHopSceneState.GameOver);
+            if (GetCurrentState() == TestTongHopSceneState.GameOver) yield break;
 
             // 10. Đếm ngược + nhận diện lại (người chơi có thể đã đổi)
             PlayerRecognitionService.Instance.RecognizeSlot(playerIdx, _ => RefreshHudNames());

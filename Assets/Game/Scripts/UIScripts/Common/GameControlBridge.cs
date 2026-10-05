@@ -89,6 +89,9 @@ public class GameControlBridge : Singleton<GameControlBridge>
     /// riêng display máy chiếu.</summary>
     public void OnStopRequested(string unused)
     {
+        // Chốt số liệu cuối (report đang throttle 1s) để màn Tổng kết không lệch round cuối.
+        MiniGameControllerBase.Current?.ForcePushReport();
+        TestTongHopController.Current?.ForcePushReport();
         MiniGameControllerBase.Current?.Pause();
         TestTongHopController.Current?.Pause();
         LidarTouchBridge.Instance.SetTouchEnabled(false);
