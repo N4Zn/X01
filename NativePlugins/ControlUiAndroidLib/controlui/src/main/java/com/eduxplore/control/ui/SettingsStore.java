@@ -14,7 +14,7 @@ public final class SettingsStore {
     private static final String TAG = "SettingsStore";
     private static final String FILE_NAME = "game_settings.json";
 
-    public float musicVolume = 1.0f;
+    public float musicVolume = 0.5f; // mặc định ban đầu 50% (khi chưa có game_settings.json)
     public float sfxVolume = 1.0f;
     public int gameTime = 100;
     public float roundEndDelay = 2.0f;

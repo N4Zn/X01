@@ -709,7 +709,7 @@ public class ControlActivity extends Activity {
         }
     }
 
-    /** Điểm theo kiểu đang chọn ở ô chọn; -1 = chưa có điểm (nơi hiển thị in 0, KHÔNG đưa vào trung bình). */
+    /** Điểm theo kiểu đang chọn ở ô chọn; -1 = chưa có điểm (nơi hiển thị in "-", KHÔNG đưa vào trung bình). */
     private int scopeScore(Row r) {
         switch (rosterScope) {
             case 0: return totalScore(r);
@@ -741,14 +741,9 @@ public class ControlActivity extends Activity {
 
         List<Row> all = classRows();
         List<Row> played = new ArrayList<>();
-        List<String> notPlayedNames = new ArrayList<>();
-        for (Row r : all) { if (r.played()) played.add(r); else notPlayedNames.add(r.s.display); }
+        for (Row r : all) if (r.played()) played.add(r);
 
-        notPlayedStrip.setVisibility(notPlayedNames.isEmpty() ? View.GONE : View.VISIBLE);
-        if (!notPlayedNames.isEmpty()) {
-            notPlayedStrip.setText("Chưa chơi (" + notPlayedNames.size() + "): "
-                    + android.text.TextUtils.join(", ", notPlayedNames));
-        }
+        notPlayedStrip.setVisibility(View.GONE); // học sinh chưa chơi giờ vẫn nằm trong bảng (điểm "-")
 
         boolean showGameCol = "select".equals(scene) && selectedGameName != null;
         gamePreviewStrip.setVisibility(showGameCol ? View.VISIBLE : View.GONE);
@@ -759,13 +754,15 @@ public class ControlActivity extends Activity {
         rosterHeader.addView(headerCell("Điểm", "score", new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.6f)));
         if (showGameCol) rosterHeader.addView(headerCell("Lượt", null, new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT)));
 
-        List<Row> rows = new ArrayList<>(played);
+        // Hiện CẢ lớp (kể cả bạn chưa chơi gì). Sắp theo điểm thì bạn chưa có điểm (-1) luôn nằm cuối, bất kể chiều sort.
+        List<Row> rows = new ArrayList<>(all);
         final int dir = rosterSortDir;
         java.util.Collections.sort(rows, (a, b) -> {
-            int cmp;
-            if ("name".equals(rosterSortKey)) cmp = a.s.display.compareTo(b.s.display);
-            else cmp = Integer.compare(scopeScore(a), scopeScore(b));
-            return cmp * dir;
+            if ("name".equals(rosterSortKey)) return a.s.display.compareTo(b.s.display) * dir;
+            int sa = scopeScore(a), sb = scopeScore(b);
+            if ((sa < 0) != (sb < 0)) return sa < 0 ? 1 : -1;
+            int cmp = Integer.compare(sa, sb) * dir;
+            return cmp != 0 ? cmp : a.s.display.compareTo(b.s.display);
         });
 
         rosterBody.removeAllViews();
@@ -775,10 +772,6 @@ public class ControlActivity extends Activity {
         }
         if (all.isEmpty()) {
             rosterBody.addView(emptyNote("Lớp này chưa có học sinh. Thêm học sinh ở mục \"Quản lý lớp\"."));
-            return;
-        }
-        if (played.isEmpty()) {
-            rosterBody.addView(emptyNote("Chưa có học sinh nào trong lớp chơi game."));
             return;
         }
         for (Row s : rows) {
@@ -800,10 +793,10 @@ public class ControlActivity extends Activity {
             nameCell.addView(nm);
             row.addView(nameCell);
 
-            // Chưa có điểm ở phạm vi đang chọn → hiện 0 (nhưng không bị tính vào trung bình ở nơi khác).
+            // Chưa có điểm ở phạm vi đang chọn (-1) → thanh rỗng + "-" (chưa có điểm, không phải 0).
             int sc = scopeScore(s);
             boolean weakest = rosterScope == 1 && sc >= 0 && weakestCategory(s) == domain;
-            View scoreCell = UiUtil.makeBarCell(this, Math.max(0, sc), weakest);
+            View scoreCell = UiUtil.makeBarCell(this, sc, weakest);
             scoreCell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.6f));
             row.addView(scoreCell);
 
@@ -815,8 +808,9 @@ public class ControlActivity extends Activity {
                 row.addView(gameCell);
             }
 
-            row.setOnClickListener(v -> {
-                compStudentIndex = played.indexOf(s);
+            final int playedIdx = played.indexOf(s);
+            if (playedIdx >= 0) row.setOnClickListener(v -> { // chưa chơi gì → chưa có gì để xem ở tab Năng lực
+                compStudentIndex = playedIdx;
                 showReportView("competency");
                 renderCompetencyChips();
             });
@@ -1293,15 +1287,11 @@ public class ControlActivity extends Activity {
         settingsBody.removeAllViews();
         settingsBody.addView(UiUtil.label(this, "CÀI ĐẶT CHUNG", 16f, R.color.text, true));
         
-        // 1. Thời gian game
-        settingsBody.addView(buildSeekBarSetting("Thời gian game (giây)", 10, 600, settingsStore.gameTime, val -> {
-            settingsStore.gameTime = val;
-            settingsStore.save();
-            syncSettingsToUnity();
-        }));
+        // 1. Thời gian game: thanh trượt 10–600 + ô nhập số ở cuối (nhập ngoài dải vẫn dùng đúng số nhập, ≥ 1)
+        settingsBody.addView(buildGameTimeSetting());
 
         // 2. Chờ chuyển round
-        settingsBody.addView(buildSeekBarSetting("Chờ chuyển round (giây)", 1, 4, (int)settingsStore.roundEndDelay, val -> {
+        settingsBody.addView(buildSeekBarSetting("Chờ chuyển round (giây)", 0, 6, Math.max(0, Math.min(6, Math.round(settingsStore.roundEndDelay))), val -> {
             settingsStore.roundEndDelay = (float)val;
             settingsStore.save();
             syncSettingsToUnity();
@@ -1363,34 +1353,99 @@ public class ControlActivity extends Activity {
         return row;
     }
 
-    private View buildFlowSpeedSetting() {
+    /** Gắn "chốt giá trị" cho ô nhập: nhấn Xong trên bàn phím hoặc rời ô thì mới áp (không áp từng phím gõ). */
+    private void commitOnDoneOrBlur(final EditText et, final Runnable commit) {
+        et.setSingleLine(true);
+        et.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+        et.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) { commit.run(); v.clearFocus(); }
+            return false;
+        });
+        et.setOnFocusChangeListener((v, hasFocus) -> { if (!hasFocus) commit.run(); });
+    }
+
+    /** Thời gian game: thanh trượt 10–600s + ô nhập số (≥ 1s, không giới hạn trên) — số nhập được dùng nguyên. */
+    private View buildGameTimeSetting() {
+        final int sbMin = 10, sbMax = 600;
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
-
-        row.addView(UiUtil.label(this, "Tốc độ flow (0.1x - 5.0x)", 13f, R.color.text_dim, false));
+        row.addView(UiUtil.label(this, "Thời gian game (giây)", 13f, R.color.text_dim, false));
 
         LinearLayout controls = new LinearLayout(this);
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(Gravity.CENTER_VERTICAL);
 
-        SeekBar sb = new SeekBar(this);
-        sb.setMax(49); // 0 to 49 -> 0.1 to 5.0
-        sb.setProgress(Math.round((settingsStore.flowSpeed - 0.1f) * 10f));
+        final SeekBar sb = new SeekBar(this);
+        sb.setMax(sbMax - sbMin);
+        sb.setProgress(Math.max(0, Math.min(sbMax - sbMin, settingsStore.gameTime - sbMin)));
         sb.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        EditText et = new EditText(this);
-        et.setText(String.format(java.util.Locale.US, "%.1f", settingsStore.flowSpeed));
+        final EditText et = new EditText(this);
+        et.setText(String.valueOf(settingsStore.gameTime));
+        et.setTextSize(13f);
+        et.setInputType(InputType.TYPE_CLASS_NUMBER);
+        et.setGravity(Gravity.CENTER);
+        et.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 72), ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) return;
+                int val = sbMin + progress;
+                et.setText(String.valueOf(val));
+                settingsStore.gameTime = val;
+                settingsStore.save();
+                syncSettingsToUnity();
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        commitOnDoneOrBlur(et, () -> {
+            int val;
+            try { val = Integer.parseInt(et.getText().toString().trim()); } catch (Exception e) { val = -1; }
+            if (val < 1) { et.setText(String.valueOf(settingsStore.gameTime)); return; } // rỗng/sai → trả lại giá trị đang dùng
+            sb.setProgress(Math.max(0, Math.min(sbMax - sbMin, val - sbMin)));
+            if (val != settingsStore.gameTime) {
+                settingsStore.gameTime = val;
+                settingsStore.save();
+                syncSettingsToUnity();
+            }
+        });
+        controls.addView(sb);
+        controls.addView(et);
+        row.addView(controls);
+        return row;
+    }
+
+    /** Tốc độ flow: thanh trượt 0.1–5.0 + ô nhập số; nhập ngoài dải vẫn dùng đúng số nhập (> 0). */
+    private View buildFlowSpeedSetting() {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
+
+        row.addView(UiUtil.label(this, "Tốc độ flow (thanh trượt 0.1x - 5.0x, ô số nhập tự do)", 13f, R.color.text_dim, false));
+
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setGravity(Gravity.CENTER_VERTICAL);
+
+        final SeekBar sb = new SeekBar(this);
+        sb.setMax(49); // 0 to 49 -> 0.1 to 5.0
+        sb.setProgress(Math.max(0, Math.min(49, Math.round((settingsStore.flowSpeed - 0.1f) * 10f))));
+        sb.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        final EditText et = new EditText(this);
+        et.setText(fmtFlow(settingsStore.flowSpeed));
         et.setTextSize(13f);
         et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         et.setGravity(Gravity.CENTER);
-        et.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 60), ViewGroup.LayoutParams.WRAP_CONTENT));
-        
+        et.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 72), ViewGroup.LayoutParams.WRAP_CONTENT));
+
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (!fromUser) return;
                 float val = 0.1f + progress / 10f;
-                et.setText(String.format(java.util.Locale.US, "%.1f", val));
+                et.setText(fmtFlow(val));
                 settingsStore.flowSpeed = val;
                 settingsStore.save();
                 syncSettingsToUnity();
@@ -1398,23 +1453,15 @@ public class ControlActivity extends Activity {
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-
-        et.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) {
-                try {
-                    float val = Float.parseFloat(s.toString());
-                    if (val < 0.1f) val = 0.1f;
-                    if (val > 5.0f) val = 5.0f;
-                    int progress = Math.round((val - 0.1f) * 10f);
-                    if (sb.getProgress() != progress) {
-                        sb.setProgress(progress);
-                        settingsStore.flowSpeed = val;
-                        settingsStore.save();
-                        syncSettingsToUnity();
-                    }
-                } catch (Exception ignored) {}
+        commitOnDoneOrBlur(et, () -> {
+            float val;
+            try { val = Float.parseFloat(et.getText().toString().trim().replace(',', '.')); } catch (Exception e) { val = -1f; }
+            if (!(val > 0f)) { et.setText(fmtFlow(settingsStore.flowSpeed)); return; }
+            sb.setProgress(Math.max(0, Math.min(49, Math.round((val - 0.1f) * 10f))));
+            if (Math.abs(val - settingsStore.flowSpeed) > 1e-6f) {
+                settingsStore.flowSpeed = val;
+                settingsStore.save();
+                syncSettingsToUnity();
             }
         });
 
@@ -1422,6 +1469,12 @@ public class ControlActivity extends Activity {
         controls.addView(et);
         row.addView(controls);
         return row;
+    }
+
+    private static String fmtFlow(float v) {
+        String t = String.format(java.util.Locale.US, "%.2f", v);
+        if (t.contains(".")) t = t.replaceAll("0+$", "").replaceAll("[.]$", "");
+        return t.isEmpty() ? "0" : (t.indexOf('.') < 0 ? t + ".0" : t);
     }
 
     private View buildVolumeSetting(String label, float current, final VolumeCallback cb) {

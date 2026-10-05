@@ -21,7 +21,7 @@ import java.util.Map;
  *
  *  Điểm 1 học phần của 1 học sinh = số round đúng / số round đã chơi, chỉ lấy {@link #WINDOW} round gần nhất
  *  của học sinh đó trong học phần đó (xem {@link #phanScores}). Học phần/môn chưa chơi → không có điểm (-1),
- *  nơi hiển thị tự quyết định in "0" nhưng KHÔNG đưa vào trung bình.
+ *  nơi hiển thị in "-" (chưa có điểm, không phải 0) và KHÔNG đưa vào trung bình.
  *
  *  Lưu ở /sdcard/EduXplore/class_rounds.jsonl (mỗi dòng 1 JSON, chỉ ghi nối cuối → rẻ dù có hàng chục nghìn
  *  round); không ghi được thì rơi về thư mục riêng của app. Chỉ lớp này đụng file đó.

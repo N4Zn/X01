@@ -63,7 +63,8 @@ public final class UiUtil {
         return tv;
     }
 
-    /** 1 hàng bar-cell (track + fill tỉ lệ value% + số) — dùng trong bảng năng lực Lớp học. */
+    /** 1 hàng bar-cell (track + fill tỉ lệ value% + số) — dùng trong bảng năng lực Lớp học.
+     *  value < 0 = chưa có điểm → thanh rỗng + chữ "-" (KHÔNG phải điểm 0). */
     public static LinearLayout makeBarCell(Context ctx, int value, boolean isMin) {
         LinearLayout row = new LinearLayout(ctx);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -78,7 +79,7 @@ public final class UiUtil {
         View fill = new View(ctx);
         fill.setBackground(roundedRect(isMin ? ContextColor(ctx, com.eduxplore.control.R.color.bad)
                 : ContextColor(ctx, com.eduxplore.control.R.color.accent), 3, 0, 0, ctx));
-        int v = Math.max(0, Math.min(100, value));
+        int v = Math.max(0, Math.min(100, value)); // value < 0 → 0 → thanh rỗng
         LinearLayout.LayoutParams fillLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, v);
         fill.setLayoutParams(fillLp);
         track.addView(fill);
@@ -90,7 +91,7 @@ public final class UiUtil {
         }
 
         TextView val = new TextView(ctx);
-        val.setText(String.valueOf(value));
+        val.setText(value < 0 ? "-" : String.valueOf(value));
         val.setTextSize(11f);
         val.setTextColor(ContextColor(ctx, com.eduxplore.control.R.color.text_dim));
         LinearLayout.LayoutParams valLp = new LinearLayout.LayoutParams(dp(ctx, 22), LinearLayout.LayoutParams.WRAP_CONTENT);
