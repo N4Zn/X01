@@ -104,7 +104,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/CalibScene/CalibScene.unity
     guid: bd1651721c4b028ca34e6630aadd9301
-  - enabled: 1
+  - enabled: 0
     path: Assets/Game/Scenes/HaiQuaGame/HaiQuaGame.unity
     guid: 8d4f68f7e57a99449bdc46d42835f9f6
   - enabled: 1
@@ -116,7 +116,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/_GenericGame/Games/CuaHangKemTruocSau.unity
     guid: 46d78e11bdeade44a80555942b776cd8
-  - enabled: 1
+  - enabled: 0
     path: Assets/Game/Scenes/_GenericGame/Games/ThuNghiem12.unity
     guid: e1f8bfc6f8d3b8d4480983186aa374c9
   - enabled: 1
