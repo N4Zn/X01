@@ -431,6 +431,13 @@ public class TestTongHopController : MonoBehaviour
         MusicManager.Instance?.PlayCorrectSfx();
     }
 
+    /// <summary>Số round ghi log: Independent = số câu riêng của bên đó (+1), chế độ chung = số round
+    /// chung của cả ván. Trước đây chế độ chung cũng dùng _xxxRoundsCompleted (chỉ tăng ở Independent)
+    /// nên round luôn = 1.</summary>
+    int LogRoundNumber(Team team) => _isIndependentPlay
+        ? (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1
+        : gameModel.RoundsPlayed;
+
     // Callback: ngay khi 1 player hết lượt và sai — hiện ✗, GIỮ nguyên câu hỏi/đáp án để player kia xem
     void OnPlayerFailed(Team team)
     {
@@ -440,9 +447,8 @@ public class TestTongHopController : MonoBehaviour
         if (_currentQuestion != null && _loggedThisRound.Add(team))
         {
             int failSlot = team == Team.Left ? 0 : 1;
-            int failRound = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
-            PlayerRecognitionService.Instance.LogRound(failSlot, failRound, DescribeQuestion(_currentQuestion),
-                "(trả lời sai)", false, Time.time - _questionStartTime);
+            PlayerRecognitionService.Instance.LogRound(failSlot, LogRoundNumber(team), DescribeQuestion(_currentQuestion),
+                "(trả lời sai)", false, Time.time - _questionStartTime, "", _currentQuestion.id);
         }
         MusicManager.Instance?.PlayWrongSfx();
         ShowWrongIcon(team);
@@ -466,10 +472,10 @@ public class TestTongHopController : MonoBehaviour
         // chính này dù đã nhận diện đúng tên. Log đúng slot theo team (0=trái, 1=phải) — khớp
         // GetPlayerStats() ở ScoreSceneController.
         int slot = team == Team.Left ? 0 : 1;
-        int roundNum = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
         if (_loggedThisRound.Add(team))
-            PlayerRecognitionService.Instance.LogRound(slot, roundNum,
-                DescribeQuestion(_currentQuestion), DescribeGivenAnswer(_currentQuestion, playerAnswer), isCorrect, responseTime);
+            PlayerRecognitionService.Instance.LogRound(slot, LogRoundNumber(team),
+                DescribeQuestion(_currentQuestion), DescribeGivenAnswer(_currentQuestion, playerAnswer), isCorrect, responseTime,
+                "", _currentQuestion?.id ?? "");
 
         _lastCorrect = isCorrect;
         _lastTeam    = team;
@@ -825,7 +831,7 @@ public class TestTongHopController : MonoBehaviour
             // LogRound() thêm ở OnAnswerResult() không bao giờ chạy tới đây — xác nhận qua test
             // thật trên K02 (điểm 3-6 lên đúng nhưng panel live báo "chưa nhận diện được ai").
             PlayerRecognitionService.Instance.LogRound(playerIdx, roundNum,
-                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime);
+                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime, "", q.id);
 
             if (team == Team.Left) _leftRoundsCompleted++; else _rightRoundsCompleted++;
 

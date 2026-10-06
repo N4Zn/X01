@@ -364,17 +364,17 @@ class AttendanceStore(private val context: Context) {
 
     // ──────────────────────────  Lớp (class) management  ─────────────────────────
 
-    fun classNameOf(name: String): String? = classNames[name]
+    @Synchronized fun classNameOf(name: String): String? = classNames[name]
 
     /** Known class names in the order they were first seen/created - includes classes with
      * zero students (created via addClass but nobody enrolled into them yet). */
-    fun allClassNames(): List<String> = knownClasses.toList()
+    @Synchronized fun allClassNames(): List<String> = knownClasses.toList()
 
-    fun addClass(name: String) {
+    @Synchronized fun addClass(name: String) {
         if (knownClasses.add(name)) persistClasses()
     }
 
-    fun renameClass(oldName: String, newName: String) {
+    @Synchronized fun renameClass(oldName: String, newName: String) {
         if (oldName == newName || newName.isBlank()) return
         if (knownClasses.remove(oldName)) knownClasses.add(newName)
         var changed = false
@@ -385,7 +385,7 @@ class AttendanceStore(private val context: Context) {
         if (changed) persist()
     }
 
-    fun setClassName(name: String, className: String) {
+    @Synchronized fun setClassName(name: String, className: String) {
         classNames[name] = className
         knownClasses.add(className)
         persist()
@@ -393,16 +393,16 @@ class AttendanceStore(private val context: Context) {
     }
 
     /** Real enrolled students belonging to one class, name-sorted. */
-    fun studentsInClass(className: String): List<String> =
+    @Synchronized fun studentsInClass(className: String): List<String> =
         realEnrolledNames().filter { classNames[it] == className }
 
     // ──────────────────────────  Tên thường gọi (alias)  ──────────────────────────
 
     /** Nickname shown in the roster UI. Falls back to the real (enrollment) name if no alias
      * was ever set - so callers can always just display aliasOf(name) unconditionally. */
-    fun aliasOf(name: String): String = aliasNames[name]?.takeIf { it.isNotBlank() } ?: name
+    @Synchronized fun aliasOf(name: String): String = aliasNames[name]?.takeIf { it.isNotBlank() } ?: name
 
-    fun setAlias(name: String, alias: String) {
+    @Synchronized fun setAlias(name: String, alias: String) {
         val trimmed = alias.trim()
         if (trimmed.isEmpty() || trimmed == name) aliasNames.remove(name) else aliasNames[name] = trimmed
         persist()
@@ -410,14 +410,14 @@ class AttendanceStore(private val context: Context) {
 
     /** Default nickname suggestion when a teacher enters the real name: the last 2 syllables
      * (e.g. "Nguyễn Khánh Vy" -> "Khánh Vy"), or the whole name if it's 1-2 syllables already. */
-    fun defaultAliasFor(realName: String): String {
+    @Synchronized fun defaultAliasFor(realName: String): String {
         val parts = realName.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
         return if (parts.size <= 2) parts.joinToString(" ") else parts.takeLast(2).joinToString(" ")
     }
 
     /** Renames an enrolled person across every map keyed by name. Returns false (no-op) if
      * newName is blank, unchanged, or already taken by someone else. */
-    fun renameEnrollment(oldName: String, newName: String): Boolean {
+    @Synchronized fun renameEnrollment(oldName: String, newName: String): Boolean {
         val trimmed = newName.trim()
         if (trimmed.isEmpty() || trimmed == oldName) return false
         if (trimmed in enrolled) return false
@@ -453,7 +453,7 @@ class AttendanceStore(private val context: Context) {
      * already exist - lets a teacher pre-register a class roster by name before anyone has
      * actually been photographed yet (shows up as "Cần ảnh" like any other unphotographed
      * student), and is also how seeded/demo rosters get created. No-op if already enrolled. */
-    fun ensurePlaceholder(name: String) {
+    @Synchronized fun ensurePlaceholder(name: String) {
         if (name in enrolled) return
         enrolled[name] = mutableListOf()
         persist()
@@ -568,7 +568,7 @@ class AttendanceStore(private val context: Context) {
 
     /** Adds one embedding to a person's cluster - used both for fresh/supplementary enrollment
      * and for samples confirmed via the ambiguous-match dialog. */
-    fun addSample(name: String, embedding: FloatArray, faceCrop: Mat?): Boolean {
+    @Synchronized fun addSample(name: String, embedding: FloatArray, faceCrop: Mat?): Boolean {
         val samples = enrolled.getOrPut(name) { mutableListOf() }
         // Đã đủ trần (hiện 3 = chỉ các mẫu lúc lấy mẫu) thì TỪ CHỐI, không tự thay/xoá mẫu cũ:
         // muốn đổi ảnh thì xoá bớt ở panel học sinh trước. Không có chỗ nào tự thêm mẫu khi nhận diện.
@@ -583,7 +583,7 @@ class AttendanceStore(private val context: Context) {
     /** Xoá 1 mẫu (embedding + file ảnh) rồi kiểm tra lại enrolled.json trên đĩa. Học sinh KHÔNG bị
      * xoá dù hết mẫu — chỉ chuyển sang "cần ảnh"; xoá học sinh phải dùng deleteEnrollment().
      * Trả về true nếu dữ liệu trên đĩa đã khớp (embedding và ảnh đã mất cùng nhau). */
-    fun deleteSample(name: String, index: Int): Boolean {
+    @Synchronized fun deleteSample(name: String, index: Int): Boolean {
         val samples = enrolled[name] ?: return false
         if (index !in samples.indices) return false
         val removed = samples.removeAt(index)
@@ -596,22 +596,22 @@ class AttendanceStore(private val context: Context) {
         }
     }
 
-    fun samplesOf(name: String): List<Sample> = enrolled[name] ?: emptyList()
+    @Synchronized fun samplesOf(name: String): List<Sample> = enrolled[name]?.toList() ?: emptyList()
 
     /** "nam" or "nu" - only meaningful the first time a name is enrolled; ignored on
      * supplementary enrollment of an existing name (gender doesn't change). */
-    fun setGender(name: String, gender: String) {
+    @Synchronized fun setGender(name: String, gender: String) {
         if (name !in genders) {
             genders[name] = gender
             persist()
         }
     }
 
-    fun genderOf(name: String): String = genders[name] ?: "nam"
+    @Synchronized fun genderOf(name: String): String = genders[name] ?: "nam"
 
     /** Sửa lại giới tính đã có - khác setGender() (chỉ set được LẦN ĐẦU, cố ý không cho ghi đè
      * lúc enroll bổ sung). Dùng cho panel sửa thông tin học sinh trong "Quản lý lớp". */
-    fun updateGender(name: String, gender: String) {
+    @Synchronized fun updateGender(name: String, gender: String) {
         genders[name] = gender
         persist()
     }
@@ -619,9 +619,9 @@ class AttendanceStore(private val context: Context) {
     // ──────────────────────────  Ngày sinh / tuổi theo tháng  ──────────────────────────
 
     /** ISO "yyyy-MM-dd", null nếu giáo viên chưa nhập. */
-    fun birthdateOf(name: String): String? = birthdates[name]
+    @Synchronized fun birthdateOf(name: String): String? = birthdates[name]
 
-    fun setBirthdate(name: String, isoDate: String) {
+    @Synchronized fun setBirthdate(name: String, isoDate: String) {
         birthdates[name] = isoDate
         persist()
     }
@@ -629,7 +629,7 @@ class AttendanceStore(private val context: Context) {
     /** Tuổi theo THÁNG tại thời điểm gọi hàm - null nếu chưa có ngày sinh. Mầm non 3 tuổi 1
      * tháng và 3 tuổi 11 tháng phát triển khác nhau nhiều, nên chuẩn hoá năng lực cần độ phân
      * giải theo tháng, không phải theo năm (xem CLAUDE.md, phần "Năng lực theo môn" Giai đoạn 0). */
-    fun ageInMonthsOf(name: String): Int? {
+    @Synchronized fun ageInMonthsOf(name: String): Int? {
         val iso = birthdates[name] ?: return null
         return try {
             val parts = iso.split("-")
@@ -647,11 +647,11 @@ class AttendanceStore(private val context: Context) {
         }
     }
 
-    fun representativePhoto(name: String): String? = enrolled[name]?.firstOrNull { it.photo != null }?.photo
+    @Synchronized fun representativePhoto(name: String): String? = enrolled[name]?.firstOrNull { it.photo != null }?.photo
 
     /** Xoá hẳn 1 học sinh: embedding, toàn bộ ảnh (cả thư mục ảnh của bạn đó), lớp, alias, ngày sinh.
      * Trả về true nếu enrolled.json trên đĩa đã không còn bạn này. */
-    fun deleteEnrollment(name: String): Boolean {
+    @Synchronized fun deleteEnrollment(name: String): Boolean {
         val samples = enrolled.remove(name) ?: emptyList()
         for (s in samples) deleteSamplePhoto(s.photo)
         photoDirFor(name).takeIf { it.isDirectory && it.list().isNullOrEmpty() }?.delete()
@@ -666,13 +666,13 @@ class AttendanceStore(private val context: Context) {
         return verifyOnDisk(name, expectGone = true)
     }
 
-    fun enrolledCount() = enrolled.size
+    @Synchronized fun enrolledCount() = enrolled.size
 
     /** Real (non test-gallery) enrolled names, for a management/delete UI. */
-    fun realEnrolledNames(): List<String> = enrolled.keys.filter { it !in testGalleryNames }.sorted()
+    @Synchronized fun realEnrolledNames(): List<String> = enrolled.keys.filter { it !in testGalleryNames }.sorted()
 
     /** The attendance CSV file, for sharing/export. Null if nothing has been logged yet. */
-    fun logFileIfExists(): File? = if (logFile.exists()) logFile else null
+    @Synchronized fun logFileIfExists(): File? = if (logFile.exists()) logFile else null
 
     /**
      * Test-only helper: bulk-loads a JSON array of {"name": str, "embedding": [floats]}
@@ -680,7 +680,7 @@ class AttendanceStore(private val context: Context) {
      * LFW photos) to stress-test matching/margin behavior at a large gallery size without
      * needing hundreds of real people to physically enroll. Not persisted (see testGalleryNames).
      */
-    fun importTestGallery(json: String): Int {
+    @Synchronized fun importTestGallery(json: String): Int {
         val arr = org.json.JSONArray(json)
         var count = 0
         for (i in 0 until arr.length()) {
@@ -702,7 +702,7 @@ class AttendanceStore(private val context: Context) {
      * (false-positive risk scales with gallery size) and, when the two are too close to call
      * (e.g. identical twins), offer the runner-up as the other candidate to confirm between.
      */
-    fun bestMatch(embedding: FloatArray, engine: FaceEngine): MatchResult {
+    @Synchronized fun bestMatch(embedding: FloatArray, engine: FaceEngine): MatchResult {
         if (enrolled.isEmpty()) return MatchResult(null, -1f, null, -1f)
         var bestName: String? = null
         var bestSim = -1f
@@ -727,12 +727,12 @@ class AttendanceStore(private val context: Context) {
         return MatchResult(bestName, bestSim, runnerName, runnerSim)
     }
 
-    fun canLog(name: String, cooldownMs: Long): Boolean {
+    @Synchronized fun canLog(name: String, cooldownMs: Long): Boolean {
         val last = lastLogged[name] ?: 0L
         return System.currentTimeMillis() - last > cooldownMs
     }
 
-    fun logAttendance(name: String, faceCrop: Mat?, confidence: Float) {
+    @Synchronized fun logAttendance(name: String, faceCrop: Mat?, confidence: Float) {
         val now = System.currentTimeMillis()
         lastLogged[name] = now
         val ts = timeFmt.format(Date(now))
@@ -762,6 +762,8 @@ class AttendanceStore(private val context: Context) {
     fun loadPhotoBitmap(path: String?, sizePx: Int): Bitmap? {
         if (path == null || !File(path).exists()) return null
         val bmp = BitmapFactory.decodeFile(path) ?: return null
-        return Bitmap.createScaledBitmap(bmp, sizePx, sizePx, true)
+        val scaled = Bitmap.createScaledBitmap(bmp, sizePx, sizePx, true)
+        if (scaled !== bmp) bmp.recycle() // ảnh gốc to, không trả sớm thì chiếm RAM tới lần GC sau
+        return scaled
     }
 }

@@ -635,6 +635,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             {"team", team.ToString()},
             {"playerName", playerName},
             {"round", round},
+            {"questionId", q != null ? q.id : ""},
             {"question", questionDesc},
             {"answer", answerDesc},
             {"correct", correct},
@@ -681,11 +682,10 @@ public abstract class MiniGameControllerBase : MonoBehaviour
                              // vô hạn (totalRounds<=0, trường hợp HaiQua/DemQua).
         while (_independentRunning)
         {
-            if (totalRounds > 0)
-            {
-                int idx = team == Team.Left ? ++_leftRoundIndex : ++_rightRoundIndex;
-                if (idx > totalRounds) break;
-            }
+            // Luôn đếm round từng bên (kể cả totalRounds<=0) — LogRoundResult đọc 2 field này,
+            // trước đây chỉ tăng khi totalRounds>0 nên chơi vô hạn bị ghi round=0.
+            int idx = team == Team.Left ? ++_leftRoundIndex : ++_rightRoundIndex;
+            if (totalRounds > 0 && idx > totalRounds) break;
 
             roundCount++;
             if (roundCount > 1)

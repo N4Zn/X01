@@ -1,0 +1,109 @@
+ẨN / CHẶN THANH THÔNG BÁO (NOTIFICATION SHADE) TRÊN K02
+=========================================================
+Đã làm và kiểm chứng trên K02 #1 (serial PNH6ZHMNZDEAYDLB) ngày 2026-10-06. Android 10, build userdebug.
+
+Cách hoạt động
+- Dùng lệnh hệ thống:  cmd statusbar disable-for-setup true   (chặn vuốt kéo thanh thông báo, không đụng SystemUI)
+  Chỉ root/shell gọi được; app không tự gọi được (su bị từ chối với app).
+- Lệnh KHÔNG giữ qua reboot -> phải có script chạy bằng root lúc máy khởi động.
+- Overlay TYPE_APPLICATION_OVERLAY không chặn được trên Android 10 (status bar nằm trên overlay) - đừng thử lại.
+
+--------------------------------------------------------------------
+A. CHẶN NGAY (không cần reboot, mất khi reboot)
+--------------------------------------------------------------------
+  adb shell cmd statusbar disable-for-setup true      # chặn
+  adb shell cmd statusbar disable-for-setup false     # mở lại
+  adb shell dumpsys statusbar | grep -i disable       # kiểm tra: mDisabled1=0x3a50000 là đang chặn
+
+--------------------------------------------------------------------
+B. CHẶN VĨNH VIỄN (tự chạy mỗi lần boot)
+--------------------------------------------------------------------
+Máy K02 #1 đã có sẵn hook trong /system/etc/init/lidar_config.rc:
+    on property:sys.boot_completed=1
+        exec u:r:su:s0 -- /data/local/tmp/your_script.sh
+=> chỉ cần đặt script đúng tên /data/local/tmp/your_script.sh (không sửa /system).
+Máy không có hook này (ví dụ K02 #2) dùng /data/local/tmp/mirror_hdmi.sh, xem mục D.
+
+Script nằm trong repo: NativePlugins/K02DeviceConfig/k02_boot_hook.sh
+(Git Bash trên Windows phải đặt MSYS_NO_PATHCONV=1 khi dùng đường dẫn /data/...)
+
+  adb root
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/k02_boot_hook.sh /data/local/tmp/your_script.sh
+  adb shell chmod 755 /data/local/tmp/your_script.sh
+  adb shell sh -n /data/local/tmp/your_script.sh && echo syntax-ok
+  adb reboot
+
+Nội dung script (tóm tắt): chạy nền, chờ 8s sau boot_completed, gọi
+"cmd statusbar disable-for-setup true" (thử lại tối đa 20 lần x 2s), áp lại 1 lần sau 15s.
+Mặc định chặn; nếu app Launcher ghi cờ shade_enabled=1 thì để mở (xem mục C).
+Vì init chạy `exec` đồng bộ nên việc chờ phải nằm trong tiến trình nền, script thoát ngay.
+
+Kiểm tra sau reboot (chờ khoảng 40 giây):
+  adb root
+  adb shell cat /data/local/tmp/boot_hook_log.txt      # phải có: shade: block / try 0 ok / done
+  adb shell dumpsys statusbar | grep -i disable        # mDisabled1=0x3a50000
+
+--------------------------------------------------------------------
+C. CHO PHÉP MỞ THANH THÔNG BÁO (khi cần)
+--------------------------------------------------------------------
+- Tạm thời, không reboot:  adb shell cmd statusbar disable-for-setup false
+- Cố định qua reboot: trong app Launcher (Quản lý ứng dụng) tick "Bật thanh thông báo"
+  -> app ghi cờ  /data/media/0/Android/data/com.launcher.eduxplore[.debug]/files/shade_enabled = 1
+  -> sau reboot script thấy cờ nên không chặn. Tick/bỏ tick xong phải reboot mới có hiệu lực.
+
+--------------------------------------------------------------------
+D. MÁY KHÁC (K02 #2 và máy dùng service OEM mirror_hdmi)
+--------------------------------------------------------------------
+Hook là /data/local/tmp/mirror_hdmi.sh (service OEM mirror_hdmi, chạy 1 lần lúc boot_completed+8s).
+Bản đã gồm chặn thanh thông báo + cấp quyền USB: NativePlugins/K02DeviceConfig/mirror_hdmi.sh.usbgrant
+  adb root
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/usbgrant/UsbGrant.dex /data/local/tmp/UsbGrant.dex
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/mirror_hdmi.sh.usbgrant /data/local/tmp/mirror_hdmi.sh
+  adb shell chmod 755 /data/local/tmp/mirror_hdmi.sh
+  adb reboot
+Chi tiết: docs/k02-device.md (mục "Chặn thanh thông báo (shade) ở Launcher").
+
+--------------------------------------------------------------------
+E. GỠ BỎ
+--------------------------------------------------------------------
+  adb root
+  adb shell rm /data/local/tmp/your_script.sh
+  adb shell cmd statusbar disable-for-setup false
+
+--------------------------------------------------------------------
+F. LƯU Ý
+--------------------------------------------------------------------
+- Mất khi flash lại ROM hoặc factory reset (file nằm trong /data) -> làm lại mục B.
+- your_script.sh là tên đặt sẵn trong lidar_config.rc của máy này. Nếu sau này dùng hook đó cho việc khác,
+  gộp lệnh vào cùng 1 file, đừng ghi đè mất phần statusbar.
+- Cài APK khi máy báo INSTALL_FAILED_INSUFFICIENT_STORAGE (APK EduGame ~666MB, /data còn ít):
+    adb shell pm trim-caches 4G      # xoá cache app (không xoá dữ liệu), rồi cài lại
+    adb install -r EduGame_2.0_xxx.apk
+
+====================================================================
+BỔ SUNG: TỰ CẤP QUYỀN USB (lidar + camera) CHO APP — cùng script boot
+====================================================================
+Android 10 không lưu quyền USB qua reboot, app không tự gọi su được -> root phải cấp từ ngoài.
+k02_boot_hook.sh (đặt thành /data/local/tmp/your_script.sh) làm luôn việc này:
+- Dùng /data/local/tmp/UsbGrant.dex (nguồn: NativePlugins/K02DeviceConfig/usbgrant/UsbGrant.java) gọi
+  IUsbManager.grantDevicePermission cho uid của com.EduXplore.X01a, cấp mọi thiết bị USB đang cắm
+  (lidar CP2102 4292:60000, camera 1410:2848, ...). Độc lập APK nên không cần build lại app.
+- Chạy nền lặp 5 giây/lần: cấp lại mỗi khi "dấu vết" đổi = thư mục cài app (đổi mỗi lần cài lại) hoặc danh
+  sách thiết bị USB (rút/cắm cáp). Nên reboot, cài lại APK, rút/cắm lại đều không hiện hộp thoại xin quyền.
+- Đổi package: sửa biến PKG đầu script.
+
+Cài (cần cả 2 file):
+  adb root
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/usbgrant/UsbGrant.dex /data/local/tmp/UsbGrant.dex
+  MSYS_NO_PATHCONV=1 adb push NativePlugins/K02DeviceConfig/k02_boot_hook.sh /data/local/tmp/your_script.sh
+  adb shell chmod 755 /data/local/tmp/your_script.sh
+  adb reboot
+
+Kiểm tra sau reboot (chờ ~40 giây):
+  adb root
+  adb shell cat /data/local/tmp/boot_hook_log.txt
+    -> dòng "usb grant uid=...: granted ... GRANT_OK 5" là đã cấp (số thiết bị tuỳ máy)
+Cấp tay ngay không cần reboot (uid lấy bằng: adb shell pm list packages -U com.EduXplore.X01a):
+  adb shell "CLASSPATH=/data/local/tmp/UsbGrant.dex app_process /system/bin UsbGrant <uid>"
+Lưu ý: cấp quyền khi màn camera của app (Quản lý lớp > Vùng nhận diện / Thêm từ camera) ĐANG MỞ có thể làm app
+chập chờn; nên cấp lúc app chưa mở camera.

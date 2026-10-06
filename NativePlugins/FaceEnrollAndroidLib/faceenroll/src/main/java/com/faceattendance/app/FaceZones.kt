@@ -1,4 +1,4 @@
-package com.eduxplore.faceplugin
+package com.faceattendance.app
 
 import android.util.Log
 import org.json.JSONObject

@@ -61,8 +61,52 @@ class OverlayView @JvmOverloads constructor(
         postInvalidate()
     }
 
+    // --- Vùng nhận diện (toạ độ chuẩn hoá 0..1, xem FaceZones) ---
+    // zoneSetup=false: chỉ làm tối phần NGOÀI hình chữ nhật enroll (hướng dẫn đứng vào đâu).
+    // zoneSetup=true: vẽ cả 3 vùng, vùng đang chọn nét đậm.
+    private var zones: FaceZones? = null
+    private var zoneSetup = false
+    private var zoneSelected = 0 // 0 = trái, 1 = phải, 2 = chữ nhật enroll
+
+    fun setZones(z: FaceZones?, setup: Boolean = false, selected: Int = 0) {
+        zones = z; zoneSetup = setup; zoneSelected = selected
+        postInvalidate()
+    }
+
+    private val zoneDimPaint = Paint().apply { color = Color.parseColor("#99000000"); style = Paint.Style.FILL }
+    private val zoneLinePaint = Paint().apply { style = Paint.Style.STROKE; isAntiAlias = true }
+    private val zoneTextPaint = Paint().apply { textSize = 26f; isFakeBoldText = true; isAntiAlias = true }
+
+    private fun drawZones(canvas: Canvas) {
+        val z = zones ?: return
+        val w = width.toFloat(); val h = height.toFloat()
+        // Preview là ImageView fitCenter 16:9 — vẽ vùng theo cùng phép co giãn như khung mặt (xem onDraw).
+        val e = z.enroll
+        if (!zoneSetup) {
+            // Tối phần NGOÀI vùng: 4 hình chữ nhật quanh vùng (không dùng Path INVERSE_WINDING — bị ngược trên một số máy).
+            val l = e.x * w; val t = e.y * h; val r = (e.x + e.w) * w; val b = (e.y + e.h) * h
+            canvas.drawRect(0f, 0f, w, t, zoneDimPaint)
+            canvas.drawRect(0f, b, w, h, zoneDimPaint)
+            canvas.drawRect(0f, t, l, b, zoneDimPaint)
+            canvas.drawRect(r, t, w, b, zoneDimPaint)
+            zoneLinePaint.color = Color.WHITE; zoneLinePaint.strokeWidth = 4f
+            canvas.drawRect(l, t, r, b, zoneLinePaint)
+            return
+        }
+        fun rect(zr: ZoneRect, sel: Boolean, color: Int, title: String) {
+            zoneLinePaint.color = color; zoneLinePaint.strokeWidth = if (sel) 8f else 3f
+            canvas.drawRect(zr.x * w, zr.y * h, (zr.x + zr.w) * w, (zr.y + zr.h) * h, zoneLinePaint)
+            zoneTextPaint.color = color
+            canvas.drawText(title, zr.x * w + 10f, zr.y * h + 30f, zoneTextPaint)
+        }
+        rect(z.playLeft, zoneSelected == 0, Color.rgb(0, 200, 255), "TRÁI (game)")
+        rect(z.playRight, zoneSelected == 1, Color.rgb(255, 200, 0), "PHẢI (game)")
+        rect(e, zoneSelected == 2, Color.rgb(120, 255, 120), "ENROLL (thêm từ camera)")
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        drawZones(canvas)
         if (items.isEmpty()) return
         val tStart = System.nanoTime()
 

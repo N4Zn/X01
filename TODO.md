@@ -76,3 +76,19 @@
 - [ ] K02: build APK, cài đè bản cũ → kiểm tra `/sdcard/EduXplore/GameLogs` có log cũ + calib/lidar_config còn nguyên; chơi 1 game → log mới nằm ở GameLogs; gỡ app rồi cài lại → mọi thứ vẫn còn.
 - Cài bằng `adb install -r` (KHÔNG `uninstall` trước) nếu muốn giữ cả PlayerPrefs; PlayerPrefs chỉ còn là bản sao, nguồn thật của cài đặt là `game_settings.json`.
 - Lưu ý: dữ liệu tồn tại nhưng app cài lại phải được cấp lại quyền Storage thì mới đọc được (Android 10, targetSdk 27: quyền runtime reset khi gỡ app).
+
+## Vùng nhận diện + sửa thoát app Quản lý lớp (2026-10-06)
+Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA test trên K02, cần build lại APK trong Unity.
+- [ ] Quản lý lớp -> "⚙ Vùng nhận diện" (hoặc ControlActivity -> Cài đặt -> "Mở cài đặt vùng"): hiện hình camera + 2 chữ nhật (TRÁI/PHẢI) + vòng tròn ENROLL; −/+ chỉnh X, Y, rộng, cao (bán kính), LƯU ghi `/sdcard/EduXplore/face_zones.json`.
+- [ ] "Thêm từ camera": chỉ mặt có tâm trong vòng tròn được nhận/chụp; ngoài vòng tối đi và bị bỏ qua.
+- [ ] Vào game 2 người: mỗi bên chỉ nhận mặt trong vùng của mình; sửa vùng xong vào chơi là áp dụng (plugin kiểm tra file mỗi 2s). Chưa có file thì hành vi cũ.
+- [ ] Đối chiếu vị trí vòng tròn/khung với hình thật (preview là fitCenter 16:9, overlay co giãn theo view — có thể lệch vài %).
+- [ ] Soak test Quản lý lớp: vào/ra màn camera nhiều lần, rút/cắm camera USB, vừa nhận diện vừa thêm HS. Lỗi Java ghi ở `/sdcard/EduXplore/crash_fa.txt`; crash native: `adb logcat -b crash`.
+- Đã sửa (nghi vấn thoát app): callback camera bọc try/catch + bỏ frame sai kích thước + bắt RejectedExecution; đóng camera/onDisconnect an toàn; onDestroy chờ thread nhận diện dừng; `AttendanceStore` đồng bộ (@Synchronized, `samplesOf` trả bản sao); tái dùng buffer frame (đỡ RAM).
+- Source plugin game nằm ở `NativePlugins/UnityFacePluginAndroidLib` (bản sao, build ở `D:\X_projects\FaceRecognition\android`).
+- [ ] Thoát màn "Vùng nhận diện" bị tắt app (K02 #1, 09:33): process `:fa` chết SIGABRT ~0,5s sau khi MainActivity bị huỷ, không có backtrace (ROM không ghi tombstone), thử lại 2 lần không tái hiện. Nghi SurfaceTexture giả bị GC khi luồng preview native còn ghi (log `dequeueBuffer failed (No such device)`) hoặc lệnh cấp quyền USB bằng tay lúc đang mở camera. Đã sửa: giữ ref SurfaceTexture, `destroy()` đúng 1 lần, thả texture sau khi đóng camera. Cần build lại APK + soak test; nếu còn: `adb logcat -d -b all -v threadtime | grep -i "X01a\|am_proc_died\|Zygote"` ngay sau khi tắt.
+- [ ] Logic khung mặt màn camera (2026-10-06, chưa test): lần đầu nhận ra = khung xanh + tên + confidence; giữ nguyên khi tracking (nới ngưỡng ghép track cho mặt đã có tên, mặt nghiêng/hụt detect vẫn vẽ khung cuối); verify nền = 3 lần khớp lại khi mặt thẳng rồi hiện ✓ và thôi nhận diện (quá 8 lần thử cũng chấp nhận; 2 lần liên tiếp ra người khác chắc chắn thì bỏ lock nhận lại); mất mặt quanh vị trí đó liên tục 1s mới coi là rời khung, vào lại nhận diện lại. Kiểm tra: nghiêng/quay đầu không nháy xám; ra khỏi khung >1s rồi vào lại thì nhận lại.
+
+## K02 #1: hook boot (2026-10-06)
+- `NativePlugins/K02DeviceConfig/k02_boot_hook.sh` -> `/data/local/tmp/your_script.sh` (hook sẵn trong `lidar_config.rc`): chặn thanh thông báo + tự cấp quyền USB (camera/lidar) cho `com.EduXplore.X01a` qua `UsbGrant.dex`, theo dõi mỗi 5s để cấp lại khi cài lại APK/rút cắm cáp. Hướng dẫn đầy đủ: `Hide_Notification_bar.txt`.
+- Đã kiểm chứng sau reboot (`GRANT_OK 5`, `mDisabled1=0x3a50000`). Chưa test: cài lại APK không reboot, rút/cắm cáp lúc app chạy.

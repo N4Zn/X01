@@ -14,6 +14,12 @@
   `PlayerRecognitionService`) gửi lên Google Sheet qua Apps Script Web App (không cần OAuth phía
   app), batch mỗi ~3s. Config: `/sdcard/EduXplore/sheets_sync_config.json` (SharedStorage)
   (`webAppUrl`, `enabled`, `intervalSeconds`).
+  Hàng đợi được lưu ở `/sdcard/EduXplore/sheets_pending.jsonl` (ghi nối ở `Enqueue`, ghi lại phần
+  còn lại sau mỗi POST thành công) → mất mạng + tắt máy, lần mở sau tự gửi bù. Mọi dòng `round_end`
+  có `questionId` (cột mới trên Sheet — Apps Script cần map thêm cột này nếu map theo tên cố định).
+  > **Gotcha round**: số round log PHẢI lấy từ bộ đếm đúng chế độ — TestTongHop chế độ chung dùng
+  > `gameModel.RoundsPlayed`, Independent dùng `_xxxRoundsCompleted+1` (xem `LogRoundNumber`);
+  > MiniGameKit Independent luôn tăng `_left/_rightRoundIndex` kể cả `totalRounds<=0`.
   > **Gotcha Apps Script**: sửa code trong editor **KHÔNG** tự cập nhật URL `/exec` đang chạy —
   > bắt buộc **Deploy → Manage deployments → Edit (bút chì) → New version → Deploy** thì code mới
   > mới thật sự chạy. Response log giờ có in body (`{"ok":true,"count":N}`) để kiểm tra ngay thay

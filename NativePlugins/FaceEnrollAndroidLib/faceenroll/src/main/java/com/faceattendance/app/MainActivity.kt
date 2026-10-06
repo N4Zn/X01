@@ -83,7 +83,15 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Gallery: mở luôn picker nhiều ảnh, mỗi ảnh cũng add thẳng vào tên đó.
         const val MODE_ADD_SAMPLES_CAMERA = "add_samples_camera"
         const val MODE_ADD_SAMPLES_GALLERY = "add_samples_gallery"
+        // Chỉnh 3 vùng nhận diện (2 vùng game + vùng chữ nhật enroll) trên hình camera thật, rồi Lưu.
+        // Từ Quản lý lớp và từ tab Cài đặt của ControlActivity. Không nhận diện/chào/điểm danh ở chế độ này.
+        const val MODE_ZONE_SETUP = "zone_setup"
     }
+
+    // Vùng nhận diện: màn camera bình thường chỉ xử lý mặt có tâm trong vùng chữ nhật enroll.
+    private var zones: FaceZones = FaceZones.DEFAULT
+    private var zoneSetupMode = false
+    @Volatile private var activityReleased = false
 
     private lateinit var previewImage: ImageView
     private lateinit var overlayView: OverlayView
@@ -166,15 +174,27 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     @Volatile private var cachedOverlayW: Int = 640
     @Volatile private var cachedOverlayH: Int = 360
 
-    // How long a track must remain unseen before it (and its lock) is dropped.
-    // A short grace absorbs YuNet's occasional missed-detection frame (blink, motion blur)
-    // without treating it as the person having actually left.
-    private val lockPresenceGraceMs = 500L
+    // Track ĐÃ có tên: giữ (vẽ khung xanh + tên, dùng lại vị trí cuối khi YuNet hụt mặt do nghiêng/che)
+    // cho tới khi KHÔNG thấy mặt nào quanh vị trí đó liên tục chừng này ms thì coi là đã rời khung hình.
+    private val lockPresenceGraceMs = 1000L
+    // Track chưa có tên: hụt ngắn thôi là bỏ (không có gì để giữ).
+    private val unlockedPresenceGraceMs = 500L
+    // Verify nền sau khi đã có tên: cần chừng này lần khớp lại (mặt thẳng) thì hiện ✓ và thôi nhận diện.
+    private val verifyFramesNeeded = 3
+    // Quá chừng này lần thử (mặt thẳng) mà chưa đủ lần khớp, cũng không có người khác => chấp nhận luôn, thôi nhận diện.
+    private val verifyMaxTries = 8
+
+    private fun graceOf(t: FaceTrack) = if (t.lock != null) lockPresenceGraceMs else unlockedPresenceGraceMs
 
     private class ResolvedLock(val name: String, val sinceMs: Long, val sim: Float)
     private class FaceTrack(var rect: RectF, var lastSeenMs: Long) {
         // Confirmed-person lock: khi có, chỉ vẽ khung xanh + theo vị trí, không nhận diện lại.
         var lock: ResolvedLock? = null
+        // Verify nền: verified=true => hiện ✓ và không chạy embedding nữa cho tới khi track bị xoá.
+        var verified = false
+        var verifyOk = 0
+        var verifyBad = 0
+        var verifyTries = 0
         var smoothed: Array<PointF>? = null
         // Số lần nhận diện (mặt frontal) liên tiếp mà không ra ai => đủ ngưỡng mới báo "mặt mới".
         var unknownCount = 0
@@ -199,19 +219,27 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
      * lockPresenceGraceMs rồi bị xoá cùng lock. Không dùng embedding để kiểm chứng lại lock: nhận
      * 1 lần là giữ tên tới khi mặt rời khung, tránh tên chớp tắt. */
     private fun assignTracks(faces: List<DetectedFace>, nowMs: Long): List<FaceTrack> {
-        tracks.removeAll { nowMs - it.lastSeenMs > lockPresenceGraceMs }
+        expireTracks(nowMs)
         class Cand(val f: Int, val t: Int, val score: Float)
         val cands = ArrayList<Cand>()
         for (fi in faces.indices) {
             val fr = faces[fi].rect
             for (ti in tracks.indices) {
-                val tr = tracks[ti].rect
+                val track = tracks[ti]
+                val tr = track.rect
+                // Track đã có tên được nới lỏng: mặt nghiêng/quay làm box đổi cỡ và lệch, vẫn là người đó
+                // (nếu không sẽ sinh track mới -> khung xám + nhận diện lại -> nháy).
+                val locked = track.lock != null
                 val sizeRatio = fr.width() / tr.width().coerceAtLeast(1f)
-                if (sizeRatio !in 0.67f..1.5f) continue // đổi cỡ đột ngột => không phải cùng người
+                val ratioRange = if (locked) 0.5f..2.0f else 0.67f..1.5f
+                if (sizeRatio !in ratioRange) continue // đổi cỡ đột ngột => không phải cùng người
                 val iou = rectIou(fr, tr)
                 val dist = kotlin.math.hypot((fr.centerX() - tr.centerX()).toDouble(), (fr.centerY() - tr.centerY()).toDouble()).toFloat()
-                val near = dist < 0.4f * minOf(fr.width(), tr.width())
-                if (iou >= 0.25f || near) cands.add(Cand(fi, ti, iou + if (near) 0.05f else 0f))
+                val near = dist < (if (locked) 0.8f else 0.4f) * minOf(fr.width(), tr.width())
+                if (iou >= (if (locked) 0.1f else 0.25f) || near) {
+                    val closeness = 1f - (dist / maxOf(fr.width(), tr.width()).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                    cands.add(Cand(fi, ti, iou + 0.2f * closeness))
+                }
             }
         }
         cands.sortByDescending { it.score }
@@ -233,6 +261,25 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             }
         }
     }
+
+    private fun expireTracks(nowMs: Long) {
+        tracks.removeAll {
+            val gone = nowMs - it.lastSeenMs > graceOf(it)
+            if (gone && it.lock != null) Log.e("FaceAttendance", "track lock cleared (absent > ${graceOf(it)}ms): ${it.lock?.name}")
+            gone
+        }
+    }
+
+    private fun lockLabel(t: FaceTrack): String {
+        val l = t.lock ?: return "..."
+        return "${l.name} ${"%.2f".format(l.sim)}" + if (t.verified) " ✓" else ""
+    }
+
+    /** Khung cho track đã có tên nhưng frame này YuNet không thấy mặt (nghiêng/che): vẽ lại vị trí cuối,
+     * vẫn xanh + tên, cho tới khi hết lockPresenceGraceMs. */
+    private fun coastingItems(matched: Collection<FaceTrack>): List<FaceOverlayItem> =
+        tracks.filter { it.lock != null && matched.none { m -> m === it } }
+            .map { FaceOverlayItem(RectF(it.rect), emptyList(), lockLabel(it), Color.GREEN) }
 
     // Greeting fires once per appearance in frame, not once per cooldownMs like attendance
     // logging. Keyed by NAME (not slot index) since slot assignment is re-sorted left-to-
@@ -263,13 +310,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
      * default handler already ultimately kills the process the same way, this just makes sure
      * the reason is captured in logcat (the actual recovery is WatchdogReceiver, which works
      * independently of this and also covers native crashes that never reach here at all). */
-    private fun installCrashLogger() {
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            Log.e("FaceAttendance", "Uncaught exception on thread ${thread.name}", throwable)
-            defaultHandler?.uncaughtException(thread, throwable)
-        }
-    }
+    private fun installCrashLogger() = CrashLog.install("MainActivity")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -314,7 +355,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         btnExport.setOnClickListener { exportAttendanceCsv() }
 
         attendanceStore = AttendanceStore(this)
+        zones = FaceZones.load()
+        zoneSetupMode = mode == MODE_ZONE_SETUP
+        overlayView.setZones(zones, zoneSetupMode)
         when (mode) {
+            MODE_ZONE_SETUP -> setupZoneEditor()
             MODE_VIEW_STUDENT -> intent.getStringExtra(EXTRA_STUDENT_NAME)?.let { showStudentSamplesDialog(it) }
             MODE_BULK_PICK -> requestBulkPick()
             MODE_ADD_SAMPLES_CAMERA -> {
@@ -328,7 +373,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }
         greetingTts = GreetingTts(this)
         greetingTts.startWeatherRefresh()
-        greetingTts.startKeepAlive()
+        if (!zoneSetupMode) greetingTts.startKeepAlive()
         loadTestGalleryIfPresent()
         OpenCVLoader.initLocal()
         faceEngine = FaceEngine(this)
@@ -435,14 +480,29 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Release the USB camera so X01 (Unity FRTest) can open it when FA goes to background.
         // The VID whitelist in looksLikeUvcCamera() ensures reconnect in onStart() is fast
         // (permission already granted → onConnect fires without a dialog).
-        uvcCamera?.setFrameCallback(null, 0)
-        uvcCamera?.stopPreview()
-        uvcCamera?.close()
-        uvcCamera = null
+        releaseCamera()
         usbMonitor.unregister()
         usbMonitorRegistered = false
         super.onStop()
     }
+
+    /** Đóng camera an toàn: lấy tham chiếu rồi null ngay (onDisconnect/onStop gọi lặp hay chồng nhau
+     * không đóng 2 lần), tắt callback trước, và không để ngoại lệ nào thoát ra (đóng camera lỗi trên
+     * thread USB/UI = chết cả process). */
+    private fun releaseCamera() {
+        val cam = uvcCamera ?: return
+        uvcCamera = null
+        try { cam.setFrameCallback(null, 0) } catch (e: Throwable) { Log.e("FaceAttendance", "setFrameCallback(null)", e) }
+        try { cam.stopPreview() } catch (e: Throwable) { Log.e("FaceAttendance", "stopPreview", e) }
+        // destroy() = close() + nativeDestroy(); trước đây nativeDestroy chỉ chạy nhờ lần gọi lồng
+        // onDisconnect trong close() — giờ onDisconnect no-op nên gọi thẳng, đúng 1 lần.
+        try { cam.destroy() } catch (e: Throwable) { Log.e("FaceAttendance", "camera destroy", e) }
+        // Chỉ thả texture SAU khi camera đã đóng hẳn (thread preview không còn ghi vào nó).
+        try { previewTexture?.release() } catch (e: Throwable) { Log.e("FaceAttendance", "texture release", e) }
+        previewTexture = null
+    }
+
+    private var previewTexture: SurfaceTexture? = null
 
     // --- USBMonitor.OnDeviceConnectListener ---
 
@@ -533,7 +593,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             // mPreviewWindow is non-null - even though we only want the frame callback
             // and never render anything, we still have to hand it a SurfaceTexture.
             // Detached mode (API 19+) needs no GL context since we never consume it.
+            // PHẢI giữ tham chiếu mạnh (field): biến cục bộ bị GC thu -> finalize() huỷ BufferQueue trong khi
+            // thread preview native vẫn ghi vào đó (log thật: "Surface: dequeueBuffer failed (No such device)"
+            // lặp liên tục) -> đóng camera sau đó dễ SIGABRT. UnityFaceBridge đã giữ tham chiếu từ lâu.
             val dummyTexture = SurfaceTexture(false)
+            previewTexture = dummyTexture
             camera.setPreviewTexture(dummyTexture)
             camera.startPreview()
             uvcCamera = camera
@@ -545,8 +609,13 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     }
 
     override fun onDisconnect(device: UsbDevice, ctrlBlock: USBMonitor.UsbControlBlock) {
-        uvcCamera?.destroy()
+        // Chạy trên thread nền của USBMonitor, và camera.destroy()/close() lại gọi ngược onDisconnect
+        // đồng bộ: null tham chiếu TRƯỚC để lần gọi lồng là no-op, ngoại lệ không được thoát ra
+        // (uncaught trên thread này = chết cả process). Xem UnityFaceBridge.onDisconnect (cùng lỗi đã gặp).
+        val cam = uvcCamera ?: return
         uvcCamera = null
+        try { cam.setFrameCallback(null, 0) } catch (e: Throwable) { Log.e("FaceAttendance", "disconnect: setFrameCallback", e) }
+        try { cam.destroy() } catch (e: Throwable) { Log.e("FaceAttendance", "disconnect: destroy", e) }
     }
 
     override fun onCancel(device: UsbDevice) {
@@ -562,64 +631,100 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // throttled capture itself to detection speed. This executor is what actually decouples them.
     private val detectionExecutor = Executors.newSingleThreadExecutor()
 
+    // Buffer dùng lại giữa các frame (callback luôn chạy trên 1 thread capture) — trước đây mỗi frame
+    // cấp mới ~1.3MB ByteArray + 2 Mat native, máy RAM thấp (K02) dễ bị hệ thống kill vì thiếu bộ nhớ.
+    private var frameBuf: ByteArray? = null
+    private var yuvMat: Mat? = null
+    private var bgrRawMat: Mat? = null
+    private var badFrameCount = 0
+
     private val frameCallback = IFrameCallback { frame: ByteBuffer ->
-        val now = System.nanoTime()
-        val sinceLastMs = if (lastFrameArrivalNs == 0L) 0.0 else (now - lastFrameArrivalNs) / 1_000_000.0
-        lastFrameArrivalNs = now
-        val t0 = System.nanoTime()
-        // frame's backing buffer is only valid until this callback returns, so the copy has to
-        // happen here - everything after this point is safe to hand off to another thread.
-        val data = ByteArray(frame.remaining())
-        frame.get(data)
-        val yuv = Mat(frameHeight + frameHeight / 2, frameWidth, CvType.CV_8UC1)
-        yuv.put(0, 0, data)
-        val bgrRaw = Mat()
-        Imgproc.cvtColor(yuv, bgrRaw, Imgproc.COLOR_YUV2BGR_NV21)
-        yuv.release()
-        val bgrPreview = Mat()
-        Core.flip(bgrRaw, bgrPreview, 1)  // 1 = horizontal mirror
-        bgrRaw.release()
-        val t1 = System.nanoTime()
+        // Callback này chạy trên thread NATIVE của camera: mọi ngoại lệ lọt ra ngoài = chết cả
+        // process (không có chỗ nào bắt). Vì vậy bọc toàn bộ, kể cả Error (OOM, UnsatisfiedLink...).
+        var bgrPreview: Mat? = null
+        var handedOff = false
+        var claimed = false // đã đặt isProcessing=true ở frame NÀY (không thì không được đụng vào cờ)
+        try {
+            if (activityReleased) return@IFrameCallback
+            val now = System.nanoTime()
+            val sinceLastMs = if (lastFrameArrivalNs == 0L) 0.0 else (now - lastFrameArrivalNs) / 1_000_000.0
+            lastFrameArrivalNs = now
+            val t0 = System.nanoTime()
 
-        // The preview always refreshes here, on every frame the camera delivers - kept on this
-        // thread since it's cheap (a color convert + bitmap copy), unlike detection below.
-        updatePreviewBitmap(bgrPreview)
-
-        // Push the last known overlay result on every frame so the bounding box moves at
-        // camera FPS rather than at detection FPS. Dropped frames still get this refresh.
-        val snap = cachedOverlayItems; val sw = cachedOverlayW; val sh = cachedOverlayH
-        runOnUiThread { overlayView.update(snap, sw, sh) }
-
-        if (isProcessing) {
-            droppedWhileBusy++
-            bgrPreview.release()
-            Log.e("FacePerf", "DROPPED frame (busy) - arrival gap=${"%.1f".format(sinceLastMs)}ms, dropped_total=$droppedWhileBusy")
-            return@IFrameCallback
-        }
-        isProcessing = true
-        // bgrPreview is handed off here - released by the detection thread once it's done with
-        // it, not by this (capture) thread, since this callback must return immediately.
-        detectionExecutor.execute {
-            try {
-                processFrame(bgrPreview)
-                val t2 = System.nanoTime()
-                val totalMs = (t2 - t0) / 1_000_000.0
-                if (totalMs > 0) {
-                    val instFps = 1000.0 / totalMs
-                    fpsEma = if (fpsEma == null) instFps else 0.9 * fpsEma!! + 0.1 * instFps
-                }
-                Log.e(
-                    "FacePerf",
-                    "arrival_gap=${"%.1f".format(sinceLastMs)}ms  nv21_to_bgr=${"%.1f".format((t1 - t0) / 1_000_000.0)}ms  " +
-                        "processFrame=${"%.1f".format((t2 - t1) / 1_000_000.0)}ms  TOTAL=${"%.1f".format(totalMs)}ms  " +
-                        "fps_if_sustained=${"%.1f".format(1000.0 / totalMs)}"
-                )
-            } catch (e: Exception) {
-                Log.e("FaceAttendance", "frame processing error", e)
-            } finally {
-                isProcessing = false
-                bgrPreview.release()
+            val w = frameWidth; val h = frameHeight
+            val expected = w * h * 3 / 2
+            val size = frame.remaining()
+            if (size != expected) {
+                // Khung lệch kích thước (đổi định dạng giữa chừng/frame hỏng): bỏ, không đưa vào Mat.put.
+                if (badFrameCount++ % 100 == 0) Log.e("FaceAttendance", "bad frame size=$size expected=$expected (${w}x$h), dropped=$badFrameCount")
+                return@IFrameCallback
             }
+            // frame's backing buffer is only valid until this callback returns, so the copy has to
+            // happen here - everything after this point is safe to hand off to another thread.
+            val data = frameBuf?.takeIf { it.size == size } ?: ByteArray(size).also { frameBuf = it }
+            frame.get(data)
+            val yuv = yuvMat?.takeIf { it.rows() == h + h / 2 && it.cols() == w }
+                ?: Mat(h + h / 2, w, CvType.CV_8UC1).also { yuvMat?.release(); yuvMat = it }
+            yuv.put(0, 0, data)
+            val bgrRaw = bgrRawMat ?: Mat().also { bgrRawMat = it }
+            Imgproc.cvtColor(yuv, bgrRaw, Imgproc.COLOR_YUV2BGR_NV21)
+            val flipped = Mat()
+            bgrPreview = flipped
+            Core.flip(bgrRaw, flipped, 1)  // 1 = horizontal mirror
+            val t1 = System.nanoTime()
+
+            // The preview always refreshes here, on every frame the camera delivers - kept on this
+            // thread since it's cheap (a color convert + bitmap copy), unlike detection below.
+            updatePreviewBitmap(flipped)
+
+            // Push the last known overlay result on every frame so the bounding box moves at
+            // camera FPS rather than at detection FPS. Dropped frames still get this refresh.
+            val snap = cachedOverlayItems; val sw = cachedOverlayW; val sh = cachedOverlayH
+            runOnUiThread { overlayView.update(snap, sw, sh) }
+
+            if (isProcessing) {
+                droppedWhileBusy++
+                Log.e("FacePerf", "DROPPED frame (busy) - arrival gap=${"%.1f".format(sinceLastMs)}ms, dropped_total=$droppedWhileBusy")
+                return@IFrameCallback
+            }
+            isProcessing = true
+            claimed = true
+            // flipped is handed off here - released by the detection thread once it's done with
+            // it, not by this (capture) thread, since this callback must return immediately.
+            try {
+                detectionExecutor.execute {
+                    try {
+                        processFrame(flipped)
+                        val t2 = System.nanoTime()
+                        val totalMs = (t2 - t0) / 1_000_000.0
+                        if (totalMs > 0) {
+                            val instFps = 1000.0 / totalMs
+                            fpsEma = if (fpsEma == null) instFps else 0.9 * fpsEma!! + 0.1 * instFps
+                        }
+                        Log.e(
+                            "FacePerf",
+                            "arrival_gap=${"%.1f".format(sinceLastMs)}ms  nv21_to_bgr=${"%.1f".format((t1 - t0) / 1_000_000.0)}ms  " +
+                                "processFrame=${"%.1f".format((t2 - t1) / 1_000_000.0)}ms  TOTAL=${"%.1f".format(totalMs)}ms  " +
+                                "fps_if_sustained=${"%.1f".format(1000.0 / totalMs)}"
+                        )
+                    } catch (e: Throwable) {
+                        // Throwable (không chỉ Exception): OOM/Error trên thread executor cũng làm chết process.
+                        Log.e("FaceAttendance", "frame processing error", e)
+                    } finally {
+                        isProcessing = false
+                        flipped.release()
+                    }
+                }
+                handedOff = true
+            } catch (e: java.util.concurrent.RejectedExecutionException) {
+                // Executor đã shutdown (activity đang đóng) đúng lúc frame cuối tới.
+                isProcessing = false
+            }
+        } catch (e: Throwable) {
+            Log.e("FaceAttendance", "frameCallback error", e)
+            if (claimed && !handedOff) isProcessing = false
+        } finally {
+            if (!handedOff) bgrPreview?.release()
         }
     }
 
@@ -641,13 +746,16 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     }
 
     /** Scales a DetectedFace from a downsampled detection space back to the original frame space. */
-    private fun scaleFace(face: DetectedFace, scale: Float): DetectedFace {
+    private fun scaleFace(face: DetectedFace, scale: Float, offsetX: Float = 0f, offsetY: Float = 0f): DetectedFace {
         val r = face.rect
         val raw = face.rawRow.copyOf()
         for (i in 0..13) raw[i] *= scale  // x, y, w, h, 5 landmark pairs — skip score at [14]
+        // Dò trên vùng đã cắt: dời toạ độ (x, y của box và 5 điểm landmark; w/h là độ dài nên không dời).
+        raw[0] += offsetX; raw[1] += offsetY
+        for (i in 0..4) { raw[4 + i * 2] += offsetX; raw[5 + i * 2] += offsetY }
         return DetectedFace(
-            rect = RectF(r.left * scale, r.top * scale, r.right * scale, r.bottom * scale),
-            landmarks = face.landmarks.map { PointF(it.x * scale, it.y * scale) },
+            rect = RectF(r.left * scale + offsetX, r.top * scale + offsetY, r.right * scale + offsetX, r.bottom * scale + offsetY),
+            landmarks = face.landmarks.map { PointF(it.x * scale + offsetX, it.y * scale + offsetY) },
             score = face.score,
             rawRow = raw
         )
@@ -672,15 +780,34 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Detect at half resolution — YuNet's cost scales roughly with input pixel count, so
         // this gives ~3-4x speedup with negligible accuracy loss for faces seen at normal range.
         val detectScale = 0.5f
+        // Chỉ dò trong vùng chữ nhật enroll (cắt ảnh trước khi dò — nhanh hơn dò cả khung).
+        // Chế độ chỉnh vùng thì dò cả khung để thấy mặt ở ngoài vùng.
+        val bounds = if (zoneSetupMode) RectF(0f, 0f, width.toFloat(), height.toFloat())
+                     else zones.enrollBounds(width.toFloat(), height.toFloat())
+        val cropX = bounds.left.toInt().coerceIn(0, width - 2)
+        val cropY = bounds.top.toInt().coerceIn(0, height - 2)
+        val cropW = (bounds.right.toInt() - cropX).coerceIn(2, width - cropX)
+        val cropH = (bounds.bottom.toInt() - cropY).coerceIn(2, height - cropY)
+        val region = Mat(bgr, Rect(cropX, cropY, cropW, cropH)) // view vào bgr, không copy
         val small = Mat()
-        Imgproc.resize(bgr, small, org.opencv.core.Size(width * detectScale.toDouble(), height * detectScale.toDouble()))
+        Imgproc.resize(region, small, org.opencv.core.Size(cropW * detectScale.toDouble(), cropH * detectScale.toDouble()))
+        region.release()
         val tDetectStart = System.nanoTime()
-        val facesSmall = engine.detectFaces(small, MAX_FACES)
+        // Lấy dư vài mặt rồi lọc theo vùng, để mặt to ở ngoài vùng không chiếm chỗ của mặt trong vùng.
+        val facesSmall = engine.detectFaces(small, MAX_FACES + 2)
         val tDetectEnd = System.nanoTime()
         small.release()
         // Scale coordinates back to full-res space so the rest of the pipeline (alignFace,
         // overlay drawing) works on the original frame dimensions.
-        val faces = facesSmall.map { scaleFace(it, 1f / detectScale) }
+        val faces = facesSmall.map { scaleFace(it, 1f / detectScale, cropX.toFloat(), cropY.toFloat()) }
+            .filter { zoneSetupMode || zones.enrollContains(it.rect.centerX(), it.rect.centerY(), width.toFloat(), height.toFloat()) }
+            .let { if (zoneSetupMode) it else it.take(MAX_FACES) }
+        if (zoneSetupMode) {
+            // Chế độ chỉnh vùng: chỉ hiện khung mặt để canh, không nhận diện/chào/điểm danh.
+            cachedOverlayItems = faces.map { FaceOverlayItem(it.rect, emptyList(), "", Color.LTGRAY) }
+            cachedOverlayW = width; cachedOverlayH = height
+            return
+        }
         // Gắn mặt <-> track bền vững (thay cho sắp trái->phải theo slot, vốn làm tên nhảy người).
         val faceTracks = assignTracks(faces, nowMs)
         lastDetected = faces.firstOrNull()
@@ -688,24 +815,23 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Push bounding boxes immediately after detection — before recognition runs — so the
         // overlay updates at detection FPS rather than being blocked on the recognition pipeline.
         cachedOverlayItems = faces.mapIndexed { i, face ->
-            val lock = faceTracks[i].lock
-            if (lock != null) FaceOverlayItem(face.rect, face.landmarks.map { android.graphics.PointF(it.x, it.y) }, "${lock.name} ✓", android.graphics.Color.GREEN)
+            val track = faceTracks[i]
+            if (track.lock != null) FaceOverlayItem(face.rect, face.landmarks.map { android.graphics.PointF(it.x, it.y) }, lockLabel(track), android.graphics.Color.GREEN)
             else FaceOverlayItem(face.rect, face.landmarks.map { android.graphics.PointF(it.x, it.y) }, "...", android.graphics.Color.GRAY)
-        }
+        } + coastingItems(faceTracks)
         cachedOverlayW = width; cachedOverlayH = height
 
         if (faces.isEmpty()) {
             lastDetected = null
-            // Tracks (kèm lock) hết hạn sau lockPresenceGraceMs không thấy.
-            tracks.removeAll {
-                val gone = nowMs - it.lastSeenMs > lockPresenceGraceMs
-                if (gone && it.lock != null) Log.e("FaceAttendance", "track lock cleared (absent > ${lockPresenceGraceMs}ms): ${it.lock?.name}")
-                gone
+            // Tracks (kèm lock) hết hạn khi không thấy mặt quanh vị trí đó liên tục lockPresenceGraceMs.
+            expireTracks(nowMs)
+            val coasting = coastingItems(emptyList())
+            cachedOverlayItems = coasting; cachedOverlayW = width; cachedOverlayH = height
+            if (coasting.isEmpty()) {
+                // Idle 1s before next detection attempt (chỉ khi không còn track nào đang được giữ).
+                nextDetectAllowedMs = nowMs + 1000
+                Log.e("FacePerf", "  detect=${"%.1f".format((tDetectEnd - tDetectStart) / 1_000_000.0)}ms (no face — idle 1s)")
             }
-            // Idle 1s before next detection attempt.
-            nextDetectAllowedMs = nowMs + 1000
-            cachedOverlayItems = emptyList(); cachedOverlayW = width; cachedOverlayH = height
-            Log.e("FacePerf", "  detect=${"%.1f".format((tDetectEnd - tDetectStart) / 1_000_000.0)}ms (no face — idle 1s)")
             // Bug đã xác nhận: nhánh này trước đây KHÔNG cập nhật tvStatus, nên "faces in view"
             // bị đứng ở giá trị lần cuối có người (thường là 1) mãi mãi dù người đã rời khung
             // hình từ lâu — chỗ set text duy nhất nằm ở cuối processFrame(), không bao giờ chạy
@@ -747,8 +873,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
             val lock = track.lock
             if (lock != null) {
-                // Person already confirmed: just track by position — no embedding, no matching.
+                // Đã có tên: giữ khung xanh + tên + confidence theo vị trí. Chưa verified thì chạy verify
+                // (vài lần khớp lại khi mặt thẳng, không ảnh hưởng hiển thị); xong là ✓ và không nhận diện nữa.
                 color = Color.GREEN
+                if (!track.verified) verifyLock(engine, bgr, face, track, lock)
                 if (!greetedActive.containsKey(lock.name)) {
                     justLogged.add(lock.name to attendanceStore.genderOf(lock.name))
                 }
@@ -759,7 +887,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     crop.release()
                     runOnUiThread { refreshRecentPeoplePanel() }
                 }
-                label = "${lock.name} ✓"
+                label = lockLabel(track)
             } else {
                 // Unknown track: run full recognition.
                 val pose = engine.estimatePose(face)
@@ -828,7 +956,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                             crop.release()
                             runOnUiThread { refreshRecentPeoplePanel() }
                         }
-                        label = "$name ${"%.2f".format(sim)}"
+                        label = lockLabel(track)
                     }
                     isAmbiguous -> {
                         color = Color.MAGENTA
@@ -880,6 +1008,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             overlayItems.add(FaceOverlayItem(rect, smoothed.toList(), label, color))
         }
 
+        overlayItems.addAll(coastingItems(faceTracks))
         cachedOverlayItems = overlayItems; cachedOverlayW = width; cachedOverlayH = height
         runOnUiThread {
             overlayView.update(overlayItems, width, height)
@@ -890,6 +1019,33 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // check-ins gets a single combined greeting instead of two overlapping ones.
         if (justLogged.isNotEmpty()) {
             speakGreeting(justLogged)
+        }
+    }
+
+    /** Verify nền cho track đã có tên: mặt thẳng thì tính lại embedding, khớp đúng tên [verifyFramesNeeded] lần
+     * => verified (hiện ✓, không nhận diện nữa). Mặt nghiêng/điểm thấp: bỏ qua, KHÔNG làm mất khung xanh.
+     * Chỉ khi 2 lần liên tiếp ra NGƯỜI KHÁC chắc chắn mới bỏ lock (lock ban đầu sai) để nhận diện lại. */
+    private fun verifyLock(engine: FaceEngine, bgr: Mat, face: DetectedFace, track: FaceTrack, lock: ResolvedLock) {
+        if (!engine.estimatePose(face).isFrontal(yawTolerance, rollToleranceDeg)) return
+        track.verifyTries++
+        val aligned = engine.alignFace(bgr, face)
+        val emb = engine.getEmbedding(aligned)
+        aligned.release()
+        val m = attendanceStore.bestMatch(emb, engine)
+        val sameName = m.name == lock.name && m.sim > matchThreshold
+        val otherPerson = m.name != null && m.name != lock.name && m.sim > matchThreshold &&
+            (m.sim - m.runnerUpSim) >= marginThreshold
+        Log.e("FaceMatch", "verify ${lock.name}: best=${m.name} sim=${"%.3f".format(m.sim)} ok=${track.verifyOk} bad=${track.verifyBad} tries=${track.verifyTries}")
+        when {
+            sameName -> { track.verifyOk++; track.verifyBad = 0 }
+            otherPerson -> track.verifyBad++
+        }
+        if (track.verifyBad >= 2) {
+            Log.e("FaceAttendance", "verify mismatch (${lock.name} vs ${m.name}) — lock dropped, recognize again")
+            greetedActive.remove(lock.name)
+            track.lock = null; track.verifyOk = 0; track.verifyBad = 0; track.verifyTries = 0
+        } else if (track.verifyOk >= verifyFramesNeeded || track.verifyTries >= verifyMaxTries) {
+            track.verified = true
         }
     }
 
@@ -1276,6 +1432,142 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         runOnUiThread { tvStatus.text = msg }
     }
 
+    // ---- Chỉnh vùng nhận diện (MODE_ZONE_SETUP) ----
+    private var editZones: FaceZones = FaceZones.DEFAULT
+    private var zoneSel = 0 // 0 = trái (game), 1 = phải (game), 2 = chữ nhật enroll
+    private val zoneRowLabels = ArrayList<TextView>()
+    private val zoneRowValues = ArrayList<TextView>()
+    private val zoneRowViews = ArrayList<LinearLayout>()
+    private val zoneTabButtons = ArrayList<Button>()
+    private val zoneRepeatHandler = Handler(Looper.getMainLooper())
+
+    private fun dpi(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    private fun selectedZone(z: FaceZones): ZoneRect = when (zoneSel) { 0 -> z.playLeft; 1 -> z.playRight; else -> z.enroll }
+
+    private fun zoneParams(): List<Pair<String, Float>> {
+        val r = selectedZone(editZones)
+        return listOf("X (trái → phải)" to r.x, "Y (trên → dưới)" to r.y, "Rộng" to r.w, "Cao" to r.h)
+    }
+
+    private fun round2(v: Float) = Math.round(v * 100f) / 100f
+
+    /** Đổi tham số thứ [param] của vùng đang chọn thêm [delta] (đơn vị 0..1), kẹp trong khung. */
+    private fun adjustZone(param: Int, delta: Float) {
+        val z = editZones
+        val r = selectedZone(z)
+        var x = r.x; var y = r.y; var w = r.w; var h = r.h
+        when (param) { 0 -> x += delta; 1 -> y += delta; 2 -> w += delta; 3 -> h += delta }
+        w = round2(w.coerceIn(0.05f, 1f)); h = round2(h.coerceIn(0.05f, 1f))
+        x = round2(x.coerceIn(0f, 1f - w)); y = round2(y.coerceIn(0f, 1f - h))
+        val nr = ZoneRect(x, y, w, h)
+        editZones = when (zoneSel) { 0 -> z.copy(playLeft = nr); 1 -> z.copy(playRight = nr); else -> z.copy(enroll = nr) }
+        refreshZoneEditor()
+    }
+
+    private fun refreshZoneEditor() {
+        val params = zoneParams()
+        for (i in zoneRowViews.indices) {
+            if (i < params.size) {
+                zoneRowViews[i].visibility = android.view.View.VISIBLE
+                zoneRowLabels[i].text = params[i].first
+                zoneRowValues[i].text = "${Math.round(params[i].second * 100)}%"
+            } else {
+                zoneRowViews[i].visibility = android.view.View.GONE
+            }
+        }
+        for ((i, b) in zoneTabButtons.withIndex()) {
+            b.backgroundTintList = android.content.res.ColorStateList.valueOf(if (i == zoneSel) Color.parseColor("#2196F3") else Color.parseColor("#616161"))
+        }
+        overlayView.setZones(editZones, true, zoneSel)
+    }
+
+    /** Nút +/- bấm 1 lần = 1 bước, giữ = tự lặp nhanh dần. */
+    private fun stepButton(text: String, onStep: () -> Unit): Button = Button(this).apply {
+        this.text = text
+        textSize = 18f
+        minWidth = dpi(48); minimumWidth = dpi(48)
+        val repeat = object : Runnable {
+            var n = 0
+            override fun run() { onStep(); n++; zoneRepeatHandler.postDelayed(this, if (n > 10) 40L else 90L) }
+        }
+        setOnTouchListener { v, ev ->
+            when (ev.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    v.isPressed = true
+                    onStep(); repeat.n = 0
+                    zoneRepeatHandler.postDelayed(repeat, 400L)
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    v.isPressed = false
+                    zoneRepeatHandler.removeCallbacks(repeat)
+                }
+            }
+            true
+        }
+    }
+
+    private fun setupZoneEditor() {
+        editZones = FaceZones.load()
+        // Ẩn mọi thứ của màn nhận diện/enroll — chỉ còn hình camera + khung vùng + bảng chỉnh.
+        for (v in listOf<android.view.View>(btnEnroll.parent as android.view.View, btnManage.parent as android.view.View,
+            recentPeoplePanel, tvGreeting, tvInfoPanel, tvFps)) v.visibility = android.view.View.GONE
+
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#D9000000"))
+            setPadding(dpi(12), dpi(10), dpi(12), dpi(10))
+        }
+        panel.addView(TextView(this).apply {
+            text = "VÙNG NHẬN DIỆN"; setTextColor(Color.WHITE); textSize = 16f; typeface = android.graphics.Typeface.DEFAULT_BOLD
+        })
+        val tabs = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        for ((i, name) in listOf("TRÁI", "PHẢI", "ENROLL").withIndex()) {
+            val b = Button(this).apply {
+                text = name; textSize = 12f; setTextColor(Color.WHITE)
+                setOnClickListener { zoneSel = i; refreshZoneEditor() }
+            }
+            tabs.addView(b, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            zoneTabButtons.add(b)
+        }
+        panel.addView(tabs)
+        for (p in 0 until 4) {
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val label = TextView(this).apply { setTextColor(Color.parseColor("#DDDDDD")); textSize = 13f }
+            val value = TextView(this).apply {
+                setTextColor(Color.WHITE); textSize = 15f; gravity = Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD
+            }
+            row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(stepButton("−") { adjustZone(p, -0.01f) })
+            row.addView(value, LinearLayout.LayoutParams(dpi(52), LinearLayout.LayoutParams.WRAP_CONTENT))
+            row.addView(stepButton("+") { adjustZone(p, 0.01f) })
+            panel.addView(row)
+            zoneRowViews.add(row); zoneRowLabels.add(label); zoneRowValues.add(value)
+        }
+        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        actions.addView(Button(this).apply {
+            text = "MẶC ĐỊNH"; textSize = 12f
+            setOnClickListener { editZones = FaceZones.DEFAULT; refreshZoneEditor() }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        actions.addView(Button(this).apply {
+            text = "LƯU"; textSize = 12f; setTextColor(Color.WHITE)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))
+            setOnClickListener {
+                toastStatus(if (editZones.save()) "Đã lưu vùng nhận diện — game áp dụng từ vòng chơi sau" else "LƯU THẤT BẠI (kiểm tra quyền bộ nhớ)")
+            }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        panel.addView(actions)
+
+        (findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0) as android.widget.FrameLayout).addView(
+            panel,
+            android.widget.FrameLayout.LayoutParams(dpi(300), android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.END or Gravity.CENTER_VERTICAL).apply {
+                rightMargin = dpi(12)
+            }
+        )
+        tvStatus.text = "Chỉnh vùng: chọn TRÁI/PHẢI/ENROLL, bấm − + rồi LƯU. Nút X để thoát."
+        refreshZoneEditor()
+    }
+
     /** Lists real enrolled students (test-gallery entries excluded); tapping one shows their
      * individual sample photos with per-sample delete, plus a whole-person remove option. */
     private fun showManageStudentsDialog() {
@@ -1510,19 +1802,31 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     }
 
     override fun onDestroy() {
+        // Thứ tự quan trọng: cờ released (callback bỏ frame mới) -> đóng camera (hết frame mới) ->
+        // chờ frame đang xử lý xong -> mới giải phóng engine/buffer. Trước đây shutdownNow() không chờ,
+        // và frame cuối còn có thể execute() vào executor đã đóng.
+        activityReleased = true
         super.onDestroy()
         healthLogHandler.removeCallbacksAndMessages(null)
         infoPanelHandler.removeCallbacksAndMessages(null)
-        uvcCamera?.setFrameCallback(null, 0)
-        uvcCamera?.stopPreview()
-        uvcCamera?.close()
-        uvcCamera = null
+        zoneRepeatHandler.removeCallbacksAndMessages(null)
+        releaseCamera()
         usbMonitorRegistered = false
-        usbMonitor.unregister()
-        usbMonitor.destroy()
+        try { usbMonitor.unregister() } catch (e: Throwable) { Log.e("FaceAttendance", "usb unregister", e) }
+        try { usbMonitor.destroy() } catch (e: Throwable) { Log.e("FaceAttendance", "usb destroy", e) }
+        detectionExecutor.shutdown()
+        try {
+            if (!detectionExecutor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                Log.w("FaceAttendance", "detectionExecutor chưa dừng sau 2s — frame đang chạy native, bỏ chờ")
+                detectionExecutor.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        yuvMat?.release(); yuvMat = null
+        bgrRawMat?.release(); bgrRawMat = null
         faceEngine?.close()
         greetingTts.release()
-        detectionExecutor.shutdownNow()
-        unregisterReceiver(debugTtsReceiver)
+        try { unregisterReceiver(debugTtsReceiver) } catch (e: IllegalArgumentException) { /* chưa đăng ký */ }
     }
 }

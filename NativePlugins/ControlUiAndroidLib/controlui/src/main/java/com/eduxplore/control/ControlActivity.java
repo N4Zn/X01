@@ -1362,6 +1362,38 @@ public class ControlActivity extends Activity {
             settingsStore.save();
             syncSettingsToUnity();
         }));
+
+        // 7. Vùng nhận diện khuôn mặt (2 vùng người chơi trong game + vòng tròn "Thêm từ camera").
+        // Chỉnh trên hình camera thật ở màn của FaceEnroll (cùng APK); lưu vào /sdcard/EduXplore/face_zones.json,
+        // game áp dụng từ vòng chơi sau. Chỉnh khi KHÔNG chơi (camera USB chỉ 1 nơi mở được).
+        settingsBody.addView(buildButtonSetting("Vùng nhận diện khuôn mặt (2 vùng chơi + vùng enroll)", "Mở cài đặt vùng", () -> {
+            try {
+                Intent i = new Intent();
+                i.setClassName(getPackageName(), "com.faceattendance.app.MainActivity");
+                i.putExtra("mode", "zone_setup");
+                startActivity(i);
+            } catch (Exception e) {
+                Log.e(TAG, "mở cài đặt vùng nhận diện lỗi: " + e);
+            }
+        }));
+    }
+
+    /** Một dòng cài đặt dạng: nhãn + nút bấm (mở màn khác, không phải giá trị). */
+    private View buildButtonSetting(String label, String buttonText, final Runnable onClick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 12), 0, UiUtil.dp(this, 12));
+        TextView l = UiUtil.label(this, label, 13f, R.color.text, false);
+        l.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(l);
+        android.widget.Button b = new android.widget.Button(this);
+        b.setText(buttonText);
+        b.setTextSize(13f);
+        b.setAllCaps(false);
+        b.setOnClickListener(v -> onClick.run());
+        row.addView(b);
+        return row;
     }
 
     private View buildSeekBarSetting(String label, int min, int max, int current, final UiUtil.OnPick onPick) {

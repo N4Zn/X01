@@ -41,10 +41,62 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void WarmUp() => _ = Instance;
 
+    // Hàng đợi được lưu xuống đĩa (1 dòng JSON/hàng) để mất mạng + tắt máy thì lần mở sau vẫn gửi bù.
+    // Ghi nối đuôi ở Enqueue, ghi lại toàn bộ (phần còn lại) sau mỗi lần POST thành công.
+    private const string PendingFileName = "sheets_pending.jsonl";
+    private const int MaxPersistedRows = 20000;
+    private static string PendingFilePath => SharedStorage.PathFor(PendingFileName);
+
     protected override void OnCreated()
     {
         gameObject.name = "SheetsSyncManager";
         LoadConfig();
+        LoadPending();
+    }
+
+    void LoadPending()
+    {
+        try
+        {
+            string path = PendingFilePath;
+            if (!File.Exists(path)) return;
+            var lines = File.ReadAllLines(path, Encoding.UTF8);
+            int start = Mathf.Max(0, lines.Length - MaxPersistedRows);
+            int loaded = 0;
+            lock (Lock)
+            {
+                // Chèn ĐẦU hàng đợi: hàng cũ (phiên trước) gửi trước hàng mới của phiên này.
+                var old = new List<string>();
+                for (int i = start; i < lines.Length; i++)
+                    if (!string.IsNullOrWhiteSpace(lines[i])) { old.Add(lines[i]); loaded++; }
+                PendingRowsJson.InsertRange(0, old);
+            }
+            if (loaded > 0) Debug.Log($"[SheetsSyncManager] Khôi phục {loaded} dòng chưa gửi từ phiên trước ({path}).");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[SheetsSyncManager] LoadPending lỗi: {e.Message}");
+        }
+    }
+
+    static void AppendPending(string json)
+    {
+        try { File.AppendAllText(PendingFilePath, json + "\n", Encoding.UTF8); }
+        catch (System.Exception e) { Debug.LogWarning($"[SheetsSyncManager] Lưu hàng đợi lỗi: {e.Message}"); }
+    }
+
+    /// <summary>Ghi lại file = đúng những gì còn trong hàng đợi (gọi sau khi 1 batch gửi xong).</summary>
+    static void RewritePending()
+    {
+        try
+        {
+            string path = PendingFilePath;
+            string[] remaining;
+            lock (Lock) { remaining = PendingRowsJson.ToArray(); }
+            if (remaining.Length == 0) { if (File.Exists(path)) File.Delete(path); }
+            else File.WriteAllLines(path, remaining, Encoding.UTF8);
+        }
+        catch (System.Exception e) { Debug.LogWarning($"[SheetsSyncManager] Ghi lại hàng đợi lỗi: {e.Message}"); }
     }
 
     void Start()
@@ -87,6 +139,7 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
     {
         string json = EncodeJsonObject(row);
         lock (Lock) { PendingRowsJson.Add(json); }
+        AppendPending(json);
     }
 
     IEnumerator SyncLoop()
@@ -138,6 +191,7 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
                 // thay vì phải suy đoán qua việc mở Sheet kiểm tra thủ công.
                 string respBody = req.downloadHandler != null ? req.downloadHandler.text : "(no body)";
                 Debug.Log($"[SheetsSyncManager] Đã gửi {batchToRestoreOnFailure.Count} dòng lên Sheet — response: {respBody}");
+                RewritePending();
             }
         }
     }

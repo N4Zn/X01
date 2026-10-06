@@ -169,6 +169,7 @@ class ClassManagementActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashLog.install("ClassManagementActivity")
         attendanceStore = AttendanceStore(this)
         scoreBook = ScoreBook(this)
         setContentView(buildRoot())
@@ -232,6 +233,16 @@ class ClassManagementActivity : AppCompatActivity() {
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).also { it.marginStart = px(8) }
         header.addView(addClassBtn)
+        // Chỉnh 3 vùng nhận diện (2 vùng game + vùng chữ nhật enroll) — mở màn camera ở chế độ chỉnh vùng.
+        header.addView(pillButton("⚙ Vùng nhận diện") {
+            startActivity(Intent(this, MainActivity::class.java).apply {
+                putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_ZONE_SETUP)
+            })
+        }.also {
+            it.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).also { lp -> lp.marginStart = px(8) }
+        })
         header.addView(View(this).apply {
             layoutParams = LinearLayout.LayoutParams(0, 0, 1f) // đẩy logo sát lề phải
         })

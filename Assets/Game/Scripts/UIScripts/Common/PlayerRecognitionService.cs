@@ -196,6 +196,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             recognizeElapsedSec = -1f,
             recognizeConfidence = -1f,
             round               = round,
+            questionId          = questionId ?? "",
             question            = question ?? "",
             answer              = answer ?? "",
             correctAnswer       = correctAnswer ?? "",
@@ -284,6 +285,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         public float  recognizeElapsedSec; // -1 for "round" entries
         public float  recognizeConfidence; // cosine sim 0..1; -1 for "round" entries or no match
         public int    round;               // -1 for "recognition" entries
+        public string questionId;          // id câu hỏi (rỗng nếu game không có QuestionData)
         public string question;
         public string answer;
         public string correctAnswer;       // đáp án đúng (rỗng nếu game chưa cung cấp)
