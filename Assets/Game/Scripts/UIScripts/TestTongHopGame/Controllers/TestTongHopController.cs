@@ -46,6 +46,9 @@ public class TestTongHopController : MonoBehaviour
 
     // Track players đã bị fail trong round này (tránh show ✗ 2 lần)
     readonly System.Collections.Generic.HashSet<Team> _failedThisRound = new();
+    // Bên đã được LogRound trong câu này (Combined) — để bên SAI cũng có round (trước đây chỉ bên chốt kết quả được log,
+    // bên sai/không có điểm không có round nào nên panel live báo "chưa nhận diện được ai") mà không log đôi.
+    readonly System.Collections.Generic.HashSet<Team> _loggedThisRound = new();
 
     // Track xem câu hỏi của từng player đã bị ẩn chưa (index 0=Left, 1=Right)
     bool[] _questionHidden = new bool[2];
@@ -361,6 +364,7 @@ public class TestTongHopController : MonoBehaviour
     {
         gameModel.IncrementRound();
         _failedThisRound.Clear();
+        _loggedThisRound.Clear();
         _questionHidden[0] = _questionHidden[1] = false;
 
         // Score-based difficulty (SoDem-style): tổng điểm 2 player < 4 → min, >= 4 → +1, >= 8 → max
@@ -432,6 +436,14 @@ public class TestTongHopController : MonoBehaviour
     {
         if (_failedThisRound.Contains(team)) return;
         _failedThisRound.Add(team);
+        // Ghi round SAI của bên này ngay (đáp án cụ thể không có ở callback này).
+        if (_currentQuestion != null && _loggedThisRound.Add(team))
+        {
+            int failSlot = team == Team.Left ? 0 : 1;
+            int failRound = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
+            PlayerRecognitionService.Instance.LogRound(failSlot, failRound, DescribeQuestion(_currentQuestion),
+                "(trả lời sai)", false, Time.time - _questionStartTime);
+        }
         MusicManager.Instance?.PlayWrongSfx();
         ShowWrongIcon(team);
         // Không ẩn câu hỏi/đáp án — giữ để player kia vẫn thấy và player fail thấy đáp án đúng sau
@@ -455,8 +467,9 @@ public class TestTongHopController : MonoBehaviour
         // GetPlayerStats() ở ScoreSceneController.
         int slot = team == Team.Left ? 0 : 1;
         int roundNum = (team == Team.Left ? _leftRoundsCompleted : _rightRoundsCompleted) + 1;
-        PlayerRecognitionService.Instance.LogRound(slot, roundNum,
-            DescribeQuestion(_currentQuestion), DescribeGivenAnswer(_currentQuestion, playerAnswer), isCorrect, responseTime);
+        if (_loggedThisRound.Add(team))
+            PlayerRecognitionService.Instance.LogRound(slot, roundNum,
+                DescribeQuestion(_currentQuestion), DescribeGivenAnswer(_currentQuestion, playerAnswer), isCorrect, responseTime);
 
         _lastCorrect = isCorrect;
         _lastTeam    = team;

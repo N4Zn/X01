@@ -243,6 +243,13 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             if (e.correct) { stat.correct++; stat.totalCorrectAnswerTimeSec += t; }
             map[name] = stat;
         }
+        // Người đã được NHẬN DIỆN ở bên này nhưng chưa có round nào (vừa vào chơi, hoặc chưa trả lời kịp/chưa đúng câu nào)
+        // vẫn phải hiện tên (0/0) — trước đây chỉ liệt kê người có round nên panel live báo "chưa nhận diện được ai".
+        foreach (var e in _logEntries)
+        {
+            if (e.eventType != "recognition" || e.slot != slotTag || !e.recognized || string.IsNullOrEmpty(e.name)) continue;
+            if (!map.ContainsKey(e.name)) map[e.name] = new PlayerRoundStat { name = e.name };
+        }
         var list = new List<PlayerRoundStat>(map.Values);
         list.Sort((a, b) => b.correct != a.correct ? b.correct.CompareTo(a.correct) : b.answered.CompareTo(a.answered));
         return list;
@@ -253,22 +260,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         if (string.IsNullOrEmpty(_sessionFileName)) return;
         string json = JsonUtility.ToJson(new LogWrapper { entries = _logEntries }, prettyPrint: true);
 
-        WriteFile(Path.Combine(Application.persistentDataPath, _sessionFileName), json);
-#if UNITY_ANDROID && !UNITY_EDITOR
-        try
-        {
-            using var player   = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
-            using var dir      = activity.Call<AndroidJavaObject>("getExternalFilesDir", (AndroidJavaObject)null);
-            if (dir != null)
-            {
-                string ext = Path.Combine(dir.Call<string>("getAbsolutePath"), "GameLogs");
-                Directory.CreateDirectory(ext);
-                WriteFile(Path.Combine(ext, _sessionFileName), json);
-            }
-        }
-        catch (Exception e) { Debug.LogWarning($"[PlayerRecognitionService] External log failed: {e.Message}"); }
-#endif
+        // Lịch sử chơi lưu ở /sdcard/EduXplore/GameLogs (sống qua lần cài lại app).
+        WriteFile(Path.Combine(SharedStorage.LogsDir, _sessionFileName), json);
     }
 
     static void WriteFile(string path, string json)

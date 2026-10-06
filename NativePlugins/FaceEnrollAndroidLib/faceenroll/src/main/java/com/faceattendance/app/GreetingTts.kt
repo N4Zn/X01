@@ -43,6 +43,9 @@ class GreetingTts(context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val cacheDir = File(context.cacheDir, "tts").apply { mkdirs() }
     private var audioTrack: AudioTrack? = null
+    @Volatile private var keepAliveRunning = false
+    @Volatile private var keepAliveStartMs = 0L
+    private var keepAliveThread: Thread? = null
     private val lastTemplate = mutableMapOf("single" to "", "pair" to "")
 
     // Hardcoded to Hanoi - IP-based geolocation was tried and dropped: Vietnamese ISPs often
@@ -65,13 +68,13 @@ class GreetingTts(context: Context) {
         private const val WINDY_KMH = 25.0
         private const val FEELS_HOTTER_DIFF_C = 5.0
         private const val TTS_SPEED = 1.2f
-        // Measured on this tablet+K29 speaker: a cold/suspended link takes ~1.1-1.4s from
-        // AudioTrack.play() to the Bluetooth stack actually starting to transmit (A2DP has to
-        // wake the link first); a link that's still warm from a recent previous greeting wakes
-        // in under 100ms. Sized for the cold case with margin, since a warm-link greeting just
-        // gets a bit more silence up front rather than risking the alternative (losing the
-        // start of the sentence).
-        private const val BT_WAKEUP_LEAD_MS = 1700
+        // Đầu ra âm thanh (codec/amp jack 3.5mm, hoặc link BT nếu có) ngủ khi im lâu; lúc thức dậy
+        // nuốt vài trăm ms tới ~2s đầu của stream => mất đầu câu chào. Đệm im lặng đủ dài cho
+        // trường hợp lạnh; trường hợp đang thức (keep-alive) chỉ cần đệm ngắn.
+        private const val BT_WAKEUP_LEAD_MS = 2200
+        // Khi keep-alive (luồng im lặng chạy nền) đã chạy đủ lâu thì đầu ra đang thức.
+        private const val WARM_LEAD_MS = 500
+        private const val KEEPALIVE_WARM_AFTER_MS = 2500L
         // Extra wait after AudioTrack's local buffer reports fully drained, covering
         // Bluetooth A2DP's own downstream encode/transmit buffering before stop() is called -
         // without this the last syllable could still be clipped occasionally.
@@ -500,7 +503,8 @@ class GreetingTts(context: Context) {
         try {
             val decoded = decodeMp3ToPcm(file)
             val gained = maximizeLoudness(speedUpPcm(decoded.samples, decoded.channels, TTS_SPEED))
-            val sped = padLeadingSilence(gained, decoded.sampleRate, decoded.channels, BT_WAKEUP_LEAD_MS)
+            val warm = keepAliveRunning && System.currentTimeMillis() - keepAliveStartMs > KEEPALIVE_WARM_AFTER_MS
+            val sped = padLeadingSilence(gained, decoded.sampleRate, decoded.channels, if (warm) WARM_LEAD_MS else BT_WAKEUP_LEAD_MS)
             val channelMask = if (decoded.channels >= 2) AudioFormat.CHANNEL_OUT_STEREO else AudioFormat.CHANNEL_OUT_MONO
             val bufferBytes = sped.size * 2
             val minBufSize = AudioTrack.getMinBufferSize(decoded.sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT)
@@ -559,7 +563,53 @@ class GreetingTts(context: Context) {
         }
     }
 
+    /** Phát liên tục PCM im lặng ở nền để audio HAL/codec (và link BT nếu có) không vào standby
+     * giữa các câu chào. Đầu ra ngủ thì phần đầu câu chào bị nuốt (nghe như mất đầu câu);
+     * đang thức thì không mất gì. File mp3 từ Google đã kiểm tra: nguyên vẹn, giọng bắt đầu
+     * ~140ms sau đầu file => lỗi nằm ở đường phát, không phải ở API. Gọi 1 lần sau khi tạo; release() dừng luồng. */
+    fun startKeepAlive() {
+        if (keepAliveRunning) return
+        keepAliveRunning = true
+        keepAliveStartMs = System.currentTimeMillis()
+        keepAliveThread = Thread {
+            var silent: AudioTrack? = null
+            try {
+                val rate = 24000
+                val minBuf = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
+                silent = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(rate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(maxOf(minBuf, rate / 5 * 2))
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build()
+                silent.play()
+                val zeros = ShortArray(rate / 10) // 100ms
+                while (keepAliveRunning) {
+                    if (silent.write(zeros, 0, zeros.size) < 0) break
+                }
+            } catch (e: Exception) {
+                Log.w("GreetingTts", "keep-alive stopped", e)
+            } finally {
+                keepAliveRunning = false
+                silent?.let { try { it.stop() } catch (_: Exception) {}; try { it.release() } catch (_: Exception) {} }
+            }
+        }.apply { isDaemon = true; name = "tts-keepalive"; start() }
+    }
+
     fun release() {
+        keepAliveRunning = false
+        keepAliveThread?.interrupt()
         audioTrack?.let {
             try { it.stop(); it.release() } catch (e: Exception) { Log.w("GreetingTts", "AudioTrack release failed", e) }
         }

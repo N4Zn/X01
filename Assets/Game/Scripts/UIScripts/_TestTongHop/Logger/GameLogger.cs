@@ -269,7 +269,7 @@ public class GameLogger
 
     /// <summary>
     /// Thư mục external tương ứng với từng platform:
-    ///   Android  → /sdcard/Android/data/&lt;pkg&gt;/files/GameLogs/
+    ///   Android  → /sdcard/EduXplore/GameLogs/ (SharedStorage, sống qua lần cài lại)
     ///              (getExternalFilesDir — không cần quyền WRITE_EXTERNAL_STORAGE trên API ≥ 19)
     ///   Editor   → &lt;project root&gt;/GameLogs/  (dễ mở trong Explorer)
     ///   Khác     → null (bỏ qua)
@@ -277,22 +277,8 @@ public class GameLogger
     static string ExternalLogDir()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
-        try
-        {
-            using var player   = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
-            // getExternalFilesDir(null) → /sdcard/Android/data/<pkg>/files/
-            using var dir      = activity.Call<AndroidJavaObject>("getExternalFilesDir",
-                                                                   (AndroidJavaObject)null);
-            if (dir == null) return null;
-            string path = dir.Call<string>("getAbsolutePath");
-            return EnsureDir(Path.Combine(path, "GameLogs"));
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning($"[GameLogger] External path unavailable: {e.Message}");
-            return null;
-        }
+        // /sdcard/EduXplore/GameLogs — sống qua lần gỡ/cài lại app (khác getExternalFilesDir).
+        return EnsureDir(SharedStorage.LogsDir);
 #elif UNITY_EDITOR
         // Project root (thư mục chứa Assets/) → dễ tìm trong Explorer
         string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));

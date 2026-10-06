@@ -12,7 +12,7 @@
   BÊN riêng, không gộp tổng).
 - `SheetsSyncManager.cs` — gom log (`GameLogger`, `MiniGameControllerBase.LogRoundResult`,
   `PlayerRecognitionService`) gửi lên Google Sheet qua Apps Script Web App (không cần OAuth phía
-  app), batch mỗi ~3s. Config: `Application.persistentDataPath/sheets_sync_config.json`
+  app), batch mỗi ~3s. Config: `/sdcard/EduXplore/sheets_sync_config.json` (SharedStorage)
   (`webAppUrl`, `enabled`, `intervalSeconds`).
   > **Gotcha Apps Script**: sửa code trong editor **KHÔNG** tự cập nhật URL `/exec` đang chạy —
   > bắt buộc **Deploy → Manage deployments → Edit (bút chì) → New version → Deploy** thì code mới

@@ -20,7 +20,7 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
   `showTouchIndicator`/`indicatorColor`/`indicatorDiameter` trên `LidarTouchBridge` — hiện đang
   màu đỏ, x1.5 kích thước gốc.
 - **Config calib** (`half_x`, `hight_floor`, `ymax`, `shift_x/y`, `offset_angle`, ...) — file JSON
-  editable trên máy KHÔNG cần rebuild: `Application.persistentDataPath/lidar_config.json`, gọi
+  editable trên máy KHÔNG cần rebuild: `/sdcard/EduXplore/lidar_config.json` (SharedStorage; bản cũ ở persistentDataPath được chép sang lần đầu), gọi
   `LidarTouchBridge.Instance.ReloadConfig()` hoặc restart app để áp dụng.
   - **Máy chiếu #1** (đã xác nhận hoạt động trước 2026-09-17): `{half_x:1130,
     hight_floor:1350, ymax:-600, shift_x_floor:1, shift_y:1, shift_x:1, offset_angle:-5,
@@ -37,7 +37,7 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
     offset_angle 0, nums_point_report 1` — backup `lidar_config.json.k02_pulled_20261003_default`),
     LiDAR "không nhận" vì điểm rơi lệch/ngoài màn hình (đã xảy ra thật 2026-10-03, đẩy đúng bộ
     máy chiếu vào là work). `interaction_area_calib.json` cũng mất, về chưa-calib. Phục hồi:
-    `MSYS_NO_PATHCONV=1 adb push <file> /sdcard/Android/data/com.EduXplore.X01a/files/lidar_config.json`
+    `MSYS_NO_PATHCONV=1 adb push <file> /sdcard/EduXplore/lidar_config.json`
     (package K02 hiện là `X01a`; **Git Bash PHẢI có `MSYS_NO_PATHCONV=1` trước lệnh** `adb push/
     cat/exec-out` có đường dẫn `/sdcard/...`, không thì bị đổi thành `C:/Program Files/Git/sdcard`),
     rồi **đóng hẳn app mở lại** (config chỉ đọc lúc khởi động).

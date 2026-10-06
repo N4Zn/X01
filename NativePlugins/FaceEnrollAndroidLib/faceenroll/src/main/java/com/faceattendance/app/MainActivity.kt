@@ -128,10 +128,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // device as a UVC camera and let UVCCamera.open()/startPreview() fail (caught below) for
     // whatever isn't actually a camera - works for any webcam without recalibration.
 
-    // Supports up to MAX_FACES people being recognized at once. Faces are assigned to a
-    // "slot" each frame by sorting left-to-right, so slot 0 = leftmost face, slot 1 =
-    // next, etc. Vote history is tracked per slot so temporal smoothing still works
-    // per-person even with several faces in frame simultaneously.
+    // Supports up to MAX_FACES people being recognized at once. Mỗi khuôn mặt được gắn vào 1
+    // FaceTrack bền vững qua các frame bằng IoU/khoảng cách tâm (KHÔNG còn sắp theo vị trí
+    // trái->phải mỗi frame: cách cũ làm tên "nhảy" sang người khác khi thứ tự trái/phải đổi hoặc
+    // người thứ 2 che người 1). Lock tên nằm trong track và được kiểm chứng lại bằng embedding
+    // định kỳ / khi box thay đổi đột ngột.
     private val MAX_FACES = 2
     // OpenCV's own recommendation for the SFace model (opencv_zoo demo.py):
     // cosine similarity >= 0.363 means same identity.
@@ -165,22 +166,73 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     @Volatile private var cachedOverlayW: Int = 640
     @Volatile private var cachedOverlayH: Int = 360
 
-    // How long a slot must remain absent before its resolvedLock is cleared.
+    // How long a track must remain unseen before it (and its lock) is dropped.
     // A short grace absorbs YuNet's occasional missed-detection frame (blink, motion blur)
     // without treating it as the person having actually left.
     private val lockPresenceGraceMs = 500L
-    private val lastSeenMs = LongArray(MAX_FACES) { 0L }
-
-    // Separate history for detecting sustained ambiguous pairs (two people too similar to auto-pick).
-    private val ambiguousHistories = List(MAX_FACES) { ArrayDeque<Pair<String, String>?>() }
-    private val ambiguousWindow = 5
-    private val ambiguousMinAgree = 3
 
     private class ResolvedLock(val name: String, val sinceMs: Long, val sim: Float)
-    // Confirmed-person lock per slot: once set, only show tracking (green box) without
-    // running recognition again. Cleared when the slot has been absent for > lockPresenceGraceMs.
-    private val resolvedLocks = arrayOfNulls<ResolvedLock>(MAX_FACES)
-    private val wasPresent = BooleanArray(MAX_FACES)
+    private class FaceTrack(var rect: RectF, var lastSeenMs: Long) {
+        // Confirmed-person lock: khi có, chỉ vẽ khung xanh + theo vị trí, không nhận diện lại.
+        var lock: ResolvedLock? = null
+        var smoothed: Array<PointF>? = null
+        // Số lần nhận diện (mặt frontal) liên tiếp mà không ra ai => đủ ngưỡng mới báo "mặt mới".
+        var unknownCount = 0
+    }
+    private val tracks = ArrayList<FaceTrack>()
+    // Cần chừng này lần nhận diện liên tiếp không ra ai (như người quen cũng cần vài frame mới chắc)
+    // thì mới coi là khuôn mặt mới và cảnh báo.
+    private val unknownFramesToAnnounce = 4
+
+    private fun rectIou(a: RectF, b: RectF): Float {
+        val iw = minOf(a.right, b.right) - maxOf(a.left, b.left)
+        val ih = minOf(a.bottom, b.bottom) - maxOf(a.top, b.top)
+        if (iw <= 0f || ih <= 0f) return 0f
+        val inter = iw * ih
+        val union = a.width() * a.height() + b.width() * b.height() - inter
+        return if (union <= 0f) 0f else inter / union
+    }
+
+    /** Gắn mỗi mặt vào track theo VỊ TRÍ (IoU, greedy, cặp tốt nhất trước). Mặt không khớp (không
+     * chồng đủ lên track nào, hoặc đổi cỡ đột ngột — dấu hiệu người khác chen vào/che) -> track mới,
+     * chưa có tên, sẽ được nhận diện như người mới. Track không được gắn giữ lại tới hết
+     * lockPresenceGraceMs rồi bị xoá cùng lock. Không dùng embedding để kiểm chứng lại lock: nhận
+     * 1 lần là giữ tên tới khi mặt rời khung, tránh tên chớp tắt. */
+    private fun assignTracks(faces: List<DetectedFace>, nowMs: Long): List<FaceTrack> {
+        tracks.removeAll { nowMs - it.lastSeenMs > lockPresenceGraceMs }
+        class Cand(val f: Int, val t: Int, val score: Float)
+        val cands = ArrayList<Cand>()
+        for (fi in faces.indices) {
+            val fr = faces[fi].rect
+            for (ti in tracks.indices) {
+                val tr = tracks[ti].rect
+                val sizeRatio = fr.width() / tr.width().coerceAtLeast(1f)
+                if (sizeRatio !in 0.67f..1.5f) continue // đổi cỡ đột ngột => không phải cùng người
+                val iou = rectIou(fr, tr)
+                val dist = kotlin.math.hypot((fr.centerX() - tr.centerX()).toDouble(), (fr.centerY() - tr.centerY()).toDouble()).toFloat()
+                val near = dist < 0.4f * minOf(fr.width(), tr.width())
+                if (iou >= 0.25f || near) cands.add(Cand(fi, ti, iou + if (near) 0.05f else 0f))
+            }
+        }
+        cands.sortByDescending { it.score }
+        val result = arrayOfNulls<FaceTrack>(faces.size)
+        val usedTracks = BooleanArray(tracks.size)
+        for (c in cands) {
+            if (result[c.f] != null || usedTracks[c.t]) continue
+            result[c.f] = tracks[c.t]
+            usedTracks[c.t] = true
+        }
+        return faces.indices.map { fi ->
+            val track = result[fi]
+            if (track != null) {
+                track.rect = RectF(faces[fi].rect)
+                track.lastSeenMs = nowMs
+                track
+            } else {
+                FaceTrack(RectF(faces[fi].rect), nowMs).also { tracks.add(it) }
+            }
+        }
+    }
 
     // Greeting fires once per appearance in frame, not once per cooldownMs like attendance
     // logging. Keyed by NAME (not slot index) since slot assignment is re-sorted left-to-
@@ -202,7 +254,6 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // jitter from YuNet's landmark head, which is noticeably less precise than its own box
     // detection - most visible on the mouth-corner points. Recognition itself is unaffected:
     // alignFace()/getEmbedding() still run on the raw, unsmoothed detector output.
-    private val smoothedLandmarks = arrayOfNulls<Array<PointF>>(MAX_FACES)
     private val landmarkSmoothingAlpha = 0.4f
 
     private var fpsEma: Double? = null
@@ -277,6 +328,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }
         greetingTts = GreetingTts(this)
         greetingTts.startWeatherRefresh()
+        greetingTts.startKeepAlive()
         loadTestGalleryIfPresent()
         OpenCVLoader.initLocal()
         faceEngine = FaceEngine(this)
@@ -628,12 +680,15 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         small.release()
         // Scale coordinates back to full-res space so the rest of the pipeline (alignFace,
         // overlay drawing) works on the original frame dimensions.
-        val faces = facesSmall.map { scaleFace(it, 1f / detectScale) }.sortedBy { it.rect.left }
+        val faces = facesSmall.map { scaleFace(it, 1f / detectScale) }
+        // Gắn mặt <-> track bền vững (thay cho sắp trái->phải theo slot, vốn làm tên nhảy người).
+        val faceTracks = assignTracks(faces, nowMs)
+        lastDetected = faces.firstOrNull()
 
         // Push bounding boxes immediately after detection — before recognition runs — so the
         // overlay updates at detection FPS rather than being blocked on the recognition pipeline.
-        cachedOverlayItems = faces.take(MAX_FACES).mapIndexed { i, face ->
-            val lock = if (i < MAX_FACES) resolvedLocks[i] else null
+        cachedOverlayItems = faces.mapIndexed { i, face ->
+            val lock = faceTracks[i].lock
             if (lock != null) FaceOverlayItem(face.rect, face.landmarks.map { android.graphics.PointF(it.x, it.y) }, "${lock.name} ✓", android.graphics.Color.GREEN)
             else FaceOverlayItem(face.rect, face.landmarks.map { android.graphics.PointF(it.x, it.y) }, "...", android.graphics.Color.GRAY)
         }
@@ -641,17 +696,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
         if (faces.isEmpty()) {
             lastDetected = null
-            // Release locks for slots that have been absent long enough.
-            for (i in 0 until MAX_FACES) {
-                if (nowMs - lastSeenMs[i] > lockPresenceGraceMs) {
-                    if (resolvedLocks[i] != null) {
-                        Log.e("FaceAttendance", "slot $i lock cleared (absent > ${lockPresenceGraceMs}ms)")
-                    }
-                    resolvedLocks[i] = null
-                    ambiguousHistories[i].clear()
-                }
-                smoothedLandmarks[i] = null
-                wasPresent[i] = false
+            // Tracks (kèm lock) hết hạn sau lockPresenceGraceMs không thấy.
+            tracks.removeAll {
+                val gone = nowMs - it.lastSeenMs > lockPresenceGraceMs
+                if (gone && it.lock != null) Log.e("FaceAttendance", "track lock cleared (absent > ${lockPresenceGraceMs}ms): ${it.lock?.name}")
+                gone
             }
             // Idle 1s before next detection attempt.
             nextDetectAllowedMs = nowMs + 1000
@@ -671,7 +720,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             enrollSnapshotRequested = false
             val toEnroll = mutableListOf<Pair<FloatArray, Mat>>()
             for ((i, face) in faces.withIndex()) {
-                if (i < MAX_FACES && resolvedLocks[i] == null) {
+                if (faceTracks[i].lock == null) {
                     val aligned = engine.alignFace(bgr, face)
                     val emb = engine.getEmbedding(aligned)
                     aligned.release()
@@ -691,31 +740,14 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // both slots are checked before speaking, so two simultaneous check-ins get one
         // combined greeting instead of two overlapping ones.
         val justLogged = mutableListOf<Pair<String, String>>()
-        for (slot in 0 until MAX_FACES) {
-            if (slot >= faces.size) {
-                // Slot absent this frame: release lock if gone long enough.
-                if (nowMs - lastSeenMs[slot] > lockPresenceGraceMs) {
-                    if (resolvedLocks[slot] != null) {
-                        Log.e("FaceAttendance", "slot $slot lock cleared (absent)")
-                        resolvedLocks[slot] = null
-                        ambiguousHistories[slot].clear()
-                    }
-                }
-                smoothedLandmarks[slot] = null
-                wasPresent[slot] = false
-                continue
-            }
-            val face = faces[slot]
-            if (slot == 0) lastDetected = face
-            lastSeenMs[slot] = nowMs
-            wasPresent[slot] = true
-
-            val lock = resolvedLocks[slot]
+        for ((slot, face) in faces.withIndex()) {
+            val track = faceTracks[slot]
             var color: Int
             val label: String
 
+            val lock = track.lock
             if (lock != null) {
-                // Person already confirmed: just track — no embedding, no matching.
+                // Person already confirmed: just track by position — no embedding, no matching.
                 color = Color.GREEN
                 if (!greetedActive.containsKey(lock.name)) {
                     justLogged.add(lock.name to attendanceStore.genderOf(lock.name))
@@ -729,17 +761,20 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 }
                 label = "${lock.name} ✓"
             } else {
-                // Unknown slot: run full recognition.
+                // Unknown track: run full recognition.
                 val pose = engine.estimatePose(face)
                 val goodPose = pose.isFrontal(yawTolerance, rollToleranceDeg)
                 if (slot == 0) lastGoodPose = goodPose
 
                 val tAlignStart = System.nanoTime()
-                val aligned = engine.alignFace(bgr, face)
+                val embedding = run {
+                    val aligned = engine.alignFace(bgr, face)
+                    val e = engine.getEmbedding(aligned)
+                    aligned.release()
+                    e
+                }
                 val tAlignEnd = System.nanoTime()
-                val embedding = engine.getEmbedding(aligned)
-                val tEmbedEnd = System.nanoTime()
-                aligned.release()
+                val tEmbedEnd = tAlignEnd
 
                 Log.e(
                     "FacePerf",
@@ -753,7 +788,6 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             if (!goodPose) {
                 color = Color.rgb(255, 165, 0)
                 label = "TURN TO CAMERA | $poseLabel"
-                ambiguousHistories[slot].clear()
             } else {
                 val match = attendanceStore.bestMatch(embedding, engine)
                 val name = match.name
@@ -774,9 +808,15 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                         color = Color.rgb(0, 200, 255)
                         label = "face OK - press ENROLL | $poseLabel"
                     }
+                    confirmed && tracks.any { it !== track && it.lock?.name == name } -> {
+                        // Cùng 1 tên không thể ở 2 chỗ: track khác đã giữ tên này => mặt này không được lock.
+                        color = Color.rgb(255, 165, 0)
+                        label = "$name đã có người khác ${"%.2f".format(sim)}"
+                    }
                     confirmed -> {
                         // Single-frame confirmation: set lock immediately, no voting needed.
-                        resolvedLocks[slot] = ResolvedLock(name!!, nowMs, sim)
+                        track.lock = ResolvedLock(name!!, nowMs, sim)
+                        track.unknownCount = 0
                         color = Color.GREEN
                         if (!greetedActive.containsKey(name)) {
                             justLogged.add(name to attendanceStore.genderOf(name))
@@ -795,12 +835,19 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                         label = "AMBIGUOUS ${"%.2f".format(sim)}/${"%.2f".format(runnerUpSim)} best=$name"
                     }
                     else -> {
-                        color = Color.RED
-                        label = "Unknown ${"%.2f".format(sim)} best=$name"
-                        newFaceLastSeenMs = nowMs
-                        if (!newFaceAnnouncedThisAppearance) {
-                            newFaceAnnouncedThisAppearance = true
-                            announceNewFace()
+                        // Như người quen: cần vài lần nhận diện liên tiếp không ra ai mới chắc là mặt mới.
+                        track.unknownCount++
+                        if (track.unknownCount >= unknownFramesToAnnounce) {
+                            color = Color.RED
+                            label = "Unknown ${"%.2f".format(sim)} best=$name"
+                            newFaceLastSeenMs = nowMs
+                            if (!newFaceAnnouncedThisAppearance) {
+                                newFaceAnnouncedThisAppearance = true
+                                announceNewFace()
+                            }
+                        } else {
+                            color = Color.GRAY
+                            label = "... ${track.unknownCount}/$unknownFramesToAnnounce"
                         }
                     }
                 }
@@ -809,7 +856,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
             val rect = RectF(face.rect)
             val rawPts = face.landmarks.map { PointF(it.x, it.y) }
-            val prev = smoothedLandmarks[slot]
+            val prev = track.smoothed
             val rawMeanX = rawPts.sumOf { it.x.toDouble() }.toFloat() / rawPts.size
             val rawMeanY = rawPts.sumOf { it.y.toDouble() }.toFloat() / rawPts.size
             val smoothed: Array<PointF> = if (prev == null) {
@@ -829,7 +876,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     }
                 }
             }
-            smoothedLandmarks[slot] = smoothed
+            track.smoothed = smoothed
             overlayItems.add(FaceOverlayItem(rect, smoothed.toList(), label, color))
         }
 

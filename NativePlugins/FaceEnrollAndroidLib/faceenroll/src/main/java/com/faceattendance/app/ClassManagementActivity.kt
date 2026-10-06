@@ -1191,12 +1191,48 @@ class ClassManagementActivity : AppCompatActivity() {
                 val p = it.split("-")
                 cal.set(p[0].toInt(), p[1].toInt() - 1, p[2].toInt())
             }
-            // Style R.style.SpinnerDatePickerDialog — cuộn 3 cột ngày/tháng/năm thay vì lịch
-            // lưới mặc định, dễ chọn hơn cho cô giáo (xem themes.xml để biết lý do).
-            android.app.DatePickerDialog(this, R.style.SpinnerDatePickerDialog, { _, y, m, d ->
+            // Hộp chọn ngày: mỗi lần cuộn đổi ngày là LƯU NGAY vào dữ liệu + cập nhật ô ngày sinh; bấm ra
+            // ngoài hộp để đóng vẫn giữ nguyên ngày đã chọn (không cần nút). Nút "Lưu" tổng của học sinh
+            // vẫn hoạt động như cũ (cũng ghi selectedBirthdateIso).
+            val picker = android.widget.DatePicker(android.view.ContextThemeWrapper(this, R.style.SpinnerDatePickerDialog)).apply {
+                calendarViewShown = false
+                spinnersShown = true
+                maxDate = System.currentTimeMillis()
+            }
+            picker.init(
+                cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)
+            ) { _, y, m, d ->
                 selectedBirthdateIso = "%04d-%02d-%02d".format(y, m + 1, d)
                 birthdateInput.setText("%02d/%02d/%04d".format(d, m + 1, y))
-            }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)).show()
+                attendanceStore.setBirthdate(currentName, selectedBirthdateIso!!)
+            }
+            val box = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(px(16), px(16), px(16), px(12))
+                background = GradientDrawable().apply { setColor(cCard); cornerRadius = px(16).toFloat() }
+                addView(TextView(this@ClassManagementActivity).apply {
+                    text = "Chọn ngày sinh"
+                    textSize = 16f
+                    setTextColor(cText)
+                    setTypeface(typeface, Typeface.BOLD)
+                    gravity = Gravity.CENTER
+                    setPadding(0, 0, 0, px(4))
+                })
+                addView(TextView(this@ClassManagementActivity).apply {
+                    text = "Chọn ngày nào lưu ngày đó — bấm ra ngoài để đóng"
+                    textSize = 12f
+                    setTextColor(cTextDim)
+                    gravity = Gravity.CENTER
+                    setPadding(0, 0, 0, px(8))
+                })
+                addView(picker, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
+            android.app.Dialog(this).apply {
+                requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+                setContentView(box)
+                setCanceledOnTouchOutside(true)
+                window?.setBackgroundDrawable(GradientDrawable().apply { setColor(Color.TRANSPARENT) })
+            }.show()
         }
         leftCol.addView(birthdateInput)
         // Enter ở ô tên thật: ẩn bàn phím, mở luôn bộ chọn ngày sinh (ô kế tiếp).

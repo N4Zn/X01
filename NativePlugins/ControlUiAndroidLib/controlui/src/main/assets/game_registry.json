@@ -47,6 +47,7 @@
     {"name": "SangTruaChieuToi", "displayName": "Thời gian trong ngày", "group": "Thời gian", "sceneName": "SangTruaChieuToi", "category": 0},
     {"name": "ThuNghiem2", "displayName": "Tách số", "group": "Đếm", "sceneName": "ThuNghiem2", "category": 0},
     {"name": "SoSanhSo", "displayName": "So sánh số", "group": "So sánh", "sceneName": "SoSanhSo", "category": 0},
-    {"name": "GameSangChuaChieuToiCuaBe", "displayName": "Các buổi trong ngày", "group": "Thời gian", "sceneName": "GameSangChuaChieuToiCuaBe", "category": 0}
+    {"name": "GameSangChuaChieuToiCuaBe", "displayName": "Các buổi trong ngày", "group": "Thời gian", "sceneName": "GameSangChuaChieuToiCuaBe", "category": 0},
+    {"name": "TachSo2", "displayName": "Tách số (2)", "group": "Cộng", "sceneName": "TachSo2", "category": 0}
   ]
 }

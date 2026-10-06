@@ -30,6 +30,8 @@
 - [ ] Lidar tự ON khi vào mọi game (kể cả game cũ không dùng Kit): vào từng game cũ, chạm sàn có ăn; Menu/Calib vẫn OFF (`LidarTouchBridge.NonGameScenes`) — (2026-10-05)
 - [ ] Tab TỔNG KẾT (ControlActivity): Thời lượng hiện m:ss (trừ Pause); điểm 2 đội = điểm cuối thật (cả game cũ, trước đây 0–0); Stop tay giữa chừng không lệch round cuối; danh sách bạn hiện "X/Y câu đúng" — (2026-10-05)
 
+- [ ] Panel live ControlActivity: bên trả lời SAI / không có điểm vẫn hiện tên (Combined: TestTongHop + Kit); bên đã nhận diện nhưng chưa có câu nào hiện 0đ·0c — (2026-10-05)
+
 ## Git / hạ tầng
 - [ ] Merge `scorescene-mvp-tiachop` → `main` (cách 1: `commit-tree` hoặc merge --allow-unrelated-histories -X theirs; squash khi về sau) — (2026-10-04)
 - [ ] Khôi phục lại `ProjectSettings/EditorBuildSettings.asset` nếu scene lại bị bỏ tick — (2026-10-04)
@@ -63,3 +65,14 @@
 - [ ] Test màu chữ câu hỏi/đáp án: chọn màu trong web builder → Export → import Unity → chữ đúng màu (web: ô màu dưới ô cỡ chữ).
 - [ ] PlanetOrderDisplay giữ countdown chữ tối trên nền trắng (cố ý); SaveTheAstronaut/LaneDash giữ số 3-2-1 to 120 (đã trắng) — đổi nếu muốn đồng bộ hẳn.
 - [ ] Quyết `Editor/GameControlBridgeTester.cs` (giữ/bỏ) và xác nhận xoá scene `ThuNghiem12.unity` (đang `D` chưa commit) — (2026-10-05)
+
+## FaceEnroll: tracking + chào + ngày sinh (2026-10-05)
+- [ ] K02: 1 người đã nhận diện, người thứ 2 bước vào che người 1 → khung người 2 KHÔNG mang tên người 1 (log `lock ... dropped`); 2 người cùng khung → mỗi người giữ đúng tên, đổi chỗ trái/phải không nhảy tên. Lock giữ theo vị trí, KHÔNG kiểm chứng lại bằng embedding (tên không chớp tắt); mặt mới/đổi cỡ đột ngột = track mới => nhận diện lại. Báo "mặt mới" sau 4 lần nhận diện liên tiếp không ra ai (`unknownFramesToAnnounce`).
+- [ ] K02: câu chào không còn mất đầu câu (GreetingTts: luồng im lặng keep-alive + lead 500ms khi warm / 2200ms khi lạnh). Nếu vẫn mất: tăng `WARM_LEAD_MS`.
+- [ ] Quản lý lớp: bấm ô ngày sinh → hộp chọn ngày/tháng/năm: cuộn tới đâu LƯU ngay tới đó, bấm ra ngoài để đóng vẫn giữ; nút Lưu tổng của học sinh vẫn dùng được — (2026-10-05)
+
+## Dữ liệu sống qua lần cài lại (2026-10-05)
+- Gốc dữ liệu lâu dài = `/sdcard/EduXplore` (targetSdk 27 → không bị Android xoá khi gỡ app): lớp, roster, khuôn mặt + ảnh, điểm (`class_rounds.jsonl`), `game_settings.json` (đã có từ trước) + MỚI: lịch sử chơi `GameLogs/`, `lidar_config.json`, `interaction_area_calib.json`, `sheets_sync_config.json`, `attendance_log.csv`, `snapshots/` (qua `SharedStorage.cs` + `AttendanceStore`). File cũ trong thư mục riêng của app tự được CHÉP sang lần mở đầu (không xoá nguồn).
+- [ ] K02: build APK, cài đè bản cũ → kiểm tra `/sdcard/EduXplore/GameLogs` có log cũ + calib/lidar_config còn nguyên; chơi 1 game → log mới nằm ở GameLogs; gỡ app rồi cài lại → mọi thứ vẫn còn.
+- Cài bằng `adb install -r` (KHÔNG `uninstall` trước) nếu muốn giữ cả PlayerPrefs; PlayerPrefs chỉ còn là bản sao, nguồn thật của cài đặt là `game_settings.json`.
+- Lưu ý: dữ liệu tồn tại nhưng app cài lại phải được cấp lại quyền Storage thì mới đọc được (Android 10, targetSdk 27: quyền runtime reset khi gỡ app).

@@ -72,16 +72,18 @@ class AttendanceStore(private val context: Context) {
     // persistence so the fake 200-person test gallery never leaks into the production save file.
     private val testGalleryNames = HashSet<String>()
     private val lastLogged = HashMap<String, Long>()
-    private val logFile = File(context.getExternalFilesDir(null), "attendance_log.csv")
     // Shared path: both FaceAttendance and EduXplore game read/write this file.
     private val sharedDir = File("/sdcard/EduXplore").also { it.mkdirs() }
+    // Nhật ký điểm danh + ảnh snapshot cũng nằm ở /sdcard/EduXplore để sống qua lần gỡ/cài lại app
+    // (getExternalFilesDir bị Android xoá cùng app). File cũ được chép sang lúc mở app (migrateAppFilesToSharedDir).
+    private val logFile = File(sharedDir, "attendance_log.csv")
     private val enrolledFile = File(sharedDir, "enrolled.json")
     private val classesFile = File(sharedDir, "classes.json")
     // Ảnh mẫu nằm CÙNG phân vùng với enrolled.json (/sdcard/EduXplore/enrolled_photos/<tên>/<tên>_<thời gian>.jpg)
     // để backup 1 thư mục /sdcard/EduXplore là đủ. Ảnh cũ ở getExternalFilesDir được chuyển sang
     // đây lúc mở app (migratePhotosToSharedDir).
     private val enrolledPhotosDir = File(sharedDir, "enrolled_photos")
-    private val snapshotDir = File(context.getExternalFilesDir(null), "snapshots")
+    private val snapshotDir = File(sharedDir, "snapshots")
     private val timeFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
     private val displayTimeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
 
@@ -108,6 +110,7 @@ class AttendanceStore(private val context: Context) {
         snapshotDir.mkdirs()
         loadPersisted()
         migratePhotosToSharedDir()
+        migrateAppFilesToSharedDir()
         migrateLegacyRosterIfNeeded()
         importRosterIfChanged()
     }
@@ -489,6 +492,26 @@ class AttendanceStore(private val context: Context) {
     /** Chuyển ảnh mẫu còn nằm ở thư mục cũ (getExternalFilesDir) sang /sdcard/EduXplore/enrolled_photos,
      * cập nhật đường dẫn trong enrolled.json. Chạy mỗi lần mở, không làm gì nếu đã chuyển hết;
      * ảnh không chuyển được (file mất, lỗi ghi) giữ nguyên đường dẫn cũ — KHÔNG xoá gì. */
+    /** Chép attendance_log.csv + snapshots từ thư mục riêng của app (mất khi cài lại) sang
+     * /sdcard/EduXplore nếu đích chưa có. Không xoá nguồn. */
+    private fun migrateAppFilesToSharedDir() {
+        try {
+            val oldDir = context.getExternalFilesDir(null) ?: return
+            val oldLog = File(oldDir, "attendance_log.csv")
+            if (oldLog.exists() && !logFile.exists()) oldLog.copyTo(logFile)
+            val oldSnaps = File(oldDir, "snapshots")
+            if (oldSnaps.isDirectory) {
+                snapshotDir.mkdirs()
+                oldSnaps.listFiles()?.forEach { f ->
+                    val dst = File(snapshotDir, f.name)
+                    if (f.isFile && !dst.exists()) f.copyTo(dst)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("AttendanceStore", "migrateAppFilesToSharedDir failed", e)
+        }
+    }
+
     private fun migratePhotosToSharedDir() {
         var changed = false
         val root = enrolledPhotosDir.absolutePath + File.separator

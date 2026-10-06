@@ -410,7 +410,7 @@ public class SpawnFlowDisplay : MonoBehaviour, IAnswerDisplay
                 ClearOthersExcept(team, answerIndex);
                 if (_isIndependent)
                 {
-                    (isLeft ? _leftOnDoneInd : _rightOnDoneInd)?.Invoke(false, team, q.correctAnswers);
+                    (isLeft ? _leftOnDoneInd : _rightOnDoneInd)?.Invoke(false, team, new[] { answerIndex }); // đáp án ĐÃ CHỌN
                 }
                 else
                 {

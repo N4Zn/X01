@@ -321,6 +321,13 @@ public class DemQuaController : MiniGameControllerBase
         if (team == Team.Left) _leftRoundCount = 0; else _rightRoundCount = 0;
         UpdateBasketText(team, 0);
         HideAllBasketFruitSlots(team);
+        // Phòng hờ punch bị cắt giữa chừng (coroutine dừng) làm rổ kẹt ở scale phóng: trả về gốc.
+        var basket = team == Team.Left ? leftBasketIcon : rightBasketIcon;
+        if (basket != null && basketBaseScale.TryGetValue(basket, out var baseScale))
+        {
+            if (basketPunch.TryGetValue(basket, out var running) && running != null) StopCoroutine(running);
+            basket.localScale = baseScale;
+        }
     }
 
     /// <summary>Ẩn cả 5 slot quả trong giỏ — gọi lúc round MỚI bắt đầu để dọn sạch quả của round
@@ -572,14 +579,24 @@ public class DemQuaController : MiniGameControllerBase
     }
 
     // ── Hiệu ứng: rổ nảy nhẹ mỗi lần chạm ────────────────────────────────────────
+    // Scale gốc của rổ ghi 1 LẦN + mỗi rổ chỉ 1 punch chạy cùng lúc. Trước đây mỗi punch tự đọc
+    // localScale hiện tại làm "gốc": chạm nhanh liên tiếp thì punch sau đọc phải scale đang phóng
+    // (vd 1.15x) làm gốc rồi trả về đúng giá trị đó => rổ to dần sau mỗi lần chồng, không thu lại.
+    readonly Dictionary<RectTransform, Vector3> basketBaseScale = new Dictionary<RectTransform, Vector3>();
+    readonly Dictionary<RectTransform, Coroutine> basketPunch = new Dictionary<RectTransform, Coroutine>();
+
     void PunchBasket(RectTransform basket)
     {
-        if (basket != null) StartCoroutine(PunchScaleRoutine(basket));
+        if (basket == null) return;
+        if (!basketBaseScale.ContainsKey(basket)) basketBaseScale[basket] = basket.localScale;
+        if (basketPunch.TryGetValue(basket, out var running) && running != null) StopCoroutine(running);
+        basket.localScale = basketBaseScale[basket];
+        basketPunch[basket] = StartCoroutine(PunchScaleRoutine(basket));
     }
 
     IEnumerator PunchScaleRoutine(RectTransform rect)
     {
-        Vector3 original = rect.localScale;
+        Vector3 original = basketBaseScale[rect];
         const float half = 0.1f;
         float t = 0f;
         while (t < half)

@@ -52,7 +52,7 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
         StartCoroutine(SyncLoop());
     }
 
-    private string ConfigFilePath => Path.Combine(Application.persistentDataPath, ConfigFileName);
+    private string ConfigFilePath => SharedStorage.PathFor(ConfigFileName);
 
     void LoadConfig()
     {

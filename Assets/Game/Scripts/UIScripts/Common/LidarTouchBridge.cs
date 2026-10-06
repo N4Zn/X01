@@ -91,7 +91,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
 
     private const string CalibFileName = "interaction_area_calib.json";
     private CalibConfigJson _calib = new CalibConfigJson();
-    private string CalibFilePath => Path.Combine(Application.persistentDataPath, CalibFileName);
+    private string CalibFilePath => SharedStorage.PathFor(CalibFileName);
 
     private void LoadCalib()
     {
@@ -204,7 +204,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         SetTouchEnabled(true);
     }
 
-    private string ConfigFilePath => Path.Combine(Application.persistentDataPath, ConfigFileName);
+    private string ConfigFilePath => SharedStorage.PathFor(ConfigFileName);
 
     private void LoadConfig()
     {

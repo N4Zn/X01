@@ -18,7 +18,7 @@ public class DataManager : Singleton<DataManager>
 
     private string GetFilePath()
     {
-        return Path.Combine(Application.persistentDataPath, FileName);
+        return SharedStorage.PathFor(FileName);
     }
 
     // ===== Save / Load =====

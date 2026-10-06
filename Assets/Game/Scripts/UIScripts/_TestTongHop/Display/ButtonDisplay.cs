@@ -219,7 +219,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
                 if (_isIndependent)
                 {
                     // Independent: thông báo riêng cho player này, không ảnh hưởng bên kia
-                    (isLeft ? _leftOnDone : _rightOnDone)?.Invoke(false, team, myQuestion.correctAnswers);
+                    (isLeft ? _leftOnDone : _rightOnDone)?.Invoke(false, team, new[] { answerIndex }); // đáp án ĐÃ CHỌN (trước đây truyền nhầm đáp án đúng)
                 }
                 else
                 {

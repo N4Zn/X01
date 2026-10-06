@@ -73,6 +73,8 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     Coroutine _timeoutCoroutine;
     Coroutine _nextRoundCoroutine;
     float _questionShownTime;
+    // Combined: bên đã được log round ở câu này (bên SAI cũng phải có round, nhưng không log đôi ở HandleResult).
+    readonly HashSet<Team> _loggedThisRound = new HashSet<Team>();
 
     // ── Independent mode state (playMode == Independent) ─────────────────────
     bool _independentRunning;
@@ -263,6 +265,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         }
 
         _questionShownTime = Time.time;
+        _loggedThisRound.Clear();
         OnQuestionShown(CurrentQuestion);
         Fsm.StateMachineChange(MiniGameState.WaitAnswer);
     }
@@ -312,7 +315,8 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         if (_timeoutCoroutine != null) { StopCoroutine(_timeoutCoroutine); _timeoutCoroutine = null; }
         if (correct) AwardDefaultPoint(team);
         if (correct && UseDefaultFeedbackFx) PlayDefaultFeedbackFx(team, true);
-        LogRoundResult(team, CurrentQuestion, playerAnswer, correct, Time.time - _questionShownTime);
+        if (playMode == MiniGamePlayMode.Independent || _loggedThisRound.Add(team))
+            LogRoundResult(team, CurrentQuestion, playerAnswer, correct, Time.time - _questionShownTime);
         OnRoundResult(correct, team, playerAnswer);
         Fsm.StateMachineChange(MiniGameState.Feedback,
             new Dictionary<string, object> { { "correct", correct }, { "team", team } });
@@ -325,6 +329,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     void HandlePlayerFailed(Team team)
     {
+        // Bên này vừa trả lời SAI: ghi round ngay để có tên/số câu trong panel live + lịch sử (trước đây chỉ bên chốt kết quả được ghi).
+        if (playMode != MiniGamePlayMode.Independent && CurrentQuestion != null && _loggedThisRound.Add(team))
+            LogRoundResult(team, CurrentQuestion, null, false, Time.time - _questionShownTime);
         if (UseDefaultFeedbackFx) PlayDefaultFeedbackFx(team, false);
         OnPlayerFailed(team);
     }

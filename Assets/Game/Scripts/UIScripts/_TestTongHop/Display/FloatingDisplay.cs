@@ -358,7 +358,7 @@ public class FloatingDisplay : MonoBehaviour, IAnswerDisplay
                 else
                     ApplyMultiFinalState(myItems, validator, q.correctAnswers);
                 if (_isIndependent)
-                    (isLeft ? _leftOnDoneInd : _rightOnDoneInd)?.Invoke(false, team, q.correctAnswers);
+                    (isLeft ? _leftOnDoneInd : _rightOnDoneInd)?.Invoke(false, team, new[] { answerIndex }); // đáp án ĐÃ CHỌN
                 else
                 {
                     if (isLeft) _leftAnsweredWrong = true; else _rightAnsweredWrong = true;

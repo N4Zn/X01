@@ -377,22 +377,7 @@ public class FRTestController : MonoBehaviour
         };
         string json  = JsonUtility.ToJson(session, prettyPrint: true);
         string fname = $"FRTest_{DateTime.Now:yyyy-MM-dd_HHmmss}.json";
-        WriteLog(Path.Combine(Application.persistentDataPath, fname), json);
-#if UNITY_ANDROID && !UNITY_EDITOR
-        try
-        {
-            using var player   = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
-            using var dir      = activity.Call<AndroidJavaObject>("getExternalFilesDir", (AndroidJavaObject)null);
-            if (dir != null)
-            {
-                string ext = Path.Combine(dir.Call<string>("getAbsolutePath"), "GameLogs");
-                Directory.CreateDirectory(ext);
-                WriteLog(Path.Combine(ext, fname), json);
-            }
-        }
-        catch (Exception e) { Debug.LogWarning($"[FRTest] External log failed: {e.Message}"); }
-#endif
+        WriteLog(Path.Combine(SharedStorage.LogsDir, fname), json);
     }
 
     static void WriteLog(string path, string json)
