@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- UVC USB camera access -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <!-- Required by AOSP UsbUserSettingsManager to grant USB_CLASS_VIDEO permission -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Read the shared face database from /sdcard/EduXplore/ -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application>
+        <!-- Activity merge: adds USB_DEVICE_ATTACHED intent to UnityPlayerActivity.
+             Without this, the USB permission dialog appears behind Unity's fullscreen
+             window and can never be tapped — camera never gets permission. -->
+        <activity android:name="com.unity3d.player.UnityPlayerActivity">
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_device_filter" />
+        </activity>
+    </application>
+
+</manifest>

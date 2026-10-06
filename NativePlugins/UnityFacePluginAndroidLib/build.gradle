@@ -1,0 +1,44 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.eduxplore.faceplugin'
+    compileSdk 34
+    ndkVersion "27.0.12077973"
+
+    defaultConfig {
+        minSdk 22
+        // targetSdk 27: same workaround as FaceAttendance — sidesteps K02 vendor ROM's
+        // broken UsbUserSettingsManager check that silently denies USB VIDEO permission
+        // for any targetSdk >= 28.
+        targetSdk 27
+    }
+
+    sourceSets {
+        main {
+            // Share the UVC Java wrappers (com.serenegiant.usb.*) from :app's source tree.
+            // Our own Kotlin files live in src/main/java/com/eduxplore/faceplugin/.
+            java.srcDirs += ['../app/src/main/java/com/serenegiant']
+            // Pre-built .so files from :app's NDK build (copied by build script).
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+
+    androidResources { noCompress += ["onnx"] }
+}
+
+dependencies {
+    implementation 'org.opencv:opencv:4.9.0'
+    // com.unity3d.player.UnityPlayer is provided at runtime by the Unity APK.
+    // Add the Unity classes.jar as compileOnly so the IDE/compiler can resolve it:
+    //   compileOnly files('<UNITY_INSTALL>/Editor/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Release/Classes/classes.jar')
+    // If you skip this, avoid referencing UnityPlayer directly in Kotlin (pass Activity from C# instead).
+}
