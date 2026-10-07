@@ -35,7 +35,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         _logEntries.Clear();
         _lastName[0] = _lastName[1] = null;
         _lastRecognized[0] = _lastRecognized[1] = false;
-        _sessionFileName = $"GameLog_{gameName}_{DateTime.Now:yyyy-MM-dd_HHmmss}.json";
+        _sessionFileName = $"{DateTime.Now:yyyy-MM-dd_HHmmss}_{gameName}.json";
     }
 
     /// <summary>

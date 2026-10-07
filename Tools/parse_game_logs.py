@@ -6,11 +6,11 @@ all games/sessions (not by game or file), so you can evaluate one specific perso
 
 Handles the three log schemas currently produced by the project:
 
-  1. SessionLog   ("<GameName>_<timestamp>.json", e.g. TestTongHop_*.json)
+  1. SessionLog   ("<timestamp>_<GameName>.json", e.g. *_TestTongHop.json)
      -> written by Assets/Game/Scripts/UIScripts/_TestTongHop/Logger/GameLogger.cs
      -> {gameName, playerLeft, playerRight, rounds:[{..., clicks:[...]}]}
 
-  2. GameLog      ("GameLog_<GameName>_<timestamp>.json")
+  2. GameLog      ("<timestamp>_<GameName>.json")
      -> written by Assets/Game/Scripts/UIScripts/Common/PlayerRecognitionService.cs
      -> {entries:[{eventType:"recognition"|"round", slot, name, ...}]}
 

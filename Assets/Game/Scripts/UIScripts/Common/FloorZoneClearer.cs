@@ -29,6 +29,8 @@ public class FloorZoneClearer : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public static FloorZoneClearer Await(RectTransform zone, Action onDone)
     {
+        zone = ResolveRoot(zone);
+        if (zone == null) { onDone?.Invoke(); return null; }
         zone.SetAsLastSibling();
         return Create(zone, onDone, labelXMin: 0f, labelXMax: 1f);
     }
@@ -38,6 +40,8 @@ public class FloorZoneClearer : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public static FloorZoneClearer AwaitSide(Team team, RectTransform root, Action onDone)
     {
+        root = ResolveRoot(root);
+        if (root == null) { onDone?.Invoke(); return null; }
         var go = new GameObject($"_FloorZoneClearer_{team}");
         var rt = go.AddComponent<RectTransform>();
         rt.SetParent(root, false);
@@ -79,6 +83,8 @@ public class FloorZoneClearer : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public static FloorZoneClearer AwaitBothSides(RectTransform root, Action onDone)
     {
+        root = ResolveRoot(root);
+        if (root == null) { onDone?.Invoke(); return null; }
         var go = new GameObject("_FloorZoneClearer_Both");
         var rt = go.AddComponent<RectTransform>();
         rt.SetParent(root, false);
@@ -136,6 +142,25 @@ public class FloorZoneClearer : MonoBehaviour, IPointerClickHandler
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Nhiều controller truyền gameView.GetComponent&lt;RectTransform&gt;(), nhưng view có thể nằm trên
+    /// object gốc chỉ có Transform thường (vd AddNumberGame/SubNumberGame) → null, hoặc nằm ngoài Canvas.
+    /// Khi đó vùng clear bị tạo ngoài Canvas (phủ cả 2 bên, nhận click của bên kia → không bao giờ clear)
+    /// hoặc crash. Fallback: dùng Canvas gốc (không phải World Space) của scene.
+    /// </summary>
+    static RectTransform ResolveRoot(RectTransform root)
+    {
+        if (root != null && root.GetComponentInParent<Canvas>() != null) return root;
+
+        foreach (var c in FindObjectsOfType<Canvas>())
+        {
+            if (c.isRootCanvas && c.renderMode != RenderMode.WorldSpace)
+                return c.transform as RectTransform;
+        }
+        Debug.LogWarning("NDL: FloorZoneClearer — không tìm thấy Canvas gốc, bỏ qua chờ clear.");
+        return null;
+    }
 
     static FloorZoneClearer Create(RectTransform parent, Action onDone, float labelXMin, float labelXMax)
     {

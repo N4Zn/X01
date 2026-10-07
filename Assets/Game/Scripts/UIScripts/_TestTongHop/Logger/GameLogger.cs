@@ -252,7 +252,7 @@ public class GameLogger
         });
 
         string json  = JsonUtility.ToJson(log, prettyPrint: true);
-        string fname = $"{_gameName}_{_sessionStart:yyyy-MM-dd_HHmmss}.json";
+        string fname = $"{_sessionStart:yyyy-MM-dd_HHmmss}_{_gameName}.json";
 
         // 1. Internal storage — luôn ghi được
         WriteFile(Path.Combine(Application.persistentDataPath, fname), json);

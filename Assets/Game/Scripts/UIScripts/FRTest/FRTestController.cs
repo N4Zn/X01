@@ -376,7 +376,7 @@ public class FRTestController : MonoBehaviour
             rounds      = _rounds,
         };
         string json  = JsonUtility.ToJson(session, prettyPrint: true);
-        string fname = $"FRTest_{DateTime.Now:yyyy-MM-dd_HHmmss}.json";
+        string fname = $"{DateTime.Now:yyyy-MM-dd_HHmmss}_FRTest.json";
         WriteLog(Path.Combine(SharedStorage.LogsDir, fname), json);
     }
 
