@@ -100,6 +100,7 @@ public static class GameRegistry
         Set(0, 1, "Counting",   "Đếm số",               "TestTongHopGame", Engine.TongHopGame, group: "Đếm");
         Set(0, 2, "AddNumber5", "Cộng số (dễ)",         "AddNumberGame",   Engine.MathGame,    group: "Cộng");
         Set(0, 3, "AddNumber",  "Cộng số",              "AddNumberGame",   Engine.MathGame,    group: "Cộng");
+        Set(0, 17, "SubNumber5", "Trừ trong phạm vi 5", "SubNumberGame",   Engine.MathGame,    group: "Trừ");
         Set(0, 4, "SoDem",      "Số đếm",               "SoDemGame",       Engine.ListenGame,  group: "Đếm");
         // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
         Set(0, 6, "Numbers",    "Nhận biết số",         "NumbersGame",     Engine.ListenGame);
@@ -170,6 +171,7 @@ public static class GameRegistry
         Set(0, 13, "SoSanhSo", "So sánh số", "SoSanhSo", Engine.MiniGameKit, group: "So sánh");
         Set(0, 14, "GameSangChuaChieuToiCuaBe", "Các buổi trong ngày", "GameSangChuaChieuToiCuaBe", Engine.MiniGameKit, group: "Thời gian");
         Set(0, 15, "TachSo2", "Tách số (2)", "TachSo2", Engine.MiniGameKit, group: "Cộng");
+        Set(0, 16, "SoSanhSo2Dau", "So sánh số (>, <, =)", "SoSanhSo2Dau", Engine.MiniGameKit, group: "So sánh");
         // <GENERIC-GAMES>
     }
 

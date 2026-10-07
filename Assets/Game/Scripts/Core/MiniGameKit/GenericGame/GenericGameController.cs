@@ -1282,6 +1282,8 @@ public class GenericGameController : MiniGameControllerBase
     protected override void CleanupCurrentDisplay()
     {
         base.CleanupCurrentDisplay();
+        StopIdleEffects(Team.Left);
+        StopIdleEffects(Team.Right);
         StopQuestionAudio();
         HideQuestionAndAnswers(Team.Left);
         HideQuestionAndAnswers(Team.Right);
@@ -1316,6 +1318,7 @@ public class GenericGameController : MiniGameControllerBase
         {
             var btn = buttonDisplay.GetActiveButtonByAnswerIndex(team, i);
             if (btn == null) continue;
+            ((RectTransform)btn.transform).localScale = Vector3.one; // idle round trước bị dừng giữa nhịp có thể để lại scale lệch
             var fx = Pick(SlotFxOf(team, i)?.onIdle, _package.effects.onIdle);
             foreach (var spec in fx.effects)
             {
@@ -1711,6 +1714,11 @@ public class GenericGameController : MiniGameControllerBase
         if (playMode == MiniGamePlayMode.Independent) return;
         ApplyRoundContent(Team.Left, CurrentQuestion);
         ApplyRoundContent(Team.Right, CurrentQuestion);
+        if (!UsesSpawnFlow)
+        {
+            StartIdleEffects(Team.Left, CurrentQuestion);
+            StartIdleEffects(Team.Right, CurrentQuestion);
+        }
     }
 
     protected override bool UseIndependentRoundCountdown => _package != null && _package.settings.countdownMode == "nextInN";

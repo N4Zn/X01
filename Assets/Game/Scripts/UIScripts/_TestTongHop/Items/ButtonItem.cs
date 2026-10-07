@@ -95,7 +95,10 @@ public class ButtonItem : MonoBehaviour, IPointerClickHandler
 
     public void SetFontSize(float size)
     {
-        if (textLabel != null && size > 0) textLabel.fontSize = size;
+        if (textLabel == null || size <= 0) return;
+        // Prefab bật auto-size (max 22) → gán fontSize bị kẹp về ≤22, nhìn bé tí. Có ghi đè thì tắt auto-size.
+        textLabel.enableAutoSizing = false;
+        textLabel.fontSize = size;
     }
 
     /// <summary>Bật/tắt nền thẻ bài (card trắng mặc định) — dùng cho đáp án ảnh thật không có

@@ -32,6 +32,7 @@ public static class BuildSettingsConfigurator
         ("AddUpGame",          "Assets/Game/Scenes/AddUpGame/AddUpGame.unity"),
         ("NumberAddUpGame",    "Assets/Game/Scenes/NumberAddUpGame/NumberAddUpGame.unity"),
         ("AddNumberGame",      "Assets/Game/Scenes/AddNumberGame/AddNumberGame.unity"),
+        ("SubNumberGame",      "Assets/Game/Scenes/SubNumberGame/SubNumberGame.unity"),
 
         // ── Other engines ─────────────────────────────────────────────────
         ("TrainPathGame",      "Assets/Game/Scenes/TrainPathGame/TrainPathGame.unity"),

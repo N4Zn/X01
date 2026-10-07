@@ -12,7 +12,7 @@ public class BreathingEffect : IVisualEffect
         Vector3 original = target.localScale;
         Vector3 peak = original * Mathf.Max(1f, p.scale);
         float half = Mathf.Max(0.05f, p.duration) * 0.5f;
-        int remaining = p.loops;
+        int remaining = p.loops == 0 ? -1 : p.loops; // JSON từ web không ghi loops → struct = 0 → coi là lặp vô hạn
 
         while (remaining < 0 || remaining-- > 0)
         {

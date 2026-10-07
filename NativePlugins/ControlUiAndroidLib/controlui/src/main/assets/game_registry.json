@@ -5,6 +5,7 @@
     {"name": "Counting", "displayName": "Đếm đến 10", "group": "Đếm", "sceneName": "TestTongHopGame", "category": 0},
     {"name": "AddNumber5", "displayName": "Cộng trong phạm vi 5", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "AddNumber", "displayName": "Cộng trong phạm vi 10", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
+    {"name": "SubNumber5", "displayName": "Trừ trong phạm vi 5", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
     {"name": "SoDem", "displayName": "Số đếm", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
     {"name": "DemQua", "displayName": "Đếm quả", "group": "Đếm", "sceneName": "DemQuaGame", "category": 0},
     {"name": "Numbers", "displayName": "Nhận biết số", "sceneName": "NumbersGame", "category": 0},
@@ -48,6 +49,7 @@
     {"name": "ThuNghiem2", "displayName": "Tách số", "group": "Đếm", "sceneName": "ThuNghiem2", "category": 0},
     {"name": "SoSanhSo", "displayName": "So sánh số", "group": "So sánh", "sceneName": "SoSanhSo", "category": 0},
     {"name": "GameSangChuaChieuToiCuaBe", "displayName": "Các buổi trong ngày", "group": "Thời gian", "sceneName": "GameSangChuaChieuToiCuaBe", "category": 0},
-    {"name": "TachSo2", "displayName": "Tách số (2)", "group": "Cộng", "sceneName": "TachSo2", "category": 0}
+    {"name": "TachSo2", "displayName": "Tách số (2)", "group": "Cộng", "sceneName": "TachSo2", "category": 0},
+    {"name": "SoSanhSo2Dau", "displayName": "So sánh số (>, <, =)", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0}
   ]
 }
