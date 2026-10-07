@@ -66,6 +66,11 @@ public class GameControlBridge : Singleton<GameControlBridge>
         // riêng, KHÔNG kế thừa MiniGameControllerBase — phải gọi thêm nhánh này, nếu không
         // Pause/report luôn no-op với game chính (đã xác nhận qua test thực tế).
         TestTongHopController.Current?.Pause();
+        // Pause CHUNG cho mọi game: nhiều scene (SoDem, ChuCai, ListenSelect, Numbers, PlanetOrder,
+        // PlanetAlphabet, SaveTheAstronaut, LaneDash, SolarSystem, AddNumber...) không có controller
+        // nào ở trên nên nút Pause trước đây là no-op. timeScale=0 đóng băng timer/coroutine/animation
+        // theo deltaTime của mọi game; touch đã tắt riêng ở dưới.
+        Time.timeScale = 0f;
         LidarTouchBridge.Instance.SetTouchEnabled(false);
         MusicManager.Instance?.PauseBgm();
         Debug.Log("[GameControlBridge] OnPauseRequested");
@@ -75,6 +80,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
     {
         MiniGameControllerBase.Current?.Resume();
         TestTongHopController.Current?.Resume();
+        Time.timeScale = 1f;
         LidarTouchBridge.Instance.SetTouchEnabled(true);
         MusicManager.Instance?.ResumeBgm();
         Debug.Log("[GameControlBridge] OnResumeRequested");
@@ -121,6 +127,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
         string gameName  = sep >= 0 ? payload.Substring(sep + 1) : null;
         Debug.Log($"[GameControlBridge][DEBUG] Parsed sceneName='{sceneName}' gameName='{gameName}'");
 
+        Time.timeScale = 1f; // phòng khi ván trước kết thúc lúc đang Pause chung
         ShowBlankOverlay(false);
         Debug.Log("[GameControlBridge][DEBUG] ShowBlankOverlay(false) xong.");
         LidarTouchBridge.Instance.SetTouchEnabled(true);

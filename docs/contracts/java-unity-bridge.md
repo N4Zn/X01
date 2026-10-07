@@ -9,8 +9,8 @@ GameObject `GameControlBridge` (`Assets/Game/Scripts/UIScripts/Common/GameContro
 
 | Method | Payload | Ý nghĩa |
 |---|---|---|
-| `OnPauseRequested` | bỏ qua | Pause game (timer/touch/nhạc) |
-| `OnResumeRequested` | bỏ qua | Tiếp tục |
+| `OnPauseRequested` | bỏ qua | Pause MỌI game: controller (nếu có) + `Time.timeScale=0` + tắt touch + dừng nhạc. ControlActivity luôn hiện PAUSE/PLAY khi `scene=="playing"`, không phụ thuộc game |
+| `OnResumeRequested` | bỏ qua | Tiếp tục (`timeScale=1`) |
 | `OnStopRequested` | bỏ qua | Pause + che đen máy chiếu. **Không** destroy Activity |
 | `OnSettingsChanged` | JSON settings (dưới) | Áp + lưu settings ngay, không load lại scene |
 | `OnLoadGameRequested` | `"sceneName\|gameName"` | Start lần 2 trở đi, load game mới trong Unity đang sống |
@@ -35,6 +35,7 @@ Nguồn: `ui/SettingsStore.java` (lưu `/sdcard/EduXplore/game_settings.json`); 
 | `flowSpeed` | float | > 0, mặc định 1 (slider 0.1–5) | ô nhập tay được ngoài dải 0.1–5 và dùng ĐÚNG số nhập; Unity chỉ chặn sàn 0.01, KHÔNG có trần |
 | `waitForClear` | int | 1 bật (mặc định), 0 tắt, -1 không đổi | OR với cờ riêng từng scene; áp cho MỌI game không đóng băng (kể cả Counting độc lập, GenericGame countdown=none, RoundEndDelay=0) |
 | `showTutorial` | int | 0 tắt (mặc định), 1 bật, -1 không đổi | màn hướng dẫn trước khi chơi; chưa có ô trên ControlActivity (2026-10-05), chỉ qua JSON; Unity đọc qua `TutorialPanel.Enabled` |
+| `showRealName` | int | 0 tên thường gọi (mặc định), 1 tên thật, -1 không đổi | chỉ đổi cách HIỂN THỊ trên màn chiếu (cả 2 chế độ chỉ hiện 2 tiếng cuối); khoá log/điểm vẫn là tên thật. Unity: `PlayerNameDisplay.Format` |
 
 Quy tắc: field vắng hoặc âm (`gameTime` ≤ 0, `flowSpeed` ≤ 0) = **không đổi**. Thêm field mới: thêm cả vào `SettingsStore.java`, `GameSettings.Dto` và bảng này, mặc định -1 ở Dto.
 

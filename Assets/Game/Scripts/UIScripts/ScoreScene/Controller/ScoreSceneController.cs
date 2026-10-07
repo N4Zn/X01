@@ -87,7 +87,7 @@ public class ScoreSceneController : MonoBehaviour
         var stats = PlayerRecognitionService.Instance?.GetPlayerStats(slot);
         if (stats == null || stats.Count == 0) return DefaultPlayerName(slot);
         if (stats.Count > 1) return slot == 0 ? session.GetTeamName1() : session.GetTeamName2();
-        return stats[0].name;
+        return PlayerNameDisplay.Format(stats[0].name);
     }
 
     // ── MVP + Tia Chớp ────────────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ public class ScoreSceneController : MonoBehaviour
         }
         return new PlayerHighlight
         {
-            name = s.name,
+            name = PlayerNameDisplay.Format(s.name),
             hairIndex = hair,
             bestTime = s.AvgCorrectAnswerTimeSec,
             score = s.correct   // số câu trả lời ĐÚNG của riêng người này (1 câu đúng = 1 điểm)

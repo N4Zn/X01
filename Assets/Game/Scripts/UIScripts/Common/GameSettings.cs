@@ -16,6 +16,7 @@ public class GameSettings : Singleton<GameSettings>
     private const string KeyFlowSpeed = "setting_flow_speed";
     private const string KeyWaitForClear = "setting_wait_for_clear";
     private const string KeyShowTutorial = "setting_show_tutorial";
+    private const string KeyShowRealName = "setting_show_real_name";
 
     // Values
     public float SfxVolume { get; set; }
@@ -43,6 +44,10 @@ public class GameSettings : Singleton<GameSettings>
     /// vào thẳng "Start in…". Controller gọi qua <see cref="TutorialPanel.Enabled"/>.</summary>
     public bool ShowTutorial { get; set; } = false;
 
+    /// <summary>Tên người chơi hiện trên màn chiếu: false (mặc định) = tên thường gọi, true = tên thật.
+    /// Cả 2 chế độ chỉ hiện 2 tiếng cuối — xem <see cref="PlayerNameDisplay"/>.</summary>
+    public bool ShowRealName { get; set; } = false;
+
     protected override void OnCreated()
     {
         Load();
@@ -58,6 +63,7 @@ public class GameSettings : Singleton<GameSettings>
         FlowSpeed = Mathf.Max(FlowSpeedMin, PlayerPrefs.GetFloat(KeyFlowSpeed, 1f));
         WaitForClear = PlayerPrefs.GetInt(KeyWaitForClear, 1) != 0;
         ShowTutorial = PlayerPrefs.GetInt(KeyShowTutorial, 0) != 0;
+        ShowRealName = PlayerPrefs.GetInt(KeyShowRealName, 0) != 0;
     }
 
     // JSON do ControlActivity (Java) gửi sang — tên field PHẢI khớp SettingsStore.java.
@@ -68,6 +74,7 @@ public class GameSettings : Singleton<GameSettings>
         public int gameTime = -1;
         public int waitForClear = -1; // -1 = không đổi, 0/1 = tắt/bật
         public int showTutorial = -1; // -1 = không đổi, 0/1 = tắt/bật (mặc định tắt)
+        public int showRealName = -1; // -1 = không đổi, 0/1 = tên thường gọi/tên thật (mặc định 0)
     }
 
     /// <summary>Áp JSON từ ControlActivity: field vắng/âm = giữ nguyên. Lưu PlayerPrefs + áp âm lượng
@@ -86,6 +93,7 @@ public class GameSettings : Singleton<GameSettings>
         if (d.flowSpeed > 0f) FlowSpeed = Mathf.Max(FlowSpeedMin, d.flowSpeed);
         if (d.waitForClear >= 0) WaitForClear = d.waitForClear != 0;
         if (d.showTutorial >= 0) ShowTutorial = d.showTutorial != 0;
+        if (d.showRealName >= 0) ShowRealName = d.showRealName != 0;
         Save();
         if (MusicManager.Instance != null) MusicManager.Instance.ApplyVolumes();
     }
@@ -100,6 +108,7 @@ public class GameSettings : Singleton<GameSettings>
         PlayerPrefs.SetFloat(KeyFlowSpeed, FlowSpeed);
         PlayerPrefs.SetInt(KeyWaitForClear, WaitForClear ? 1 : 0);
         PlayerPrefs.SetInt(KeyShowTutorial, ShowTutorial ? 1 : 0);
+        PlayerPrefs.SetInt(KeyShowRealName, ShowRealName ? 1 : 0);
         PlayerPrefs.Save();
         Debug.Log("GameSettings: saved");
     }

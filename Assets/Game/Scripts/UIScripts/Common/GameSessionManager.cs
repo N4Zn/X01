@@ -184,9 +184,9 @@ public class GameSessionManager : Singleton<GameSessionManager>
         if (CurrentGameMode == GameMode.Team)
         {
             string player = Players.Count > 0 ? Players[0].PlayerName : null;
-            return string.IsNullOrEmpty(player) ? GetTeamName1() : player;
+            return string.IsNullOrEmpty(player) ? GetTeamName1() : PlayerNameDisplay.Format(player);
         }
-        return GetPlayer1Name();
+        return PlayerNameDisplay.Format(GetPlayer1Name());
     }
 
     public string GetDisplayName2()
@@ -194,9 +194,9 @@ public class GameSessionManager : Singleton<GameSessionManager>
         if (CurrentGameMode == GameMode.Team)
         {
             string player = Players.Count > 1 ? Players[1].PlayerName : null;
-            return string.IsNullOrEmpty(player) ? GetTeamName2() : player;
+            return string.IsNullOrEmpty(player) ? GetTeamName2() : PlayerNameDisplay.Format(player);
         }
-        return GetPlayer2Name();
+        return PlayerNameDisplay.Format(GetPlayer2Name());
     }
 
     public string GetTeamName1() => !string.IsNullOrEmpty(BlueTeamName) ? BlueTeamName : "Blue";

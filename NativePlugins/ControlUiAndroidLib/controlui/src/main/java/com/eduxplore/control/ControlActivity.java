@@ -1363,7 +1363,14 @@ public class ControlActivity extends Activity {
             syncSettingsToUnity();
         }));
 
-        // 7. Vùng nhận diện khuôn mặt (2 vùng người chơi trong game + vòng tròn "Thêm từ camera").
+        // 7. Tên hiển thị trong game: tên thường gọi (mặc định) hay tên thật; cả 2 chỉ hiện 2 tiếng cuối.
+        settingsBody.addView(buildCheckboxSetting("Hiện tên thật trong game (bỏ chọn = tên thường gọi)", settingsStore.showRealName == 1, checked -> {
+            settingsStore.showRealName = checked ? 1 : 0;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
+        // 8. Vùng nhận diện khuôn mặt (2 vùng người chơi trong game + vòng tròn "Thêm từ camera").
         // Chỉnh trên hình camera thật ở màn của FaceEnroll (cùng APK); lưu vào /sdcard/EduXplore/face_zones.json,
         // game áp dụng từ vòng chơi sau. Chỉnh khi KHÔNG chơi (camera USB chỉ 1 nơi mở được).
         settingsBody.addView(buildButtonSetting("Vùng nhận diện khuôn mặt (2 vùng chơi + vùng enroll)", "Mở cài đặt vùng", () -> {
