@@ -9,8 +9,8 @@ GameObject `GameControlBridge` (`Assets/Game/Scripts/UIScripts/Common/GameContro
 
 | Method | Payload | Ý nghĩa |
 |---|---|---|
-| `OnPauseRequested` | bỏ qua | Pause MỌI game: controller (nếu có) + `Time.timeScale=0` + tắt touch + dừng nhạc. ControlActivity luôn hiện PAUSE/PLAY khi `scene=="playing"`, không phụ thuộc game |
-| `OnResumeRequested` | bỏ qua | Tiếp tục (`timeScale=1`) |
+| `OnPauseRequested` | bỏ qua | Pause game (timer/touch/nhạc) |
+| `OnResumeRequested` | bỏ qua | Tiếp tục |
 | `OnStopRequested` | bỏ qua | Pause + che đen máy chiếu. **Không** destroy Activity |
 | `OnSettingsChanged` | JSON settings (dưới) | Áp + lưu settings ngay, không load lại scene |
 | `OnLoadGameRequested` | `"sceneName\|gameName"` | Start lần 2 trở đi, load game mới trong Unity đang sống |
