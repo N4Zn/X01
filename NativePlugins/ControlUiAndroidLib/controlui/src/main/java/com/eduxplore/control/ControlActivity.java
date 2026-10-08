@@ -411,7 +411,7 @@ public class ControlActivity extends Activity {
         actionZone.addView(col);
 
         if ("select".equals(scene)) {
-            col.addView(UiUtil.label(this, "HỌC PHẦN", 10f, R.color.text_faint, true));
+            col.addView(UiUtil.label(this, "HỌC PHẦN", 14f, R.color.text_dim, true));
 
             ScrollView scroll = new ScrollView(this);
             LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
@@ -488,10 +488,10 @@ public class ControlActivity extends Activity {
     private TextView buildPhanRow(String label, String phan) {
         TextView row = new TextView(this);
         row.setText(label);
-        row.setTextSize(14f);
+        row.setTextSize(18f);
         boolean sel = phan == null ? selectedPhan == null : phan.equals(selectedPhan);
-        row.setTypeface(row.getTypeface(), sel ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-        row.setTextColor(UiUtil.ContextColor(this, sel ? R.color.text : R.color.text_dim));
+        row.setTypeface(row.getTypeface(), android.graphics.Typeface.BOLD);
+        row.setTextColor(UiUtil.ContextColor(this, R.color.text));
         row.setPadding(UiUtil.dp(this, 12), UiUtil.dp(this, 12), UiUtil.dp(this, 12), UiUtil.dp(this, 12));
         row.setBackground(sel
                 ? UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.accent_dim), 8, UiUtil.ContextColor(this, R.color.accent), 1, this)
@@ -644,7 +644,7 @@ public class ControlActivity extends Activity {
             String[] p = t.split(":");
             TextView tab = new TextView(this);
             tab.setText(p[1]);
-            tab.setTextSize(13f);
+            tab.setTextSize(17f);
             tab.setTypeface(tab.getTypeface(), android.graphics.Typeface.BOLD);
             tab.setPadding(UiUtil.dp(this, 14), UiUtil.dp(this, 12), UiUtil.dp(this, 14), UiUtil.dp(this, 12));
             tab.setTag(p[0]);
@@ -659,7 +659,7 @@ public class ControlActivity extends Activity {
         for (int i = 0; i < reportTabs.getChildCount(); i++) {
             TextView tab = (TextView) reportTabs.getChildAt(i);
             boolean active = tab.getTag().equals(view);
-            tab.setTextColor(UiUtil.ContextColor(this, active ? R.color.text : R.color.text_faint));
+            tab.setTextColor(UiUtil.ContextColor(this, active ? R.color.text : R.color.text_dim));
             // Tab "Trò chơi" chỉ có lúc chọn game; sau khi chơi xong muốn đổi game thì bấm CHỌN GAME KHÁC.
             if ("games".equals(tab.getTag())) tab.setVisibility("select".equals(scene) ? View.VISIBLE : View.GONE);
         }
