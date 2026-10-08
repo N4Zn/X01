@@ -102,6 +102,7 @@ public static class BuildOptimizer
         {
             if (apply) AssetDatabase.StopAssetEditing();
         }
+        if (apply && changed > 0) { AssetDatabase.SaveAssets(); AssetDatabase.Refresh(); } // ghi .meta ra đĩa
 
         Debug.Log($"[BuildOptimizer] Texture: {(apply ? "đã đổi" : "sẽ đổi")} {changed}/{guids.Length} " +
                   $"(tắt mipmap {noMipOnly}, bỏ qua {skipped}). Format Android = {AndroidFormat}, max {MaxSizeCap}.");
