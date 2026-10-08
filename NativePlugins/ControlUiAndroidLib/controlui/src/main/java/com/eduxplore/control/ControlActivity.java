@@ -95,7 +95,8 @@ public class ControlActivity extends Activity {
     private String displayNameOf(String internalName) {
         if (internalName == null) return null;
         String d = displayNameByName.get(internalName);
-        return d != null ? d : internalName;
+        // "\n" trong displayName chỉ để ngắt dòng trên thẻ game; chỗ khác (tiêu đề, bảng) hiện 1 dòng.
+        return d != null ? d.replace('\n', ' ') : internalName;
     }
 
     // ── Views ────────────────────────────────────────────────────────────────
@@ -562,14 +563,14 @@ public class ControlActivity extends Activity {
         card.setBackground(sel
                 ? UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.accent_dim), 12, UiUtil.ContextColor(this, R.color.accent), 2, this)
                 : UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.panel), 12, UiUtil.ContextColor(this, R.color.border_soft), 1, this));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, UiUtil.dp(this, 96), 1f);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, UiUtil.dp(this, 112), 1f);
         lp.leftMargin = lp.rightMargin = UiUtil.dp(this, 5);
         card.setLayoutParams(lp);
 
         // Tên game: chữ đen viền trắng dày (nổi trên nền ảnh/màu của thẻ).
         com.eduxplore.control.ui.OutlinedTextView name = new com.eduxplore.control.ui.OutlinedTextView(this);
         name.setText(item.displayName);
-        name.setTextSize(15f);
+        name.setTextSize(20f);
         name.setTextColor(0xFF111111);
         name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
         name.setGravity(Gravity.CENTER);
