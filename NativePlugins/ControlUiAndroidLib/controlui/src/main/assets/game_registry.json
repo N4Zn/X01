@@ -54,9 +54,9 @@
     {"name": "SoSanhSo", "displayName": "So sánh số", "group": "So sánh", "sceneName": "SoSanhSo", "category": 0},
     {"name": "GameSangChuaChieuToiCuaBe", "displayName": "Các buổi trong ngày", "group": "Thời gian", "sceneName": "GameSangChuaChieuToiCuaBe", "category": 0},
     {"name": "TachSo2", "displayName": "Tách số", "group": "Cộng", "sceneName": "TachSo2", "category": 0},
-    {"name": "SoSanhSo2Dau", "displayName": "So sánh số (>, <, =)", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0},
+    {"name": "SoSanhSo2Dau", "displayName": "So sánh số >, <, =", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0},
     {"name": "GhepAnhConThieu", "displayName": "Ghép tranh", "group": "Ghép hình", "sceneName": "GhepAnhConThieu", "category": 5},
     {"name": "SoSanhSoChuSo", "displayName": "So sánh số\n(chữ số)", "group": "So sánh", "sceneName": "SoSanhSoChuSo", "category": 0},
-    {"name": "SoSanhSo2DauChuSo", "displayName": "So sánh số (>, <, =)\n(chữ số)", "group": "So sánh", "sceneName": "SoSanhSo2DauChuSo", "category": 0}
+    {"name": "SoSanhSo2DauChuSo", "displayName": "So sánh >, <, = \n(chữ số)", "group": "So sánh", "sceneName": "SoSanhSo2DauChuSo", "category": 0}
   ]
 }
