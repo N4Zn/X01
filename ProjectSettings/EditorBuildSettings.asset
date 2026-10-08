@@ -135,6 +135,9 @@ EditorBuildSettings:
     path: Assets/Game/Scenes/_GenericGame/Games/SoSanhSo.unity
     guid: a2360753ecd5aa54e94952b4101dca41
   - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/SoSanhSoChuSo.unity
+    guid: 058ccee0c05aa884106c140f246e9afc
+  - enabled: 1
     path: Assets/Game/Scenes/_GenericGame/Games/GameSangChuaChieuToiCuaBe.unity
     guid: 202b1e733b457b94392f429eb839260d
   - enabled: 1
@@ -143,6 +146,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/_GenericGame/Games/SoSanhSo2Dau.unity
     guid: 3584161128031864aa8ca435f456d6cd
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/SoSanhSo2DauChuSo.unity
+    guid: c8efb8475c95630e9d033616088e199a
+  - enabled: 1
+    path: Assets/Game/Scenes/_GenericGame/Games/GhepAnhConThieu.unity
+    guid: a3a328f0176fe1d40919f4321c676028
   - enabled: 1
     path: Assets/Game/Scenes/TongHopToanGame/TongHopToanGame.unity
     guid: 775d696e27356704691ca3e0cc7aa685

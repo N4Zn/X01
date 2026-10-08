@@ -103,10 +103,10 @@ public static class GameRegistry
         Set(0, 17, "SubNumber5", "Trừ trong phạm vi 5", "SubNumberGame",   Engine.MathGame,    group: "Trừ");
         Set(0, 18, "SubNumber",  "Trừ trong phạm vi 10", "SubNumberGame",  Engine.MathGame,    group: "Trừ");
         // Biến thể hiện CHỮ SỐ thay cho hình (controller đọc hậu tố "Digit" của tên game) — cùng scene với bản hình.
-        Set(0, 19, "AddNumber5Digit", "Cộng trong phạm vi 5 (chữ số)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
-        Set(0, 20, "AddNumberDigit",  "Cộng trong phạm vi 10 (chữ số)", "AddNumberGame", Engine.MathGame, group: "Cộng");
-        Set(0, 21, "SubNumber5Digit", "Trừ trong phạm vi 5 (chữ số)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
-        Set(0, 22, "SubNumberDigit",  "Trừ trong phạm vi 10 (chữ số)",  "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 19, "AddNumber5Digit", "Cộng trong phạm vi 5\n(chữ số)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 20, "AddNumberDigit",  "Cộng trong phạm vi 10\n(chữ số)", "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 21, "SubNumber5Digit", "Trừ trong phạm vi 5\n(chữ số)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 22, "SubNumberDigit",  "Trừ trong phạm vi 10\n(chữ số)",  "SubNumberGame", Engine.MathGame, group: "Trừ");
         Set(0, 4, "SoDem",      "Số đếm",               "SoDemGame",       Engine.ListenGame,  group: "Đếm");
         // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
         Set(0, 6, "Numbers",    "Nhận biết số",         "NumbersGame",     Engine.ListenGame);
@@ -174,12 +174,18 @@ public static class GameRegistry
         Set(0, 9, "CuaHangKemTruocSau", "cửa hàng kem ( trước , sau)", "CuaHangKemTruocSau", Engine.MiniGameKit, group: "Vị trí, định hướng");
         Set(0, 10, "DongHo", "Đồng hồ", "DongHo", Engine.MiniGameKit, group: "Thời gian");
         Set(0, 11, "SangTruaChieuToi", "sáng trưa chiều tối", "SangTruaChieuToi", Engine.MiniGameKit, group: "Thời gian");
-        Set(0, 12, "ThuNghiem2", "Tách số", "ThuNghiem2", Engine.MiniGameKit, group: "Đếm");
         Set(0, 13, "SoSanhSo", "So sánh số", "SoSanhSo", Engine.MiniGameKit, group: "So sánh");
         Set(0, 14, "GameSangChuaChieuToiCuaBe", "Các buổi trong ngày", "GameSangChuaChieuToiCuaBe", Engine.MiniGameKit, group: "Thời gian");
-        Set(0, 15, "TachSo2", "Tách số (2)", "TachSo2", Engine.MiniGameKit, group: "Cộng");
+        Set(0, 15, "TachSo2", "Tách số", "TachSo2", Engine.MiniGameKit, group: "Cộng");
         Set(0, 16, "SoSanhSo2Dau", "So sánh số (>, <, =)", "SoSanhSo2Dau", Engine.MiniGameKit, group: "So sánh");
+        Set(5, 2, "GhepAnhConThieu", "Ghép tranh", "GhepAnhConThieu", Engine.MiniGameKit, group: "Ghép hình");
+        Set(0, 17, "SoSanhSoChuSo", "So sánh số\n(chữ số)", "SoSanhSoChuSo", Engine.MiniGameKit, group: "So sánh");
+
+        Set(0, 18, "SoSanhSo2DauChuSo", "So sánh số (>, <, =)\n(chữ số)", "SoSanhSo2DauChuSo", Engine.MiniGameKit, group: "So sánh");
+
+
         Set(0, 23, "TongHopToan", "Tổng hợp Toán", "TongHopToanGame", Engine.MiniGameKit, group: "Ôn tập chung");
+
         // <GENERIC-GAMES>
     }
 

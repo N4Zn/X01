@@ -173,6 +173,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     /// không đẩy mỗi frame để tránh gọi JNI quá dày. Xem GameControlBridge.PushReport().</summary>
     void PushReportIfDue()
     {
+        if (ScoreManager == null) return; // chưa InitScoring / đang huỷ scene (thoát Play) — tránh NRE
         if (Time.time - _lastReportPushTime < 1f) return;
         _lastReportPushTime = Time.time;
         int secondsLeft = _useTimer ? Mathf.CeilToInt(Mathf.Max(0f, _gameTimer)) : 0;
@@ -609,6 +610,8 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         string gameName = GameSessionManager.ResolveActiveGameName(
             !string.IsNullOrEmpty(sceneNameForRegistry) ? sceneNameForRegistry : GetType().Name);
         PlayerRecognitionService.Instance.BeginGameSession(gameName);
+        // BeginGameSession vừa xoá tên ván trước → vẽ lại HUD ngay, không để tên cũ nằm trên màn tới khi nhận diện xong.
+        RefreshHudNames();
 
         StartCoroutine(InitialStartCountdownThenBegin());
     }

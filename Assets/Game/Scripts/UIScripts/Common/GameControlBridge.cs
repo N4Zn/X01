@@ -49,11 +49,35 @@ public class GameControlBridge : Singleton<GameControlBridge>
     // → xác nhận main thread Unity thực sự bị block/deadlock, không phải lỗi hiển thị/display.
     // Xoá khối DEBUG này sau khi tìm ra nguyên nhân treo (xem CLAUDE.md/phiên debug "Chơi lại").
     float _lastHeartbeatLog;
+    float _lastFallbackPush;
     void Update()
     {
+        PushLiveFallback();
         if (Time.unscaledTime - _lastHeartbeatLog < 2f) return;
         _lastHeartbeatLog = Time.unscaledTime;
         Debug.Log($"[GameControlBridge][HEARTBEAT] t={Time.unscaledTime:F1} scene={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name} frame={Time.frameCount}");
+    }
+
+    /// <summary>Realtime cho MỌI game: MiniGameControllerBase/TestTongHop tự đẩy report mỗi giây, còn các game có controller
+    /// riêng (AddNumber, SubNumber, ChuCai, SoDem...) trước đây không đẩy gì trong lúc chơi nên panel live đứng ở "0 – 0,
+    /// chưa nhận diện được ai" tới hết ván. Ở đây đẩy dự phòng (theo unscaledTime, không phụ thuộc controller/timeScale):
+    /// tên bên trái/phải + điểm mỗi bên = tổng số câu đúng của các bạn ở bên đó (1 điểm/câu đúng — khớp ScoreManager) + breakdown.</summary>
+    void PushLiveFallback()
+    {
+        if (Time.unscaledTime - _lastFallbackPush < 1f) return;
+        _lastFallbackPush = Time.unscaledTime;
+        if (MiniGameControllerBase.Current != null || TestTongHopController.Current != null) return; // đã tự đẩy
+        var rec = PlayerRecognitionService.Instance;
+        var session = GameSessionManager.Instance;
+        if (rec == null || session == null || !rec.IsSessionSceneActive) return;
+
+        var left = rec.GetPlayerStats(0);
+        var right = rec.GetPlayerStats(1);
+        int leftScore = 0, rightScore = 0;
+        foreach (var s in left) leftScore += s.correct;
+        foreach (var s in right) rightScore += s.correct;
+        PushReport(0, session.GetDisplayName1(), leftScore, session.GetDisplayName2(), rightScore);
+        PushPlayerBreakdown(left, right);
     }
 
     /// <summary>Gọi từ ControlActivity (UnitySendMessage) khi bấm Pause. Dừng timer/logic

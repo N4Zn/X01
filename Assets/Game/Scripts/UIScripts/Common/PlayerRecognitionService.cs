@@ -78,9 +78,18 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             GameSessionManager.Instance.Players[slot].PlayerName = name;
     }
 
+    // Scene đang chạy lúc BeginGameSession — GameControlBridge chỉ đẩy realtime dự phòng khi còn ở đúng scene này
+    // (sang scene khác = ván cũ đã hết, không đẩy số liệu cũ đè lên ván mới).
+    int _sessionSceneHandle = -1;
+
+    /// <summary>true = đang trong ván (scene hiện tại chính là scene đã gọi BeginGameSession).</summary>
+    public bool IsSessionSceneActive =>
+        _sessionFileName != null && UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle == _sessionSceneHandle;
+
     /// <summary>Call once when a mini-game session starts, before any RecognizeSlot calls.</summary>
     public void BeginGameSession(string gameName)
     {
+        _sessionSceneHandle = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
         _currentGameName = gameName;
         _logEntries.Clear();
         _lastName[0] = _lastName[1] = null;
