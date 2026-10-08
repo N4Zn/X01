@@ -121,6 +121,12 @@ lúc nạp (`GenericGameMigration.FromV1`, cùng quy tắc với `migrateV1` tro
   `text` = chữ. **Có icon (riêng hoặc chung) thì `text` là SỐ LƯỢNG icon** (để trống/không phải số = 1, tối đa 20) và chữ **không hiện** —
   chữ và icon không bao giờ cùng lúc. Người soạn tự đảm bảo `text` là số khi dùng icon (web tool tô viền đỏ ô chữ nếu không phải số).
 - **Nền đáp án** (ưu tiên): ảnh riêng/pool/`bgImage` của nhóm (giữ tỉ lệ) > `layout.slotFrames` xoay vòng theo thứ tự ô (kéo kín) > thẻ trắng.
+- **`hideOnCorrect`** (chỉ slot CÂU HỎI, mặc định `false`): khi chọn ĐÚNG đáp án cuối của round, đợi hiệu ứng bay xong (= thời gian dài nhất của
+  `onCorrectTap` hiệu lực, và `onCorrectRemove` nếu đáp án cuối bay vào vùng "Đã chọn") rồi ảnh này mờ đi 0.3s và ẩn → lộ ảnh phía sau
+  (vd ảnh hoàn chỉnh nằm sau ảnh có lỗ khuyết, mảnh ghép bay vào lỗ). Game có slot như vậy: `feedbackDelayCorrect` được nâng lên ≥ 2.5s lúc khởi động
+  để bé kịp nhìn tranh hoàn chỉnh (xấp xỉ web: 700ms + 1800ms). Unity: `RevealQuestionOnCorrect`/`FadeQuestionSlot`.
+- **`sendToBack`** (chỉ slot CÂU HỎI, mặc định `false`): vẽ PHÍA SAU các slot câu hỏi khác cùng round (cùng layer "question"; đổi sibling index,
+  `OrderQuestionSlots`). Thường đi cùng `hideOnCorrect` của slot khác. Web builder có nút 👻 (hideOnCorrect), ⬇ (sendToBack), ⧉ (khớp vị trí/kích thước slot 1 — chỉ web).
 - **`correct`** (chỉ đáp án): đáp án đúng. Với `OrderedSequence`, thứ tự chạm = thứ tự các slot `correct:true` trong mảng `slots[]`
   (web tool cho ↑/↓ đổi thứ tự — chỉ đổi NỘI DUNG giữa các slot, giữ nguyên vị trí). `SumToTarget` bỏ qua `correct`.
 - **`sound`**: slot đáp án = phát khi chạm vào slot (cộng với âm thanh của hiệu ứng trúng/sai). Slot câu hỏi = **âm thanh câu hỏi** — xem mục riêng.
@@ -326,6 +332,11 @@ THÂN nó trên canvas, hoặc dùng nút ↑↓ trong panel "Nhân vật / Item
 (bay đi mất thì hết trang trí) — cả ở web lẫn Unity. Trong lúc phản hồi, hiệu ứng chờ tạm dừng rồi chạy lại. Item "tên lửa" (`launchOnComplete`) bỏ qua phản hồi (có luồng bay riêng).
 Item **chỉ bắt chạm khi có `fx.onClick`** (`raycastTarget` + `Button`) — còn lại thuần hiển thị, không chặn chạm của đáp án. `text.bind` đọc trực tiếp từ `ScoreManager`
 (totalScore/roundScore theo ĐÚNG bên trái-phải tương ứng) hoặc từ `settings.targetScore` tĩnh. Chưa có chế độ "ma trận/random" cho item — chỉ tự đặt từng item.
+
+### FlyToStay — `effectParams.stayFor` (giây, mặc định 0)
+
+`> 0`: item bay tới ô "Đã chọn" xong đứng yên `stayFor` giây rồi mờ dần (0.25s) và biến mất (`FadeAndDestroyAfter`). `0` = ở lại tới round mới như cũ.
+Bị bỏ qua khi "Lấp theo giá trị" (SumToTarget / `fillByValue`) vì lúc đó thẻ đáp án vốn đã biến mất sau khi bay.
 
 ## Chờ cả 2 đội xong mới sang câu (`settings.waitBothTeams`)
 

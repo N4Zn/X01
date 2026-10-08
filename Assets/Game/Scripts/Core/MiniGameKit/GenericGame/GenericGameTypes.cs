@@ -255,6 +255,11 @@ public class SlotSpec
     public string icon;
     public string sound;
     public bool correct;
+    /// <summary>CHỈ slot CÂU HỎI: true = khi người chơi chọn ĐÚNG (đáp án cuối của round) thì đợi hiệu ứng bay xong rồi ảnh này mờ đi (0.3s)
+    /// và ẩn — lộ ảnh xếp phía sau (vd ảnh hoàn chỉnh sau ảnh có lỗ khuyết). Round có slot này giữ màn hình lâu hơn trước khi sang round mới.</summary>
+    public bool hideOnCorrect;
+    /// <summary>CHỈ slot CÂU HỎI: true = vẽ PHÍA SAU các slot câu hỏi khác của cùng round (cùng layer "question").</summary>
+    public bool sendToBack;
     public SlotFx fx;
 }
 

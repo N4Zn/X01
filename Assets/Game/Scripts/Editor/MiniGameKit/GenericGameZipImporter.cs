@@ -143,8 +143,11 @@ public static class GenericGameZipImporter
         if (!File.Exists(MiniGameSceneBuilderHelpers.ToAbsolutePath(scenePath)))
             BuildScene(scenePath, variantPath);
 
+        // Ảnh trùng nội dung với ảnh đã có (cùng game hoặc _shared) → gom về Resources/.../_shared, game.json/prefab tự đổi tham chiếu.
+        GenericGameAssetDedupe.Run(apply: true, onlyGameId: gameId, interactive: false);
+
         MiniGameSceneBuilderHelpers.AddSceneToBuildSettings(scenePath);
-        var reg = GenericGameRegistryWriter.RegisterWithPrompt(gameId, displayName);
+        var reg =GenericGameRegistryWriter.RegisterWithPrompt(gameId, displayName);
         string regNote = reg.line != null
             ? (reg.registered ? $"\n  GameRegistry.cs: đã thêm `{reg.line}`" : $"\n  GameRegistry.cs: CHƯA thêm — dán tay `{reg.line}`")
             : reg.registered ? "\n  GameRegistry: đã có sẵn." : "\n  GameRegistry: bỏ qua (chưa đăng ký — import lại để đăng ký).";
@@ -297,7 +300,10 @@ public static class GenericGameZipImporter
     static Sprite LoadSprite(string imgDir, string file)
     {
         if (string.IsNullOrEmpty(file)) return null;
-        return AssetDatabase.LoadAssetAtPath<Sprite>($"{imgDir}/{Path.GetFileName(file)}");
+        // "_shared/x.png" (ảnh dùng chung, xem GenericGameAssetDedupe) → thư mục anh em của imgDir.
+        string norm = file.Replace('\\', '/');
+        string dir = norm.Contains("/") ? $"{ImagesRoot}/{norm.Substring(0, norm.LastIndexOf('/'))}" : imgDir;
+        return AssetDatabase.LoadAssetAtPath<Sprite>($"{dir}/{Path.GetFileName(file)}");
     }
 
     // ── Scene riêng ─────────────────────────────────────────────────────────────

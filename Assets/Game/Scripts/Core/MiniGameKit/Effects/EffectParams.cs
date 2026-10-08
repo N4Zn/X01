@@ -36,6 +36,8 @@ public struct EffectParams
     /// thước hiện tại rồi nhân `scale`).</summary>
     public float targetWPct;
     public float targetHPct;
+    /// <summary>CHỈ dùng cho FlyToStay: &gt; 0 = bay tới xong đứng yên ngần ấy giây rồi mờ đi và biến mất. 0 = ở lại tới khi round mới (như cũ).</summary>
+    public float stayFor;
 
     public static EffectParams Default(EffectType type)
     {

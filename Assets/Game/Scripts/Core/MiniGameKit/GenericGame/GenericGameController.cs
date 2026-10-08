@@ -153,6 +153,8 @@ public class GenericGameController : MiniGameControllerBase
         // Có "tên lửa" (launchOnComplete) thì chờ lâu hơn sau khi THẮNG round cho kịp bay hết màn hình
         // (LaunchDecos ~1.5s) rồi mới sang round mới — khớp web (endRound(1800)).
         if (_launchDecos.Count > 0) feedbackDelayCorrect = Mathf.Max(feedbackDelayCorrect, 1.8f);
+        // Có slot câu hỏi "biến mất khi đúng" (hideOnCorrect): giữ màn hình thêm ~1.8s để bé nhìn tranh hoàn chỉnh (web: 700ms + 1800ms).
+        if (HasHideOnCorrectQuestion()) feedbackDelayCorrect = Mathf.Max(feedbackDelayCorrect, 2.5f);
 
         base.Start();
 
@@ -343,11 +345,19 @@ public class GenericGameController : MiniGameControllerBase
         return string.IsNullOrEmpty(g.bgImage) ? null : g.bgImage;
     }
 
+    /// <summary>Tên file trong game.json: "a.png" → thư mục riêng của game; "_shared/h.png" → thư mục dùng chung
+    /// (ảnh trùng nội dung giữa các game, xem GenericGameAssetDedupe). Game cũ không có '/' nên không đổi gì.</summary>
     string ResolveImagePath(string fileName) => string.IsNullOrEmpty(fileName) ? null
-        : $"TestTongHop/images/GenericGames/{_gameId}/{Path.GetFileNameWithoutExtension(fileName)}";
+        : $"TestTongHop/images/GenericGames/{ResolveFolder(fileName)}/{Path.GetFileNameWithoutExtension(fileName)}";
 
     string ResolveAudioPath(string fileName) => string.IsNullOrEmpty(fileName) ? null
-        : $"TestTongHop/audio/GenericGames/{_gameId}/{Path.GetFileNameWithoutExtension(fileName)}";
+        : $"TestTongHop/audio/GenericGames/{ResolveFolder(fileName)}/{Path.GetFileNameWithoutExtension(fileName)}";
+
+    string ResolveFolder(string fileName)
+    {
+        int slash = fileName.LastIndexOfAny(new[] { '/', '\\' });
+        return slash > 0 ? fileName.Substring(0, slash).Replace('\\', '/') : _gameId;
+    }
 
     static void Shuffle(List<QuestionData> list)
     {
@@ -573,6 +583,8 @@ public class GenericGameController : MiniGameControllerBase
         public GridLayoutGroup grid;
         public Image frame, bg;
         public Text text;
+        public CanvasGroup group;      // mờ dần khi hideOnCorrect
+        public Coroutine reveal;
         public readonly List<Coroutine> idle = new List<Coroutine>();
     }
     readonly Dictionary<Team, List<QuestionSlotUi>> _qUis = new Dictionary<Team, List<QuestionSlotUi>>
@@ -637,6 +649,8 @@ public class GenericGameController : MiniGameControllerBase
         ApplyLayer(go, "question");
         if (siblingIndex >= 0) rt.SetSiblingIndex(siblingIndex); // chèn NGAY TRƯỚC mốc → vẽ dưới đáp án/nhân vật như câu hỏi cũ
         var ui = new QuestionSlotUi { root = rt };
+        ui.group = go.AddComponent<CanvasGroup>();
+        ui.group.blocksRaycasts = false; ui.group.interactable = false; // câu hỏi không bắt chạm
 
         ui.frame = MakeFullImage(rt, "Frame");
         ui.frame.type = Image.Type.Sliced;
@@ -685,8 +699,73 @@ public class GenericGameController : MiniGameControllerBase
         foreach (var ui in _qUis[team])
         {
             StopQuestionSlotIdle(ui);
+            if (ui.reveal != null) { StopCoroutine(ui.reveal); ui.reveal = null; }
+            if (ui.group != null) ui.group.alpha = 1f;
             if (ui.root != null) ui.root.gameObject.SetActive(false);
         }
+    }
+
+    bool HasHideOnCorrectQuestion()
+    {
+        if (_package?.rounds == null) return false;
+        foreach (var r in _package.rounds)
+            if (r?.question?.slots != null && Array.Exists(r.question.slots, s => s != null && s.hideOnCorrect)) return true;
+        return false;
+    }
+
+    /// <summary>Slot câu hỏi "sendToBack" vẽ PHÍA SAU các slot câu hỏi khác của round: đổi sibling index trong CÙNG tập vị trí
+    /// các slot đang dùng (không đụng các object khác cùng cha). Mỗi round gọi lại nên reset được về thứ tự thường.</summary>
+    void OrderQuestionSlots(List<QuestionSlotUi> list, SlotSpec[] slots)
+    {
+        var idx = new List<int>();
+        foreach (var ui in list) if (ui.root != null) idx.Add(ui.root.GetSiblingIndex());
+        idx.Sort();
+        var order = new List<QuestionSlotUi>();
+        for (int i = 0; i < list.Count && i < slots.Length; i++) if (slots[i].sendToBack) order.Add(list[i]);
+        for (int i = 0; i < list.Count; i++) if (!(i < slots.Length && slots[i].sendToBack)) order.Add(list[i]);
+        for (int k = 0; k < order.Count && k < idx.Count; k++) order[k].root.SetSiblingIndex(idx[k]);
+    }
+
+    /// <summary>Đáp án cuối ĐÚNG: sau `delay` giây (hiệu ứng bay xong) các slot câu hỏi hideOnCorrect mờ dần 0.3s rồi ẩn → lộ ảnh phía sau.
+    /// Combined: câu hỏi dùng chung (bộ slot của Team.Left).</summary>
+    void RevealQuestionOnCorrect(Team team, float delay)
+    {
+        if (!_teamQuestion.TryGetValue(team, out var q) || q == null || !_rounds.TryGetValue(q.id, out var rr)) return;
+        var slots = rr.spec.question.slots;
+        var list = _qUis[SharedQuestion ? Team.Left : team];
+        for (int i = 0; i < list.Count && i < slots.Length; i++)
+        {
+            var ui = list[i];
+            if (!slots[i].hideOnCorrect || ui.root == null || !ui.root.gameObject.activeSelf) continue;
+            if (ui.reveal != null) StopCoroutine(ui.reveal);
+            ui.reveal = StartCoroutine(FadeQuestionSlot(ui, delay));
+        }
+    }
+
+    IEnumerator FadeQuestionSlot(QuestionSlotUi ui, float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+        const float dur = 0.3f;
+        for (float t = 0f; t < dur; t += Time.deltaTime)
+        {
+            ui.group.alpha = 1f - t / dur;
+            yield return null;
+        }
+        ui.group.alpha = 0f;
+        ui.reveal = null;
+    }
+
+    /// <summary>Thời gian dài nhất (giây) của các hiệu ứng thật trong `fx` — 0 nếu không có.</summary>
+    static float MaxEffectDuration(ActionFx fx)
+    {
+        float d = 0f;
+        if (fx?.effects == null) return d;
+        foreach (var s in fx.effects)
+        {
+            if (ParseType(s.type) == EffectType.None) continue;
+            d = Mathf.Max(d, s.effectParams.duration > 0 ? s.effectParams.duration : 0.45f);
+        }
+        return d;
     }
 
     /// <summary>Hiện các slot câu hỏi của round `q` cho `team`: vị trí theo bố cục nhóm câu hỏi, mỗi slot = ảnh nền (riêng/chung nhóm) + hàng icon
@@ -698,6 +777,7 @@ public class GenericGameController : MiniGameControllerBase
         var g = rr.spec.question;
         var list = _qUis[team];
         var pos = ComputePositions(g, team);
+        OrderQuestionSlots(list, g.slots);
         for (int i = 0; i < list.Count && i < g.slots.Length; i++)
         {
             var ui = list[i];
@@ -1435,12 +1515,24 @@ public class GenericGameController : MiniGameControllerBase
                 // đáp án cuối, trừ thu thập: slot không tự đặt onCorrectTap mà onCorrectRemove chung có FlyToStay thì đáp án cuối
                 // cũng bay vào vùng "Đã chọn" như các đáp án trước (tự ẩn bản gốc rồi chạy clone).
                 var remove = Pick(slotFx?.onCorrectRemove, _package.effects.onCorrectRemove);
-                if (!HasOwnFx(slotFx?.onCorrectTap) && HasFlyToStay(remove))
+                var finalTap = Pick(slotFx?.onCorrectTap, _package.effects.onCorrectTap);
+                float revealDelay = MaxEffectDuration(finalTap);
+                // onCorrectTap có FlyToStay: PHẢI chạy trên bản sao qua ApplyCollectSlot (tính đích từ ô "Đã chọn") —
+                // PlayActionFx chạy thẳng trên nút gốc với targetX/Y = 0 → bay về góc trên-trái màn hình.
+                bool finalFlies = HasFlyToStay(finalTap);
+                if (finalFlies)
+                {
+                    PlayCorrectRemoveClone(team, btn, rt, finalTap);
+                    btn.gameObject.SetActive(false);
+                }
+                else if (!HasOwnFx(slotFx?.onCorrectTap) && HasFlyToStay(remove))
                 {
                     PlayCorrectRemoveClone(team, btn, rt, remove);
                     btn.gameObject.SetActive(false);
+                    revealDelay = Mathf.Max(revealDelay, MaxEffectDuration(remove));
                 }
-                PlayActionFx(team, rt, Pick(slotFx?.onCorrectTap, _package.effects.onCorrectTap), true);
+                RevealQuestionOnCorrect(team, revealDelay); // slot câu hỏi hideOnCorrect: đợi mảnh bay xong rồi mờ đi
+                if (!finalFlies) PlayActionFx(team, rt, finalTap, true);
                 FireItems(team, ItemTrigger.Correct);
                 break;
             case ClickResult.WrongFinal:
@@ -1696,12 +1788,31 @@ public class GenericGameController : MiniGameControllerBase
             var p = MirrorForTeam(spec.effectParams, team, type);
             if (type == EffectType.FlyToStay)
             {
-                p = ApplyCollectSlot(p, team, span, out int f, out int l);
-                if (litFirst < 0) { litFirst = f; litLast = l; }
+                p = ApplyCollectSlot(p, team, span, out int f, out int l);                if (litFirst < 0) { litFirst = f; litLast = l; }
             }
             EffectLibrary.Play(this, cloneRt, type, p, () => { if (!keepsClone && --remaining <= 0) Destroy(clone); });
+            // "Ở lại (giây)" > 0: bay tới xong đứng yên ngần ấy giây rồi mờ đi và biến mất (0 = ở lại tới round mới như cũ).
+            if (type == EffectType.FlyToStay && p.stayFor > 0f && !fillByValue)
+                StartCoroutine(FadeAndDestroyAfter(clone, (p.duration > 0 ? p.duration : 0.45f) + p.stayFor));
         }
         if (fillByValue && litFirst >= 0) SpawnLitCells(team, (RectTransform)rt.parent, litFirst, litLast, maxDur * 0.65f);
+    }
+
+    /// <summary>Chờ `delay` giây rồi mờ dần (0.25s) và huỷ `go` — dùng cho FlyToStay có stayFor. go đã bị huỷ trước đó (round mới dọn giỏ) thì thôi.</summary>
+    IEnumerator FadeAndDestroyAfter(GameObject go, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (go == null) yield break;
+        var cg = go.GetComponent<CanvasGroup>();
+        if (cg == null) cg = go.AddComponent<CanvasGroup>();
+        const float dur = 0.25f;
+        for (float t = 0f; t < dur; t += Time.deltaTime)
+        {
+            if (go == null) yield break;
+            cg.alpha = 1f - t / dur;
+            yield return null;
+        }
+        if (go != null) Destroy(go);
     }
 
     IEnumerator ShowFeedbackIconAfterDelay(Team team, float delay)
@@ -1927,11 +2038,14 @@ public class GenericGameController : MiniGameControllerBase
                 // Giống đáp án cuối ở chế độ thường: có hiệu ứng "biến mất" thì đáp án CUỐI cũng bay vào
                 // thanh (lấp nốt các ô còn lại) rồi mới ẩn bản gốc.
                 var remove = Pick(slotFx?.onCorrectRemove, _package.effects.onCorrectRemove);
+                float sumRevealDelay = MaxEffectDuration(Pick(slotFx?.onCorrectTap, _package.effects.onCorrectTap));
                 if (HasRealEffects(remove))
                 {
                     PlayCorrectRemoveClone(team, btn, rt, remove);
                     btn.gameObject.SetActive(false);
+                    sumRevealDelay = Mathf.Max(sumRevealDelay, MaxEffectDuration(remove));
                 }
+                RevealQuestionOnCorrect(team, sumRevealDelay);
                 LaunchDecos(team);
                 PlayActionFx(team, rt, Pick(slotFx?.onCorrectTap, _package.effects.onCorrectTap), true);
                 FireItems(team, ItemTrigger.Correct);

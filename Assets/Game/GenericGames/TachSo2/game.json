@@ -15,10 +15,11 @@
     "hasTargetScore": false,
     "targetScore": 10,
     "wrongEndsRound": true,
+    "waitBothTeams": true,
     "showCorrectWrongTint": true,
     "questionAudioOnly": false,
-    "questionFontSize": 42,
-    "answerFontSize": 50,
+    "questionFontSize": 50,
+    "answerFontSize": 73,
     "questionTextColor": "",
     "answerTextColor": "",
     "iconColumns": 2,
@@ -34,9 +35,9 @@
       "spawnIntervalSec": 1,
       "maxConcurrent": 4
     },
-    "background": "bg_0.png",
+    "background": "_shared/ef4504022d19.png",
     "backgroundAudio": null,
-    "qFrame": "qFrame_3.png",
+    "qFrame": "_shared/8c2827c88d8d.png",
     "slotFrames": [],
     "layerOrder": [
       "question",
@@ -49,7 +50,7 @@
     "decorations": [
       {
         "id": "deco1790934509556",
-        "image": "deco1_2.png",
+        "image": "deco0_10.png",
         "launchOnComplete": false,
         "mirrorImage": false,
         "xPct": 6.280687923902503,
@@ -93,11 +94,11 @@
       },
       {
         "id": "deco1790934427949",
-        "image": "deco0_1.png",
+        "image": "_shared/b1f3f2bb1910.png",
         "launchOnComplete": true,
         "mirrorImage": true,
-        "xPct": 42.540630122619184,
-        "yPct": 23.105344493487713,
+        "xPct": 39.19054637052538,
+        "yPct": 22.111026311669534,
         "wPct": 34.680867749151815,
         "hPct": 53.35970814612057,
         "effect": {
@@ -308,13 +309,13 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 37.61204624971597,
-            "yPct": 6.878419520882016,
-            "wPct": 44.517257184863745,
-            "hPct": 20.452640488418115,
+            "xPct": 28.231811743853328,
+            "yPct": 5.173874066336561,
+            "wPct": 53.394979127912315,
+            "hPct": 24.28786776114539,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 10",
+            "text": "Cần 10",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -325,10 +326,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.4603567165250555,
-          "yPct": 78.05101863441504,
-          "wPct": 97.33377253132633,
-          "hPct": 20.806124222727817
+          "xPct": 0.790339966106295,
+          "yPct": 75.76530434870075,
+          "wPct": 98.53964328347494,
+          "hPct": 21.948981365584956
         },
         "matrix": {
           "cols": 5,
@@ -349,11 +350,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.4603567165250555,
-            "yPct": 78.05101863441504,
+            "xPct": 0.790339966106295,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -362,11 +363,11 @@
             "fx": {}
           },
           {
-            "xPct": 20.79379984935664,
-            "yPct": 78.05101863441504,
+            "xPct": 20.42525078697503,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -375,11 +376,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 78.05101863441504,
+            "xPct": 40.06016160784377,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -388,11 +389,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.460686115019804,
-            "yPct": 78.05101863441504,
+            "xPct": 59.6950724287125,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -401,11 +402,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.79412924785139,
-            "yPct": 78.05101863441504,
+            "xPct": 79.32998324958125,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -603,13 +604,13 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 37.61204624971597,
-            "yPct": 6.878419520882016,
+            "xPct": 34.93197924804093,
+            "yPct": 6.594328611791107,
             "wPct": 44.517257184863745,
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 9",
+            "text": "Cần 9",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -620,10 +621,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 0.622835778501605,
+          "yPct": 75.62244720584361,
+          "wPct": 98.17129346934979,
+          "hPct": 15.233024593370837
         },
         "matrix": {
           "cols": 5,
@@ -644,11 +645,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 0.622835778501605,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -657,11 +658,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 20.165659145839054,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -670,11 +671,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 39.7084825131765,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -683,11 +684,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 59.25130588051395,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -696,11 +697,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 78.7941292478514,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -904,7 +905,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 2",
+            "text": "Cần 2",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -915,9 +916,9 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
+          "xPct": 2.2978776545485062,
+          "yPct": 76.19387577727218,
+          "wPct": 97.66878090653572,
           "hPct": 15.518738879085124
         },
         "matrix": {
@@ -939,11 +940,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 2.2978776545485062,
+            "yPct": 76.19387577727218,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -952,11 +953,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 21.715072881182437,
+            "yPct": 76.19387577727218,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -965,11 +966,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 41.132268107816365,
+            "yPct": 76.19387577727218,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -978,11 +979,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 60.549463334450294,
+            "yPct": 76.19387577727218,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -991,11 +992,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 79.96665856108422,
+            "yPct": 76.19387577727218,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -1199,7 +1200,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 1",
+            "text": "Cần 1",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -1210,10 +1211,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 1.2928525289203652,
+          "yPct": 76.05101863441504,
+          "wPct": 98.0037892817451,
+          "hPct": 15.233024593370837
         },
         "matrix": {
           "cols": 5,
@@ -1234,11 +1235,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 1.2928525289203652,
+            "yPct": 76.05101863441504,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -1247,11 +1248,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 20.79379984935664,
+            "yPct": 76.05101863441504,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -1260,11 +1261,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 40.29474716979291,
+            "yPct": 76.05101863441504,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -1273,11 +1274,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 59.79569449022919,
+            "yPct": 76.05101863441504,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -1286,11 +1287,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 79.29664181066546,
+            "yPct": 76.05101863441504,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -1494,7 +1495,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 3",
+            "text": "Cần 3",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -1505,10 +1506,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 1.4603567165250557,
+          "yPct": 75.62244720584361,
+          "wPct": 97.66878090653573,
+          "hPct": 16.37588173622798
         },
         "matrix": {
           "cols": 5,
@@ -1529,11 +1530,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 1.4603567165250557,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -1542,11 +1543,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 20.877551943158988,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -1555,11 +1556,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 40.29474716979292,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -1568,11 +1569,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 59.71194239642685,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -1581,11 +1582,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 79.12913762306079,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -1789,7 +1790,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 4",
+            "text": "Cần 4",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -1800,10 +1801,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 0.2878274032922248,
+          "yPct": 75.76530434870075,
+          "wPct": 98.37213909587025,
+          "hPct": 16.37588173622798
         },
         "matrix": {
           "cols": 5,
@@ -1824,11 +1825,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 0.2878274032922248,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -1837,11 +1838,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 19.88086217725979,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -1850,11 +1851,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 39.47389695122735,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -1863,11 +1864,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 59.06693172519492,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -1876,11 +1877,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 78.65996649916248,
+            "yPct": 75.76530434870075,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -2078,13 +2079,13 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 37.61204624971597,
-            "yPct": 6.878419520882016,
-            "wPct": 44.517257184863745,
-            "hPct": 20.452640488418115,
+            "xPct": 30.24186199510961,
+            "yPct": 5.457964975427471,
+            "wPct": 46.527307436120026,
+            "hPct": 19.60036776114539,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần ",
+            "text": "Cần 5",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -2095,10 +2096,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 0.7903399661062951,
+          "yPct": 75.62244720584361,
+          "wPct": 96.83125996851227,
+          "hPct": 23.804453164799412
         },
         "matrix": {
           "cols": 5,
@@ -2119,11 +2120,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 0.7903399661062951,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -2132,11 +2133,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 19.998154958234363,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -2145,11 +2146,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 39.20596995036243,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -2158,11 +2159,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 58.4137849424905,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -2171,11 +2172,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 77.62159993461857,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -2379,7 +2380,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 6",
+            "text": "Cần 6",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -2390,10 +2391,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 0.957844153710985,
+          "yPct": 75.47959006298647,
+          "wPct": 98.17129346934978,
+          "hPct": 23.520409937013525
         },
         "matrix": {
           "cols": 5,
@@ -2414,11 +2415,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 0.957844153710985,
+            "yPct": 75.47959006298647,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -2427,11 +2428,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 20.500667521048427,
+            "yPct": 75.47959006298647,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -2440,11 +2441,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 40.043490888385875,
+            "yPct": 75.47959006298647,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -2453,11 +2454,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 59.586314255723316,
+            "yPct": 75.47959006298647,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -2466,11 +2467,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 79.12913762306076,
+            "yPct": 75.47959006298647,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -2674,7 +2675,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 8",
+            "text": "Cần 8",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -2685,10 +2686,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 1.3261939678361472,
+          "yPct": 75.62244720584361,
+          "wPct": 98.67380603216385,
+          "hPct": 23.804453164799412
         },
         "matrix": {
           "cols": 5,
@@ -2709,11 +2710,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 1.3261939678361472,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -2722,11 +2723,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 20.99464547587711,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -2735,11 +2736,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 40.663096983918074,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -2748,11 +2749,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 60.33154849195904,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -2761,11 +2762,11 @@
             "fx": {}
           },
           {
-            "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "xPct": 80,
+            "yPct": 75.62244720584361,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,
@@ -2969,7 +2970,7 @@
             "hPct": 20.452640488418115,
             "image": null,
             "imagePool": null,
-            "text": "Nhiên liệu cần 7",
+            "text": "Cần 7",
             "icon": null,
             "sound": null,
             "correct": false,
@@ -2980,10 +2981,10 @@
       "answers": {
         "arrangement": "matrix",
         "area": {
-          "xPct": 1.9628692793391258,
-          "yPct": 79.19387577727218,
-          "wPct": 96.3287474056982,
-          "hPct": 15.518738879085124
+          "xPct": 0.28782740329222456,
+          "yPct": 75.9081614915579,
+          "wPct": 98.0037892817451,
+          "hPct": 23.806124222727817
         },
         "matrix": {
           "cols": 5,
@@ -3004,11 +3005,11 @@
         "bgIcon": null,
         "slots": [
           {
-            "xPct": 1.9628692793391258,
-            "yPct": 79.19387577727218,
+            "xPct": 0.28782740329222456,
+            "yPct": 75.9081614915579,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_0_4.png",
+            "image": "_shared/57132da63d80.png",
             "imagePool": null,
             "text": "5",
             "icon": null,
@@ -3017,11 +3018,11 @@
             "fx": {}
           },
           {
-            "xPct": 21.045056130763676,
-            "yPct": 79.19387577727218,
+            "xPct": 19.7887747237285,
+            "yPct": 75.9081614915579,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_1_5.png",
+            "image": "_shared/97d0dd833bc9.png",
             "imagePool": null,
             "text": "4",
             "icon": null,
@@ -3030,11 +3031,11 @@
             "fx": {}
           },
           {
-            "xPct": 40.12724298218822,
-            "yPct": 79.19387577727218,
+            "xPct": 39.289722044164776,
+            "yPct": 75.9081614915579,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_2_6.png",
+            "image": "_shared/d25a8eb6aa31.png",
             "imagePool": null,
             "text": "3",
             "icon": null,
@@ -3043,11 +3044,11 @@
             "fx": {}
           },
           {
-            "xPct": 59.20942983361277,
-            "yPct": 79.19387577727218,
+            "xPct": 58.79066936460105,
+            "yPct": 75.9081614915579,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_3_9.png",
+            "image": "_shared/5f2e4c7ddb16.png",
             "imagePool": null,
             "text": "2",
             "icon": null,
@@ -3057,10 +3058,10 @@
           },
           {
             "xPct": 78.29161668503733,
-            "yPct": 79.19387577727218,
+            "yPct": 75.9081614915579,
             "wPct": 20,
             "hPct": 22,
-            "image": "a0_4_8.png",
+            "image": "_shared/265d574df43f.png",
             "imagePool": null,
             "text": "1",
             "icon": null,

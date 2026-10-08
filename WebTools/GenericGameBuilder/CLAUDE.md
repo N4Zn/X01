@@ -31,6 +31,11 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - `settings.waitBothTeams` (ô tick `#waitBothTeams`, chỉ hiện khi 2 đội = Gộp): 2 đội cùng câu, cả 2 xong mới sang câu. Web preview: `waitBothOn()`, `teamDoneCombined()`, `combinedWin()`, `waitBothWrong()` (quanh `onCombinedPick`/`onSpawnPickCombined`/`sumToTargetPick`). Unity: xem SCHEMA.md mục "Chờ cả 2 đội". Chưa test trong Editor.
 - Chữ SỐ (text chỉ gồm chữ số): web preview đậm + viền đen, trắng trừ khi đặt màu riêng (`.stxt-num`), khớp `NumberTextStyle` bên Unity.
 
+## Lộ ảnh hoàn chỉnh (2026-10-08, port từ `game_builder_v2_6_1004_reveal.html`)
+- Slot câu hỏi: `hideOnCorrect` (👻, mờ đi sau khi đúng + giữ màn hình thêm 1.8s `holdMsFor`), `sendToBack` (⬇, vẽ sau). `FlyToStay.stayFor` (giây ở lại rồi biến mất). Nút ⧉ khớp vị trí slot 1 (chỉ web). Unity: `RevealQuestionOnCorrect`, `OrderQuestionSlots`, `FadeAndDestroyAfter`; SCHEMA.md mục "hideOnCorrect/sendToBack" + "stayFor".
+- Chưa port: hold 1.8s ở spawn flow / SumToTarget; chưa test trong Editor (game mẫu `GhepAnhConThieu`).
+- File reveal gốc là fork của bản cũ — KHÔNG ghi đè builder bằng nó (mất `waitBothTeams`, chữ số viền, `effFx` gộp từng phần).
+
 ## Wait-to-do (làm sau, chưa ưu tiên)
 - [ ] **Safari: chưa chơi thử (Play/preview) được** — builder chạy trên trình duyệt Safari không vào được chế độ chơi thử. Chưa điều tra nguyên nhân (nghi: autoplay audio bị chặn, `requestAnimationFrame`/API chưa hỗ trợ, hoặc cú pháp JS/CSS Safari không nhận). Khi làm: test trên Safari thật (macOS/iOS), mở Web Inspector xem lỗi Console. Hiện dùng Chrome/Edge.
 

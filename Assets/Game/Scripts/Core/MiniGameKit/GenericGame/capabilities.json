@@ -75,7 +75,8 @@
     ]},
     { "id": "FlyToStay", "label": "Bay tới & Ở LẠI (đọng lại thành vùng mới, không biến mất)", "params": [
       { "name": "duration", "type": "float", "default": 0.45, "min": 0.1, "max": 2 },
-      { "name": "scale", "type": "float", "default": 1, "min": 0.05, "max": 2, "hint": "CHỈ áp dụng khi chưa cấu hình 'Vùng thu thập' (mảng ô đích) — có cấu hình thì kích thước lấy thẳng từ ô đó" }
+      { "name": "scale", "type": "float", "default": 1, "min": 0.05, "max": 2, "hint": "CHỈ áp dụng khi chưa cấu hình 'Vùng thu thập' (mảng ô đích) — có cấu hình thì kích thước lấy thẳng từ ô đó" },
+      { "name": "stayFor", "type": "float", "default": 0, "min": 0, "max": 5, "hint": "Ở lại (giây) rồi mờ đi và biến mất · 0 = ở lại tới round mới" }
     ]},
     { "id": "Breathing", "label": "Phóng to-nhỏ liên tục (mời gọi, trước khi chạm)", "params": [
       { "name": "duration", "type": "float", "default": 0.6, "min": 0.2, "max": 2 },

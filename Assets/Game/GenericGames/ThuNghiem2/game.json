@@ -160,12 +160,12 @@
       "wPct": 44.517257184863745,
       "hPct": 20.452640488418115
     },
-    "background": "bg_0.png",
+    "background": "_shared/ef4504022d19.png",
     "backgroundAudio": null,
     "decorations": [
       {
         "id": "deco1790934509556",
-        "image": "deco1_2.png",
+        "image": "_shared/cd9240d34524.png",
         "launchOnComplete": false,
         "mirrorImage": false,
         "xPct": 6.280687923902503,
@@ -183,7 +183,7 @@
       },
       {
         "id": "deco1790934427949",
-        "image": "deco0_1.png",
+        "image": "_shared/b1f3f2bb1910.png",
         "launchOnComplete": true,
         "mirrorImage": true,
         "xPct": 42.540630122619184,
@@ -204,7 +204,7 @@
       }
     ],
     "collectFillByValue": true,
-    "qFrame": "qFrame_3.png"
+    "qFrame": "_shared/8c2827c88d8d.png"
   },
   "effects": {
     "onIdle": {
@@ -274,31 +274,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -314,31 +314,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -354,31 +354,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -394,31 +394,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -434,31 +434,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -474,31 +474,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -514,31 +514,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -554,31 +554,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -594,31 +594,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }
@@ -634,31 +634,31 @@
       "answers": [
         {
           "text": "5",
-          "image": "a0_0_4.png",
+          "image": "_shared/57132da63d80.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "4",
-          "image": "a0_1_5.png",
+          "image": "_shared/97d0dd833bc9.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "3",
-          "image": "a0_2_6.png",
+          "image": "_shared/d25a8eb6aa31.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "2",
-          "image": "a0_3_9.png",
+          "image": "_shared/5f2e4c7ddb16.png",
           "imagePool": null,
           "correct": true
         },
         {
           "text": "1",
-          "image": "a0_4_8.png",
+          "image": "_shared/265d574df43f.png",
           "imagePool": null,
           "correct": true
         }

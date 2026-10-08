@@ -1,0 +1,5881 @@
+{
+  "schemaVersion": 2,
+  "meta": {
+    "gameId": "SoSanhSo2DauChuSo",
+    "displayName": "SoSanhSo2DauChuSo",
+    "category": "So sánh"
+  },
+  "settings": {
+    "playMode": "Independent",
+    "answerMode": "Single",
+    "scoringMode": "flat",
+    "flatPoints": 1,
+    "countdownMode": "nextInN",
+    "countdownSeconds": 3,
+    "hasTargetScore": false,
+    "targetScore": 10,
+    "wrongEndsRound": true,
+    "showCorrectWrongTint": true,
+    "questionAudioOnly": false,
+    "questionFontSize": 113,
+    "answerFontSize": 117,
+    "questionTextColor": "",
+    "answerTextColor": "",
+    "iconColumns": 2
+  },
+  "layout": {
+    "spawnFlow": {
+      "enabled": false,
+      "direction": "LeftToRight",
+      "itemWPct": 28,
+      "itemHPct": 23.8,
+      "speedPct": 20,
+      "spawnIntervalSec": 1,
+      "maxConcurrent": 5
+    },
+    "background": "_shared/17057fbf6c42.png",
+    "backgroundAudio": null,
+    "qFrame": null,
+    "slotFrames": [],
+    "layerOrder": [
+      "question",
+      "deco:deco1791346085599",
+      "answers",
+      "collect",
+      "feedback"
+    ],
+    "decorations": [
+      {
+        "id": "deco1791346085599",
+        "image": "_shared/0204d87d8104.png",
+        "launchOnComplete": false,
+        "fx": {
+          "onCorrect": {
+            "effects": [],
+            "sound": null,
+            "playSound": true,
+            "showIcon": false
+          },
+          "onPartial": {
+            "effects": [],
+            "sound": null,
+            "playSound": true,
+            "showIcon": false
+          },
+          "onWrong": {
+            "effects": [],
+            "sound": null,
+            "playSound": true,
+            "showIcon": false
+          },
+          "onClick": {
+            "effects": [],
+            "sound": null,
+            "playSound": true,
+            "showIcon": false
+          }
+        },
+        "mirrorImage": true,
+        "xPct": 0,
+        "yPct": 31.285714285714285,
+        "wPct": 28.85259631490787,
+        "hPct": 29,
+        "effect": {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        },
+        "text": {
+          "bind": "",
+          "fontSizePct": 7
+        }
+      }
+    ],
+    "collectSlots": [
+      {
+        "xPct": 8.67238026421779,
+        "yPct": 7.986317720763534,
+        "wPct": 20.638804660585023,
+        "hPct": 21.640809000596807
+      },
+      {
+        "xPct": 40.40373119609517,
+        "yPct": 8.15222144799639,
+        "wPct": 21.60522168377551,
+        "hPct": 21.80671905665118
+      }
+    ],
+    "collectArea": {
+      "xPct": 5,
+      "yPct": 5,
+      "wPct": 48.50448012652372,
+      "hPct": 22.20240457244697
+    },
+    "collectMatrix": {
+      "count": 2,
+      "cols": 2,
+      "itemWPct": 16,
+      "itemHPct": 16,
+      "fillOrder": "forward"
+    },
+    "collectLayoutMode": "manual",
+    "collectCols": 2,
+    "collectFillReverse": false,
+    "collectAutoStretch": false,
+    "collectFillByValue": false,
+    "questionSpace": "stage"
+  },
+  "effects": {
+    "onIdle": {
+      "effects": [
+        {
+          "type": "Breathing",
+          "effectParams": {
+            "duration": 0.6,
+            "scale": 1.08
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectTap": {
+      "effects": [
+        {
+          "type": "FlyToStay",
+          "effectParams": {
+            "duration": 0.45
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onWrongTap": {
+      "effects": [
+        {
+          "type": "Shake",
+          "effectParams": {
+            "duration": 0.3,
+            "amplitudePct": 1.5,
+            "speed": 30
+          }
+        }
+      ],
+      "sound": null,
+      "playSound": true,
+      "showIcon": true
+    },
+    "onCorrectRemove": {
+      "effects": [],
+      "sound": null,
+      "playSound": true,
+      "showIcon": false
+    }
+  },
+  "rounds": [
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "5",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "4",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "3",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    },
+    {
+      "target": 0,
+      "question": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 4.962779156327544,
+          "yPct": 9.374780220865683,
+          "wPct": 89.24731182795699,
+          "hPct": 28.334362169671838
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 29,
+          "itemHPct": 26
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 4.962779156327544,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "2",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 35.08643507030604,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/57132da63d80.png",
+            "imagePool": null,
+            "text": "?",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          },
+          {
+            "xPct": 65.21009098428453,
+            "yPct": 9.374780220865683,
+            "wPct": 29,
+            "hPct": 26,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "1",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      },
+      "answers": {
+        "arrangement": "matrix",
+        "area": {
+          "xPct": 2.5125628140703515,
+          "yPct": 70.39441431923305,
+          "wPct": 91.82253481443698,
+          "hPct": 27.31987139505267
+        },
+        "matrix": {
+          "cols": 3,
+          "itemWPct": 31,
+          "itemHPct": 26.349999999999998
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 12.75,
+          "gapPct": 2
+        },
+        "shape": "square",
+        "mirror": true,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 2.5125628140703515,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "<",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 32.92383022128884,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": "=",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          },
+          {
+            "xPct": 63.33509762850733,
+            "yPct": 70.39441431923305,
+            "wPct": 31,
+            "hPct": 26.349999999999998,
+            "image": "_shared/5f2e4c7ddb16.png",
+            "imagePool": null,
+            "text": ">",
+            "icon": null,
+            "sound": null,
+            "correct": true,
+            "fx": {
+              "onCorrectRemove": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": false
+              },
+              "onCorrectTap": {
+                "effects": [
+                  {
+                    "type": "FlyToStay",
+                    "effectParams": {
+                      "duration": 0.45
+                    }
+                  }
+                ],
+                "sound": null,
+                "playSound": true,
+                "showIcon": true
+              }
+            }
+          }
+        ]
+      },
+      "collect": {
+        "arrangement": "manual",
+        "area": {
+          "xPct": 5,
+          "yPct": 5,
+          "wPct": 48.50448012652372,
+          "hPct": 22.20240457244697
+        },
+        "matrix": {
+          "cols": 2,
+          "itemWPct": 16,
+          "itemHPct": 16
+        },
+        "random": {
+          "itemWPct": 15,
+          "itemHPct": 20,
+          "gapPct": 2
+        },
+        "shape": "rectangle",
+        "mirror": false,
+        "autoStretch": false,
+        "fillByValue": false,
+        "fillReverse": false,
+        "bgImage": null,
+        "bgIcon": null,
+        "slots": [
+          {
+            "xPct": 35.471700165520936,
+            "yPct": 9.3478038449488,
+            "wPct": 28.877192040076697,
+            "hPct": 26.452839075784777,
+            "image": null,
+            "imagePool": null,
+            "text": "",
+            "icon": null,
+            "sound": null,
+            "correct": false,
+            "fx": {}
+          }
+        ]
+      }
+    }
+  ],
+  "imagePools": []
+}

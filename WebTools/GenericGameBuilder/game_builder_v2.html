@@ -541,8 +541,9 @@ const CAPS = {
       {name:"targetYPct",label:"Điểm đến Y%",type:"float",def:90,min:0,max:100,step:1,hasMarker:true},
       {name:"scale",label:"Co nhỏ còn",type:"float",def:0.3,min:0.05,max:1,step:0.05},
     ]},
-    { id:"FlyToStay", label:"Bay tới & Ở LẠI (không biến mất)", params:[
-      {name:"duration",label:"Thời gian",type:"float",def:0.45,min:0.1,max:2,step:0.05},
+    { id:"FlyToStay", label:"Bay tới & Ở LẠI (đặt giây để biến mất)", params:[
+      {name:"duration",label:"Thời gian bay",type:"float",def:0.45,min:0.1,max:2,step:0.05},
+      {name:"stayFor",label:"Ở lại (giây) rồi biến mất · 0 = ở lại mãi",type:"float",def:0,min:0,max:5,step:0.05},
     ], needsCollectArea:true },
     { id:"Breathing", label:"Phóng to-nhỏ liên tục", params:[
       {name:"duration",label:"Thời gian 1 nhịp",type:"float",def:0.6,min:0.2,max:2,step:0.05},
@@ -574,7 +575,7 @@ function newActionFx(){ return {effects:[], sound:null, playSound:true, showIcon
 const DEFAULT_QAREA = {xPct:8, yPct:8, wPct:84, hPct:40};
 const DEFAULT_AAREA = {xPct:5, yPct:50, wPct:90, hPct:45};
 function newSlot(rect){
-  return Object.assign({ xPct:10, yPct:10, wPct:20, hPct:25, image:null, imagePool:null, text:'', icon:null, sound:null, correct:false, fx:{} }, rect||{});
+  return Object.assign({ xPct:10, yPct:10, wPct:20, hPct:25, image:null, imagePool:null, text:'', icon:null, sound:null, correct:false, hideOnCorrect:false, sendToBack:false, fx:{} }, rect||{});
 }
 function newGroup(kind){
   return {
@@ -1554,6 +1555,12 @@ function buildSlotRow(r, ri, key, si){
   fxBtn.addEventListener('click', ()=>{ slotFxOpen.set(s, !slotFxOpen.get(s)); renderRounds(); });
   row.appendChild(fxBtn);
 
+  if (!isA){
+    const mk = (txt, title, on, fn)=>{ const b = document.createElement('button'); b.className='upload-btn' + (on ? ' on' : ''); b.textContent=txt; b.title=title; b.addEventListener('click', fn); row.appendChild(b); };
+    mk('👻', 'Biến mất sau khi chọn ĐÚNG (đợi mảnh bay tới nơi rồi mờ đi) — dùng cho ảnh có lỗ khuyết', !!s.hideOnCorrect, ()=>{ s.hideOnCorrect = !s.hideOnCorrect; afterRoundsEdit(); });
+    mk('⬇', 'Xếp PHÍA SAU các ảnh khác trong nhóm câu hỏi — vd ảnh hoàn chỉnh nằm sau ảnh khuyết', !!s.sendToBack, ()=>{ s.sendToBack = !s.sendToBack; afterRoundsEdit(); });
+    if (si>0) mk('⧉', 'Khớp đúng vị trí & kích thước với slot 1', false, ()=>{ const b0 = g.slots[0]; s.xPct=b0.xPct; s.yPct=b0.yPct; s.wPct=b0.wPct; s.hPct=b0.hPct; afterRoundsEdit(); });
+  }
   if (isA){
     const cb = document.createElement('button'); cb.className='correct-toggle' + (s.correct ? ' on' : ''); cb.textContent='✓'; cb.title='Đáp án đúng';
     cb.addEventListener('click', ()=>{ s.correct = !s.correct; renderRounds(); });
@@ -2014,7 +2021,7 @@ async function doExport(){
     slots: g.slots.map(s=>({
       xPct:s.xPct, yPct:s.yPct, wPct:s.wPct, hPct:s.hPct,
       image:s.image||null, imagePool:s.imagePool||null, text:s.text||'', icon:s.icon||null, sound:s.sound||null,
-      correct:!!s.correct, fx:cleanFx(s.fx),
+      correct:!!s.correct, hideOnCorrect:!!s.hideOnCorrect, sendToBack:!!s.sendToBack, fx:cleanFx(s.fx),
     })),
   });
   const cleanRounds = game.rounds.map(r=>({
@@ -2452,7 +2459,7 @@ function resolveRoundsForPlaytest(){
         const pool = game.imagePools.find(p=>p.id===sl.imagePool);
         if (pool && pool.images.length) image = pool.images[Math.floor(Math.random()*pool.images.length)];
       }
-      return { src:sl, image, icon: sl.icon || g.bgIcon || null, text: sl.text || '', sound: sl.sound || null, correct: !!sl.correct, fx: sl.fx || {} };
+      return { src:sl, image, icon: sl.icon || g.bgIcon || null, text: sl.text || '', sound: sl.sound || null, correct: !!sl.correct, hideOnCorrect: !!sl.hideOnCorrect, sendToBack: !!sl.sendToBack, fx: sl.fx || {} };
     });
     return { target: r.target || null, qGroup: r.question, aGroup: r.answers, cGroup: r.collect, qSlots: res(r.question), answers: res(r.answers) };
   });
@@ -2573,6 +2580,7 @@ function renderQuestion(side, round){
   const W = host.clientWidth, H = host.clientHeight;
   const pos = positionsFor(round.qGroup, 'left' === side || shared ? 'left' : side);
   const fs = game.settings.questionFontSize;
+  const backs = [];
   round.qSlots.forEach((qs, i)=>{
     if (!qs.image && !qs.icon && !qs.text) return;
     const p = pos[i];
@@ -2591,8 +2599,11 @@ function renderQuestion(side, round){
       el.style.textShadow = '0 2px 4px rgba(0,0,0,.6)';
     }
     host.appendChild(el);
+    el._qs = qs; if (qs.sendToBack) backs.push(el);
     if (hasFx(qs.fx.onIdle)) startIdleOnElement(el, qs.fx.onIdle);
   });
+  // Ảnh đánh dấu "xếp sau" nằm DƯỚI mọi ảnh câu hỏi còn lại (cùng lớp) — vd ảnh hoàn chỉnh nằm sau ảnh khuyết.
+  backs.slice().reverse().forEach(b=> host.insertBefore(b, host.querySelector('.pt-qs')));
 }
 
 function renderAnswers(side, round, onPick){
@@ -3040,7 +3051,7 @@ function onCombinedPick(side, round, ansIdx, el){
     if (isFinalSeq){
       finishCorrectTap(side, el, round);
       pt.sides[side].lastRoundPoints = pointsFor(round); pt.sides[side].score += pt.sides[side].lastRoundPoints; updateScore(side);
-      combinedWin(side, 700);
+      combinedWin(side, 700 + holdMsFor(round));
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden';
@@ -3057,7 +3068,7 @@ function onCombinedPick(side, round, ansIdx, el){
     if (isFinal){
       finishCorrectTap(side, el, round);
       pt.sides[side].lastRoundPoints = pointsFor(round); pt.sides[side].score += pt.sides[side].lastRoundPoints; updateScore(side);
-      combinedWin(side, 700);
+      combinedWin(side, 700 + holdMsFor(round));
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden'; // giống Kit thật: đáp án đúng-chưa-xong ẩn NGAY, không để trùng hình với bản sao đang bay
@@ -3233,16 +3244,35 @@ function hasRealFx(fx){ return !!(fx && fx.effects && fx.effects.some(s=>s.type!
 function finishCorrectTap(side, el, round){
   launchDecos(side);
   const rm = effFx(el._ans, 'onCorrectRemove');
+  const tapFx = effFx(el._ans, 'onCorrectTap');
   const collect = !slotHasOwnFx(el._ans, 'onCorrectTap') && (rm.effects||[]).some(s=>s.type==='FlyToStay');
+  let revealMs = fxDurationMs(tapFx);
   if (collect){
     runCorrectRemove(side, el, rm);
     el.style.visibility = 'hidden';
+    revealMs = Math.max(revealMs, fxDurationMs(rm));
   } else if (game.settings.showCorrectWrongTint){
     el.classList.add('tint-correct');
   }
-  runActionFx(side, el, effFx(el._ans, 'onCorrectTap'), true);
+  runActionFx(side, el, tapFx, true);
+  revealQuestionOnCorrect(side, revealMs);
   fireItems(side, 'onCorrect');
 }
+/// Thời gian dài nhất (ms) của các hiệu ứng thật trong 1 ActionFx (mặc định 0.45s/hiệu ứng) — 0 nếu không có.
+function fxDurationMs(fx){
+  const ds = ((fx && fx.effects) || []).filter(sp=>sp.type!=='None').map(sp=> ((sp.effectParams && sp.effectParams.duration) || 0.45) * 1000);
+  return ds.length ? Math.max.apply(null, ds) : 0;
+}
+/// Ảnh câu hỏi đánh dấu "biến mất khi đúng": đợi hiệu ứng bay (mảnh tới lỗ) xong rồi mờ đi → lộ ảnh xếp sau (ảnh hoàn chỉnh). Khớp Unity RevealQuestionOnCorrect.
+function revealQuestionOnCorrect(side, delay){
+  const host = isSharedQ() ? document.querySelector('#ptStage .pt-qlayer') : pt.sides[side].half;
+  if (!host) return;
+  host.querySelectorAll('.pt-qs').forEach(q=>{
+    if (q._qs && q._qs.hideOnCorrect) setTimeout(()=>{ q.style.transition = 'opacity .3s ease'; q.style.opacity = '0'; }, delay);
+  });
+}
+/// Round có ảnh "biến mất khi đúng" → giữ màn hình thêm 1.8s để bé nhìn tranh hoàn chỉnh trước khi sang round mới (Unity: feedbackDelayCorrect ≥ 2.5s).
+function holdMsFor(round){ return (round && round.qSlots && round.qSlots.some(q=>q.hideOnCorrect)) ? 1800 : 0; }
 
 // ── Independent mode: mỗi bên tự nhịp — SAI luôn kết thúc round (giống AnswerValidator thật) ──
 function showRoundIndependent(side){
@@ -3294,7 +3324,7 @@ function onIndependentPick(side, round, ansIdx, el, totalCorrect){
         clearRoundVisuals(side);
         if (game.settings.countdownMode==='nextInN') runCountdown(side, ()=>showRoundIndependent(side));
         else showRoundIndependent(side);
-      }, 700);
+      }, 700 + holdMsFor(round));
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden';
@@ -3315,7 +3345,7 @@ function onIndependentPick(side, round, ansIdx, el, totalCorrect){
         clearRoundVisuals(side);
         if (game.settings.countdownMode==='nextInN') runCountdown(side, ()=>showRoundIndependent(side));
         else showRoundIndependent(side);
-      }, 700);
+      }, 700 + holdMsFor(round));
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden'; // giống Kit thật: đáp án đúng-chưa-xong ẩn NGAY, không để trùng hình với bản sao đang bay
@@ -3608,6 +3638,12 @@ function runCorrectRemove(side, el, fx){
       if (!fillByValueOn(roundOf(side))){
         s.collectedEls = s.collectedEls || [];
         s.collectedEls.push(clone);
+        // "Ở lại (giây)" > 0: bay tới xong đứng yên ngần ấy giây rồi mờ đi và biến mất (0 = ở lại mãi như cũ).
+        const stayMs = Math.max(0, +((spec.effectParams||{}).stayFor)||0) * 1000;
+        if (stayMs>0){
+          setTimeout(()=>{ clone.style.transition='opacity .25s ease'; clone.style.opacity='0'; }, dur+stayMs);
+          setTimeout(()=> clone.remove(), dur+stayMs+320);
+        }
       }
     } else if (spec.type==='FadeOut'){
       runTransition(clone, `opacity ${dur}ms linear`, ()=>{ clone.style.opacity='0'; });
