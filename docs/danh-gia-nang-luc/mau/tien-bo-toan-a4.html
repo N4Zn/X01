@@ -1,0 +1,296 @@
+<title>Tiến bộ Toán A4</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,800&display=swap">
+<style>
+/* Layout: một tờ A4 dọc (794x1123) kiểu phiếu InBody, cột chính + cột phụ 224px; khoảng 50% chữ/số, 50% hình; xu hướng theo tháng T5 đến T10. Một giao diện giấy trắng, tự co theo độ rộng màn hình. */
+:root{
+  --paper:#ffffff;
+  --ground:#e9ebee;
+  --ink:#1c1d20;
+  --muted:#5d636b;
+  --red:#a8252b;
+  --slate:#6d7a88;
+  --slate-dark:#4a5663;
+  --line:#c9ced4;
+  --tint:#f0f2f4;
+  --up:#1f7a52;
+  --flat:#b8741a;
+  --font-display:"Source Serif 4","Noto Serif",Georgia,serif;
+  --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--font-body);font-size:12.5px;line-height:1.4;padding-inline:16px;padding-block:14px}
+.sample{max-width:794px;margin:0 auto 8px;font-size:11.5px;color:var(--muted)}
+.sample b{color:var(--red);font-weight:600}
+.sheet{width:794px;min-height:1123px;margin:0 auto;background:var(--paper);padding:26px 28px 14px;border-top:4px solid var(--red);display:flex;flex-direction:column;transform-origin:top left}
+.fit{margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block}
+svg text{font-family:var(--font-body)}
+
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+.logo{height:58px;width:auto}
+.dev{font-size:12.5px;color:var(--muted);padding-bottom:5px}
+.idbar{display:grid;grid-template-columns:1fr 1.8fr .6fr .8fr 1.6fr;border-top:1px solid var(--ink);border-bottom:1px solid var(--line);margin-top:10px}
+.idbar div{padding:3px 8px;border-right:1px solid var(--line)}
+.idbar div:last-child{border-right:0}
+.idbar small{display:block;color:var(--muted);font-size:10.5px}
+.idbar b{font-weight:500;font-size:13.5px}
+
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 224px;gap:22px;margin-top:14px;flex:1}
+h2{font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--slate-dark);margin:0 0 6px;padding-bottom:2px;border-bottom:1px solid var(--line)}
+h2 small{font-family:var(--font-body);font-weight:400;font-size:10.5px;color:var(--muted);margin-left:6px}
+.aside h2{font-size:14.5px;color:var(--ink);border-bottom-color:var(--ink)}
+section{margin-bottom:15px}
+
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{background:var(--slate);color:#fff;font-weight:500;padding:3px 4px;border:1px solid #fff;text-align:center;font-size:11px}
+th.dk{background:var(--slate-dark)}
+td{padding:3px 4px;border:1px solid var(--line);text-align:center}
+td.l{text-align:left;font-weight:600}
+td b{font-size:14px;font-weight:600}
+.up{color:var(--up);font-weight:600}
+.flat{color:var(--flat);font-weight:600}
+
+.bhead,.brow{display:grid;grid-template-columns:86px minmax(0,1fr) 36px;align-items:center;gap:0 6px}
+.bhead{margin-bottom:1px}
+.bhead .cells{display:flex}
+.bhead .cells span{background:var(--slate);color:#fff;text-align:center;font-size:10.5px;padding:0 2px;border-left:1px solid #fff;white-space:nowrap;overflow:hidden}
+.bhead .cells span.n{background:var(--slate-dark)}
+.bhead .r{background:var(--slate-dark);color:#fff;text-align:center;font-size:10.5px}
+.brow{border-bottom:1px solid var(--line);padding:1px 0 3px}
+.blab{font-weight:600;font-size:12.5px;line-height:1.15}
+.bt{position:relative;padding-top:11px}
+.tick{position:absolute;top:0;font-size:9px;color:var(--muted);transform:translateX(-50%)}
+.lane{position:relative;height:12px;border:1px solid var(--line)}
+.bar{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+.mk{position:absolute;top:-8px;transform:translateX(-50%);color:var(--red);font-size:11px;line-height:1}
+.bval{position:absolute;top:-4px;font-size:14px;font-weight:600;line-height:18px;white-space:nowrap}
+.bval.in{color:#fff;transform:translateX(-100%);padding-right:4px;top:-2px;font-size:11.5px;line-height:14px}
+.bx{text-align:center;font-size:13px;font-weight:600}
+.legend{font-size:10.5px;color:var(--muted);margin-top:3px}
+.legend b{color:var(--red);font-weight:600}
+
+.hrow{display:grid;grid-template-columns:86px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--line)}
+.hrow .blab small{display:block;font-weight:400;color:var(--muted);font-size:10px}
+.hd{display:grid;grid-template-columns:86px repeat(6,1fr);text-align:center;font-size:10.5px;color:var(--muted);margin-top:2px}
+.hd span:last-child{color:var(--ink);font-weight:600}
+
+.score{display:flex;align-items:baseline;justify-content:center;gap:5px;padding-top:4px}
+.score b{font-family:var(--font-display);font-weight:800;font-size:56px;line-height:1}
+.score span{color:var(--muted)}
+.delta{text-align:center;margin:2px 0 4px;font-size:12px}
+.note{font-size:10.5px;color:var(--muted);text-align:center}
+.kv{display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:0}
+.kv dt{font-size:12px}
+.kv dd{margin:0;text-align:right;font-weight:600}
+.ins{margin:0;padding:0;list-style:none}
+.ins li{padding:4px 0;border-bottom:1px solid var(--line);font-size:11.5px}
+.ins b{font-weight:600}
+.foot{display:flex;justify-content:space-between;gap:10px;border-top:3px solid var(--red);padding-top:5px;font-size:10px;color:var(--muted)}
+</style>
+
+<p class="sample"><b>Dữ liệu mẫu.</b> Học sinh và số liệu giả lập. Mỗi chỉ số theo tháng là tổng hợp từ các phiên chơi trong tháng.</p>
+
+<div class="fit" id="fit">
+<main class="sheet" id="sheet">
+  <div class="top">
+    <img class="logo" src="logo.png" alt="EduXplore" height="58">
+    <div class="dev">[Hồ sơ năng lực Toán] [Báo cáo theo tháng]</div>
+  </div>
+  <div class="idbar">
+    <div><small>Mã HS</small><b>HS-0142</b></div>
+    <div><small>Họ và tên</small><b>Nguyễn Minh Anh</b></div>
+    <div><small>Tuổi</small><b>5</b></div>
+    <div><small>Lớp</small><b>Lá 1</b></div>
+    <div><small>Kỳ báo cáo</small><b class="num">T5 → T10 / 2026</b></div>
+  </div>
+
+  <div class="cols">
+    <div class="main">
+      <section>
+        <h2>Phân tích kỹ năng <small>điểm tháng 10 so với tháng 5</small></h2>
+        <table id="tcomp"></table>
+      </section>
+
+      <section>
+        <h2>Độ chính xác <small>tháng 10</small></h2>
+        <div id="accbars"></div>
+        <div class="legend"><b>▼</b> vị trí của tháng 5. Vùng trắng là mức chuẩn lứa tuổi 5 đến 6.</div>
+      </section>
+
+      <section>
+        <h2>Lịch sử theo tháng</h2>
+        <div id="hist"></div>
+        <div class="hd" id="hdates"></div>
+      </section>
+    </div>
+
+    <aside class="aside">
+      <section>
+        <h2>Điểm EduXplore</h2>
+        <div class="score"><b id="tot" class="num">0</b><span>/ 100</span></div>
+        <div class="delta" id="dl"></div>
+        <div class="note" id="clsnote"></div>
+      </section>
+
+      <section>
+        <h2>Bản đồ kỹ năng</h2>
+        <svg id="radar" viewBox="0 0 224 200" width="224" height="200" role="img" aria-label="Mạng nhện sáu kỹ năng"></svg>
+        <div class="legend" style="display:flex;gap:10px;justify-content:center">
+          <span><svg width="18" height="7" style="display:inline-block"><rect width="18" height="7" fill="#a8252b" fill-opacity=".25" stroke="#a8252b"/></svg> T10</span>
+          <span><svg width="18" height="7" style="display:inline-block"><line x1="0" y1="3.5" x2="18" y2="3.5" stroke="#6d7a88" stroke-width="1.6" stroke-dasharray="4 2"/></svg> T5</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Mục tiêu tháng 11</h2>
+        <dl class="kv" id="goal"></dl>
+      </section>
+
+      <section>
+        <h2>Nhận xét</h2>
+        <ul class="ins" id="ins"></ul>
+      </section>
+    </aside>
+  </div>
+
+  <div class="foot"><span>* T10 tính đến ngày 7/10. Dữ liệu mẫu.</span><span>EduXplore Floor Math Profile</span></div>
+</main>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
+  var INK="#1c1d20",RED="#a8252b",SLATE="#6d7a88",MUTE="#5d636b",LINE="#c9ced4";
+  var MON=["T5","T6","T7","T8","T9","T10*"];
+  var SK=[
+    {name:"Đếm",short:"Đếm",n:24,s:[74,78,82,85,88,91],t:[4.6,4.3,3.9,3.6,3.4,3.2],cls:82},
+    {name:"So sánh số",short:"So sánh",n:20,s:[62,66,70,74,79,83],t:[6.0,5.6,5.1,4.8,4.4,4.1],cls:78},
+    {name:"Nhận biết hình",short:"Hình",n:18,s:[55,60,64,69,73,77],t:[6.8,6.4,5.9,5.5,5.1,4.8],cls:72},
+    {name:"Cộng trừ",short:"Cộng trừ",n:22,s:[30,34,38,43,47,50],t:[11.5,11.0,10.2,9.6,9.1,8.6],cls:62},
+    {name:"Quy luật",short:"Quy luật",n:16,s:[38,36,39,41,42,43],t:[11.0,11.2,10.6,10.3,10.0,9.8],cls:58},
+    {name:"Đo lường",short:"Đo lường",n:14,s:[48,52,55,59,62,65],t:[8.9,8.3,7.7,7.2,6.8,6.5],cls:64}
+  ];
+  SK.forEach(function(s){s.acc=s.s.map(function(v,m){var sp=clamp(1-(s.t[m]-2)/10,0,1);return clamp((v-25*sp)/.75,20,100)})});
+  var N=SK.reduce(function(a,s){return a+s.n},0);
+  var wavg=function(f){return[0,1,2,3,4,5].map(function(m){return SK.reduce(function(a,s){return a+f(s,m)*s.n},0)/N})};
+  var TOT=wavg(function(s,m){return s.s[m]}),ACC=wavg(function(s,m){return s.acc[m]}),TIME=wavg(function(s,m){return s.t[m]});
+  var CLS=[57,59,61,63,65,67],SESS=[8,10,7,12,13,5];
+  var total=Math.round(TOT[5]),d5=Math.round(TOT[5]-TOT[0]);
+  var f1=function(v){return v.toFixed(1)},sgn=function(v){return(v>=0?"+":"")+v};
+
+  /* điểm */
+  $("tot").textContent=total;
+  $("dl").innerHTML='<span class="up">▲ '+d5+' điểm</span> so với T5';
+  $("clsnote").textContent="Trung bình lớp: "+CLS[5]+" điểm";
+
+  /* sparkline trong bảng */
+  function spark(v,flat){
+    var W=70,H=22,mn=Math.min.apply(null,v),mx=Math.max.apply(null,v);
+    var p=v.map(function(y,i){return[3+i*(W-6)/5,H-3-(y-mn)/(mx-mn||1)*(H-6)]});
+    return'<svg viewBox="0 0 '+W+' '+H+'" width="70" height="22" style="margin:0 auto" aria-hidden="true"><polyline fill="none" stroke="'+(flat?'#b8741a':INK)+'" stroke-width="1.6" points="'+p.map(function(a){return a[0].toFixed(1)+','+a[1].toFixed(1)}).join(' ')+'"/><circle cx="'+p[5][0]+'" cy="'+p[5][1]+'" r="3" fill="'+(flat?'#b8741a':RED)+'"/></svg>';
+  }
+  var h='<tr><th class="dk">Kỹ năng</th><th class="dk">Điểm T10</th><th>So T5</th><th>Chính xác (%)</th><th>Thời gian (giây)</th><th>6 tháng</th></tr>';
+  SK.forEach(function(s){
+    var flat=s.s[5]-s.s[2]<=5;
+    h+='<tr><td class="l">'+s.name+'</td><td class="num"><b>'+s.s[5]+'</b></td><td class="num '+(flat?'flat':'up')+'">'+(flat?'':'▲ ')+sgn(s.s[5]-s.s[0])+'</td><td class="num">'+f1(s.acc[5])+'</td><td class="num">'+f1(s.t[5])+'</td><td>'+spark(s.s,flat)+'</td></tr>';
+  });
+  h+='<tr><td class="l">Tổng hợp</td><td class="num"><b>'+total+'</b></td><td class="num up">▲ '+sgn(d5)+'</td><td class="num">'+f1(ACC[5])+'</td><td class="num">'+f1(TIME[5])+'</td><td>'+spark(TOT,false)+'</td></tr>';
+  $("tcomp").innerHTML=h;
+
+  /* thanh chính xác + mốc T5 */
+  (function(){
+    var max=100,cuts=[60,85],heads=["Dưới chuẩn","Chuẩn","Vượt chuẩn"];
+    var o='<div class="bhead"><div></div><div class="cells">';
+    var prev=0;cuts.concat([max]).forEach(function(c,i){o+='<span class="'+(i===1?'n':'')+'" style="width:'+(c-prev)+'%">'+heads[i]+'</span>';prev=c});
+    o+='</div><div class="r">Điểm</div></div>';
+    SK.forEach(function(s){
+      var v=s.acc[5],p=v,old=s.acc[0],inside=p>82;
+      var tk='';for(var t=0;t<=100;t+=20)tk+='<span class="tick" style="left:'+t+'%">'+t+'</span>';
+      var bg='linear-gradient(90deg,var(--tint) 60%,#fff 60%,#fff 85%,var(--tint) 85%)';
+      o+='<div class="brow"><div class="blab">'+s.name+'</div><div class="bt">'+tk+'<div class="lane" style="background:'+bg+'"><div class="bar" style="width:'+p+'%"></div>'
+        +'<span class="mk" style="left:'+old+'%">▼</span>'
+        +'<span class="bval num'+(inside?' in':'')+'" style="left:'+(inside?p+'%':'calc('+p+'% + 6px)')+'">'+f1(v)+'</span></div></div><div class="bx num">'+s.s[5]+'</div></div>';
+    });
+    $("accbars").innerHTML=o;
+  })();
+
+  /* lịch sử */
+  (function(){
+    var rows=[
+      {n:"Điểm tổng",sub:"đường đứt: TB lớp",v:TOT,c:CLS,dec:0},
+      {n:"Chính xác",sub:"%",v:ACC,dec:1},
+      {n:"Thời gian TB",sub:"giây, thấp là nhanh",v:TIME,dec:1},
+      {n:"Số buổi chơi",sub:"mỗi tháng",v:SESS,dec:0,bars:true}
+    ];
+    var out='';
+    rows.forEach(function(m){
+      var W=504,Hh=60,all=m.v.concat(m.c||[]);
+      var mn=m.bars?0:Math.min.apply(null,all),mx=Math.max.apply(null,all);
+      var X=function(i){return(i+.5)/6*W},Y=function(y){return Hh-9-(y-mn)/(mx-mn||1)*(Hh-30)};
+      var s='<svg viewBox="0 0 '+W+' '+Hh+'" width="100%" role="img" aria-label="'+m.n+'">';
+      if(m.bars){
+        m.v.forEach(function(v,i){var bh=v/mx*(Hh-26);s+='<rect x="'+(X(i)-18)+'" y="'+(Hh-6-bh)+'" width="36" height="'+bh+'" fill="'+(i===5?RED:INK)+'"/><text x="'+X(i)+'" y="'+(Hh-10-bh)+'" text-anchor="middle" font-size="11.5" fill="'+INK+'" font-weight="'+(i===5?700:400)+'">'+v+'</text>'});
+      }else{
+        if(m.c)s+='<polyline fill="none" stroke="#9aa3ae" stroke-width="1.5" stroke-dasharray="5 4" points="'+m.c.map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1)}).join(' ')+'"/>';
+        s+='<polyline fill="none" stroke="'+INK+'" stroke-width="1.8" points="'+m.v.map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1)}).join(' ')+'"/>';
+        m.v.forEach(function(v,i){var l=i===5;
+          s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="'+(l?4.6:3)+'" fill="'+(l?RED:INK)+'"/>';
+          s+='<text x="'+X(i).toFixed(1)+'" y="'+(Y(v)-8).toFixed(1)+'" text-anchor="middle" font-size="11.5" fill="'+INK+'" font-weight="'+(l?700:400)+'">'+v.toFixed(m.dec)+'</text>';
+        });
+      }
+      s+='</svg>';
+      out+='<div class="hrow"><div class="blab">'+m.n+'<small>'+m.sub+'</small></div><div>'+s+'</div></div>';
+    });
+    $("hist").innerHTML=out;
+    $("hdates").innerHTML='<span></span>'+MON.map(function(m){return'<span>'+m+'</span>'}).join('');
+  })();
+
+  /* radar T10 so với T5 */
+  (function(){
+    var cx=112,cy=100,r=62,n=6,g='';
+    var ang=function(i){return -Math.PI/2+i*2*Math.PI/n};
+    var pt=function(i,v){return[cx+Math.cos(ang(i))*r*v/100,cy+Math.sin(ang(i))*r*v/100]};
+    var poly=function(f){return SK.map(function(s,i){return pt(i,f(s)).map(function(x){return x.toFixed(1)}).join(',')}).join(' ')};
+    [25,50,75,100].forEach(function(l){g+='<polygon fill="none" stroke="'+LINE+'" points="'+poly(function(){return l})+'"/>'});
+    SK.forEach(function(_,i){var p=pt(i,100);g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="'+LINE+'"/>'});
+    g+='<polygon fill="'+SLATE+'" fill-opacity=".15" stroke="'+SLATE+'" stroke-width="1.6" stroke-dasharray="4 3" points="'+poly(function(s){return s.s[0]})+'"/>';
+    g+='<polygon fill="'+RED+'" fill-opacity=".2" stroke="'+RED+'" stroke-width="2" points="'+poly(function(s){return s.s[5]})+'"/>';
+    SK.forEach(function(s,i){var p=pt(i,s.s[5]);g+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.8" fill="'+RED+'"/>'});
+    SK.forEach(function(s,i){
+      var a=ang(i),lx=cx+Math.cos(a)*(r+8),ly=cy+Math.sin(a)*(r+11),c=Math.cos(a);
+      var an=Math.abs(c)<.2?'middle':c>0?'start':'end';
+      g+='<text x="'+lx.toFixed(1)+'" y="'+(ly+3).toFixed(1)+'" text-anchor="'+an+'" font-size="11" font-weight="600" fill="'+INK+'">'+s.short+'</text>';
+    });
+    $("radar").innerHTML=g;
+  })();
+
+  /* mục tiêu + nhận xét */
+  var TARGET=75;
+  var gain=SK.map(function(s){return{s:s,d:s.s[5]-s.s[0],d3:s.s[5]-s.s[2]}});
+  var best=gain.slice().sort(function(a,b){return b.d-a.d})[0];
+  var watch=gain.slice().sort(function(a,b){return a.d3-b.d3})[0];
+  var top=SK.slice().sort(function(a,b){return b.s[5]-a.s[5]})[0];
+  var need=SK.filter(function(s){return s.s[5]<TARGET}).sort(function(a,b){return a.s[5]-b.s[5]}).slice(0,3);
+  var gh='<dt>Điểm hiện tại</dt><dd class="num">'+total+'</dd><dt>Điểm mục tiêu</dt><dd class="num">'+TARGET+'</dd>';
+  need.forEach(function(s){gh+='<dt>Luyện '+s.name.toLowerCase()+'</dt><dd class="num">+'+Math.round(TARGET-s.s[5])+'</dd>'});
+  $("goal").innerHTML=gh;
+  $("ins").innerHTML=
+    '<li><b>Mạnh nhất:</b> '+top.name+' ('+top.s[5]+' điểm)</li>'
+   +'<li><b>Tiến bộ nhất:</b> '+best.s.name+', '+sgn(best.d)+' điểm từ T5</li>'
+   +'<li><b>Chững lại:</b> '+watch.s.name+', chỉ '+sgn(watch.d3)+' điểm trong 3 tháng</li>';
+
+  /* co theo màn hình: tờ A4 giữ nguyên bố cục */
+  var sheet=$("sheet"),fit=$("fit");
+  function resize(){
+    var s=Math.min(1,(document.documentElement.clientWidth-32)/794);
+    sheet.style.transform=s<1?'scale('+s+')':'none';
+    fit.style.width=(794*s)+'px';
+    fit.style.height=(sheet.offsetHeight*s)+'px';
+  }
+  resize();window.addEventListener("resize",resize);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
+})();
+</script>

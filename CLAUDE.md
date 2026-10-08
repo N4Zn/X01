@@ -91,6 +91,7 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Cài/khôi phục máy K02 (HDMI, quyền USB, audio) | `docs/k02-device.md` |
 | Launcher, Quản lý lớp, FaceEnroll | `docs/launcher-roster.md` |
 | Log/report/Google Sheets | `docs/sheets-report.md` |
+| Báo cáo đánh giá năng lực học sinh (công thức điểm, mã HS, tool dựng báo cáo) | `docs/danh-gia-nang-luc/README.md` |
 | Import zip GenericGame, scene riêng | `docs/generic-game-import.md`, `WebTools/GenericGameBuilder/CLAUDE.md` |
 | Build `.aar` (Android modules) | `/build-aar` hoặc `sh Tools/build-aar.sh changed`, `handoff/build-aar.md` |
 | Giao thức Java↔Unity (message, JSON settings) | `docs/contracts/java-unity-bridge.md` |

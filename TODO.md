@@ -100,3 +100,7 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Build APK Release (Tools/Build/Profile/Release) rồi test K02: game Tổng hợp Toán (Ôn tập chung) + không còn console lỗi — (2026-10-08)
 - [ ] `GameRegistry.cs`: (0,17)/(0,18) bị gán 2 lần (SubNumber5/SubNumber vs SoSanhSoChuSo/SoSanhSo2DauChuSo) → đổi index; index trống nhóm 0: 5, 7, 12 — (2026-10-08)
 
+## Đánh giá năng lực học sinh (2026-10-08)
+- [ ] Mai: nhận log K02 bổ sung → chạy lại `docs/danh-gia-nang-luc/tool/pipeline/` (score→res→xl→gen), cập nhật Excel + phiếu A4; Minh Trí / Hòa Vũ / Minh Anh (`CASA-22001`) cần điểm — (2026-10-08)
+- [ ] Kéo `roster.json` mới nhất từ K02 (backup 06/10 chưa có Minh Anh) để lấy alias/ngày sinh thật, kiểm lại mã `CASA-YYNNN` — (2026-10-08)
+- [ ] Log chưa đủ định danh/chế độ chơi (xem README mục "Việc còn mở"); đồng hồ K02 nhảy `2025-04-14` làm log lệch ngày — cân nhắc đồng bộ giờ lúc boot — (2026-10-08)
