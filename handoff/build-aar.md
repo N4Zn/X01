@@ -27,6 +27,6 @@ sh Tools/build-aar.sh changed --commit            # tự phát hiện module đ�
 - Chỉ xem trước: `sh Tools/build-aar.sh changed --check-only`.
 
 ## Kết quả mong đợi
-_lần chạy 2026-10-08 13:53_ (module:controlui)
+_lần chạy 2026-10-08 13:58_ (module:controlui)
 
 - controlui: aar đã đổi → commit `aar: rebuild controlui`.
