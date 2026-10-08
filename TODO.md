@@ -95,7 +95,8 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - Đã kiểm chứng sau reboot (`GRANT_OK 5`, `mDisabled1=0x3a50000`). Chưa test: cài lại APK không reboot, rút/cắm cáp lúc app chạy.
 
 ## Build / Tổng hợp Toán (2026-10-08)
-- [ ] Unity: Tools → Build → Optimize Android Textures (áp dụng) (user tự chạy), kiểm tra ảnh không mờ/vỡ; đo lại thời gian build — (2026-10-08)
+- [x] Optimize Android Textures (áp dụng) đã chạy, commit a898f568 — (2026-10-08)
+- [ ] Kiểm tra ảnh không mờ/vỡ với ASTC 6x6 (nếu mờ: hạ 4x4 cho thư mục đó); đo lại thời gian build — (2026-10-08)
 - [ ] Build APK Release (Tools/Build/Profile/Release) rồi test K02: game Tổng hợp Toán (Ôn tập chung) + không còn console lỗi — (2026-10-08)
 - [ ] `GameRegistry.cs`: (0,17)/(0,18) bị gán 2 lần (SubNumber5/SubNumber vs SoSanhSoChuSo/SoSanhSo2DauChuSo) → đổi index; index trống nhóm 0: 5, 7, 12 — (2026-10-08)
 
