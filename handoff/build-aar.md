@@ -27,6 +27,6 @@ sh Tools/build-aar.sh changed --commit            # tự phát hiện module đ�
 - Chỉ xem trước: `sh Tools/build-aar.sh changed --check-only`.
 
 ## Kết quả mong đợi
-_lần chạy 2026-10-05 11:50_ (module:faceenroll)
+_lần chạy 2026-10-08 12:49_ (module: controlui)
 
-- faceenroll: aar đã đổi → commit `aar: rebuild faceenroll`.
+- controlui: aar đã đổi → commit `aar: rebuild controlui`.
