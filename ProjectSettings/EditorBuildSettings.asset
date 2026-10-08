@@ -143,5 +143,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/_GenericGame/Games/SoSanhSo2Dau.unity
     guid: 3584161128031864aa8ca435f456d6cd
+  - enabled: 1
+    path: Assets/Game/Scenes/TongHopToanGame/TongHopToanGame.unity
+    guid: 775d696e27356704691ca3e0cc7aa685
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

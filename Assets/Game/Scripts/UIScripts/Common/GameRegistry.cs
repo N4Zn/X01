@@ -179,6 +179,7 @@ public static class GameRegistry
         Set(0, 14, "GameSangChuaChieuToiCuaBe", "Các buổi trong ngày", "GameSangChuaChieuToiCuaBe", Engine.MiniGameKit, group: "Thời gian");
         Set(0, 15, "TachSo2", "Tách số (2)", "TachSo2", Engine.MiniGameKit, group: "Cộng");
         Set(0, 16, "SoSanhSo2Dau", "So sánh số (>, <, =)", "SoSanhSo2Dau", Engine.MiniGameKit, group: "So sánh");
+        Set(0, 23, "TongHopToan", "Tổng hợp Toán", "TongHopToanGame", Engine.MiniGameKit, group: "Ôn tập chung");
         // <GENERIC-GAMES>
     }
 
