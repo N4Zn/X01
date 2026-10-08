@@ -11,10 +11,8 @@
     {"name": "AddNumberDigit", "displayName": "Cộng trong phạm vi 10 (chữ số)", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "SubNumber5Digit", "displayName": "Trừ trong phạm vi 5 (chữ số)", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
     {"name": "SubNumberDigit", "displayName": "Trừ trong phạm vi 10 (chữ số)", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
-    {"name": "SoDem", "displayName": "Số đếm", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
+    {"name": "SoDem", "displayName": "Nhận biết số", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
     {"name": "DemQua", "displayName": "Đếm quả", "group": "Đếm", "sceneName": "DemQuaGame", "category": 0},
-    {"name": "Numbers", "displayName": "Nhận biết số", "sceneName": "NumbersGame", "category": 0},
-
 
     {"name": "ChuCai", "displayName": "Chữ cái", "sceneName": "ChuCaiGame", "category": 1},
     {"name": "ChuCaiThuong", "displayName": "Chữ cái (thường)", "sceneName": "ChuCaiGame", "category": 1},
@@ -23,6 +21,7 @@
     {"name": "FamilySpellingJump", "displayName": "Ghép vần - Nhảy ô", "sceneName": "FamilySpellingGame", "category": 2},
     {"name": "WordHuntMaze", "displayName": "Tìm từ - Mê cung", "sceneName": "WordHuntMazeGame", "category": 2},
     {"name": "SentenceBuilder", "displayName": "Ghép câu", "sceneName": "SentenceBuilderGame", "category": 2},
+    {"name": "Numbers", "displayName": "Numbers","group": "Numbers", "sceneName": "NumbersGame", "category": 2},
 
     {"name": "SaveEnvironment", "displayName": "Bảo vệ môi trường", "sceneName": "TestTongHopGame", "category": 3},
     {"name": "Fruit", "displayName": "Hoa quả", "sceneName": "TestTongHopGame", "category": 3},
@@ -52,11 +51,10 @@
     {"name": "CuaHangKemTruocSau", "displayName": "cửa hàng kem ( trước , sau)", "group": "Vị trí, định hướng", "sceneName": "CuaHangKemTruocSau", "category": 0},
     {"name": "DongHo", "displayName": "Đồng hồ", "group": "Thời gian", "sceneName": "DongHo", "category": 0},
     {"name": "SangTruaChieuToi", "displayName": "Thời gian trong ngày", "group": "Thời gian", "sceneName": "SangTruaChieuToi", "category": 0},
-    {"name": "ThuNghiem2", "displayName": "Tách số", "group": "Đếm", "sceneName": "ThuNghiem2", "category": 0},
     {"name": "SoSanhSo", "displayName": "So sánh số", "group": "So sánh", "sceneName": "SoSanhSo", "category": 0},
     {"name": "GameSangChuaChieuToiCuaBe", "displayName": "Các buổi trong ngày", "group": "Thời gian", "sceneName": "GameSangChuaChieuToiCuaBe", "category": 0},
-    {"name": "TachSo2", "displayName": "Tách số (2)", "group": "Cộng", "sceneName": "TachSo2", "category": 0},
+    {"name": "TachSo2", "displayName": "Tách số", "group": "Cộng", "sceneName": "TachSo2", "category": 0},
     {"name": "SoSanhSo2Dau", "displayName": "So sánh số (>, <, =)", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0},
-    {"name": "GhepAnhConThieu", "displayName": "ghép ảnh còn thiếu", "group": "Ghép hình", "sceneName": "GhepAnhConThieu", "category": 5}
+    {"name": "GhepAnhConThieu", "displayName": "Ghép tranh", "group": "Ghép hình", "sceneName": "GhepAnhConThieu", "category": 5}
   ]
 }

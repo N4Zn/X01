@@ -597,8 +597,8 @@ public class ControlActivity extends Activity {
         } else if ("playing".equals(scene)) {
             TextView pauseBtn = paused
                     ? bigButton("TIẾP TỤC CHƠI", R.color.good, 0xFF0B1710, 240, 18f, 20)
-                    : bigButton("TẠM DỪNG", R.color.panel2, UiUtil.ContextColor(this, R.color.text), 240, 18f, 20);
-            TextView stopBtn = bigButton("DỪNG HẲN", R.color.bad_dim, UiUtil.ContextColor(this, R.color.bad), 240, 18f, 20);
+                    : bigButton("TẠM DỪNG", R.color.accent, 0xFFFFFFFF, 240, 18f, 20);
+            TextView stopBtn = bigButton("DỪNG HẲN", R.color.bad, 0xFFFFFFFF, 240, 18f, 20);
             pauseBtn.setOnClickListener(v -> onPauseClicked());
             stopBtn.setOnClickListener(v -> onStopClicked());
             bottomBar.addView(pauseBtn);
@@ -606,13 +606,13 @@ public class ControlActivity extends Activity {
         } else { // ended
             TextView replayBtn = bigButton("CHƠI LẠI", R.color.good, 0xFF0B1710, 288, 20f, 20);
             replayBtn.setOnClickListener(v -> onStartClicked());
-            TextView otherBtn = bigButton("CHỌN GAME KHÁC", R.color.panel2, UiUtil.ContextColor(this, R.color.text), 220, 15f, 20);
+            TextView otherBtn = bigButton("CHỌN GAME KHÁC", R.color.accent, 0xFFFFFFFF, 220, 15f, 20);
             otherBtn.setOnClickListener(v -> {
                 scene = "select"; selectedGameName = null; selectedScene = null;
                 reportTab = "games"; gamesScrollReset = true;
                 renderAll();
             });
-            TextView sumBtn = bigButton("TỔNG KẾT", R.color.panel2, UiUtil.ContextColor(this, R.color.text), 160, 15f, 20);
+            TextView sumBtn = bigButton("TỔNG KẾT", R.color.live, 0xFFFFFFFF, 160, 15f, 20);
             sumBtn.setOnClickListener(v -> showReportView("summary"));
             bottomBar.addView(replayBtn);
             bottomBar.addView(otherBtn);

@@ -391,6 +391,7 @@
             android:gravity="center"
             android:background="@color/rail"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="10dp" />
+            android:paddingTop="10dp"
+            android:paddingBottom="20dp" />
     </LinearLayout>
 </FrameLayout>
