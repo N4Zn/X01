@@ -36,7 +36,8 @@ public static class AndroidBuildHelper
             scenes = scenes.ToArray(),
             locationPathName = outputPath,
             target = BuildTarget.Android,
-            options = BuildOptions.Development
+            // Theo Tools/Build/Profile (EditorUserBuildSettings.development); release không kèm console debug.
+            options = EditorUserBuildSettings.development ? BuildOptions.Development : BuildOptions.None
         };
 
         Debug.Log("AndroidBuildHelper: Starting Android APK build...");
