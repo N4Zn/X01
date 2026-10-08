@@ -200,6 +200,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             string leftName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName1() : "Left";
             string rightName = GameSessionManager.Instance != null ? GameSessionManager.Instance.GetDisplayName2() : "Right";
             hud.Initialize(ScoreManager, leftName, rightName, totalRounds > 0 ? totalRounds : HudMaxScoreFallback);
+            // Có Resources/Background/<tên game> thì dùng làm nền; không có thì giữ nền của scene.
+            var bgEntry = GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedEntry : default;
+            hud.ApplyGameBackground(bgEntry.name, bgEntry.backgroundSprite);
             if (_useTimer) { /* timer text driven by Update() below */ }
             else hud.HideTimer();
         }

@@ -103,6 +103,22 @@ public class GameHUD : MonoBehaviour
     }
 
     /// <summary>
+    /// Đặt ảnh nền theo game: ưu tiên đường dẫn khai báo trong GameRegistry (<paramref name="registryPath"/>),
+    /// không có thì tự tìm <c>Assets/Resources/Background/&lt;tên game&gt;.png|jpg</c> (tên game = GameEntry.name,
+    /// vd "Counting5", "DemQua"). Không có ảnh nào → giữ nền mặc định. Muốn đổi nền một game chỉ cần thả ảnh
+    /// đúng tên vào thư mục đó rồi build lại APK, không phải sửa code.
+    /// </summary>
+    public void ApplyGameBackground(string gameName, string registryPath)
+    {
+        string path = !string.IsNullOrEmpty(registryPath) ? registryPath
+                    : !string.IsNullOrEmpty(gameName) ? "Background/" + gameName : null;
+        if (path == null) return;
+        var tex = Resources.Load<Texture2D>(path);
+        if (tex != null) { SetBackground(tex); return; }
+        SetBackground(Resources.Load<Sprite>(path));
+    }
+
+    /// <summary>
     /// Đổi ảnh nền bằng Sprite (png import type Sprite 2D and UI).
     /// null → giữ nguyên sprite mặc định trong prefab.
     /// </summary>

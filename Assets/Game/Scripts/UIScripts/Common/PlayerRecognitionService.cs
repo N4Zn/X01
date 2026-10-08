@@ -28,6 +28,33 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     readonly string[] _lastName = new string[2];
     readonly bool[] _lastRecognized = new bool[2];
 
+    // Mỗi RecognizeSlot() của 1 slot tăng _gen[slot]; request cũ thấy _gen đổi thì tự thoát (không ghi đè kết quả của
+    // request mới). _slotActive đếm request còn chạy trên slot đó — chỉ tắt nhận diện native khi về 0, nếu không request
+    // cũ kết thúc sẽ tắt nhầm slot mà request mới đang chờ. _requested: slot đã từng được yêu cầu nhận diện trong ván này.
+    readonly int[] _gen = new int[2];
+    readonly int[] _slotActive = new int[2];
+    readonly bool[] _requested = new bool[2];
+
+    /// <summary>Sau khi hết timeout mà chưa nhận ra ai, vẫn tiếp tục dò thêm ngần này giây (người chơi bước vào muộn).</summary>
+    const float LateWatchSec = 30f;
+
+    /// <summary>Tên mặc định khi không nhận ra ai ở slot (cùng quy ước với nhánh timeout).</summary>
+    string DefaultName(int slot)
+    {
+        var plugin = FaceRecognitionPlugin.Instance;
+        if (GameSessionManager.Instance != null && GameSessionManager.Instance.CurrentGameMode == GameMode.Team)
+            return slot == 0 ? "Blue_1" : "Red_1";
+        return slot == 0
+            ? (plugin != null ? plugin.GetDefaultNameLeft()  : "Player_1")
+            : (plugin != null ? plugin.GetDefaultNameRight() : "Player_2");
+    }
+
+    void SetSessionName(int slot, string name)
+    {
+        if (GameSessionManager.Instance != null && GameSessionManager.Instance.Players.Count > slot)
+            GameSessionManager.Instance.Players[slot].PlayerName = name;
+    }
+
     /// <summary>Call once when a mini-game session starts, before any RecognizeSlot calls.</summary>
     public void BeginGameSession(string gameName)
     {
@@ -35,6 +62,12 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         _logEntries.Clear();
         _lastName[0] = _lastName[1] = null;
         _lastRecognized[0] = _lastRecognized[1] = false;
+        _requested[0] = _requested[1] = false;
+        // Huỷ mọi request/dò muộn còn sót từ ván trước, và bỏ tên người chơi ván trước còn nằm trong
+        // GameSessionManager (singleton sống qua các scene) — nếu không HUD/ControlActivity hiện tên cũ
+        // cho tới khi nhận diện xong.
+        _gen[0]++; _gen[1]++;
+        for (int s = 0; s < 2; s++) SetSessionName(s, DefaultName(s));
         _sessionFileName = $"{DateTime.Now:yyyy-MM-dd_HHmmss}_{gameName}.json";
     }
 
@@ -76,6 +109,13 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         else                      plugin?.ClearSlotVote(slot);
         plugin?.SetSlotRecognitionEnabled(slot, true);
         _activeRequests++;
+        _slotActive[slot]++;
+        int myGen = ++_gen[slot];
+        // Từ lúc này tới khi có kết quả, "ai đang đứng ở slot" là CHƯA BIẾT: không để LogRound() gán câu trả lời
+        // cho người của round trước (trước đây câu trả lời đến trước kết quả nhận diện bị ghi nhầm sang bạn cũ).
+        _requested[slot] = true;
+        _lastName[slot] = null;
+        _lastRecognized[slot] = false;
 
         float timeout   = plugin != null ? plugin.GetTimeoutSec() : 4f;
         float startTime  = Time.time;
@@ -83,7 +123,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         string result    = null;
         float confidence = -1f;
 
-        while (t < timeout)
+        while (t < timeout && _gen[slot] == myGen)
         {
             var (left, right, leftSim, rightSim) = plugin != null ? plugin.GetConfirmed() : (null, null, -1f, -1f);
             string candidate = slot == 0 ? left : right;
@@ -92,31 +132,48 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             t += Time.deltaTime;
         }
 
-        bool recognized = result != null;
-        if (!recognized)
+        // _gen đổi = có RecognizeSlot() mới cho cùng slot (hoặc ván mới) thay thế request này → không ghi đè kết quả của nó.
+        if (_gen[slot] == myGen)
         {
-            result = GameSessionManager.Instance != null && GameSessionManager.Instance.CurrentGameMode == GameMode.Team
-                ? (slot == 0 ? "Blue_1" : "Red_1")
-                : slot == 0
-                    ? (plugin != null ? plugin.GetDefaultNameLeft()  : "Player_1")
-                    : (plugin != null ? plugin.GetDefaultNameRight() : "Player_2");
+            bool recognized = result != null;
+            if (!recognized) result = DefaultName(slot);
+            ApplyRecognition(slot, result, recognized, Time.time - startTime, confidence, onDone);
+
+            // Hết timeout mà chưa ai được nhận ra → KHÔNG tắt slot ngay: người chơi bước vào muộn vẫn được nhận,
+            // tên cập nhật lại (HUD + ControlActivity + log) thay vì giữ tên mặc định cả round.
+            if (!recognized)
+            {
+                float watched = 0f;
+                while (watched < LateWatchSec && _gen[slot] == myGen)
+                {
+                    var (left, right, leftSim, rightSim) = plugin != null ? plugin.GetConfirmed() : (null, null, -1f, -1f);
+                    string candidate = slot == 0 ? left : right;
+                    if (candidate != null)
+                    {
+                        ApplyRecognition(slot, candidate, true, Time.time - startTime, slot == 0 ? leftSim : rightSim, onDone);
+                        break;
+                    }
+                    yield return null;
+                    watched += Time.deltaTime;
+                }
+            }
         }
-        float elapsed = Time.time - startTime;
 
-        if (GameSessionManager.Instance != null && GameSessionManager.Instance.Players.Count > slot)
-            GameSessionManager.Instance.Players[slot].PlayerName = result;
-
-        _lastName[slot] = result;
-        _lastRecognized[slot] = recognized;
-
-        AppendRecognitionLog(slot, result, recognized, elapsed, confidence);
-        onDone?.Invoke(result);
-
-        // Disable only this slot — the other slot (if it has its own request still running)
-        // keeps working uninterrupted, and never had its cost paid by this one to begin with.
-        plugin?.SetSlotRecognitionEnabled(slot, false);
+        // Chỉ tắt slot khi không còn request nào khác đang chờ nó (request mới cùng slot có thể đã thay thế request này);
+        // slot còn lại có request riêng vẫn chạy bình thường.
+        _slotActive[slot]--;
+        if (_slotActive[slot] <= 0) { _slotActive[slot] = 0; plugin?.SetSlotRecognitionEnabled(slot, false); }
         _activeRequests--;
         if (_activeRequests < 0) _activeRequests = 0;
+    }
+
+    void ApplyRecognition(int slot, string name, bool recognized, float elapsed, float confidence, Action<string> onDone)
+    {
+        SetSessionName(slot, name);
+        _lastName[slot] = name;
+        _lastRecognized[slot] = recognized;
+        AppendRecognitionLog(slot, name, recognized, elapsed, confidence);
+        onDone?.Invoke(name);
     }
 
     // ── Realtime log — rewritten to disk after every single event, not batched ─────────────────
@@ -177,7 +234,9 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         if (string.IsNullOrEmpty(name))
         {
             var session = GameSessionManager.Instance;
-            if (session != null && session.Players.Count > slot && !string.IsNullOrEmpty(session.Players[slot].PlayerName))
+            // Slot đã yêu cầu nhận diện mà chưa có kết quả: tên trong session là của người round trước → dùng tên mặc định.
+            bool pending = (slot == 0 || slot == 1) && _requested[slot];
+            if (!pending && session != null && session.Players.Count > slot && !string.IsNullOrEmpty(session.Players[slot].PlayerName))
                 name = session.Players[slot].PlayerName;
             else if (session != null && session.CurrentGameMode == GameMode.Team)
                 name = slot == 0 ? "Blue_1" : "Red_1";

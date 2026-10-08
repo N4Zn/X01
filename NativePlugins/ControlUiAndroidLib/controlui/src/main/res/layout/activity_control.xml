@@ -167,6 +167,21 @@
                     android:layout_height="0dp"
                     android:layout_weight="1">
 
+                    <!-- Scene select: Trò chơi (tab chính) — lưới game theo học phần đang chọn ở cột trái -->
+                    <ScrollView
+                        android:id="@+id/panel_games"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:id="@+id/games_body"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="14dp" />
+                    </ScrollView>
+
                     <!-- Scene select/ended: Lớp học -->
                     <LinearLayout
                         android:id="@+id/panel_roster"
@@ -361,5 +376,21 @@
                 </FrameLayout>
             </LinearLayout>
         </LinearLayout>
+
+        <!-- ============== BOTTOM BAR: nút điều khiển chính, căn giữa màn hình ============== -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border" />
+
+        <LinearLayout
+            android:id="@+id/bottom_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@color/rail"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp" />
     </LinearLayout>
 </FrameLayout>

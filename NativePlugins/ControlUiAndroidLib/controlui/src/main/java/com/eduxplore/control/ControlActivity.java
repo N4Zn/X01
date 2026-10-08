@@ -101,7 +101,8 @@ public class ControlActivity extends Activity {
     // ── Views ────────────────────────────────────────────────────────────────
     private TextView categoryTrigger, classTrigger;
     private FrameLayout actionZone;
-    private LinearLayout reportTabs;
+    private LinearLayout reportTabs, bottomBar, gamesBody;
+    private ScrollView panelGames;
     private LinearLayout panelRoster, panelCompetency, panelLive, panelSummary;
     private View panelHistory; // ScrollView trong XML — chỉ cần setVisibility, không cần LinearLayout
     private TextView gamePreviewStrip, notPlayedStrip;
@@ -121,10 +122,11 @@ public class ControlActivity extends Activity {
     private SettingsStore settingsStore;
     private String selectedScene = null;      // sceneName Unity thật (Start dùng cái này)
     private String selectedGameName = null;   // tên game/variant đang chọn hoặc vừa chơi
-    /** Danh sách game được dựng lại mỗi renderAll() (ScrollView mới) → nhớ vị trí cuộn để chọn game
-     *  ở dưới không bị kéo về đầu. Đổi môn thì reset về 0. */
-    private ScrollView gameListScroll = null;
-    private int gameListScrollY = 0;
+    /** Học phần đang lọc ở cột trái (null = tất cả học phần của môn). Đổi môn thì reset. */
+    private String selectedPhan = null;
+    /** Lưới game được dựng lại mỗi renderAll() → giữ vị trí cuộn để chọn game ở dưới không bị kéo về đầu.
+     *  Đổi môn/học phần thì đặt true để cuộn về đầu. */
+    private boolean gamesScrollReset = false;
     private int compStudentIndex = 0;
     private String rosterSortKey = "score";
     /** Ô chọn kiểu điểm ở tab Lớp học (chạm để đổi vòng): 0 = Tất cả các môn, 1 = Môn đang chọn (mặc định),
@@ -140,10 +142,6 @@ public class ControlActivity extends Activity {
     /** Thời lượng ván cho màn Tổng kết: từ lúc bấm Start đến lúc kết thúc, trừ thời gian Pause. 0 = chưa có. */
     private long gameStartMs = 0, gameEndMs = 0, pausedAtMs = 0, pausedAccumMs = 0;
     private boolean unityStarted = false;
-    // Group nào đang thu gọn trong danh sách chọn game (vd "Đếm", "Cộng") — mặc định tất cả
-    // đang mở (set rỗng = không group nào bị collapse).
-    private final java.util.Set<String> collapsedGroups = new java.util.HashSet<>();
-
     // Logo màn hình phụ (máy chiếu) lúc chưa chọn/chạy game — dùng Presentation (Dialog cho
     // 1 Display cụ thể), KHÔNG phải 1 Activity riêng: nhẹ hơn nhiều (không tốn task/back-stack/
     // khai báo manifest), API chính chủ Android dành đúng cho việc hiển thị nội dung phụ trên
@@ -161,6 +159,7 @@ public class ControlActivity extends Activity {
 
     private static class LivePlayer {
         String name = "?";
+        String display = "?"; // tên thường gọi đầy đủ để HIỂN THỊ (name = tên thật, dùng làm khoá)
         int correct, answered;
         float avgTime, avgCorrectTime;
     }
@@ -186,6 +185,9 @@ public class ControlActivity extends Activity {
         classTrigger = findViewById(R.id.class_trigger);
         actionZone = findViewById(R.id.action_zone);
         reportTabs = findViewById(R.id.report_tabs);
+        bottomBar = findViewById(R.id.bottom_bar);
+        panelGames = (ScrollView) findViewById(R.id.panel_games);
+        gamesBody = findViewById(R.id.games_body);
         panelRoster = findViewById(R.id.panel_roster);
         panelCompetency = findViewById(R.id.panel_competency);
         panelHistory = findViewById(R.id.panel_history);
@@ -363,6 +365,7 @@ public class ControlActivity extends Activity {
         renderTopBar();
         renderActionZone();
         renderReportZone();
+        renderBottomBar();
     }
 
     private void renderTopBar() {
@@ -372,7 +375,7 @@ public class ControlActivity extends Activity {
             UiUtil.showDropdown(this, categoryTrigger, labels, domain,
                     UiUtil.ContextColor(this, R.color.accent_dim), idx -> {
                         domain = idx; selectedGameName = null; selectedScene = null;
-                        gameListScrollY = 0;
+                        selectedPhan = null; gamesScrollReset = true;
                         renderAll();
                     });
         });
@@ -401,8 +404,6 @@ public class ControlActivity extends Activity {
 
     // ── ACTION ZONE (trái, nhỏ) — nội dung đổi theo scene ───────────────────────────────────
     private void renderActionZone() {
-        if (gameListScroll != null) gameListScrollY = gameListScroll.getScrollY();
-        gameListScroll = null;
         actionZone.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -410,81 +411,24 @@ public class ControlActivity extends Activity {
         actionZone.addView(col);
 
         if ("select".equals(scene)) {
-            LinearLayout eyebrowRow = new LinearLayout(this);
-            eyebrowRow.setOrientation(LinearLayout.HORIZONTAL);
-            eyebrowRow.addView(UiUtil.label(this, "CHỌN MINI GAME", 10f, R.color.text_faint, true));
-            col.addView(eyebrowRow);
+            col.addView(UiUtil.label(this, "HỌC PHẦN", 10f, R.color.text_faint, true));
 
             ScrollView scroll = new ScrollView(this);
             LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
             scrollLp.topMargin = UiUtil.dp(this, 10);
-            scrollLp.bottomMargin = UiUtil.dp(this, 10);
             scroll.setLayoutParams(scrollLp);
             LinearLayout list = new LinearLayout(this);
             list.setOrientation(LinearLayout.VERTICAL);
             scroll.addView(list);
             col.addView(scroll);
-            gameListScroll = scroll;
-            final int restoreY = gameListScrollY;
-            if (restoreY > 0) {
-                // Chờ layout xong (nội dung chưa đo lúc này) rồi mới cuộn về chỗ cũ, 1 lần.
-                scroll.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
-                    @Override public boolean onPreDraw() {
-                        scroll.getViewTreeObserver().removeOnPreDrawListener(this);
-                        scroll.scrollTo(0, restoreY);
-                        return true;
-                    }
-                });
-            }
 
-            List<GameItem> items = gamesByCategory.get(domain);
-            if (items == null || items.isEmpty()) {
+            List<String> phans = phansOfDomain();
+            if (phans.isEmpty()) {
                 list.addView(UiUtil.label(this, "Chưa có mini game cho môn này.", 12.5f, R.color.text_faint, false));
             } else {
-                // Gom theo group (giữ thứ tự xuất hiện đầu tiên của mỗi group trong danh sách
-                // gốc — 1 group có thể có phần tử không liền kề nhau, vẫn gộp về đúng 1 mục).
-                // Game không có group (group rỗng) hiện phẳng như cũ, không bọc trong mục nào.
-                Map<String, List<GameItem>> groupBuckets = new LinkedHashMap<>();
-                List<Object> sections = new ArrayList<>(); // phần tử: GameItem (phẳng) hoặc String (tên group)
-                for (GameItem item : items) {
-                    if (item.group == null || item.group.isEmpty()) {
-                        sections.add(item);
-                    } else {
-                        if (!groupBuckets.containsKey(item.group)) {
-                            groupBuckets.put(item.group, new ArrayList<>());
-                            sections.add(item.group);
-                        }
-                        groupBuckets.get(item.group).add(item);
-                    }
-                }
-                for (Object section : sections) {
-                    if (section instanceof GameItem) {
-                        list.addView(buildGameRow((GameItem) section, 0));
-                    } else {
-                        String groupName = (String) section;
-                        List<GameItem> children = groupBuckets.get(groupName);
-                        boolean expanded = !collapsedGroups.contains(groupName);
-                        list.addView(buildGroupHeader(groupName, children.size(), expanded));
-                        if (expanded) {
-                            for (GameItem child : children) list.addView(buildGameRow(child, 14));
-                        }
-                    }
-                }
+                list.addView(buildPhanRow("Tất cả", null));
+                for (String phan : phans) list.addView(buildPhanRow(phan, phan));
             }
-
-            TextView startBtn = new TextView(this);
-            startBtn.setText("START");
-            startBtn.setGravity(Gravity.CENTER);
-            startBtn.setTextSize(13f);
-            startBtn.setTypeface(startBtn.getTypeface(), android.graphics.Typeface.BOLD);
-            boolean canStart = selectedGameName != null && selectedScene != null && !selectedScene.isEmpty();
-            startBtn.setEnabled(canStart);
-            startBtn.setAlpha(canStart ? 1f : 0.4f);
-            startBtn.setTextColor(0xFF0B1710);
-            startBtn.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.good), 9, 0, 0, this));
-            startBtn.setPadding(0, UiUtil.dp(this, 13), 0, UiUtil.dp(this, 13));
-            startBtn.setOnClickListener(v -> { if (canStart) onStartClicked(); });
-            col.addView(startBtn);
         } else if ("playing".equals(scene)) {
             col.addView(UiUtil.label(this, "ĐANG CHẠY", 10f, R.color.text_faint, true));
 
@@ -498,26 +442,6 @@ public class ControlActivity extends Activity {
             card.addView(UiUtil.label(this, selectedGameName != null ? displayNameOf(selectedGameName) : "—", 16f, R.color.text, true));
             card.addView(UiUtil.label(this, "Đang chơi", 12f, R.color.text_dim, false));
             col.addView(card);
-
-            View spacer = new View(this);
-            spacer.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-            col.addView(spacer);
-
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            TextView pauseBtn = simpleButton(paused ? "PLAY" : "PAUSE", R.color.panel2, R.color.text);
-            TextView stopBtn = simpleButton("STOP", R.color.bad_dim, R.color.bad);
-            LinearLayout.LayoutParams halfLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            halfLp.rightMargin = UiUtil.dp(this, 4);
-            pauseBtn.setLayoutParams(halfLp);
-            LinearLayout.LayoutParams halfLp2 = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            halfLp2.leftMargin = UiUtil.dp(this, 4);
-            stopBtn.setLayoutParams(halfLp2);
-            pauseBtn.setOnClickListener(v -> onPauseClicked());
-            stopBtn.setOnClickListener(v -> onStopClicked());
-            row.addView(pauseBtn);
-            row.addView(stopBtn);
-            col.addView(row);
         } else { // ended
             col.addView(UiUtil.label(this, "VỪA XONG", 10f, R.color.text_faint, true));
 
@@ -535,45 +459,40 @@ public class ControlActivity extends Activity {
             // renderSummary() — xem breakdown đầy đủ từng người ở nút "TỔNG KẾT" bên dưới).
             banner.addView(UiUtil.label(this, "Đội trái " + liveLeftScore + " – " + liveRightScore + " Đội phải", 11.5f, R.color.text_dim, false));
             col.addView(banner);
-
-            View spacer = new View(this);
-            spacer.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-            col.addView(spacer);
-
-            TextView replayBtn = simpleButton("CHƠI LẠI", R.color.good, R.color.bg);
-            replayBtn.setTextColor(0xFF0B1710);
-            replayBtn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            replayBtn.setOnClickListener(v -> onStartClicked());
-            col.addView(replayBtn);
-
-            TextView otherBtn = simpleButton("CHỌN GAME KHÁC", R.color.panel2, R.color.text);
-            LinearLayout.LayoutParams otherLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            otherLp.topMargin = UiUtil.dp(this, 8);
-            otherBtn.setLayoutParams(otherLp);
-            otherBtn.setOnClickListener(v -> { scene = "select"; selectedGameName = null; selectedScene = null; renderAll(); });
-            col.addView(otherBtn);
-
-            TextView sumBtn = simpleButton("TỔNG KẾT", R.color.panel2, R.color.text);
-            LinearLayout.LayoutParams sumLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            sumLp.topMargin = UiUtil.dp(this, 8);
-            sumBtn.setLayoutParams(sumLp);
-            sumBtn.setOnClickListener(v -> showReportView("summary"));
-            col.addView(sumBtn);
         }
     }
 
-    /** 1 hàng game trong danh sách chọn — dùng chung cho game đứng riêng (indentDp=0) và game
-     *  nằm trong 1 group (indentDp>0, thụt vào cho thấy quan hệ cha-con với header nhóm). Game
-     *  chưa có scene thật (isImplemented()==false, placeholder) vẫn chọn/tô sáng được như bình
-     *  thường — chỉ nút START bị khoá (xem canStart ở renderActionZone) nên bấm không chạy gì. */
-    private TextView buildGameRow(GameItem item, int indentDp) {
+    /** Các học phần của môn đang chọn, theo thứ tự xuất hiện đầu tiên trong registry. */
+    private List<String> phansOfDomain() {
+        List<String> out = new ArrayList<>();
+        List<GameItem> items = gamesByCategory.get(domain);
+        if (items == null) return out;
+        for (GameItem item : items) {
+            String phan = phanByGame.get(item.name);
+            if (phan != null && !out.contains(phan)) out.add(phan);
+        }
+        return out;
+    }
+
+    /** Game của môn đang chọn, đã lọc theo học phần (selectedPhan == null = hết). */
+    private List<GameItem> visibleGames() {
+        List<GameItem> out = new ArrayList<>();
+        List<GameItem> items = gamesByCategory.get(domain);
+        if (items == null) return out;
+        for (GameItem item : items)
+            if (selectedPhan == null || selectedPhan.equals(phanByGame.get(item.name))) out.add(item);
+        return out;
+    }
+
+    /** 1 mục học phần ở cột trái; phan == null = "Tất cả". Bấm = lọc lưới game ở giữa. */
+    private TextView buildPhanRow(String label, String phan) {
         TextView row = new TextView(this);
-        row.setText(item.displayName);
-        row.setTextSize(13f);
-        boolean sel = item.name.equals(selectedGameName);
-        int baseColor = item.isImplemented() ? R.color.text_dim : R.color.text_faint;
-        row.setTextColor(UiUtil.ContextColor(this, sel ? R.color.text : baseColor));
-        row.setPadding(UiUtil.dp(this, 11 + indentDp), UiUtil.dp(this, 9), UiUtil.dp(this, 11), UiUtil.dp(this, 9));
+        row.setText(label);
+        row.setTextSize(14f);
+        boolean sel = phan == null ? selectedPhan == null : phan.equals(selectedPhan);
+        row.setTypeface(row.getTypeface(), sel ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        row.setTextColor(UiUtil.ContextColor(this, sel ? R.color.text : R.color.text_dim));
+        row.setPadding(UiUtil.dp(this, 12), UiUtil.dp(this, 12), UiUtil.dp(this, 12), UiUtil.dp(this, 12));
         row.setBackground(sel
                 ? UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.accent_dim), 8, UiUtil.ContextColor(this, R.color.accent), 1, this)
                 : UiUtil.roundedRect(android.graphics.Color.TRANSPARENT, 8, 0, 0, this));
@@ -581,49 +500,146 @@ public class ControlActivity extends Activity {
         lp.bottomMargin = UiUtil.dp(this, 6);
         row.setLayoutParams(lp);
         row.setOnClickListener(v -> {
-            selectedGameName = item.name;
-            selectedScene = item.sceneName;
+            selectedPhan = phan;
+            gamesScrollReset = true;
+            // Game đang chọn nằm ngoài học phần mới → bỏ chọn, tránh Start nhầm game đang bị ẩn.
+            if (selectedGameName != null && phan != null && !phan.equals(phanByGame.get(selectedGameName))) {
+                selectedGameName = null; selectedScene = null;
+            }
             renderAll();
         });
         return row;
     }
 
-    /** Tiêu đề 1 nhóm chủ đề (vd "Đếm", "Cộng") — bấm để thu gọn/mở rộng (collapsedGroups). */
-    private TextView buildGroupHeader(String groupName, int count, boolean expanded) {
-        TextView header = new TextView(this);
-        header.setText((expanded ? "▾ " : "▸ ") + groupName + " (" + count + ")");
-        header.setTextSize(12.5f);
-        header.setTypeface(header.getTypeface(), android.graphics.Typeface.BOLD);
-        header.setTextColor(UiUtil.ContextColor(this, R.color.text));
-        header.setPadding(UiUtil.dp(this, 8), UiUtil.dp(this, 9), UiUtil.dp(this, 8), UiUtil.dp(this, 9));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = UiUtil.dp(this, 4);
-        header.setLayoutParams(lp);
-        header.setOnClickListener(v -> {
-            if (collapsedGroups.contains(groupName)) collapsedGroups.remove(groupName);
-            else collapsedGroups.add(groupName);
-            renderAll();
-        });
-        return header;
+    // ── TAB "TRÒ CHƠI" (tab chính, giữa màn hình): lưới game ──────────────────────────────────
+    private int gridColumns() {
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float mainDp = dm.widthPixels / dm.density - 221f - 28f; // trừ cột học phần (220dp + viền) và lề
+        return Math.max(2, Math.min(5, (int) (mainDp / 170f)));
     }
 
-    private TextView simpleButton(String text, int bgColorRes, int textColorRes) {
+    private void renderGames() {
+        final int keepY = gamesScrollReset ? 0 : panelGames.getScrollY();
+        gamesScrollReset = false;
+        gamesBody.removeAllViews();
+        List<GameItem> items = visibleGames();
+        if (items.isEmpty()) {
+            gamesBody.addView(UiUtil.label(this, "Chưa có mini game cho môn này.", 13f, R.color.text_faint, false));
+            return;
+        }
+        int cols = gridColumns();
+        LinearLayout row = null;
+        for (int i = 0; i < items.size(); i++) {
+            if (i % cols == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                rowLp.bottomMargin = UiUtil.dp(this, 10);
+                gamesBody.addView(row, rowLp);
+            }
+            row.addView(buildGameCard(items.get(i)));
+        }
+        // Hàng cuối thiếu ô → chèn ô trống để các thẻ không bị kéo giãn.
+        int rem = items.size() % cols;
+        if (rem != 0) {
+            for (int k = rem; k < cols; k++) {
+                View pad = new View(this);
+                pad.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+                row.addView(pad);
+            }
+        }
+        panelGames.post(() -> panelGames.scrollTo(0, keepY));
+    }
+
+    /** 1 thẻ game trong lưới. Game chưa có scene thật (isImplemented()==false, placeholder) vẫn chọn/tô sáng
+     *  được như thường — chỉ nút BẮT ĐẦU CHƠI bị khoá (xem renderBottomBar) nên bấm không chạy gì. */
+    private View buildGameCard(GameItem item) {
+        boolean sel = item.name.equals(selectedGameName);
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(UiUtil.dp(this, 10), UiUtil.dp(this, 10), UiUtil.dp(this, 10), UiUtil.dp(this, 10));
+        card.setBackground(sel
+                ? UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.accent_dim), 12, UiUtil.ContextColor(this, R.color.accent), 2, this)
+                : UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.panel), 12, UiUtil.ContextColor(this, R.color.border_soft), 1, this));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, UiUtil.dp(this, 96), 1f);
+        lp.leftMargin = lp.rightMargin = UiUtil.dp(this, 5);
+        card.setLayoutParams(lp);
+
+        // Tên game: chữ đen viền trắng dày (nổi trên nền ảnh/màu của thẻ).
+        com.eduxplore.control.ui.OutlinedTextView name = new com.eduxplore.control.ui.OutlinedTextView(this);
+        name.setText(item.displayName);
+        name.setTextSize(15f);
+        name.setTextColor(0xFF111111);
+        name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
+        name.setGravity(Gravity.CENTER);
+        card.addView(name);
+        // Thẻ chỉ có tên game: học phần đã có cột bên trái để lọc, và danh sách chỉ chứa game chạy được.
+        card.setOnClickListener(v -> {
+            selectedGameName = item.name;
+            selectedScene = item.sceneName;
+            renderAll();
+        });
+        return card;
+    }
+
+    // ── BOTTOM BAR (giữa-dưới màn hình): nút điều khiển chính theo scene ─────────────────────
+    private void renderBottomBar() {
+        bottomBar.removeAllViews();
+        if ("select".equals(scene)) {
+            // Cỡ START = 1.5x nút cũ (rộng ~192dp→288dp, chữ 13→20sp, đệm dọc 13→20dp).
+            boolean canStart = selectedGameName != null && selectedScene != null && !selectedScene.isEmpty();
+            TextView startBtn = bigButton("BẮT ĐẦU CHƠI", R.color.good, 0xFF0B1710, 288, 20f, 20);
+            startBtn.setEnabled(canStart);
+            startBtn.setAlpha(canStart ? 1f : 0.4f);
+            startBtn.setOnClickListener(v -> { if (canStart) onStartClicked(); });
+            bottomBar.addView(startBtn);
+        } else if ("playing".equals(scene)) {
+            TextView pauseBtn = paused
+                    ? bigButton("TIẾP TỤC CHƠI", R.color.good, 0xFF0B1710, 240, 18f, 20)
+                    : bigButton("TẠM DỪNG", R.color.panel2, UiUtil.ContextColor(this, R.color.text), 240, 18f, 20);
+            TextView stopBtn = bigButton("DỪNG HẲN", R.color.bad_dim, UiUtil.ContextColor(this, R.color.bad), 240, 18f, 20);
+            pauseBtn.setOnClickListener(v -> onPauseClicked());
+            stopBtn.setOnClickListener(v -> onStopClicked());
+            bottomBar.addView(pauseBtn);
+            bottomBar.addView(stopBtn);
+        } else { // ended
+            TextView replayBtn = bigButton("CHƠI LẠI", R.color.good, 0xFF0B1710, 288, 20f, 20);
+            replayBtn.setOnClickListener(v -> onStartClicked());
+            TextView otherBtn = bigButton("CHỌN GAME KHÁC", R.color.panel2, UiUtil.ContextColor(this, R.color.text), 220, 15f, 20);
+            otherBtn.setOnClickListener(v -> {
+                scene = "select"; selectedGameName = null; selectedScene = null;
+                reportTab = "games"; gamesScrollReset = true;
+                renderAll();
+            });
+            TextView sumBtn = bigButton("TỔNG KẾT", R.color.panel2, UiUtil.ContextColor(this, R.color.text), 160, 15f, 20);
+            sumBtn.setOnClickListener(v -> showReportView("summary"));
+            bottomBar.addView(replayBtn);
+            bottomBar.addView(otherBtn);
+            bottomBar.addView(sumBtn);
+        }
+    }
+
+    private TextView bigButton(String text, int bgColorRes, int textColor, int widthDp, float sp, int padV) {
         TextView btn = new TextView(this);
         btn.setText(text);
         btn.setGravity(Gravity.CENTER);
-        btn.setTextSize(13f);
+        btn.setTextSize(sp);
         btn.setTypeface(btn.getTypeface(), android.graphics.Typeface.BOLD);
-        btn.setTextColor(UiUtil.ContextColor(this, textColorRes));
-        btn.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, bgColorRes), 9, 0, 0, this));
-        btn.setPadding(0, UiUtil.dp(this, 13), 0, UiUtil.dp(this, 13));
+        btn.setTextColor(textColor);
+        btn.setBackground(UiUtil.roundedRect(UiUtil.ContextColor(this, bgColorRes), 12, 0, 0, this));
+        btn.setPadding(0, UiUtil.dp(this, padV), 0, UiUtil.dp(this, padV));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(UiUtil.dp(this, widthDp), ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.leftMargin = lp.rightMargin = UiUtil.dp(this, 8);
+        btn.setLayoutParams(lp);
         return btn;
     }
 
     // ── REPORT ZONE (phải, to) ───────────────────────────────────────────────────────────────
-    private String reportTab = "roster"; // roster | competency | history | summary
+    private String reportTab = "games"; // games | roster | competency | history | settings | summary | live
 
     private void buildReportTabs() {
-        String[] tabs = {"roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt"};
+        String[] tabs = {"games:Trò chơi", "roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt"};
         for (String t : tabs) {
             String[] p = t.split(":");
             TextView tab = new TextView(this);
@@ -644,7 +660,10 @@ public class ControlActivity extends Activity {
             TextView tab = (TextView) reportTabs.getChildAt(i);
             boolean active = tab.getTag().equals(view);
             tab.setTextColor(UiUtil.ContextColor(this, active ? R.color.text : R.color.text_faint));
+            // Tab "Trò chơi" chỉ có lúc chọn game; sau khi chơi xong muốn đổi game thì bấm CHỌN GAME KHÁC.
+            if ("games".equals(tab.getTag())) tab.setVisibility("select".equals(scene) ? View.VISIBLE : View.GONE);
         }
+        panelGames.setVisibility("games".equals(view) ? View.VISIBLE : View.GONE);
         panelRoster.setVisibility("roster".equals(view) ? View.VISIBLE : View.GONE);
         panelCompetency.setVisibility("competency".equals(view) ? View.VISIBLE : View.GONE);
         panelHistory.setVisibility("history".equals(view) ? View.VISIBLE : View.GONE);
@@ -657,7 +676,12 @@ public class ControlActivity extends Activity {
 
     private void renderReportZone() {
         if ("playing".equals(scene)) { showReportView("live"); renderLive(); return; }
-        showReportView(reportTab.equals("live") || reportTab.equals("summary") ? "roster" : reportTab);
+        boolean selecting = "select".equals(scene);
+        String view = reportTab;
+        if (view.equals("live") || view.equals("summary")) view = selecting ? "games" : "roster";
+        else if (view.equals("games") && !selecting) view = "roster";
+        showReportView(view);
+        renderGames();
         renderRoster();
         renderCompetencyChips();
         renderHistory();
@@ -1171,9 +1195,13 @@ public class ControlActivity extends Activity {
         nameRow.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams nameRowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         nameRowLp.topMargin = UiUtil.dp(this, 14);
-        TextView label = UiUtil.label(this, teamLabel + "  ·  Đang chơi: " + playingName, 14f, R.color.text, true);
-        label.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        nameRow.addView(label);
+        // Lúc đang chơi cột này rộng rãi: tên người chơi to gấp đôi (14sp → 28sp), nhãn đội nhỏ phía trên.
+        LinearLayout nameCol = new LinearLayout(this);
+        nameCol.setOrientation(LinearLayout.VERTICAL);
+        nameCol.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        nameCol.addView(UiUtil.label(this, teamLabel + "  ·  Đang chơi", 12f, R.color.text_dim, false));
+        nameCol.addView(UiUtil.label(this, playingName, 28f, R.color.text, true));
+        nameRow.addView(nameCol);
         nameRow.setLayoutParams(nameRowLp);
         side.addView(nameRow);
 
@@ -1199,20 +1227,18 @@ public class ControlActivity extends Activity {
             LinearLayout av = new LinearLayout(this);
             av.setOrientation(LinearLayout.VERTICAL);
             av.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams avLp = new LinearLayout.LayoutParams(UiUtil.dp(this, 46), ViewGroup.LayoutParams.WRAP_CONTENT);
-            avLp.rightMargin = UiUtil.dp(this, 8);
+            LinearLayout.LayoutParams avLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            avLp.rightMargin = UiUtil.dp(this, 16);
             av.setLayoutParams(avLp);
-            TextView circle = UiUtil.makeAvatar(this, initialsOf(m.name), 38);
-            circle.setTextColor(UiUtil.ContextColor(this, R.color.text));
-            circle.setBackground(UiUtil.circle(UiUtil.ContextColor(this, R.color.panel2), UiUtil.ContextColor(this, R.color.accent), 2, this));
-            av.addView(circle);
-            // "3đ · 5c" = 3 điểm / 5 câu đã trả lời — số liệu THẬT từ PlayerRecognitionService,
-            // không phải tổng lượt chơi mock cả lớp như trước.
-            TextView cnt = UiUtil.label(this, m.correct + "đ · " + m.answered + "c", 9f, R.color.text_faint, false);
-            av.addView(cnt);
-            TextView tname = UiUtil.label(this, m.name, 9.5f, R.color.text_dim, false);
+            // Tên thường gọi đầy đủ, cỡ gấp đôi (9.5sp → 19sp), thay cho vòng tròn 2 chữ cái viết tắt.
+            TextView tname = UiUtil.label(this, m.display, 19f, R.color.text, true);
             tname.setGravity(Gravity.CENTER);
             av.addView(tname);
+            // "3đ · 5c" = 3 điểm / 5 câu đã trả lời — số liệu THẬT từ PlayerRecognitionService,
+            // không phải tổng lượt chơi mock cả lớp như trước.
+            TextView cnt = UiUtil.label(this, m.correct + "đ · " + m.answered + "c", 11f, R.color.text_faint, false);
+            cnt.setGravity(Gravity.CENTER);
+            av.addView(cnt);
             turnRow.addView(av);
         }
         side.addView(turnScroll);
@@ -1291,7 +1317,7 @@ public class ControlActivity extends Activity {
         if (paused) pausedAtMs = System.currentTimeMillis();
         else if (pausedAtMs > 0) { pausedAccumMs += System.currentTimeMillis() - pausedAtMs; pausedAtMs = 0; }
         sendToUnity(paused ? "OnPauseRequested" : "OnResumeRequested", "");
-        renderActionZone();
+        renderBottomBar();
     }
 
     private void onStopClicked() {
@@ -1666,6 +1692,7 @@ public class ControlActivity extends Activity {
                     JSONObject p = arr.getJSONObject(i);
                     LivePlayer lp = new LivePlayer();
                     lp.name = p.optString("name", "?");
+                    lp.display = p.optString("display", lp.name);
                     lp.correct = p.optInt("correct", 0);
                     lp.answered = p.optInt("answered", 0);
                     lp.avgTime = (float) p.optDouble("avgTime", 0);

@@ -276,7 +276,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
 #endif
     }
 
-    [System.Serializable] class LivePlayerDto { public string name; public int correct; public int answered; public float avgTime; public float avgCorrectTime; }
+    [System.Serializable] class LivePlayerDto { public string name; public string display; public int correct; public int answered; public float avgTime; public float avgCorrectTime; }
     [System.Serializable] class LivePlayerListDto { public System.Collections.Generic.List<LivePlayerDto> players; }
 
     /// <summary>Đẩy điểm/số liệu THẬT từng người chơi đã nhận diện được (PlayerRecognitionService.
@@ -312,6 +312,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
                 dto.players.Add(new LivePlayerDto
                 {
                     name = s.name,
+                    display = PlayerNameDisplay.Format(s.name),
                     correct = s.correct,
                     answered = s.answered,
                     avgTime = s.AvgAnswerTimeSec,

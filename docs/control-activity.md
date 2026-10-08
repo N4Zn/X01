@@ -2,7 +2,7 @@
 
 > **TL;DR**: K02 dùng 2 Activity/2 display: ControlActivity (Java View, display 0) điều khiển, UnityPlayerActivity (máy chiếu) chạy game. Stop KHÔNG destroy Unity; Start lần 2 gửi UnitySendMessage. Cài đặt game gửi bằng JSON.
 > **Đọc khi**: sửa NativePlugins/ControlUiAndroidLib, GameControlBridge/ControlBridge, tab Cài đặt, luồng Start/Pause/Stop, lớp/điểm/registry hiển thị.
-> **Cập nhật**: 2026-10-04 (2026-10-05: roster tab hiện cả lớp, settings; trước đó tách nguyên văn từ CLAUDE.md gốc)
+> **Cập nhật**: 2026-10-04 (2026-10-08: bố cục tab Trò chơi + bottom bar; 2026-10-05: roster tab hiện cả lớp, settings; trước đó tách nguyên văn từ CLAUDE.md gốc)
 
 ## Track A — K02 dual-display + LiDAR touch (session "Dual display setup K02")
 
@@ -48,6 +48,14 @@ tương ứng — sửa tên hiển thị thì sửa Ở CẢ 2 FILE (C# + JSON)
 dùng `item.displayName` để vẽ danh sách chọn game, nhưng vẫn giữ `selectedGameName`/`item.name`
 (định danh nội bộ) cho toàn bộ logic chọn/gửi Unity — chỗ hiển thị tên game ở nơi khác
 (pause card, banner, summary...) tra ngược qua `displayNameOf(selectedGameName)`.
+
+### Bố cục ControlActivity: tab "Trò chơi" là chính (2026-10-08)
+
+- **Cột trái** (`action_zone`, 220dp) lúc chọn game chỉ liệt kê **học phần** của môn đang chọn (+ "Tất cả"); bấm = lọc lưới game (`selectedPhan`). Môn vẫn chọn ở dropdown top bar. Đang chơi/vừa xong: cột trái chỉ còn thẻ tên game.
+- **Giữa màn hình**: tab đầu tiên **"Trò chơi"** (`panel_games`) = lưới thẻ game (`renderGames()`, 2–5 cột theo bề rộng). Các tab cũ (Lớp học, Năng lực, Lịch sử, Cài đặt) giữ nguyên, thứ yếu. Tab "Trò chơi" chỉ hiện ở scene `select`; sau khi chơi xong bấm CHỌN GAME KHÁC để quay lại.
+- **Tên game trên thẻ**: `OutlinedTextView` (chữ đen #111, viền trắng, nét = 0.35 × cỡ chữ). **Tên người chơi lúc `playing`**: to gấp đôi (28sp tiêu đề, 19sp từng bạn), hiện CÙNG tên với HUD game (`PlayerNameDisplay.Format`: tên thường gọi/alias nếu có, không thì tên thật rút còn 2 tiếng cuối) — Unity gửi qua `UpdateReport` (`GetDisplayName1/2`) và field `display` trong `UpdateLivePlayers`.
+- **Bottom bar giữa-dưới** (`bottom_bar`, `renderBottomBar()`): `select` = **BẮT ĐẦU CHƠI** (1.5x nút START cũ); `playing` = **TẠM DỪNG** ↔ **TIẾP TỤC CHƠI** (cùng `OnPauseRequested`/`OnResumeRequested`: `timeScale=0` + tắt touch + dừng nhạc, áp mọi game) và **DỪNG HẲN**; `ended` = CHƠI LẠI / CHỌN GAME KHÁC / TỔNG KẾT.
+- Chưa loại trừ game rủi ro khỏi Pause (user: để sau).
 
 ### ControlActivity — lớp/điểm THẬT, hết mock (2026-10-03)
 

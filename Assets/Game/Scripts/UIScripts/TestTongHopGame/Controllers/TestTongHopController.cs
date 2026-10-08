@@ -224,15 +224,8 @@ public class TestTongHopController : MonoBehaviour
         gameModel.PointsPerCorrect = entry.pointsPerCorrect > 0 ? entry.pointsPerCorrect : 1;
 
         // Đổi background nếu game có khai báo backgroundSprite trong GameRegistry.
-        // Ưu tiên Texture2D (jpg/png dạng Texture) → fallback Sprite (png dạng Sprite 2D and UI).
-        if (!string.IsNullOrEmpty(entry.backgroundSprite))
-        {
-            var tex = Resources.Load<Texture2D>(entry.backgroundSprite);
-            if (tex != null)
-                gameHud?.SetBackground(tex);
-            else
-                gameHud?.SetBackground(Resources.Load<Sprite>(entry.backgroundSprite));
-        }
+        // Không khai báo thì tự tìm Resources/Background/<tên game> (xem GameHUD.ApplyGameBackground).
+        gameHud?.ApplyGameBackground(entry.name, entry.backgroundSprite);
 
         if (entry.hideScoreBars)
             gameHud?.HideScoreBars();
