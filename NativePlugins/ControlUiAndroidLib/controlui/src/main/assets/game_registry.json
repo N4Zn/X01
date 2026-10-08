@@ -13,6 +13,7 @@
     {"name": "SubNumberDigit", "displayName": "Trừ trong phạm vi 10\n(chữ số)", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
     {"name": "SoDem", "displayName": "Nhận biết số", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
     {"name": "DemQua", "displayName": "Đếm quả", "group": "Đếm", "sceneName": "DemQuaGame", "category": 0},
+    {"name": "TongHopToan", "displayName": "Tổng hợp Toán", "group": "Ôn tập chung", "sceneName": "TongHopToanGame", "category": 0},
 
     {"name": "ChuCai", "displayName": "Chữ cái", "sceneName": "ChuCaiGame", "category": 1},
     {"name": "ChuCaiThuong", "displayName": "Chữ cái (thường)", "sceneName": "ChuCaiGame", "category": 1},
