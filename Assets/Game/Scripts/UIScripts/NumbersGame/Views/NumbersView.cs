@@ -189,7 +189,8 @@ public class NumbersView : MonoBehaviour
             if (txts[i] != null)
             {
                 txts[i].text = values[i];
-                txts[i].color = _normalTextColor;
+                if (NumberTextStyle.IsNumber(values[i])) NumberTextStyle.Apply(txts[i]); // số: trắng/đậm/viền đen/to (chuẩn chung)
+                else txts[i].color = _normalTextColor;
                 if (txts[i].gameObject.GetComponent<KeepUpright>() == null)
                     txts[i].gameObject.AddComponent<KeepUpright>();
             }

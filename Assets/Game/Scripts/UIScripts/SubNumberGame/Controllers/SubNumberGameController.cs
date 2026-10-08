@@ -58,12 +58,16 @@ public class SubNumberGameController : MonoBehaviour
         // }
         // if (!isLoaded) { Debug.LogError("NDL: Failed to load AddUpMaster after retries. Returning to MenuScene."); SceneManager.LoadScene("MenuScene"); yield break; }
 
-        int maxSum = GameSessionManager.Instance?.SelectedGameName == "SubNumber5" ? 5 : 10;
+        // Biến thể theo tên game (GameRegistry): SubNumber5 / SubNumber (hình) · SubNumber5Digit / SubNumberDigit (chữ số).
+        string gameName = GameSessionManager.Instance?.SelectedGameName ?? "";
+        int maxSum = gameName.Contains("5") ? 5 : 10;
+        bool digitMode = gameName.EndsWith("Digit");
         _gameModel = new SubNumberGameModel(maxSum);
         // _gameModel.LoadQuestions(); // Removed as we use procedural generation now
 
         if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;
 
+        gameView.SetDigitMode(digitMode);
         gameView.InitView();
 
         // NamNN change with Android Studio Agent: Set dynamic max score
@@ -275,6 +279,10 @@ public class SubNumberGameController : MonoBehaviour
     {
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
+
+        // Đang đếm "Start in" chỉ hiện nền: ẩn phép tính + đáp án mặc định của scene.
+        gameView.HideQuestion(0);
+        gameView.HideQuestion(1);
 
         for (int i = 3; i >= 1; i--)
         {

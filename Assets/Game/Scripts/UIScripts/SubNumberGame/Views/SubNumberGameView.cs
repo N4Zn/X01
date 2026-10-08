@@ -223,6 +223,8 @@ public class SubNumberGameView : MonoBehaviour
         Text equals = playerIndex == 0 ? p1EqualsLabel : p2EqualsLabel;
         if (plus != null) plus.gameObject.SetActive(true);
         if (equals != null) equals.gameObject.SetActive(true);
+        NumberTextStyle.ApplyOperator(plus);
+        NumberTextStyle.ApplyOperator(equals);
 
         GameObject overlayA = playerIndex == 0 ? p1HiddenOverlay : p2HiddenOverlay;
         GameObject overlayB = playerIndex == 0 ? p1HiddenOverlayB : p2HiddenOverlayB;
@@ -512,8 +514,30 @@ public class SubNumberGameView : MonoBehaviour
 
     // ===== Helper methods =====
 
+    // Chế độ "chữ số": thay vì N hình con vật thì mỗi ô hiện đúng 1 chữ số (kiểu chữ chuẩn: NumberTextStyle).
+    private bool _digitMode;
+    public void SetDigitMode(bool digitMode) { _digitMode = digitMode; }
+
+    private void DisplayDigitInContainer(Transform container, int value)
+    {
+        ClearContainer(container);
+        var go = new GameObject("DigitText", typeof(RectTransform), typeof(Text), typeof(LayoutElement));
+        go.transform.SetParent(container, false);
+        go.GetComponent<LayoutElement>().ignoreLayout = true; // container có GridLayoutGroup — tự căng kín ô, không theo lưới
+        var rt = (RectTransform)go.transform;
+        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
+        var txt = go.GetComponent<Text>();
+        Text fontSrc = p1PlusLabel != null ? p1PlusLabel : (p2PlusLabel != null ? p2PlusLabel : timerText);
+        txt.font = fontSrc != null && fontSrc.font != null ? fontSrc.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.raycastTarget = false;
+        txt.text = value.ToString();
+        NumberTextStyle.Apply(txt);
+    }
+
     private void DisplayItemsInContainer(Transform container, int count, string imageType)
     {
+        if (_digitMode) { DisplayDigitInContainer(container, count); return; }
         ClearContainer(container);
         // 1. Load sprite from the new Animal folder
         Sprite sprite = Resources.Load<Sprite>("GameImages/Animal/" + imageType);
@@ -650,6 +674,7 @@ public class SubNumberGameView : MonoBehaviour
         Transform boxC = playerIndex == 0 ? p1BoxCImageContainer : p2BoxCImageContainer;
         GameObject overlay = playerIndex == 0 ? p1HiddenOverlay : p2HiddenOverlay;
         GameObject overlayB = playerIndex == 0 ? p1HiddenOverlayB : p2HiddenOverlayB;
+        GameObject overlayC = playerIndex == 0 ? p1HiddenOverlayC : p2HiddenOverlayC;
         Text plus = playerIndex == 0 ? p1PlusLabel : p2PlusLabel;
         Text equals = playerIndex == 0 ? p1EqualsLabel : p2EqualsLabel;
 
@@ -658,6 +683,7 @@ public class SubNumberGameView : MonoBehaviour
         if (boxC != null) boxC.parent.gameObject.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
         if (overlayB != null) overlayB.SetActive(false);
+        if (overlayC != null) overlayC.SetActive(false);
         if (plus != null) plus.gameObject.SetActive(false);
         if (equals != null) equals.gameObject.SetActive(false);
 

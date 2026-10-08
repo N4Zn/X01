@@ -269,6 +269,10 @@ public class TongHopGameController : MonoBehaviour
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshPlayerNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshPlayerNames());
 
+        // Đang đếm "Start in" chỉ hiện nền: ẩn câu hỏi + đáp án mặc định của scene.
+        gameView.HideQuestion(0);
+        gameView.HideQuestion(1);
+
         for (int i = 3; i >= 1; i--)
         {
             gameView.ShowCountdown(0, i);

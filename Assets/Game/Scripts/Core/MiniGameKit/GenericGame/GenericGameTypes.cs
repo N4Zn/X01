@@ -37,6 +37,10 @@ public class GenericGameSettings
     /// thì Kit vẫn kết thúc round (giới hạn đã biết, xem SCHEMA.md) — false chỉ có tác dụng khi còn
     /// ít nhất 1 bên chưa sai.</summary>
     public bool wrongEndsRound = true;
+    /// <summary>false (mặc định, hành vi gốc) = Combined: bên nào ĐÚNG trước thắng, round kết thúc cho cả 2 bên.
+    /// true = 2 đội cùng 1 câu hỏi nhưng MỖI đội chơi hết câu của mình (đúng → ghi điểm, khoá ô; sai → khoá,
+    /// hoặc thử lại nếu wrongEndsRound=false), chỉ sang câu mới khi CẢ 2 đội đã xong. Chỉ có tác dụng ở playMode="Combined".</summary>
+    public bool waitBothTeams = false;
     /// <summary>true (mặc định, hành vi gốc của Kit) = ô đáp án tự tô XANH (đúng)/ĐỎ (sai)/XÁM
     /// (khoá) khi round kết thúc — màu nền (bgImage.color) có sẵn trong ButtonItem.SetState().
     /// false = tắt hẳn 3 màu này (GenericGameController ghi đè lại màu về bình thường NGAY SAU khi

@@ -312,6 +312,10 @@ public class AnswerDisplayManager : MonoBehaviour
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
+    /// <summary>Tắt mọi display đáp án (mặc định của scene) — gọi lúc bắt đầu game, trước "Start in Ns", để chỉ còn nền.
+    /// Show() sẽ bật lại display cần dùng ở câu đầu.</summary>
+    public void HideAllDisplays() => HideAll();
+
     void HideAll()
     {
         floatingDisplay.gameObject.SetActive(false);

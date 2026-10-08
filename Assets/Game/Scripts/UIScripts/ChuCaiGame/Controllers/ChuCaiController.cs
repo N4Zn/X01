@@ -28,7 +28,10 @@ public class ChuCaiController : MonoBehaviour
 
     void Start()
     {
-        _model = new ChuCaiModel();
+        // "ChuCaiThuong" (Chữ cái (thường)): cùng scene, hiện chữ viết thường bằng font Quicksand (có đủ dấu tiếng Việt, chữ 'a' 1 tầng như chữ viết tay).
+        bool lowercase = GameSessionManager.Instance?.SelectedGameName == "ChuCaiThuong";
+        _model = new ChuCaiModel(lowercase);
+        if (lowercase) gameView.SetLetterFont(Resources.Load<Font>("Fonts/Quicksand/Quicksand-Bold"));
         gameView.InitView();
 
         if (GameSettings.Instance != null)
@@ -156,7 +159,7 @@ public class ChuCaiController : MonoBehaviour
 
         // Start repeating audio reminder
         if (_audioReminderCoroutine != null) StopCoroutine(_audioReminderCoroutine);
-        _audioReminderCoroutine = StartCoroutine(AudioReminderRoutine(_model.TargetLetter));
+        _audioReminderCoroutine = StartCoroutine(AudioReminderRoutine(_model.AudioKey));
     }
 
     private IEnumerator AudioReminderRoutine(string letter)

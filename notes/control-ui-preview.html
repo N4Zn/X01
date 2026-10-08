@@ -1,0 +1,217 @@
+<title>Giao diện điều khiển K02</title>
+<style>
+:root{
+  --bg:#F5F1E8; --panel:#FFFFFF; --panel2:#F3EEFB; --rail:#F8F5EC; --border:#E5DFD0; --border-soft:#EDE8DC;
+  --text:#2A2338; --dim:#6E6580; --faint:#9990A8; --accent:#5B3F9E; --accent-dim:#EFE9FB;
+  --good:#2F9E6E; --live:#3E7FD1; --bad:#D9577B; --bad-dim:#FBEAF0; --ink:#0B1710;
+  --page:#E9E4D8; --note:#6E6580;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--text);font-family:"Be Vietnam Pro","Segoe UI",system-ui,sans-serif;padding-block:20px;padding-inline:16px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.switch{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.switch button{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--dim);cursor:pointer}
+.switch button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.switch span{font-size:12px;color:var(--note);margin-left:4px}
+.scroller{overflow-x:auto}
+.screen{width:1024px;height:600px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;margin:0 auto;box-shadow:0 6px 24px rgba(42,35,56,.12)}
+.top{display:flex;align-items:center;background:var(--rail);border-bottom:1px solid var(--border);flex:none}
+.top .half{flex:1;padding:6px 12px;display:flex}
+.top .half.l{justify-content:flex-end}
+.trig{display:flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--border);border-radius:999px;background:var(--panel);font-weight:700;font-size:20px}
+.trig small{font-size:14px;color:var(--faint);margin-right:6px}
+.trig i{font-style:normal;color:var(--accent);font-size:18px}
+.vsep{width:1px;align-self:stretch;background:var(--border)}
+.logo{margin:0 16px 0 10px;font-weight:800;color:var(--accent);font-size:20px;letter-spacing:.5px;white-space:nowrap}
+.logo b{color:var(--good)}
+.body{flex:1;display:flex;min-height:0}
+.rail{width:220px;flex:none;background:var(--rail);padding:14px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--faint)}
+.phan{padding:12px;border-radius:8px;font-size:14px;color:var(--dim);border:1px solid transparent;cursor:pointer}
+.phan.sel{background:var(--accent-dim);border-color:var(--accent);color:var(--text);font-weight:700}
+.rail .list{display:flex;flex-direction:column;gap:6px;overflow:auto}
+.card{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:12px 13px}
+.card b{display:block;font-size:16px}
+.card span{font-size:12px;color:var(--dim)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.tabs{display:flex;padding:0 12px;flex:none}
+.tabs div{padding:12px 14px;font-size:13px;font-weight:700;color:var(--faint);cursor:default}
+.tabs div.on{color:var(--text);box-shadow:inset 0 -2px 0 var(--accent)}
+.panel{flex:1;overflow:auto;padding:14px;min-height:0}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.game{height:96px;border-radius:12px;background:var(--panel);border:1px solid var(--border-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px;text-align:center;cursor:pointer}
+.game b{font-size:15px;line-height:1.25}
+.game span{font-size:11px;color:var(--faint)}
+.game.sel{background:var(--accent-dim);border:2px solid var(--accent)}
+.game.soon b{color:var(--faint)}
+.bar{flex:none;background:var(--rail);border-top:1px solid var(--border);display:flex;justify-content:center;align-items:center;padding:10px 16px;gap:16px}
+.btn{border:0;border-radius:12px;font:inherit;font-weight:700;text-align:center;padding:20px 0;cursor:pointer}
+.btn.start{width:288px;font-size:20px;background:var(--good);color:var(--ink)}
+.btn.pause{width:240px;font-size:18px;background:var(--panel2);color:var(--text)}
+.btn.resume{width:240px;font-size:18px;background:var(--good);color:var(--ink)}
+.btn.stop{width:240px;font-size:18px;background:var(--bad-dim);color:var(--bad)}
+.btn.sec{font-size:15px;background:var(--panel2);color:var(--text)}
+.live{display:flex;gap:14px;height:100%}
+.team{flex:1;background:var(--panel);padding:16px;border-top:3px solid var(--live)}
+.team.r{border-color:var(--bad)}
+.team h4{margin:14px 0 0;font-size:14px}
+.team .sc{font-size:36px;font-weight:800;margin-top:10px;font-variant-numeric:tabular-nums}
+.team small{color:var(--faint);font-size:10.5px}
+.av{display:inline-flex;flex-direction:column;align-items:center;margin:14px 8px 0 0;font-size:9.5px;color:var(--dim)}
+.av i{font-style:normal;width:38px;height:38px;border-radius:50%;background:var(--panel2);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text)}
+.pausedtag{position:absolute;top:10px;right:14px;background:var(--bad);color:#fff;font-weight:700;font-size:12px;padding:4px 10px;border-radius:999px}
+.rows{width:100%;border-collapse:collapse;font-size:13px}
+.rows th{text-align:left;color:var(--faint);font-size:11px;padding:6px 8px}
+.rows td{padding:9px 8px;border-top:1px solid var(--border-soft)}
+.notes{font-size:13px;color:var(--note);line-height:1.6;max-width:70ch}
+.notes b{color:var(--text)}
+[hidden]{display:none!important}
+</style>
+
+<div class="wrap">
+  <div class="switch" role="group" aria-label="Trạng thái">
+    <button id="b-select" aria-pressed="true">Chọn game</button>
+    <button id="b-playing" aria-pressed="false">Đang chơi</button>
+    <button id="b-paused" aria-pressed="false">Tạm dừng</button>
+    <button id="b-ended" aria-pressed="false">Vừa xong</button>
+    <span>Bấm môn, học phần, thẻ game để thử.</span>
+  </div>
+
+  <div class="scroller"><div class="screen" id="screen" style="position:relative">
+    <div class="top">
+      <div class="half l"><div class="trig"><span id="catName">Toán</span><i>▾</i></div></div>
+      <div class="vsep"></div>
+      <div class="half"><div class="trig"><small>Lớp</small><span style="min-width:108px">Lá</span><i>▾</i></div></div>
+      <div class="logo">Edu<b>Xplore</b></div>
+    </div>
+
+    <div class="body">
+      <div class="rail" id="rail"></div>
+      <div class="main">
+        <div class="tabs" id="tabs"></div>
+        <div class="panel" id="panel" style="position:relative"></div>
+      </div>
+    </div>
+
+    <div class="bar" id="bar"></div>
+  </div></div>
+
+  <p class="notes"><b>Thay đổi so với bản cũ.</b> Cột trái chỉ còn học phần. Danh sách game chuyển ra giữa dạng lưới, là tab đầu tiên. Nút BẮT ĐẦU CHƠI nằm giữa-dưới, to gấp 1,5 lần. Khi chơi, thanh dưới đổi thành TẠM DỪNG và DỪNG HẲN; bấm TẠM DỪNG thì nút thành TIẾP TỤC CHƠI. Đây là bản dựng minh hoạ bằng HTML, màu và cỡ lấy từ app thật. Ảnh icon game chưa có trong thẻ.</p>
+</div>
+
+<script>
+var GAMES = [
+  {n:"Đếm đến 5",g:"Đếm"},{n:"Đếm đến 10",g:"Đếm"},{n:"Số đếm",g:"Đếm"},{n:"Đếm quả",g:"Đếm"},{n:"Tách số",g:"Đếm"},
+  {n:"Cộng trong phạm vi 5",g:"Cộng"},{n:"Cộng trong phạm vi 10",g:"Cộng"},{n:"Tách số (2)",g:"Cộng"},
+  {n:"Trừ trong phạm vi 5",g:"Trừ"},
+  {n:"So sánh số",g:"So sánh"},{n:"So sánh số (>, <, =)",g:"So sánh"},
+  {n:"Đồng hồ",g:"Thời gian"},{n:"Thời gian trong ngày",g:"Thời gian"},{n:"Các buổi trong ngày",g:"Thời gian"},
+  {n:"Cửa hàng kem (trước, sau)",g:"Vị trí, định hướng"},
+  {n:"Nhận biết số",g:"Toán"},
+  {n:"Phép nhân (sắp có)",g:"Toán",soon:1}
+];
+var S = {scene:"select", paused:false, phan:null, game:"Đếm đến 5", tab:"games"};
+var TABS = [["games","Trò chơi"],["roster","Lớp học"],["comp","Năng lực"],["hist","Lịch sử"],["set","Cài đặt"]];
+var $ = function(id){return document.getElementById(id)};
+var phans = []; GAMES.forEach(function(x){ if(phans.indexOf(x.g)<0) phans.push(x.g); });
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+
+function renderRail(){
+  var h="";
+  if(S.scene==="select"){
+    h+='<div class="eyebrow">HỌC PHẦN</div><div class="list">';
+    h+='<div class="phan'+(S.phan===null?' sel':'')+'" data-p="">Tất cả</div>';
+    phans.forEach(function(p){ h+='<div class="phan'+(S.phan===p?' sel':'')+'" data-p="'+esc(p)+'">'+esc(p)+'</div>'; });
+    h+='</div>';
+  } else if(S.scene==="playing"){
+    h+='<div class="eyebrow">ĐANG CHẠY</div><div class="card"><b>'+esc(S.game)+'</b><span>'+(S.paused?'Đang tạm dừng':'Đang chơi')+'</span></div>';
+  } else {
+    h+='<div class="eyebrow">VỪA XONG</div><div class="card"><span style="font-size:10px;font-weight:700;color:var(--faint)">Vừa chơi</span><b style="font-size:15px">'+esc(S.game)+'</b><span>Đội trái 12 – 9 Đội phải</span></div>';
+  }
+  $("rail").innerHTML=h;
+  Array.prototype.forEach.call($("rail").querySelectorAll(".phan"),function(el){
+    el.onclick=function(){ S.phan=el.getAttribute("data-p")||null; render(); };
+  });
+}
+
+function renderTabs(){
+  var h="";
+  TABS.forEach(function(t){
+    if(t[0]==="games" && S.scene!=="select") return;
+    if(S.scene==="playing") return;
+    h+='<div class="'+(S.tab===t[0]?'on':'')+'" data-t="'+t[0]+'">'+t[1]+'</div>';
+  });
+  $("tabs").innerHTML=h;
+  Array.prototype.forEach.call($("tabs").children,function(el){
+    el.style.cursor="pointer";
+    el.onclick=function(){ S.tab=el.getAttribute("data-t"); render(); };
+  });
+}
+
+function panelHtml(){
+  if(S.scene==="playing"){
+    return '<div class="live">'+
+      team("Team Trái","Minh Anh","8","l",[["MA",5,6],["BK",3,4]])+
+      team("Team Phải","Gia Hân","6","r",[["GH",4,5],["TL",2,5]])+
+    '</div>'+(S.paused?'<div class="pausedtag">TẠM DỪNG</div>':'');
+  }
+  var tab = (S.scene!=="select" && S.tab==="games") ? "roster" : S.tab;
+  if(tab==="games"){
+    var list = GAMES.filter(function(x){return S.phan===null||x.g===S.phan});
+    var h='<div class="grid">';
+    list.forEach(function(x){
+      var sub = x.soon ? "Sắp có" : (S.phan===null ? x.g : "");
+      h+='<div class="game'+(x.n===S.game?' sel':'')+(x.soon?' soon':'')+'" data-g="'+esc(x.n)+'"><b>'+esc(x.n)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</div>';
+    });
+    return h+'</div>';
+  }
+  if(tab==="roster"){
+    return '<table class="rows"><tr><th>Học sinh</th><th>Điểm học phần</th><th>Số ván</th></tr>'+
+      [["Minh Anh","92","6"],["Gia Hân","85","5"],["Bảo Khánh","78","4"],["Thảo Linh","-","0"]].map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'}).join("")+'</table>';
+  }
+  return '<p class="notes">Tab này giữ nguyên như bản cũ.</p>';
+}
+function team(label,name,score,side,members){
+  var av=members.map(function(m){return '<span class="av"><i>'+m[0]+'</i>'+m[1]+'đ · '+m[2]+'c</span>'}).join("");
+  return '<div class="team '+side+'"><h4>'+label+' · Đang chơi: '+name+'</h4><div class="sc">'+score+'</div><small>tổng điểm nhóm</small><div>'+av+'</div></div>';
+}
+
+function renderBar(){
+  var h="";
+  if(S.scene==="select"){
+    h='<button class="btn start" id="go">BẮT ĐẦU CHƠI</button>';
+  } else if(S.scene==="playing"){
+    h=(S.paused?'<button class="btn resume" id="pz">TIẾP TỤC CHƠI</button>':'<button class="btn pause" id="pz">TẠM DỪNG</button>')+
+      '<button class="btn stop" id="st">DỪNG HẲN</button>';
+  } else {
+    h='<button class="btn start" id="again">CHƠI LẠI</button><button class="btn sec" style="width:220px" id="other">CHỌN GAME KHÁC</button><button class="btn sec" style="width:160px">TỔNG KẾT</button>';
+  }
+  $("bar").innerHTML=h;
+  var on=function(id,fn){var e=$(id); if(e) e.onclick=fn;};
+  on("go",function(){ S.scene="playing"; S.paused=false; render(); });
+  on("again",function(){ S.scene="playing"; S.paused=false; render(); });
+  on("pz",function(){ S.paused=!S.paused; render(); });
+  on("st",function(){ S.scene="ended"; S.paused=false; S.tab="roster"; render(); });
+  on("other",function(){ S.scene="select"; S.tab="games"; render(); });
+}
+
+function render(){
+  renderRail(); renderTabs();
+  $("panel").innerHTML=panelHtml();
+  Array.prototype.forEach.call($("panel").querySelectorAll(".game"),function(el){
+    el.onclick=function(){ S.game=el.getAttribute("data-g"); render(); };
+  });
+  renderBar();
+  var b=function(id,on){$(id).setAttribute("aria-pressed",on)};
+  b("b-select",S.scene==="select"); b("b-playing",S.scene==="playing"&&!S.paused);
+  b("b-paused",S.scene==="playing"&&S.paused); b("b-ended",S.scene==="ended");
+}
+
+$("b-select").onclick=function(){S.scene="select";S.paused=false;S.tab="games";render()};
+$("b-playing").onclick=function(){S.scene="playing";S.paused=false;render()};
+$("b-paused").onclick=function(){S.scene="playing";S.paused=true;render()};
+$("b-ended").onclick=function(){S.scene="ended";S.paused=false;S.tab="roster";render()};
+render();
+</script>

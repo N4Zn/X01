@@ -318,6 +318,7 @@ public class TestTongHopController : MonoBehaviour
             if (!_independentStarted)
             {
                 _independentStarted = true;
+                HideQuestionAndAnswersAtStart();
                 StartIndependentPlay();
                 _fsm.StateMachineChange(TestTongHopSceneState.WaitAnswer);
             }
@@ -328,11 +329,19 @@ public class TestTongHopController : MonoBehaviour
         if (_isFirstQuestion)
         {
             _isFirstQuestion = false;
+            HideQuestionAndAnswersAtStart();
             StartCoroutine(FirstQuestionCountdown());
             return;
         }
 
         DoShowQuestion();
+    }
+
+    /// <summary>Lúc bắt đầu game (trước "Start in Ns") chỉ hiện nền: ẩn câu hỏi + mọi display đáp án mặc định của scene.</summary>
+    void HideQuestionAndAnswersAtStart()
+    {
+        foreach (var d in questionDisplays) d?.Hide();
+        answerDisplayManager.HideAllDisplays();
     }
 
     protected void StateMachineExit_ShowQuestion(Enum prev, Dictionary<string, object> opts) { }

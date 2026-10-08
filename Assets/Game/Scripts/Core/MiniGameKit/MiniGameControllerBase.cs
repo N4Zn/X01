@@ -269,6 +269,8 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
         _questionShownTime = Time.time;
         _loggedThisRound.Clear();
+        _teamsDone.Clear();
+        _anyTeamCorrect = false;
         OnQuestionShown(CurrentQuestion);
         Fsm.StateMachineChange(MiniGameState.WaitAnswer);
     }
@@ -313,8 +315,48 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         Fsm.StateMachineChange(MiniGameState.Feedback, new Dictionary<string, object> { { "correct", false } });
     }
 
+    // ── Combined "chờ cả 2 đội" (WaitForBothTeams) ───────────────────────────────
+    // Mỗi đội chơi hết câu của mình; round chỉ kết thúc khi CẢ 2 đội đã xong (đúng, hoặc sai mà không được thử lại).
+    readonly HashSet<Team> _teamsDone = new HashSet<Team>();
+    bool _anyTeamCorrect;
+
+    /// <summary>true (chỉ có nghĩa ở Combined) = 2 đội cùng 1 câu hỏi nhưng KHÔNG ai "thắng trước": đội xong sớm
+    /// chờ đội kia, cả 2 xong mới sang câu mới. Display tương ứng phải bật WaitBothTeams (không khoá bên kia).</summary>
+    protected virtual bool WaitForBothTeams => false;
+
+    /// <summary>Wait-both: chạm SAI có kết thúc lượt của đội đó không (false = đội được thử lại, chưa tính xong).</summary>
+    protected virtual bool WrongEndsTeamTurn => true;
+
+    protected bool WaitBothActive => WaitForBothTeams && playMode == MiniGamePlayMode.Combined;
+
+    /// <summary>Wait-both: `team` vừa XONG lượt (đúng hết, hoặc sai không được thử lại) — đội kia có thể còn đang chơi. Icon ✔/✖ của
+    /// đội này được GIỮ cho tới khi cả 2 đội xong (NextRoundAfterDelay mới ẩn); subclass dùng hook này để ẩn đáp án của đội đã xong.</summary>
+    protected virtual void OnTeamTurnDone(Team team, bool correct) { }
+
+    void MarkTeamDone(Team team, bool correct)
+    {
+        if (GetCurrentState() != MiniGameState.WaitAnswer) return;
+        if (!_teamsDone.Add(team)) return;
+        if (correct) _anyTeamCorrect = true;
+        OnTeamTurnDone(team, correct);
+        if (_teamsDone.Count < 2) return;
+        if (_timeoutCoroutine != null) { StopCoroutine(_timeoutCoroutine); _timeoutCoroutine = null; }
+        Fsm.StateMachineChange(MiniGameState.Feedback,
+            new Dictionary<string, object> { { "correct", _anyTeamCorrect }, { "team", team } });
+    }
+
     void HandleResult(bool correct, Team team, int[] playerAnswer)
     {
+        if (WaitBothActive && correct)
+        {
+            AwardDefaultPoint(team);
+            if (UseDefaultFeedbackFx) PlayDefaultFeedbackFx(team, true);
+            if (_loggedThisRound.Add(team))
+                LogRoundResult(team, CurrentQuestion, playerAnswer, true, Time.time - _questionShownTime);
+            OnRoundResult(true, team, playerAnswer);
+            MarkTeamDone(team, true);
+            return;
+        }
         if (_timeoutCoroutine != null) { StopCoroutine(_timeoutCoroutine); _timeoutCoroutine = null; }
         if (correct) AwardDefaultPoint(team);
         if (correct && UseDefaultFeedbackFx) PlayDefaultFeedbackFx(team, true);
@@ -337,6 +379,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             LogRoundResult(team, CurrentQuestion, null, false, Time.time - _questionShownTime);
         if (UseDefaultFeedbackFx) PlayDefaultFeedbackFx(team, false);
         OnPlayerFailed(team);
+        if (WaitBothActive && WrongEndsTeamTurn) MarkTeamDone(team, false);
     }
 
     /// <summary>Bật/tắt hiệu ứng mặc định của Kit khi trả lời đúng/sai — âm thanh
@@ -489,6 +532,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         if (rightCountdownText != null) rightCountdownText.gameObject.SetActive(false);
     }
 
+    /// <summary>Gọi 1 lần ngay trước "Start in 3,2,1": lúc này chỉ được hiện nền — subclass ẩn câu hỏi/đáp án mặc định của scene.</summary>
+    protected virtual void OnBeforeStartCountdown() { }
+
     protected virtual void CleanupCurrentDisplay()
     {
         GetDisplayForQuestion(CurrentQuestion)?.Cleanup();
@@ -578,6 +624,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         PlayerRecognitionService.Instance.RecognizeSlot(0, _ => RefreshHudNames());
         PlayerRecognitionService.Instance.RecognizeSlot(1, _ => RefreshHudNames());
 
+        OnBeforeStartCountdown();
         for (int i = 3; i >= 1; i--)
         {
             ShowTransitionCountdown(i, "Start");

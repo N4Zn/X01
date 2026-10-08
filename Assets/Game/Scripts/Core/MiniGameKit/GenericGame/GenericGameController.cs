@@ -397,6 +397,7 @@ public class GenericGameController : MiniGameControllerBase
             _rightSlotItems = right;
             buttonDisplay.ConfigureSlots(left, right);
             buttonDisplay.onAnswerTapped += HandleAnswerTapped;
+            buttonDisplay.WaitBothTeams = WaitBothActive;
         }
         BuildQuestionSlotUis();
     }
@@ -420,6 +421,7 @@ public class GenericGameController : MiniGameControllerBase
             ApplyAnswerContent(team, item, answerIndex, -1);
         };
         spawnFlowDisplay.onAnswerTapped += HandleAnswerTapped;
+        spawnFlowDisplay.WaitBothTeams = WaitBothActive;
     }
 
     // ── Bố cục + nội dung ĐÁP ÁN theo round ─────────────────────────────────────
@@ -745,6 +747,7 @@ public class GenericGameController : MiniGameControllerBase
             if (showText)
             {
                 ui.text.text = s.text;
+                NumberTextStyle.OutlineIfNumber(ui.text, s.text); // câu hỏi là SỐ: viền đen như mọi game (màu/cỡ chữ vẫn theo builder)
                 if (_package.settings.questionFontSize > 0f)
                 {
                     ui.text.resizeTextForBestFit = false;
@@ -1279,6 +1282,35 @@ public class GenericGameController : MiniGameControllerBase
     /// <summary>Combined/Solo mode: base class gọi hàm này NGAY TRƯỚC khi hiện "Next in Ns"
     /// (NextRoundAfterDelay) — ẩn luôn câu hỏi + đáp án CẢ 2 BÊN ở đây, đúng yêu cầu "hết hiệu ứng
     /// thì tắt hết câu hỏi/đáp án, chỉ còn nền + Next in Ns".</summary>
+    /// <summary>Chờ cả 2 đội: đội vừa xong lượt → sau khoảng feedback (đủ thấy hiệu ứng đúng/sai) ẩn hết ĐÁP ÁN của đội đó.
+    /// Câu hỏi, item, icon ✔/✖ giữ nguyên tới khi cả 2 đội xong (base class ẩn icon ở NextRoundAfterDelay).</summary>
+    protected override void OnTeamTurnDone(Team team, bool correct)
+    {
+        StartCoroutine(HideTeamAnswersAfterDelay(team, correct ? feedbackDelayCorrect : feedbackDelayWrong));
+    }
+
+    IEnumerator HideTeamAnswersAfterDelay(Team team, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (GetCurrentState() != MiniGameState.WaitAnswer && GetCurrentState() != MiniGameState.Feedback) yield break;
+        StopIdleEffects(team);
+        if (UsesSpawnFlow)
+        {
+            spawnFlowDisplay.HidePlayerAnswers(team);
+            yield break;
+        }
+        var items = team == Team.Left ? _leftSlotItems : _rightSlotItems;
+        if (items == null) yield break;
+        foreach (var item in items)
+            if (item != null) item.gameObject.SetActive(false);
+    }
+
+    protected override void OnBeforeStartCountdown()
+    {
+        HideQuestionAndAnswers(Team.Left);
+        HideQuestionAndAnswers(Team.Right);
+    }
+
     protected override void CleanupCurrentDisplay()
     {
         base.CleanupCurrentDisplay();
@@ -1294,6 +1326,20 @@ public class GenericGameController : MiniGameControllerBase
         yield return new WaitForSeconds(feedbackDelayWrong);
         if (UsesSpawnFlow) spawnFlowDisplay.ResetTeamAttempt(team);
         else buttonDisplay.ResetTeamAttempt(team);
+        RestoreAnswerAlpha(team); // ô sai vừa "mờ dần biến mất" (FadeOut mặc định) hiện lại để thử tiếp
+    }
+
+    /// <summary>FadeOut chạy trên CHÍNH nút đáp án (đáp án cuối / sai) để alpha = 0 — trả về 1 khi round mới / thử lại, kẻo đáp án vô hình mà vẫn bấm được.</summary>
+    void RestoreAnswerAlpha(Team team)
+    {
+        var items = team == Team.Left ? _leftSlotItems : _rightSlotItems;
+        if (items == null) return;
+        foreach (var item in items)
+        {
+            if (item == null) continue;
+            var cg = item.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = 1f;
+        }
     }
 
     // ── Hiệu ứng theo slot (ghi đè hiệu ứng chung) ─────────────────────────────
@@ -1306,13 +1352,30 @@ public class GenericGameController : MiniGameControllerBase
         return answerIndex >= 0 && answerIndex < slots.Length ? slots[answerIndex].fx : null;
     }
 
-    /// <summary>Slot có hiệu ứng/âm thanh riêng ở trigger này thì THAY HẲN hiệu ứng chung, không thì dùng cái chung. ("None" tính là có hiệu ứng → cố ý tắt.)</summary>
+    static bool HasOwnFx(ActionFx s)
+        => s != null && ((s.effects != null && s.effects.Length > 0) || !string.IsNullOrEmpty(s.sound));
+
+    /// <summary>MẶC ĐỊNH theo hiệu ứng CHUNG; chỉ phần nào slot tự đặt mới thay phần đó: ≥1 effect ("None" tính là có → cố ý tắt) thay danh sách
+    /// effect chung, âm thanh riêng thay âm thanh chung. Slot chỉ đặt âm thanh → vẫn giữ hiệu ứng chung (và ngược lại); không đặt gì → dùng nguyên cái chung.</summary>
     static ActionFx Pick(ActionFx slotOverride, ActionFx global)
-        => slotOverride != null && ((slotOverride.effects != null && slotOverride.effects.Length > 0) || !string.IsNullOrEmpty(slotOverride.sound)) ? slotOverride : global;
+    {
+        bool hasE = slotOverride != null && slotOverride.effects != null && slotOverride.effects.Length > 0;
+        bool hasS = slotOverride != null && !string.IsNullOrEmpty(slotOverride.sound);
+        if (!hasE && !hasS) return global;
+        if (hasE && hasS) return slotOverride;
+        return new ActionFx
+        {
+            effects = hasE ? slotOverride.effects : (global?.effects ?? Array.Empty<EffectSpec>()),
+            sound = hasS ? slotOverride.sound : global?.sound,
+            playSound = slotOverride.playSound,
+            showIcon = slotOverride.showIcon,
+        };
+    }
 
     void StartIdleEffects(Team team, QuestionData q)
     {
         PlaySound(_package.effects.onIdle.sound);
+        RestoreAnswerAlpha(team); // round mới: đáp án round trước đã FadeOut (alpha 0) phải hiện lại
         var list = new List<Coroutine>();
         for (int i = 0; i < q.answers.Length; i++)
         {
@@ -1366,13 +1429,13 @@ public class GenericGameController : MiniGameControllerBase
         {
             case ClickResult.CorrectFinal:
                 LaunchDecos(team);
-                StopQuestionAudio();
-                // Kit mặc định GIỮ NGUYÊN hiển thị đáp án cuối (tô xanh ApplyFinalState), KHÔNG tự
-                // ẩn như các đáp án đúng trước đó (CorrectPartial). Nếu game đã gắn hiệu ứng
-                // "biến mất" (onCorrectRemove, vd FlyTo) thì đáp án CUỐI cũng phải bay giống hệt
-                // các đáp án trước — tự ẩn bản gốc rồi chạy clone, không chờ Kit làm hộ.
+                if (!WaitBothActive) StopQuestionAudio(); // chờ cả 2 đội: âm thanh câu hỏi còn lặp cho đội kia, CleanupCurrentDisplay sẽ tắt
+                // Đáp án cuối dùng hiệu ứng "đúng — hết round" (onCorrectTap: slot tự đặt thì theo slot, không thì theo chung) —
+                // câu chỉ có 1 đáp án đúng thì đây là hiệu ứng DUY NHẤT chạy. onCorrectRemove (đúng chưa hết round) KHÔNG áp cho
+                // đáp án cuối, trừ thu thập: slot không tự đặt onCorrectTap mà onCorrectRemove chung có FlyToStay thì đáp án cuối
+                // cũng bay vào vùng "Đã chọn" như các đáp án trước (tự ẩn bản gốc rồi chạy clone).
                 var remove = Pick(slotFx?.onCorrectRemove, _package.effects.onCorrectRemove);
-                if (HasRealEffects(remove))
+                if (!HasOwnFx(slotFx?.onCorrectTap) && HasFlyToStay(remove))
                 {
                     PlayCorrectRemoveClone(team, btn, rt, remove);
                     btn.gameObject.SetActive(false);
@@ -1651,6 +1714,8 @@ public class GenericGameController : MiniGameControllerBase
 
     /// <summary>true nếu ActionFx có ít nhất 1 effect khác "None" — dùng để quyết định có cần
     /// nhân bản/ẩn đáp án cuối hay không (xem HandleAnswerTapped's CorrectFinal case).</summary>
+    static bool HasFlyToStay(ActionFx fx) => fx != null && fx.effects != null && Array.Exists(fx.effects, s => ParseType(s.type) == EffectType.FlyToStay);
+
     static bool HasRealEffects(ActionFx fx) => fx != null && fx.effects != null && Array.Exists(fx.effects, s => ParseType(s.type) != EffectType.None);
 
     /// <summary>Mirror targetXPct (FlyTo) / angleDeg (FlyOff) cho bên PHẢI — web tool chỉ cho đặt
@@ -1720,6 +1785,10 @@ public class GenericGameController : MiniGameControllerBase
             StartIdleEffects(Team.Right, CurrentQuestion);
         }
     }
+
+    /// <summary>settings.waitBothTeams (chỉ Combined): 2 đội cùng câu, chờ cả 2 xong mới sang câu mới.</summary>
+    protected override bool WaitForBothTeams => _package != null && _package.settings.waitBothTeams;
+    protected override bool WrongEndsTeamTurn => _package == null || _package.settings.wrongEndsRound;
 
     protected override bool UseIndependentRoundCountdown => _package != null && _package.settings.countdownMode == "nextInN";
     protected override bool UseDefaultTransitionCountdown => _package == null || _package.settings.countdownMode != "none";
@@ -1854,7 +1923,7 @@ public class GenericGameController : MiniGameControllerBase
         {
             case ClickResult.CorrectFinal:
                 _sumWon[team] = true;
-                StopQuestionAudio();
+                if (!WaitBothActive) StopQuestionAudio();
                 // Giống đáp án cuối ở chế độ thường: có hiệu ứng "biến mất" thì đáp án CUỐI cũng bay vào
                 // thanh (lấp nốt các ô còn lại) rồi mới ẩn bản gốc.
                 var remove = Pick(slotFx?.onCorrectRemove, _package.effects.onCorrectRemove);

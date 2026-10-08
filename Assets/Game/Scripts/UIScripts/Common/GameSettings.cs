@@ -17,6 +17,7 @@ public class GameSettings : Singleton<GameSettings>
     private const string KeyWaitForClear = "setting_wait_for_clear";
     private const string KeyShowTutorial = "setting_show_tutorial";
     private const string KeyShowRealName = "setting_show_real_name";
+    private const string KeyTeamPlay = "setting_team_play";
 
     // Values
     public float SfxVolume { get; set; }
@@ -48,6 +49,10 @@ public class GameSettings : Singleton<GameSettings>
     /// Cả 2 chế độ chỉ hiện 2 tiếng cuối — xem <see cref="PlayerNameDisplay"/>.</summary>
     public bool ShowRealName { get; set; } = false;
 
+    /// <summary>true (mặc định) = chơi theo đội (GameMode.Team); false = 1 vs 1: mỗi bên chỉ 1 người cả ván, tên hiển thị
+    /// theo người được nhận diện nhiều lần nhất — xem <see cref="PlayerRecognitionService"/>.</summary>
+    public bool TeamPlay { get; set; } = true;
+
     protected override void OnCreated()
     {
         Load();
@@ -64,6 +69,7 @@ public class GameSettings : Singleton<GameSettings>
         WaitForClear = PlayerPrefs.GetInt(KeyWaitForClear, 1) != 0;
         ShowTutorial = PlayerPrefs.GetInt(KeyShowTutorial, 0) != 0;
         ShowRealName = PlayerPrefs.GetInt(KeyShowRealName, 0) != 0;
+        TeamPlay = PlayerPrefs.GetInt(KeyTeamPlay, 1) != 0;
     }
 
     // JSON do ControlActivity (Java) gửi sang — tên field PHẢI khớp SettingsStore.java.
@@ -75,6 +81,7 @@ public class GameSettings : Singleton<GameSettings>
         public int waitForClear = -1; // -1 = không đổi, 0/1 = tắt/bật
         public int showTutorial = -1; // -1 = không đổi, 0/1 = tắt/bật (mặc định tắt)
         public int showRealName = -1; // -1 = không đổi, 0/1 = tên thường gọi/tên thật (mặc định 0)
+        public int teamPlay = -1;     // -1 = không đổi, 1 = chơi đội (mặc định), 0 = 1 vs 1
     }
 
     /// <summary>Áp JSON từ ControlActivity: field vắng/âm = giữ nguyên. Lưu PlayerPrefs + áp âm lượng
@@ -94,6 +101,7 @@ public class GameSettings : Singleton<GameSettings>
         if (d.waitForClear >= 0) WaitForClear = d.waitForClear != 0;
         if (d.showTutorial >= 0) ShowTutorial = d.showTutorial != 0;
         if (d.showRealName >= 0) ShowRealName = d.showRealName != 0;
+        if (d.teamPlay >= 0) TeamPlay = d.teamPlay != 0;
         Save();
         if (MusicManager.Instance != null) MusicManager.Instance.ApplyVolumes();
     }
@@ -109,6 +117,7 @@ public class GameSettings : Singleton<GameSettings>
         PlayerPrefs.SetInt(KeyWaitForClear, WaitForClear ? 1 : 0);
         PlayerPrefs.SetInt(KeyShowTutorial, ShowTutorial ? 1 : 0);
         PlayerPrefs.SetInt(KeyShowRealName, ShowRealName ? 1 : 0);
+        PlayerPrefs.SetInt(KeyTeamPlay, TeamPlay ? 1 : 0);
         PlayerPrefs.Save();
         Debug.Log("GameSettings: saved");
     }

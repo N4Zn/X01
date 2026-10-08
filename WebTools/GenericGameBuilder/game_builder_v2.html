@@ -215,6 +215,8 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
 .sicons{position:absolute; inset:0; display:grid; gap:3%; padding:6%; pointer-events:none;}
 .sicons img{width:100%; height:100%; object-fit:contain; min-width:0; min-height:0;}
 .stxt{position:relative; z-index:1; white-space:pre-wrap; pointer-events:none; max-width:100%; max-height:100%; overflow:hidden; text-align:center; line-height:1.1;}
+/* Chữ SỐ dùng chung kiểu với Unity (NumberTextStyle): đậm + viền đen; màu trắng trừ khi người soạn đặt màu riêng. */
+.stxt.stxt-num{font-weight:800; text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #000;}
 .mbox{position:relative; flex-shrink:0;}
 .mbox .thumb.inherit{opacity:.45; border-style:dashed;}
 .mbox .mx{position:absolute; top:-6px; right:-6px; width:14px; height:14px; padding:0; border-radius:50%; border:none; background:var(--bad); color:#fff; font-size:9px; line-height:14px; cursor:pointer;}
@@ -303,6 +305,7 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
           <ul>
             <li><b>Game ID</b>: tên nội bộ, không dấu (VD: ThuNghiem1). Chủ đề/nhóm: khai báo sau trong Unity hoặc json.</li>
             <li><b>2 đội</b>: Gộp = 2 đội chơi chung 1 câu hỏi (câu hỏi là 1 vùng chung toàn màn hình, kéo tự do qua 2 nửa). Độc lập = mỗi đội có câu hỏi và nhịp chơi riêng.</li>
+            <li><b>Chờ cả 2 đội xong mới sang câu</b> (chỉ khi Gộp): 2 đội cùng câu hỏi nhưng không ai "thắng trước" — mỗi đội chơi hết câu của mình (đúng thì ghi điểm, sai thì khoá hoặc thử lại theo mục Chạm sai), cả 2 đội xong mới sang câu tiếp.</li>
             <li><b>Kiểu đáp án</b> — Nhiều đáp án: đánh dấu đúng (✓) nhiều ô, chạm hết các ô đúng (gom/hái). Theo đúng thứ tự: đánh dấu đúng (✓), dùng ↑↓ ở mỗi đáp án để sắp xếp thứ tự cần chạm; chạm sai thứ tự coi như sai, kết thúc round ngay. Cộng dồn tới mục tiêu: mọi đáp án đều bấm được, giá trị SỐ của đáp án cộng vào thanh (đáp án "3" = 3 ô); tổng phải ĐÚNG BẰNG mục tiêu mới thắng round, vượt thì sai và khoá đáp án; muốn chọn lại thì chạm vào thanh nhiên liệu (không trừ điểm). Dấu ✓ không dùng ở chế độ này. Mục tiêu mặc định = số ô của thanh (Vùng thu thập → "Số ô"), round nào khác thì đặt riêng.</li>
             <li><b>Câu hỏi chỉ phát âm thanh</b>: không nhập chữ và không chọn ảnh ở slot câu hỏi, chỉ tải âm thanh (nút 🔈 ở dòng slot). Âm thanh câu hỏi chỉ phát khi 2 đội chơi chế độ Gộp.</li>
             <li><b>Cỡ chữ / màu chữ</b>: chỉ áp khi slot hiện dạng CHỮ (đơn vị point, như Unity Text/TMP); 0 = giữ cỡ mặc định của Kit. Màu: bấm ↺ để bỏ ghi đè (câu hỏi mặc định trắng, đáp án giữ màu đặt sẵn của Kit).</li>
@@ -314,6 +317,7 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
         </div>
         <div class="srow"><label>Game ID</label><input id="gameId" placeholder="VD: ThuNghiem1" style="flex:1; min-width:0"></div>
         <div class="srow"><button type="button" class="btn cyc" id="cycPlayMode"></button></div>
+        <div class="srow" id="rowWaitBoth"><label class="chk" title="Chỉ có tác dụng khi 2 đội = Gộp"><input type="checkbox" id="waitBothTeams"> Chờ cả 2 đội xong mới sang câu</label></div>
         <div class="srow"><label>Kiểu đáp án</label>
           <select id="selAnswerMode" style="flex:1; min-width:0">
             <option value="Single">1 đáp án đúng</option>
@@ -625,7 +629,7 @@ function newItemFxSet(){ const o = {}; ITEM_TRIGGERS.forEach(t=> o[t.id] = { eff
 let game = {
   schemaVersion: 2,
   meta: { gameId:"ThuNghiem1", displayName:"Thử nghiệm 1", category:"Đếm" },
-  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 },
+  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, waitBothTeams:false, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 },
   layout: {
     spawnFlow: { enabled:false, direction:"BottomToTop", itemWPct:15, itemHPct:15, speedPct:25, spawnIntervalSec:1, maxConcurrent:4 },
     background: null,     // tên file trong assets/ (vd "bg.png"), null = không có nền
@@ -637,9 +641,10 @@ let game = {
   },
   effects: {
     onIdle: { effects:[{type:"Breathing", effectParams:defaultParams("Breathing")}], sound:null, playSound:true, showIcon:true },
-    onCorrectTap: { effects:[{type:"Punch", effectParams:defaultParams("Punch")}], sound:null, playSound:true, showIcon:true },
-    onWrongTap: { effects:[{type:"Shake", effectParams:defaultParams("Shake")}], sound:null, playSound:true, showIcon:true },
-    onCorrectRemove: { effects:[{type:"FlyOff", effectParams:defaultParams("FlyOff")}], sound:null, playSound:true, showIcon:false },
+    // Mặc định: đáp án đúng (hết round / chưa hết round) và sai đều "mờ dần rồi biến mất"; đúng-hết-round + sai hiện thêm icon ✔/✖.
+    onCorrectTap: { effects:[{type:"FadeOut", effectParams:defaultParams("FadeOut")}], sound:null, playSound:true, showIcon:true },
+    onWrongTap: { effects:[{type:"FadeOut", effectParams:defaultParams("FadeOut")}], sound:null, playSound:true, showIcon:true },
+    onCorrectRemove: { effects:[{type:"FadeOut", effectParams:defaultParams("FadeOut")}], sound:null, playSound:true, showIcon:false },
   },
   rounds: [ defaultRound() ],
   imagePools: [], // [{id, name, images:[filename,...]}] — dùng cho slot.imagePool, xem SCHEMA.md
@@ -872,6 +877,11 @@ function initSettingsPanel(){
   icEl.value = game.settings.iconColumns || 2;
   icEl.addEventListener('input', ()=>{ game.settings.iconColumns = Math.max(1, parseInt(icEl.value||'2',10)); renderStage(); });
 
+  const waitEl = document.getElementById('waitBothTeams');
+  waitEl.checked = !!game.settings.waitBothTeams;
+  waitEl.addEventListener('change', ()=> game.settings.waitBothTeams = waitEl.checked);
+  updateWaitBothVisibility();
+
   const tintEl = document.getElementById('showTint');
   tintEl.checked = game.settings.showCorrectWrongTint;
   tintEl.addEventListener('change', ()=> game.settings.showCorrectWrongTint = tintEl.checked);
@@ -913,9 +923,17 @@ function onPlayModeChanged(){
     const fix = p=>{ p.xPct *= k; p.wPct *= k; if (now !== 'Combined'){ p.wPct = Math.min(p.wPct, 100); p.xPct = Math.min(p.xPct, 100 - p.wPct); } };
     game.rounds.forEach(r=>{ const g = r.question; fix(g.area); g.slots.forEach(fix); g.matrix.itemWPct *= k; g.random.itemWPct *= k; });
     prevPlayMode = now;
+    if (now === 'Combined'){ // sang chế độ Gộp: mặc định tick "Chờ cả 2 đội xong mới sang câu"
+      game.settings.waitBothTeams = true;
+      document.getElementById('waitBothTeams').checked = true;
+    }
   }
+  updateWaitBothVisibility();
   selectedSlot = -1;
   syncCanvasUi(); renderStage(); renderRounds();
+}
+function updateWaitBothVisibility(){
+  document.getElementById('rowWaitBoth').style.display = game.settings.playMode === 'Combined' ? '' : 'none';
 }
 function updateFlatPointsVisibility(){
   document.getElementById('flatPoints').style.display = game.settings.scoringMode === 'flat' ? '' : 'none';
@@ -1058,7 +1076,8 @@ function fillSlotContent(el, v, o){
   if (t){
     const sp = document.createElement('span'); sp.className='stxt'; sp.textContent = t;
     if (o.fontSize) sp.style.fontSize = o.fontSize;
-    if (o.color) sp.style.color = o.color;
+    if (/^\s*\d+\s*$/.test(t)){ sp.classList.add('stxt-num'); sp.style.color = o.color || '#fff'; }
+    else if (o.color) sp.style.color = o.color;
     el.appendChild(sp);
   }
   return 'text';
@@ -1453,7 +1472,7 @@ function buildSlotFxPanel(s, key){
   const wrap = document.createElement('div'); wrap.className='slot-fx';
   const hint = document.createElement('div'); hint.className='hint'; hint.style.marginBottom='6px';
   hint.textContent = key==='answers'
-    ? 'Hiệu ứng riêng của slot này — để TRỐNG = dùng hiệu ứng chung của game. Có hiệu ứng/âm thanh thì thay hẳn cái chung ở trigger đó.'
+    ? 'Hiệu ứng riêng của slot này — để TRỐNG = dùng hiệu ứng chung của game. Thêm hiệu ứng thì thay danh sách hiệu ứng chung, tải âm thanh thì thay âm thanh chung (phần còn lại vẫn theo chung). Câu chỉ có 1 đáp án đúng: đặt ở "Đáp án ĐÚNG — hết round luôn".'
     : 'Hiệu ứng riêng của slot câu hỏi (vd Phóng to-nhỏ liên tục).';
   wrap.appendChild(hint);
   s.fx = s.fx || {};
@@ -2045,7 +2064,7 @@ document.getElementById('btnExport').addEventListener('click', doExport);
 // không có chỗ lưu nào khác ngoài Export, đây là cách nhanh nhất để tạo 1 BIẾN THỂ mới mà không
 // phải chỉnh lại từ đầu.
 // ─────────────────────────────────────────────────────────────────
-const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 };
+const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, waitBothTeams:true,showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 };
 const DEFAULT_LAYOUT = { spawnFlow:{enabled:false,direction:"BottomToTop",itemWPct:15,itemHPct:15,speedPct:25,spawnIntervalSec:1,maxConcurrent:4}, background:null, backgroundAudio:null, qFrame:null, slotFrames:[], layerOrder:[], decorations:[] };
 const DEFAULT_EFFECTS = { onIdle:newActionFx(), onCorrectTap:newActionFx(), onWrongTap:newActionFx(), onCorrectRemove:newActionFx() };
 
@@ -2153,6 +2172,8 @@ function syncUiFromGame(keepSel){
   document.getElementById('selAnswerMode').value = game.settings.answerMode;
   document.getElementById('flatPoints').value = game.settings.flatPoints;
   document.getElementById('showTint').checked = game.settings.showCorrectWrongTint;
+  document.getElementById('waitBothTeams').checked = !!game.settings.waitBothTeams;
+  updateWaitBothVisibility();
   fontColorSync.forEach(f=> f());
   document.getElementById('hasTargetScore').checked = game.settings.hasTargetScore;
   document.getElementById('targetScore').value = game.settings.targetScore;
@@ -2451,9 +2472,18 @@ document.getElementById('btnPlaytest').addEventListener('click', openPlaytest);
 document.getElementById('btnExitPlaytest').addEventListener('click', closePlaytest);
 
 function hasFx(f){ return !!(f && ((f.effects && f.effects.some(s=>s.type!=='None')) || f.sound)); }
-/// Hiệu ứng HIỆU LỰC của 1 đáp án ở trigger `key`: slot có hiệu ứng/âm thanh riêng thì thay hẳn cái chung của game, không thì dùng cái chung.
-/// (Ghi đè = có ≥1 hiệu ứng — kể cả "Không có" để cố ý TẮT hiệu ứng chung — hoặc có âm thanh riêng.)
-function effFx(a, key){ const o = a && a.fx && a.fx[key]; return (o && ((o.effects && o.effects.length) || o.sound)) ? o : game.effects[key]; }
+/// Hiệu ứng HIỆU LỰC của 1 đáp án ở trigger `key`: MẶC ĐỊNH theo hiệu ứng CHUNG của game; chỉ phần nào slot tự đặt mới thay phần đó.
+/// (Hiệu ứng riêng = có ≥1 effect — kể cả "Không có" để cố ý TẮT — thì thay danh sách effect chung; âm thanh riêng thì thay âm thanh chung.
+///  Slot chỉ đặt âm thanh → vẫn giữ hiệu ứng chung, và ngược lại. Slot không đặt gì → dùng nguyên cái chung.)
+function effFx(a, key){
+  const g = game.effects[key], o = a && a.fx && a.fx[key];
+  const hasE = !!(o && o.effects && o.effects.length), hasS = !!(o && o.sound);
+  if (!hasE && !hasS) return g;
+  if (hasE && hasS) return o;
+  return { effects: hasE ? o.effects : g.effects, sound: hasS ? o.sound : g.sound, playSound: o.playSound, showIcon: o.showIcon };
+}
+/// Slot có TỰ ĐẶT hiệu ứng/âm thanh riêng ở trigger `key` không.
+function slotHasOwnFx(a, key){ const o = a && a.fx && a.fx[key]; return !!(o && ((o.effects && o.effects.length) || o.sound)); }
 function doWrong(side, el){ runActionFx(side, el, effFx(el._ans,'onWrongTap'), false); fireItems(side, 'onWrong'); }
 function doPartial(side, el){
   const fx = effFx(el._ans,'onCorrectRemove');
@@ -2860,6 +2890,7 @@ function onSpawnPickCombined(side, round, ansIdx, el){
     setTimeout(()=>{ clearAllSpawnItems('left'); clearAllSpawnItems('right'); scheduleNextCombinedRoundSpawn(); }, 500);
   };
   const endWin = ()=>{
+    if (waitBothOn()){ stopSpawnTimer(side); teamDoneCombined(side, 700, true); return; } // chờ cả 2 đội: đội kia vẫn chơi tiếp
     pt.combinedDone = true;
     stopSpawnTimer(other); clearAllSpawnItems(other);
     setTimeout(()=>{ clearAllSpawnItems(side); scheduleNextCombinedRoundSpawn(); }, 700);
@@ -2873,6 +2904,7 @@ function onSpawnPickCombined(side, round, ansIdx, el){
       if (game.settings.showCorrectWrongTint) el.classList.add('tint-wrong');
       st.finalised = true; stopSpawnTimer(side); freeze(); clearOtherSpawnItems(side, ansIdx);
       pt.combinedWrong[side] = true;
+      if (waitBothOn()){ teamDoneCombined(side, 500, true); return; }
       if (pt.combinedWrong.left && pt.combinedWrong.right) endBothWrong();
       return;
     }
@@ -2908,6 +2940,7 @@ function onSpawnPickCombined(side, round, ansIdx, el){
     if (game.settings.showCorrectWrongTint) el.classList.add('tint-wrong');
     st.finalised = true; stopSpawnTimer(side); freeze(); clearOtherSpawnItems(side, ansIdx);
     pt.combinedWrong[side] = true;
+    if (waitBothOn()){ teamDoneCombined(side, 500, true); return; }
     if (pt.combinedWrong.left && pt.combinedWrong.right) endBothWrong();
   }
 }
@@ -2917,9 +2950,11 @@ function showRoundCombinedSpawn(){
   pt.combinedRound = round;
   pt.combinedSeq = { left:0, right:0 };
   pt.combinedWrong = { left:false, right:false };
+  pt.combinedTeamDone = { left:false, right:false };
   pt.combinedDone = false;
   ['left','right'].forEach(side=>{
     pt.sides[side].lastRoundPoints = 0;
+    pt.sides[side].wrongLocked = false;
     hideFeedbackIcon(side);
     resetCollectArea(side, round);
     refreshDecoTexts(side);
@@ -2957,6 +2992,7 @@ function showRoundCombined(){
   pt.combinedPicked = { left:0, right:0 };
   pt.combinedSeq = { left:0, right:0 };
   pt.combinedWrong = { left:false, right:false };
+  pt.combinedTeamDone = { left:false, right:false };
   pt.combinedDone = false;
   ['left','right'].forEach(side=>{
     pt.sides[side].wrongLocked = false;
@@ -2990,6 +3026,7 @@ function onCombinedPick(side, round, ansIdx, el){
       pt.combinedWrong[side] = true;
       pt.sides[side].wrongLocked = true;
       lockAllSlots(side);
+      if (waitBothWrong(side)) return;
       if (pt.combinedWrong.left && pt.combinedWrong.right){
         pt.combinedDone = true;
         scheduleNextCombinedRound(500);
@@ -3001,11 +3038,9 @@ function onCombinedPick(side, round, ansIdx, el){
     pt.combinedSeq[side]++;
     const isFinalSeq = pt.combinedSeq[side] >= seq.length;
     if (isFinalSeq){
-      pt.combinedDone = true;
       finishCorrectTap(side, el, round);
       pt.sides[side].lastRoundPoints = pointsFor(round); pt.sides[side].score += pt.sides[side].lastRoundPoints; updateScore(side);
-      lockAllSlots(side==='left'?'right':'left');
-      scheduleNextCombinedRound(700);
+      combinedWin(side, 700);
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden';
@@ -3020,11 +3055,9 @@ function onCombinedPick(side, round, ansIdx, el){
     pt.combinedPicked[side]++;
     const isFinal = game.settings.answerMode==='Single' || pt.combinedPicked[side]>=totalCorrect;
     if (isFinal){
-      pt.combinedDone = true;
       finishCorrectTap(side, el, round);
       pt.sides[side].lastRoundPoints = pointsFor(round); pt.sides[side].score += pt.sides[side].lastRoundPoints; updateScore(side);
-      lockAllSlots(side==='left'?'right':'left');
-      scheduleNextCombinedRound(700);
+      combinedWin(side, 700);
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden'; // giống Kit thật: đáp án đúng-chưa-xong ẩn NGAY, không để trùng hình với bản sao đang bay
@@ -3036,6 +3069,7 @@ function onCombinedPick(side, round, ansIdx, el){
     pt.combinedWrong[side] = true;
     pt.sides[side].wrongLocked = true;
     lockAllSlots(side);
+    if (waitBothWrong(side)) return;
     if (pt.combinedWrong.left && pt.combinedWrong.right){
       pt.combinedDone = true;
       scheduleNextCombinedRound(500);
@@ -3046,12 +3080,52 @@ function onCombinedPick(side, round, ansIdx, el){
     }
   }
 }
+/// "Chờ cả 2 đội" (settings.waitBothTeams, chỉ Combined): 2 đội cùng 1 câu hỏi nhưng KHÔNG ai thắng trước —
+/// mỗi đội chơi hết câu của mình, cả 2 đội xong mới sang câu mới (khớp MiniGameControllerBase.MarkTeamDone bên Unity).
+function waitBothOn(){ return game.settings.playMode==='Combined' && !!game.settings.waitBothTeams; }
+/// Đội `side` đã xong lượt (đúng hết, hoặc sai mà không được thử lại). Cả 2 đội xong → sang round mới sau `delay` ms.
+function teamDoneCombined(side, delay, spawn){
+  if (!pt || pt.combinedTeamDone[side]) return;
+  pt.combinedTeamDone[side] = true;
+  pt.sides[side].wrongLocked = true; // chặn chạm tiếp ở đội đã xong
+  pt.sides[side].holdIcon = true;    // icon ✔/✖ của đội này giữ nguyên tới khi cả 2 đội xong (clearRoundVisuals mới tắt)
+  clearTimeout(pt.sides[side].feedbackIconTimer);
+  // Đội đã xong: sau 1 nhịp hiệu ứng thì ẩn hết đáp án của đội đó (icon ✔/✖ vẫn giữ) — khớp GenericGameController bên Unity.
+  const td = pt.combinedTeamDone;
+  setTimeout(()=>{
+    if (!pt || pt.combinedTeamDone !== td) return; // đã sang round mới / thoát chơi thử
+    if (spawn){ stopSpawnTimer(side); clearAllSpawnItems(side); }
+    else Array.from(pt.sides[side].half.querySelectorAll('.pt-slot:not([data-collected])')).forEach(el=>{ stopIdleOnElement(el); el.style.display = 'none'; });
+  }, 600);
+  if (!(pt.combinedTeamDone.left && pt.combinedTeamDone.right)) return;
+  pt.combinedDone = true;
+  if (spawn) setTimeout(()=>{ clearAllSpawnItems('left'); clearAllSpawnItems('right'); scheduleNextCombinedRoundSpawn(); }, delay);
+  else scheduleNextCombinedRound(delay);
+}
+/// Đội `side` vừa trả lời ĐÚNG CUỐI. Luật gốc: khoá đội kia, round kết thúc. Chờ cả 2 đội: chỉ đội này xong.
+function combinedWin(side, delay){
+  if (waitBothOn()){ teamDoneCombined(side, delay); return; }
+  pt.combinedDone = true;
+  lockAllSlots(side==='left'?'right':'left');
+  scheduleNextCombinedRound(delay);
+}
+/// Đội `side` vừa SAI. true = đã xử lý theo luật "chờ cả 2 đội" (caller bỏ qua luật gốc "cả 2 sai mới sang round").
+function waitBothWrong(side){
+  if (!waitBothOn()) return false;
+  pt.combinedWrong[side] = true;
+  if (game.settings.wrongEndsRound) teamDoneCombined(side, 500);
+  else setTimeout(()=>{ if (!pt) return; pt.combinedWrong[side]=false; pt.sides[side].wrongLocked=false; unlockAllSlots(side); }, 700);
+  return true;
+}
 function lockAllSlots(side){
   // Bỏ qua clone đã "đọng lại" (FlyToStay) — không phải nút đáp án, không có khái niệm khoá/mờ đi.
   Array.from(pt.sides[side].half.querySelectorAll('.pt-slot:not([data-collected])')).forEach(el=>{ el.classList.add('locked'); stopIdleOnElement(el); });
 }
 function unlockAllSlots(side){
-  Array.from(pt.sides[side].half.querySelectorAll('.pt-slot:not([data-collected])')).forEach(el=> el.classList.remove('locked','tint-correct','tint-wrong'));
+  Array.from(pt.sides[side].half.querySelectorAll('.pt-slot:not([data-collected])')).forEach(el=>{
+    el.classList.remove('locked','tint-correct','tint-wrong');
+    el.style.opacity = ''; el.style.visibility = ''; // ô sai vừa "mờ dần biến mất" hiện lại để thử tiếp
+  });
   startIdleEffect(side);
 }
 
@@ -3108,13 +3182,15 @@ function sumToTargetPick(side, round, ansIdx, el, mode){
   };
   if (reached){
     s.sumWon = true;
-    if (mode==='combined') pt.combinedDone = true;
+    const waitBoth = mode==='combined' && waitBothOn(); // chờ cả 2 đội: đội này xong, đội kia vẫn chơi
+    if (mode==='combined' && !waitBoth) pt.combinedDone = true;
     finishCorrectTap(side, el, round); // chạy bay-vào-thanh + onCorrectTap + tên lửa bay
     const pts = game.settings.scoringMode==='perCorrectCount' ? s.sumPicked : Math.max(1, game.settings.flatPoints);
     s.lastRoundPoints = pts; s.score += pts; updateScore(side); refreshDecoTexts(side);
     lockAllSlots(side);
-    if (mode==='combined') lockAllSlots(side==='left'?'right':'left');
-    endRound(hasLaunchDeco() ? 1800 : 700);
+    if (mode==='combined' && !waitBoth) lockAllSlots(side==='left'?'right':'left');
+    if (waitBoth) teamDoneCombined(side, hasLaunchDeco() ? 1800 : 700);
+    else endRound(hasLaunchDeco() ? 1800 : 700);
   } else {
     // Không bao giờ kết thúc round vì sai: vượt mục tiêu / hết đáp án → khoá đáp án + gợi ý "chạm thanh để chọn lại".
     const needRetry = ()=>{
@@ -3143,21 +3219,22 @@ function sumReset(side){
   if (!s.sumPicked) return;
   s.sumTotal = 0; s.sumPicked = 0; s.collectCounter = 0; s.sumLocked = false;
   s.collectedEls = (s.collectedEls||[]).filter(e=>{ if (e.dataset && (e.dataset.lit || e.dataset.hint)){ e.remove(); return false; } return true; });
-  Array.from(s.half.querySelectorAll('.pt-slot')).forEach(el=>{ el.style.visibility=''; el.classList.remove('locked','tint-correct','tint-wrong'); });
+  Array.from(s.half.querySelectorAll('.pt-slot')).forEach(el=>{ el.style.visibility=''; el.style.opacity=''; el.classList.remove('locked','tint-correct','tint-wrong'); });
   hideFeedbackIcon(side);
   startIdleEffect(side);
 }
 
 function hasRealFx(fx){ return !!(fx && fx.effects && fx.effects.some(s=>s.type!=='None')); }
 
-/// Đáp án ĐÚNG và là cái CUỐI (kết thúc round) — khớp GenericGameController.cs: nếu onCorrectRemove
-/// có hiệu ứng thật, đáp án cuối CŨNG phải bay/biến mất giống các đáp án trước, KHÔNG để mặc định
-/// đứng yên (tô xanh) như hành vi gốc của Kit. onCorrectTap vẫn chạy thêm (âm thanh/hiệu ứng riêng
-/// cho lúc round kết thúc).
+/// Đáp án ĐÚNG và là cái CUỐI (kết thúc round) — khớp GenericGameController.cs: dùng hiệu ứng "đúng — hết round" (onCorrectTap:
+/// slot tự đặt thì theo slot, không thì theo chung). Câu chỉ có 1 đáp án đúng → đây là hiệu ứng duy nhất chạy.
+/// onCorrectRemove (đúng CHƯA hết round) KHÔNG áp cho đáp án cuối — trừ trường hợp thu thập: slot không tự đặt onCorrectTap và
+/// onCorrectRemove chung có "Bay tới & Ở lại" thì đáp án cuối cũng phải bay vào vùng "Đã chọn" như các đáp án trước.
 function finishCorrectTap(side, el, round){
   launchDecos(side);
   const rm = effFx(el._ans, 'onCorrectRemove');
-  if (hasRealFx(rm)){
+  const collect = !slotHasOwnFx(el._ans, 'onCorrectTap') && (rm.effects||[]).some(s=>s.type==='FlyToStay');
+  if (collect){
     runCorrectRemove(side, el, rm);
     el.style.visibility = 'hidden';
   } else if (game.settings.showCorrectWrongTint){
@@ -3367,11 +3444,12 @@ function showFeedbackIcon(side, correct){
   el.style.zIndex = zOf('feedback');
   s.half.appendChild(el);
   clearTimeout(s.feedbackIconTimer);
-  s.feedbackIconTimer = setTimeout(()=>{ el.remove(); }, 1000);
+  if (!s.holdIcon) s.feedbackIconTimer = setTimeout(()=>{ el.remove(); }, 1000);
 }
 function hideFeedbackIcon(side){
   const s = pt && pt.sides[side];
   if (!s) return;
+  s.holdIcon = false;
   clearTimeout(s.feedbackIconTimer);
   const old = s.half.querySelector('.pt-feedback-icon');
   if (old) old.remove();

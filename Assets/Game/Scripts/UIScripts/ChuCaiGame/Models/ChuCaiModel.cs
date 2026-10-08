@@ -12,8 +12,15 @@ public class ChuCaiModel
     public string[][] Values;      // [playerIdx][boxIdx]
     public int[] BoxCount;        // [playerIdx]
 
-    public ChuCaiModel()
+    /// <summary>true = hiện chữ viết THƯỜNG (a, b, c…) — game "Chữ cái (thường)". Âm thanh vẫn theo chữ HOA (xem AudioKey).</summary>
+    public bool Lowercase { get; private set; }
+
+    /// <summary>Khoá file âm thanh Audio/ChuCai/{AudioKey} — luôn chữ HOA dù đang hiện chữ thường (Android phân biệt hoa/thường tên file).</summary>
+    public string AudioKey => string.IsNullOrEmpty(TargetLetter) ? "" : TargetLetter.ToUpperInvariant();
+
+    public ChuCaiModel(bool lowercase = false)
     {
+        Lowercase = lowercase;
         Player1Score = 0;
         Player2Score = 0;
         MaxGameTime = GameSettings.Instance != null ? GameSettings.Instance.GameTime : 100f;
@@ -80,6 +87,13 @@ public class ChuCaiModel
                 addedCount++;
             }
             poolIdx++;
+        }
+
+        // Luật chọn chữ (I/Y…) ở trên chạy trên chữ HOA; chỉ đổi sang chữ thường ở bước hiển thị cuối.
+        if (Lowercase)
+        {
+            TargetLetter = TargetLetter.ToLowerInvariant();
+            for (int i = 0; i < roundValues.Count; i++) roundValues[i] = roundValues[i].ToLowerInvariant();
         }
 
         // For Player 1

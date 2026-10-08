@@ -6,12 +6,18 @@
     {"name": "AddNumber5", "displayName": "Cộng trong phạm vi 5", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "AddNumber", "displayName": "Cộng trong phạm vi 10", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
     {"name": "SubNumber5", "displayName": "Trừ trong phạm vi 5", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
+    {"name": "SubNumber", "displayName": "Trừ trong phạm vi 10", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
+    {"name": "AddNumber5Digit", "displayName": "Cộng trong phạm vi 5 (chữ số)", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
+    {"name": "AddNumberDigit", "displayName": "Cộng trong phạm vi 10 (chữ số)", "group": "Cộng", "sceneName": "AddNumberGame", "category": 0},
+    {"name": "SubNumber5Digit", "displayName": "Trừ trong phạm vi 5 (chữ số)", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
+    {"name": "SubNumberDigit", "displayName": "Trừ trong phạm vi 10 (chữ số)", "group": "Trừ", "sceneName": "SubNumberGame", "category": 0},
     {"name": "SoDem", "displayName": "Số đếm", "group": "Đếm", "sceneName": "SoDemGame", "category": 0},
     {"name": "DemQua", "displayName": "Đếm quả", "group": "Đếm", "sceneName": "DemQuaGame", "category": 0},
     {"name": "Numbers", "displayName": "Nhận biết số", "sceneName": "NumbersGame", "category": 0},
 
 
     {"name": "ChuCai", "displayName": "Chữ cái", "sceneName": "ChuCaiGame", "category": 1},
+    {"name": "ChuCaiThuong", "displayName": "Chữ cái (thường)", "sceneName": "ChuCaiGame", "category": 1},
 
     {"name": "ListenSelect", "displayName": "Nghe và chọn", "sceneName": "ListenGame", "category": 2},
     {"name": "FamilySpellingJump", "displayName": "Ghép vần - Nhảy ô", "sceneName": "FamilySpellingGame", "category": 2},

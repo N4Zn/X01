@@ -35,6 +35,29 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     readonly int[] _slotActive = new int[2];
     readonly bool[] _requested = new bool[2];
 
+    // ── Chế độ 1 vs 1 (cá nhân): mỗi bên chỉ có 1 người chơi cả ván ─────────────────────────────
+    // Mỗi lần nhận ra 1 người (1 request = 1 phiếu) thì cộng phiếu cho người đó; người đang hiển thị/ghi log (_owner) chỉ
+    // đổi khi có người KHÁC có số phiếu NHIỀU HƠN hẳn. Không nhận ra ai → không cộng phiếu, giữ nguyên _owner.
+    // Người nhiễu thoáng qua vì vậy không làm đổi tên. Chế độ đội không dùng 2 mảng này.
+    readonly Dictionary<string, int>[] _votes = { new Dictionary<string, int>(), new Dictionary<string, int>() };
+    readonly string[] _owner = new string[2];
+
+    static bool Individual => GameSessionManager.Instance != null && GameSessionManager.Instance.CurrentGameMode != GameMode.Team;
+
+    /// <summary>Cộng phiếu (nếu nhận ra) rồi trả tên dùng cho slot: người đang giữ chỗ, hoặc <paramref name="fallback"/> khi chưa có ai.</summary>
+    string ResolveOwner(int slot, string name, bool recognized, string fallback)
+    {
+        if (recognized && !string.IsNullOrEmpty(name))
+        {
+            var votes = _votes[slot];
+            votes.TryGetValue(name, out int n);
+            votes[name] = ++n;
+            string owner = _owner[slot];
+            if (owner == null || (name != owner && n > votes[owner])) _owner[slot] = name;
+        }
+        return _owner[slot] ?? fallback;
+    }
+
     /// <summary>Sau khi hết timeout mà chưa nhận ra ai, vẫn tiếp tục dò thêm ngần này giây (người chơi bước vào muộn).</summary>
     const float LateWatchSec = 30f;
 
@@ -63,6 +86,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         _lastName[0] = _lastName[1] = null;
         _lastRecognized[0] = _lastRecognized[1] = false;
         _requested[0] = _requested[1] = false;
+        GameSessionManager.Instance?.ApplyPlayModeFromSettings();
+        for (int s = 0; s < 2; s++) { _votes[s].Clear(); _owner[s] = null; }
         // Huỷ mọi request/dò muộn còn sót từ ván trước, và bỏ tên người chơi ván trước còn nằm trong
         // GameSessionManager (singleton sống qua các scene) — nếu không HUD/ControlActivity hiện tên cũ
         // cho tới khi nhận diện xong.
@@ -169,10 +194,13 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
 
     void ApplyRecognition(int slot, string name, bool recognized, float elapsed, float confidence, Action<string> onDone)
     {
+        // 1 vs 1: log "recognition" giữ tên nhận được thô; tên dùng cho HUD/ControlActivity/log round là người đang giữ chỗ.
+        string detected = name;
+        if (Individual) name = ResolveOwner(slot, name, recognized, name);
         SetSessionName(slot, name);
         _lastName[slot] = name;
         _lastRecognized[slot] = recognized;
-        AppendRecognitionLog(slot, name, recognized, elapsed, confidence);
+        AppendRecognitionLog(slot, detected, recognized, elapsed, confidence, Individual ? name : "");
         onDone?.Invoke(name);
     }
 
@@ -181,7 +209,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     // entries (who was detected, how long it took) and "round" entries (question/answer/correct,
     // stamped with whoever was most recently recognized for that slot at LogRound() time).
 
-    void AppendRecognitionLog(int slot, string name, bool recognized, float elapsedSec, float confidence)
+    void AppendRecognitionLog(int slot, string name, bool recognized, float elapsedSec, float confidence, string owner = "")
     {
         float roundedElapsed = (float)Math.Round(elapsedSec, 2);
         // Làm tròn 3 chữ số (không phải 2 như thời gian) — cosine sim đủ nhạy để cần độ chính
@@ -194,6 +222,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             slot                = slot == 0 ? "left" : "right",
             eventType           = "recognition",
             name                = name,
+            owner               = owner,
             recognized          = recognized,
             recognizeElapsedSec = roundedElapsed,
             recognizeConfidence = roundedConfidence, // -1 = không nhận diện được (dùng tên mặc định)
@@ -230,6 +259,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     public void LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "")
     {
         string name = (slot == 0 || slot == 1) ? _lastName[slot] : null;
+        // 1 vs 1: cả ván chỉ có 1 người mỗi bên → mọi round ghi tên người đang giữ chỗ, kể cả round không nhận ra ai.
+        if (Individual && (slot == 0 || slot == 1) && _owner[slot] != null) name = _owner[slot];
         bool recognized = (slot == 0 || slot == 1) && _lastRecognized[slot];
         if (string.IsNullOrEmpty(name))
         {
@@ -308,6 +339,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         foreach (var e in _logEntries)
         {
             if (e.eventType != "recognition" || e.slot != slotTag || !e.recognized || string.IsNullOrEmpty(e.name)) continue;
+            if (Individual && e.name != _owner[slot]) continue; // 1 vs 1: người nhiễu không phải người chơi
             if (!map.ContainsKey(e.name)) map[e.name] = new PlayerRoundStat { name = e.name };
         }
         var list = new List<PlayerRoundStat>(map.Values);
@@ -340,6 +372,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         public string slot;                // "left" / "right"
         public string eventType;           // "recognition" or "round"
         public string name;
+        public string owner;               // chỉ 1 vs 1: người đang giữ chỗ sau lần nhận diện này (rỗng ở chế độ đội)
         public bool   recognized;
         public float  recognizeElapsedSec; // -1 for "round" entries
         public float  recognizeConfidence; // cosine sim 0..1; -1 for "round" entries or no match

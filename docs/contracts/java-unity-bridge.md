@@ -36,6 +36,7 @@ Nguồn: `ui/SettingsStore.java` (lưu `/sdcard/EduXplore/game_settings.json`); 
 | `waitForClear` | int | 1 bật (mặc định), 0 tắt, -1 không đổi | OR với cờ riêng từng scene; áp cho MỌI game không đóng băng (kể cả Counting độc lập, GenericGame countdown=none, RoundEndDelay=0) |
 | `showTutorial` | int | 0 tắt (mặc định), 1 bật, -1 không đổi | màn hướng dẫn trước khi chơi; chưa có ô trên ControlActivity (2026-10-05), chỉ qua JSON; Unity đọc qua `TutorialPanel.Enabled` |
 | `showRealName` | int | 0 tên thường gọi (mặc định), 1 tên thật, -1 không đổi | chỉ đổi cách HIỂN THỊ trên màn chiếu (cả 2 chế độ chỉ hiện 2 tiếng cuối); khoá log/điểm vẫn là tên thật. Unity: `PlayerNameDisplay.Format` |
+| `teamPlay` | int | 1 chơi theo đội (mặc định), 0 = 1 vs 1, -1 không đổi | ô tick ở tab Cài đặt. Đội: nhận ra ai thì đổi tên, không nhận ra → `Blue_1`/`Red_1`. 1 vs 1: mỗi bên 1 người cả ván; mỗi lần nhận ra = 1 phiếu, tên (HUD + log round) chỉ đổi khi người khác có NHIỀU phiếu hơn hẳn; không nhận ra ai thì không tính phiếu, giữ tên cũ. Unity: `GameSettings.TeamPlay` → `GameSessionManager.ApplyPlayModeFromSettings` (lúc nạp game + `BeginGameSession`), logic ở `PlayerRecognitionService.ResolveOwner` |
 
 Quy tắc: field vắng hoặc âm (`gameTime` ≤ 0, `flowSpeed` ≤ 0) = **không đổi**. Thêm field mới: thêm cả vào `SettingsStore.java`, `GameSettings.Dto` và bảng này, mặc định -1 ở Dto.
 

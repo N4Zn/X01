@@ -18,6 +18,10 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     /// theo OrderedSequence — xem SentenceBuilderGameController).</summary>
     public Action<Team, int, ClickResult> onAnswerTapped;
 
+    /// <summary>true = Combined "chờ cả 2 đội": đội đúng KHÔNG khoá bên kia, cả 2 bên sai cũng không tự báo
+    /// kết thúc round — controller (MiniGameControllerBase) tự đếm số đội đã xong qua onResult/onPlayerFailed.</summary>
+    public bool WaitBothTeams { get; set; }
+
     Action<bool, Team, int[]> _onResult;
     Action<Team>              _onPlayerFailed;
     Action<Team>              _onPartialCorrect;
@@ -256,7 +260,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
                 }
                 else
                 {
-                    LockGroup(theirGroup);
+                    if (!WaitBothTeams) LockGroup(theirGroup);
                     _onResult?.Invoke(true, team, myQuestion.correctAnswers);
                 }
                 break;
@@ -300,7 +304,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
 
     void CheckBothWrong()
     {
-        if (_leftAnsweredWrong && _rightAnsweredWrong)
+        if (!WaitBothTeams && _leftAnsweredWrong && _rightAnsweredWrong)
             _onResult?.Invoke(false, Team.Left, System.Array.Empty<int>());
     }
 

@@ -101,6 +101,12 @@ public static class GameRegistry
         Set(0, 2, "AddNumber5", "Cộng số (dễ)",         "AddNumberGame",   Engine.MathGame,    group: "Cộng");
         Set(0, 3, "AddNumber",  "Cộng số",              "AddNumberGame",   Engine.MathGame,    group: "Cộng");
         Set(0, 17, "SubNumber5", "Trừ trong phạm vi 5", "SubNumberGame",   Engine.MathGame,    group: "Trừ");
+        Set(0, 18, "SubNumber",  "Trừ trong phạm vi 10", "SubNumberGame",  Engine.MathGame,    group: "Trừ");
+        // Biến thể hiện CHỮ SỐ thay cho hình (controller đọc hậu tố "Digit" của tên game) — cùng scene với bản hình.
+        Set(0, 19, "AddNumber5Digit", "Cộng trong phạm vi 5 (chữ số)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 20, "AddNumberDigit",  "Cộng trong phạm vi 10 (chữ số)", "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 21, "SubNumber5Digit", "Trừ trong phạm vi 5 (chữ số)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 22, "SubNumberDigit",  "Trừ trong phạm vi 10 (chữ số)",  "SubNumberGame", Engine.MathGame, group: "Trừ");
         Set(0, 4, "SoDem",      "Số đếm",               "SoDemGame",       Engine.ListenGame,  group: "Đếm");
         // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
         Set(0, 6, "Numbers",    "Nhận biết số",         "NumbersGame",     Engine.ListenGame);
@@ -115,6 +121,7 @@ public static class GameRegistry
         // trước đó bị gán nhầm category 1, đã chuyển đúng sang category 2 bên dưới. Chỉ ChuCai/
         // ChuCai2 dùng kho âm chữ cái tiếng Việt thật (Dờ/Sờ/Đờ/Ư...) nên mới thực sự ở đây.
         Set(1, 0, "ChuCai",  "Chữ cái",            "ChuCaiGame",  Engine.ListenGame);
+        Set(1, 2, "ChuCaiThuong", "Chữ cái (thường)", "ChuCaiGame", Engine.ListenGame); // cùng scene/controller, hiện chữ viết thường
         // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(1, 1, "ChuCai2", "Chữ cái - Bóng bay", "BalloonGame", Engine.BalloonGame);
 
         // ── Category 2: Tiếng Anh ────────────────────────────────────────────

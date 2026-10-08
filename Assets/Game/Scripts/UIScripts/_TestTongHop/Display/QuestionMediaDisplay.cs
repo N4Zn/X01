@@ -41,6 +41,7 @@ public class QuestionMediaDisplay : MonoBehaviour
             case QuestionMediaType.Text:
                 textSlot.SetActive(true);
                 textLabel.text = q.questionMediaValue;
+                NumberTextStyle.Refresh(textLabel, q.questionMediaValue);
                 break;
 
             case QuestionMediaType.Image:
@@ -50,6 +51,7 @@ public class QuestionMediaDisplay : MonoBehaviour
                     Debug.LogWarning($"[QuestionMediaDisplay] Không tìm thấy sprite: {q.questionMediaValue}");
                     textSlot.SetActive(true);
                     textLabel.text = q.questionMediaValue;
+                    NumberTextStyle.Refresh(textLabel, q.questionMediaValue);
                     break;
                 }
                 imageSlot.SetActive(true);

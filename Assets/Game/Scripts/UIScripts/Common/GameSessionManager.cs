@@ -164,6 +164,14 @@ public class GameSessionManager : Singleton<GameSessionManager>
         }
     }
 
+    /// <summary>Đặt CurrentGameMode theo ô "Chơi theo đội / 1 vs 1" ở ControlActivity (GameSettings.TeamPlay).
+    /// Gọi lúc nạp game và lúc bắt đầu ván; luồng TeamSelect cũ không còn dùng trên K02.</summary>
+    public void ApplyPlayModeFromSettings()
+    {
+        bool team = GameSettings.Instance == null || GameSettings.Instance.TeamPlay;
+        CurrentGameMode = team ? GameMode.Team : GameMode.OneVsOne;
+    }
+
     public string GetPlayer1Name()
     {
         return Players.Count > 0 ? Players[0].PlayerName : "Player 1";

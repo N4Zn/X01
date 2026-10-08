@@ -27,6 +27,10 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - Unity đã theo `collect.mirror` (`CollectFlipsFor` trong controller; SCHEMA.md/capabilities.json đã cập nhật).
 - Code Unity mới chỉ compile-check bằng Roslyn (0 lỗi), **chưa chạy trong Editor**: cần test round/collect/mirror/icon grid.
 
+## Chờ cả 2 đội (2026-10-08)
+- `settings.waitBothTeams` (ô tick `#waitBothTeams`, chỉ hiện khi 2 đội = Gộp): 2 đội cùng câu, cả 2 xong mới sang câu. Web preview: `waitBothOn()`, `teamDoneCombined()`, `combinedWin()`, `waitBothWrong()` (quanh `onCombinedPick`/`onSpawnPickCombined`/`sumToTargetPick`). Unity: xem SCHEMA.md mục "Chờ cả 2 đội". Chưa test trong Editor.
+- Chữ SỐ (text chỉ gồm chữ số): web preview đậm + viền đen, trắng trừ khi đặt màu riêng (`.stxt-num`), khớp `NumberTextStyle` bên Unity.
+
 ## Wait-to-do (làm sau, chưa ưu tiên)
 - [ ] **Safari: chưa chơi thử (Play/preview) được** — builder chạy trên trình duyệt Safari không vào được chế độ chơi thử. Chưa điều tra nguyên nhân (nghi: autoplay audio bị chặn, `requestAnimationFrame`/API chưa hỗ trợ, hoặc cú pháp JS/CSS Safari không nhận). Khi làm: test trên Safari thật (macOS/iOS), mở Web Inspector xem lỗi Console. Hiện dùng Chrome/Edge.
 

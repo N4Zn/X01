@@ -59,6 +59,10 @@ public class ChuCaiView : MonoBehaviour
     public event Action OnSettingClicked = delegate { };
     public event Action OnRetryClicked = delegate { };
 
+    private Font _letterFont;
+    /// <summary>Font riêng cho chữ trên hành tinh (null = giữ font trong scene). Dùng cho "Chữ cái (thường)".</summary>
+    public void SetLetterFont(Font font) { _letterFont = font; }
+
     public void InitView()
     {
         SetupButtonListeners(p1Boxes, 0);
@@ -189,6 +193,7 @@ public class ChuCaiView : MonoBehaviour
             if (txts[i] != null)
             {
                 txts[i].text = values[i];
+                if (_letterFont != null) txts[i].font = _letterFont;
                 txts[i].color = _normalTextColor;
                 if (txts[i].gameObject.GetComponent<KeepUpright>() == null)
                     txts[i].gameObject.AddComponent<KeepUpright>();

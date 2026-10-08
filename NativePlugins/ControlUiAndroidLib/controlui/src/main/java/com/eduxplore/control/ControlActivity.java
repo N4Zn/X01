@@ -1396,7 +1396,15 @@ public class ControlActivity extends Activity {
             syncSettingsToUnity();
         }));
 
-        // 8. Vùng nhận diện khuôn mặt (2 vùng người chơi trong game + vòng tròn "Thêm từ camera").
+        // 8. Chế độ chơi: tick = chơi theo đội (mặc định), bỏ tick = 1 vs 1 (mỗi bên chỉ 1 người cả ván,
+        // tên hiện theo người được nhận diện nhiều lần nhất — xem PlayerRecognitionService).
+        settingsBody.addView(buildCheckboxSetting("Chơi theo đội (bỏ chọn = 1 vs 1, mỗi bên 1 người)", settingsStore.teamPlay == 1, checked -> {
+            settingsStore.teamPlay = checked ? 1 : 0;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
+        // 9. Vùng nhận diện khuôn mặt (2 vùng người chơi trong game + vòng tròn "Thêm từ camera").
         // Chỉnh trên hình camera thật ở màn của FaceEnroll (cùng APK); lưu vào /sdcard/EduXplore/face_zones.json,
         // game áp dụng từ vòng chơi sau. Chỉnh khi KHÔNG chơi (camera USB chỉ 1 nơi mở được).
         settingsBody.addView(buildButtonSetting("Vùng nhận diện khuôn mặt (2 vùng chơi + vùng enroll)", "Mở cài đặt vùng", () -> {

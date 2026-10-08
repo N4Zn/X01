@@ -32,6 +32,9 @@ public class SpawnFlowDisplay : MonoBehaviour, IAnswerDisplay
     /// ButtonDisplay.onAnswerTapped để GenericGameController dùng CHUNG 1 HandleAnswerTapped bất kể
     /// display nào đang active.</summary>
     public Action<Team, int, ClickResult> onAnswerTapped;
+
+    /// <summary>true = Combined "chờ cả 2 đội" (xem ButtonDisplay.WaitBothTeams): đội đúng KHÔNG dọn bên kia, cả 2 sai không tự báo kết thúc.</summary>
+    public bool WaitBothTeams { get; set; }
     /// <summary>Gọi mỗi khi 1 item mới được tạo (trước khi bắt đầu di chuyển) — GenericGameController
     /// dùng để áp shape/transparency giống hệt CreateSlot() của ButtonDisplay.</summary>
     public Action<Team, ButtonItem, int> OnItemSpawned;
@@ -436,7 +439,7 @@ public class SpawnFlowDisplay : MonoBehaviour, IAnswerDisplay
                 StopSide(team);
                 FreezeTapped(live);
                 ClearOthersExcept(team, answerIndex);
-                if (!_isIndependent)
+                if (!_isIndependent && !WaitBothTeams)
                 {
                     // Combined: dọn sạch LUÔN bên kia (round kết thúc, không để lộ đáp án đang trôi
                     // dở của bên vừa thua) — khớp tinh thần ButtonDisplay.LockGroup().
@@ -475,7 +478,7 @@ public class SpawnFlowDisplay : MonoBehaviour, IAnswerDisplay
 
     void CheckBothWrong()
     {
-        if (_leftAnsweredWrong && _rightAnsweredWrong)
+        if (!WaitBothTeams && _leftAnsweredWrong && _rightAnsweredWrong)
             _onResult?.Invoke(false, Team.Left, Array.Empty<int>());
     }
 

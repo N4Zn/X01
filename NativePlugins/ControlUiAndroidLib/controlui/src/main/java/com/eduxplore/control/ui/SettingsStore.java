@@ -21,6 +21,7 @@ public final class SettingsStore {
     public float flowSpeed = 1.0f;
     public int waitForClear = 1; // 1: bật, 0: tắt, -1: không đổi
     public int showRealName = 0; // 0: tên thường gọi (mặc định), 1: tên thật (cả 2 chỉ hiện 2 tiếng cuối)
+    public int teamPlay = 1;     // 1: chơi theo đội (mặc định), 0: 1 vs 1 (mỗi bên 1 người cả ván, tên theo số lần nhận diện)
 
     private final File primary;
     private final File fallback;
@@ -47,6 +48,7 @@ public final class SettingsStore {
             flowSpeed = (float) o.optDouble("flowSpeed", flowSpeed);
             waitForClear = o.optInt("waitForClear", waitForClear);
             showRealName = o.optInt("showRealName", showRealName);
+            teamPlay = o.optInt("teamPlay", teamPlay);
         } catch (Exception e) {
             Log.e(TAG, "đọc " + f + " lỗi: " + e);
         }
@@ -73,6 +75,7 @@ public final class SettingsStore {
         o.put("flowSpeed", flowSpeed);
         o.put("waitForClear", waitForClear);
         o.put("showRealName", showRealName);
+        o.put("teamPlay", teamPlay);
         return o;
     }
 

@@ -37,6 +37,7 @@ public static class ItemMediaHelper
             case AnswerMediaType.Text:
                 textSlot.SetActive(true);
                 textLabel.text = value;
+                NumberTextStyle.Refresh(textLabel, value);
                 break;
 
             case AnswerMediaType.Image:
@@ -46,6 +47,7 @@ public static class ItemMediaHelper
                     Debug.LogWarning($"[ItemMediaHelper] Không tìm thấy sprite: {value}");
                     textSlot.SetActive(true);
                     textLabel.text = value;
+                    NumberTextStyle.Refresh(textLabel, value);
                     return;
                 }
                 imageSlot.SetActive(true);

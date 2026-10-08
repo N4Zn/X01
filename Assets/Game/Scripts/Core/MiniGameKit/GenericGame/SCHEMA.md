@@ -50,6 +50,7 @@ lúc nạp (`GenericGameMigration.FromV1`, cùng quy tắc với `migrateV1` tro
     "countdownSeconds": 3,           // CHƯA dùng thật — Kit hiện hardcode 3s, giữ chỗ cho sau
     "hasTargetScore": false, "targetScore": 10,  // chỉ để HIỂN THỊ qua item bind="targetScore", KHÔNG có logic thắng/thua
     "wrongEndsRound": true,          // false = "cho thử lại" — xem mục riêng bên dưới
+    "waitBothTeams": false,          // true (chỉ Combined) = 2 đội cùng câu, mỗi đội chơi hết câu của mình, CẢ 2 xong mới sang câu — xem mục "Chờ cả 2 đội"
     "showCorrectWrongTint": true,    // false = tắt tô xanh/đỏ/xám mặc định của Kit
     "questionAudioOnly": false,      // true = ẩn hẳn chữ/ảnh/icon câu hỏi, chỉ phát âm thanh slot câu hỏi (chỉ Combined) — xem mục riêng
     "questionFontSize": 0, "answerFontSize": 0, "questionTextColor": "", "answerTextColor": ""
@@ -124,8 +125,8 @@ lúc nạp (`GenericGameMigration.FromV1`, cùng quy tắc với `migrateV1` tro
   (web tool cho ↑/↓ đổi thứ tự — chỉ đổi NỘI DUNG giữa các slot, giữ nguyên vị trí). `SumToTarget` bỏ qua `correct`.
 - **`sound`**: slot đáp án = phát khi chạm vào slot (cộng với âm thanh của hiệu ứng trúng/sai). Slot câu hỏi = **âm thanh câu hỏi** — xem mục riêng.
 - **`fx`** — hiệu ứng **GHI ĐÈ** riêng slot: `{ onIdle, onCorrectTap, onWrongTap, onCorrectRemove }` (mỗi cái là 1 `ActionFx`). Trigger nào có
-  ≥1 effect (kể cả `"None"` để cố ý TẮT hiệu ứng chung) hoặc `sound` riêng thì **thay hẳn** hiệu ứng chung (`effects.*`) ở trigger đó; trigger
-  nào trống thì dùng hiệu ứng chung. Slot câu hỏi chỉ dùng `onIdle` (vd Phóng to-nhỏ liên tục). Web tool: nút ✨ ở dòng slot (cột phải).
+  ≥1 effect (kể cả `"None"` để cố ý TẮT hiệu ứng chung) thì thay danh sách effect chung, có `sound` riêng thì thay âm thanh chung — phần còn lại
+  VẪN theo chung (slot chỉ đặt âm thanh thì giữ hiệu ứng chung); trigger nào trống thì dùng nguyên hiệu ứng chung. Slot câu hỏi chỉ dùng `onIdle` (vd Phóng to-nhỏ liên tục). Web tool: nút ✨ ở dòng slot (cột phải).
   Unity: `SlotFxOf` + `Pick(slotOverride, global)`.
 - Web tool xuất `fx` chỉ gồm trigger có nội dung; JsonUtility tự tạo object rỗng cho trigger thiếu → Unity phân biệt "có ghi đè" bằng nội dung, không bằng null.
 
@@ -326,6 +327,17 @@ THÂN nó trên canvas, hoặc dùng nút ↑↓ trong panel "Nhân vật / Item
 Item **chỉ bắt chạm khi có `fx.onClick`** (`raycastTarget` + `Button`) — còn lại thuần hiển thị, không chặn chạm của đáp án. `text.bind` đọc trực tiếp từ `ScoreManager`
 (totalScore/roundScore theo ĐÚNG bên trái-phải tương ứng) hoặc từ `settings.targetScore` tĩnh. Chưa có chế độ "ma trận/random" cho item — chỉ tự đặt từng item.
 
+## Chờ cả 2 đội xong mới sang câu (`settings.waitBothTeams`)
+
+Chỉ có nghĩa khi `playMode="Combined"` (2 đội cùng 1 câu hỏi). Mặc định `false` = luật gốc: đội nào ĐÚNG trước thắng, đội kia bị khoá, round kết thúc cho cả 2.
+`true` = không ai "thắng trước": mỗi đội chơi hết câu của mình — **đúng** → ghi điểm ngay, ô đội đó khoá/giữ nguyên, đội kia vẫn chơi tiếp; **sai** → đội đó xong lượt
+(hoặc thử lại nếu `wrongEndsRound=false`, lúc đó chưa tính xong). Khi CẢ 2 đội xong thì mới tới "Next in Ns" và sang câu mới. Hết giờ cả game thì game kết thúc như thường.
+- Unity: `MiniGameControllerBase.WaitForBothTeams`/`MarkTeamDone` đếm đội xong; `ButtonDisplay`/`SpawnFlowDisplay.WaitBothTeams` tắt việc khoá/dọn bên kia khi 1 đội đúng và tắt `CheckBothWrong`.
+  Âm thanh câu hỏi vẫn lặp cho tới khi cả 2 đội xong. Web builder: ô tick "Chờ cả 2 đội xong mới sang câu" (chỉ hiện khi 2 đội = Gộp), preview qua `waitBothOn()`/`teamDoneCombined()`.
+- Web builder tự tick ô này khi chuyển 2 đội sang Gộp (game mới mặc định Gộp + tick). Field thiếu trong JSON cũ = `false`.
+- Đội xong lượt: icon ✔/✖ GIỮ nguyên trên màn hình; sau `feedbackDelayCorrect/Wrong` ẩn hết ĐÁP ÁN của đội đó (hook `OnTeamTurnDone` → `GenericGameController.HideTeamAnswersAfterDelay`; câu hỏi/item giữ). Cả 2 đội xong → sau feedback delay: `CleanupCurrentDisplay` ẩn đồng bộ icon + đáp án + câu hỏi → (wait-for-clear nếu bật) → "Next in Ns" → câu sau.
+- Chưa test trong Editor; chưa kiểm tra riêng tổ hợp với `SumToTarget` ở spawn flow (spawn flow vốn chưa hỗ trợ SumToTarget).
+
 ## Chạm sai — kết thúc round hay cho thử lại?
 
 `settings.wrongEndsRound = false` cho phép chạm sai KHÔNG kết thúc round — ô vừa sai mở khoá lại
@@ -356,6 +368,12 @@ DUNG cần chạm tiếp theo, không phải theo vị trí cố định. Chạm
 thúc round ngay, giống hệt chạm đáp án sai (không retry trừ khi `wrongEndsRound=false`) — đúng hành
 vi gốc của `AnswerValidator.ValidateOrdered()`, không có code mới ở `GenericGameController.cs` vì
 `HandleAnswerTapped()` đã xử lý `ClickResult` chung cho mọi answerMode.
+
+## Hiệu ứng mặc định + đáp án cuối (2026-10-08)
+
+Web builder tạo game mới với hiệu ứng chung mặc định **"Mờ dần biến mất" (`FadeOut`)** ở `onCorrectTap` (đúng hết round, hiện icon ✔), `onWrongTap` (sai, hiện icon ✖) và `onCorrectRemove` (đúng chưa hết round, không icon). Muốn khác thì đổi hiệu ứng chung hoặc đặt riêng ở slot.
+- Đáp án ĐÚNG CUỐI (hết round) chỉ chạy `onCorrectTap` (slot tự đặt thì theo slot, không thì theo chung) — câu chỉ có 1 đáp án đúng thì đặt ở đây là đủ. `onCorrectRemove` KHÔNG còn áp cho đáp án cuối, TRỪ thu thập: slot không tự đặt `onCorrectTap` và `onCorrectRemove` chung có `FlyToStay` → đáp án cuối cũng bay vào vùng "Đã chọn". (Trước đây `onCorrectRemove` chung luôn "ăn" mất `onCorrectTap` riêng của slot.) `SumToTarget` vẫn như cũ (đáp án cuối bay vào thanh theo `onCorrectRemove`).
+- Unity: `FadeOut` chạy trên nút gốc (đáp án cuối/sai) để alpha 0 → `RestoreAnswerAlpha` trả về 1 khi sang round mới / thử lại.
 
 ## Âm thanh + icon ✔/✖ mặc định (fallback) cho onCorrectTap/onWrongTap/onCorrectRemove
 

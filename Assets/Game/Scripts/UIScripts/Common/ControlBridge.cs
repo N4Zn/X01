@@ -68,6 +68,7 @@ public static class ControlBridge
         {
             GameSessionManager.Instance.SelectedGameName = gameName;
             GameSessionManager.Instance.LastPlayedGame = sceneName;
+            GameSessionManager.Instance.ApplyPlayModeFromSettings();
             // SelectedEntry (GameRegistry.GameEntry đầy đủ, gồm engine/bgm/...) — tra lại
             // từ GameRegistry theo name, vì ControlActivity (Java) chỉ gửi được name+scene
             // dạng string, không gửi được cả struct.
