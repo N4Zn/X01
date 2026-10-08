@@ -1,7 +1,7 @@
 # CLAUDE.md — EduXplore 2.0
 
 Derived from: `EduGame/edu-game` (EduXplore v1).
-Unity 2022.3.62f1 · IL2CPP · Android primary target.
+Unity 6000.3.11f1 · IL2CPP · Android primary target.
 
 > **Bàn giao việc giữa agent**: xem `handoff/README.md` (quy ước + bảng trạng thái) TRƯỚC khi làm việc được giao.
 

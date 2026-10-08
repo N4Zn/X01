@@ -2,7 +2,7 @@
 
 > **TL;DR**: Mỗi zip từ web builder = 1 scene riêng + prefab layout; tool Tools/GenericGame/Import Zip. game.json là bản cuối; importer chèn registry nhưng KHÔNG rebuild aar.
 > **Đọc khi**: import/update game GenericGame, sửa layer/icon/marker, GenericGameRegistryWriter.
-> **Cập nhật**: 2026-10-04 (tách nguyên văn từ CLAUDE.md gốc, chưa sửa nội dung)
+> **Cập nhật**: 2026-10-08 @ 94278ae9 (thêm mục ảnh dùng chung `_shared`)
 
 ### Import zip → scene riêng cho từng game (2026-10-03)
 
@@ -17,3 +17,9 @@ Mỗi game `.zip` xuất từ web builder = 1 scene riêng chỉnh được tron
 - **Gotcha Canvas trên object đang tắt**: Canvas thêm vào object tắt (icon ✔/✖) mất `overrideSorting`/`sortingOrder` khi bật lần đầu → `ApplyLayer` bật tạm rồi tắt lại. Đã sửa và xác nhận bằng Play (icon lên top); các log chẩn đoán layer/icon đã xoá.
 - **Chỉnh kích thước icon ✔/✖**: icon nằm trong scene (không phải prefab layout), kích thước do **Anchors** quyết định; **đừng chỉnh Scale** vì `FeedbackEffect` ép `BaseScale = 1.5` mỗi lần hiện. 4 icon (Left/Right × Correct/Wrong) chỉnh riêng.
 - **Chưa làm**: đăng ký `CuaHangKemTruocSau`/`ThuNghiem12` vào GameRegistry (import lại zip → hộp thoại đăng ký sẽ hiện); chưa test hộp thoại/ghi registry trong Unity; so schema `game_builder_v2.2_1003.html` (mới hơn v2) với types Unity; tool so/reset marker Variant theo json mới.
+
+### Ảnh dùng chung `_shared` (2026-10-08)
+- `GenericGameAssetDedupe` (`Tools/GenericGame/Dọn ảnh trùng (xem trước/áp dụng)`; import zip tự gọi cho game vừa import) gom ảnh trùng nội dung (md5) về `Resources/TestTongHop/images/GenericGames/_shared/<md5-12>.png`. File di chuyển bằng AssetDatabase (giữ GUID), bản trùng bị xoá + GUID trong prefab/scene/asset đổi sang bản giữ lại; `game.json` đổi `"a.png"` → `"_shared/<hash>.png"`.
+- Runtime: `GenericGameController.ResolveFolder` — tên có `/` đọc thư mục đó, tên thường đọc thư mục riêng của game (game cũ không đổi). Định dạng zip/web không đổi; game có ảnh nhưng thiếu `game.json` (vd ThuNghiem1) bị bỏ qua. Chỉ ảnh, không gom âm thanh.
+- Gotcha FlyToStay: `onCorrectTap` của đáp án cuối phải chạy qua `PlayCorrectRemoveClone` (có `ApplyCollectSlot`); chạy thẳng `PlayActionFx` thì toạ độ đích = 0 → bay về góc trên-trái.
+

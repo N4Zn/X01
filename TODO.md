@@ -49,6 +49,7 @@
 - [ ] Test trong Editor: round/collect/mirror/icon grid; hộp thoại đăng ký registry — (2026-10-03)
 - [ ] Tool so/reset marker Variant theo json mới; so schema `game_builder_v2.2_1003.html` — (2026-10-03)
 - [ ] GenericGameBuilder: Safari chưa chơi thử được — (2026-10-04)
+- [ ] Chơi lại SoSanhSo/SoSanhSo2Dau/TachSo2/CuaHangKem sau khi dọn ảnh trùng (`_shared`) — ảnh/FlyToStay đúng; ThuNghiem1 chưa có game.json nên chưa gom — (2026-10-08)
 
 ## Đóng băng (không làm cho tới khi user mở lại) — xem `handoff/FROZEN.txt`
 - [ ] HaiQua: tạm bỏ (2026-10-05), mở lại sau khi update scene: bỏ `// DISABLED` ở `GameRegistry.cs`, thêm lại dòng json, xoá 2 dòng HaiQua ở `FROZEN.txt`, build lại aar — (2026-10-05)
@@ -92,3 +93,9 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 ## K02 #1: hook boot (2026-10-06)
 - `NativePlugins/K02DeviceConfig/k02_boot_hook.sh` -> `/data/local/tmp/your_script.sh` (hook sẵn trong `lidar_config.rc`): chặn thanh thông báo + tự cấp quyền USB (camera/lidar) cho `com.EduXplore.X01a` qua `UsbGrant.dex`, theo dõi mỗi 5s để cấp lại khi cài lại APK/rút cắm cáp. Hướng dẫn đầy đủ: `Hide_Notification_bar.txt`.
 - Đã kiểm chứng sau reboot (`GRANT_OK 5`, `mDisabled1=0x3a50000`). Chưa test: cài lại APK không reboot, rút/cắm cáp lúc app chạy.
+
+## Build / Tổng hợp Toán (2026-10-08)
+- [ ] Unity: Tools → Build → Optimize Android Textures (áp dụng) (user tự chạy), kiểm tra ảnh không mờ/vỡ; đo lại thời gian build — (2026-10-08)
+- [ ] Build APK Release (Tools/Build/Profile/Release) rồi test K02: game Tổng hợp Toán (Ôn tập chung) + không còn console lỗi — (2026-10-08)
+- [ ] `GameRegistry.cs`: (0,17)/(0,18) bị gán 2 lần (SubNumber5/SubNumber vs SoSanhSoChuSo/SoSanhSo2DauChuSo) → đổi index; index trống nhóm 0: 5, 7, 12 — (2026-10-08)
+
