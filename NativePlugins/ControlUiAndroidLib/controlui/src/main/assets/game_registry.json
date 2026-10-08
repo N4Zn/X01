@@ -56,6 +56,7 @@
     {"name": "SoSanhSo", "displayName": "So sánh số", "group": "So sánh", "sceneName": "SoSanhSo", "category": 0},
     {"name": "GameSangChuaChieuToiCuaBe", "displayName": "Các buổi trong ngày", "group": "Thời gian", "sceneName": "GameSangChuaChieuToiCuaBe", "category": 0},
     {"name": "TachSo2", "displayName": "Tách số (2)", "group": "Cộng", "sceneName": "TachSo2", "category": 0},
-    {"name": "SoSanhSo2Dau", "displayName": "So sánh số (>, <, =)", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0}
+    {"name": "SoSanhSo2Dau", "displayName": "So sánh số (>, <, =)", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0},
+    {"name": "GhepAnhConThieu", "displayName": "ghép ảnh còn thiếu", "group": "Ghép hình", "sceneName": "GhepAnhConThieu", "category": 5}
   ]
 }
