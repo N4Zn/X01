@@ -563,14 +563,14 @@ public class ControlActivity extends Activity {
         card.setBackground(sel
                 ? UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.accent_dim), 12, UiUtil.ContextColor(this, R.color.accent), 2, this)
                 : UiUtil.roundedRect(UiUtil.ContextColor(this, R.color.panel), 12, UiUtil.ContextColor(this, R.color.border_soft), 1, this));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, UiUtil.dp(this, 112), 1f);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, UiUtil.dp(this, 96), 1f);
         lp.leftMargin = lp.rightMargin = UiUtil.dp(this, 5);
         card.setLayoutParams(lp);
 
         // Tên game: chữ đen viền trắng dày (nổi trên nền ảnh/màu của thẻ).
         com.eduxplore.control.ui.OutlinedTextView name = new com.eduxplore.control.ui.OutlinedTextView(this);
         name.setText(item.displayName);
-        name.setTextSize(20f);
+        name.setTextSize(15f);
         name.setTextColor(0xFF111111);
         name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
         name.setGravity(Gravity.CENTER);
@@ -1309,6 +1309,11 @@ public class ControlActivity extends Activity {
         // Ván mới: bỏ số liệu người chơi của ván trước (không để lẫn vào bản ghi của ván này).
         liveLeftPlayers = new ArrayList<>();
         liveRightPlayers = new ArrayList<>();
+        // Cả tên "Đang chơi" + điểm + giờ cũng phải về trống: nếu không panel live hiện tên/điểm của game
+        // trước cho tới khi game mới đẩy UpdateReport đầu tiên (scene Unity load xong mới có).
+        liveLeftName = liveRightName = "—";
+        liveLeftScore = liveRightScore = "0";
+        liveTime = "—";
         scene = "playing";
         renderAll();
     }
