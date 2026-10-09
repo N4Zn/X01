@@ -92,6 +92,7 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Launcher, Quản lý lớp, FaceEnroll | `docs/launcher-roster.md` |
 | Log/report/Google Sheets | `docs/sheets-report.md` |
 | Báo cáo đánh giá năng lực học sinh (công thức điểm, mã HS, tool dựng báo cáo) | `docs/danh-gia-nang-luc/README.md` |
+| Game FloorStory (Ngày của bé, Hình học, Bé khỏe mạnh, Vỡ bóng bay, Sàn kỳ diệu, Dài-ngắn, Trên-dưới, Đồng hồ khổng lồ) | `docs/floor-story-game.md` |
 | Import zip GenericGame, scene riêng | `docs/generic-game-import.md`, `WebTools/GenericGameBuilder/CLAUDE.md` |
 | Build `.aar` (Android modules) | `/build-aar` hoặc `sh Tools/build-aar.sh changed`, `handoff/build-aar.md` |
 | Giao thức Java↔Unity (message, JSON settings) | `docs/contracts/java-unity-bridge.md` |

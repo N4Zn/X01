@@ -58,6 +58,15 @@
     {"name": "SoSanhSo2Dau", "displayName": "So sánh số >, <, =", "group": "So sánh", "sceneName": "SoSanhSo2Dau", "category": 0},
     {"name": "GhepAnhConThieu", "displayName": "Ghép tranh", "group": "Ghép hình", "sceneName": "GhepAnhConThieu", "category": 5},
     {"name": "SoSanhSoChuSo", "displayName": "So sánh số\n(chữ số)", "group": "So sánh", "sceneName": "SoSanhSoChuSo", "category": 0},
-    {"name": "SoSanhSo2DauChuSo", "displayName": "So sánh >, <, = \n(chữ số)", "group": "So sánh", "sceneName": "SoSanhSo2DauChuSo", "category": 0}
+    {"name": "SoSanhSo2DauChuSo", "displayName": "So sánh >, <, = \n(chữ số)", "group": "So sánh", "sceneName": "SoSanhSo2DauChuSo", "category": 0},
+    {"name": "NgayCuaBe", "displayName": "Một ngày của Bé", "group": "Thời gian", "sceneName": "NgayCuaBe", "category": 0},
+    {"name": "HinhHoc", "displayName": "Xây nhà hình học", "group": "Hình học", "sceneName": "HinhHoc", "category": 0},
+    {"name": "BeKhoeManh", "displayName": "Chăm bạn Bi (khỏe mạnh)", "group": "Sức khỏe", "sceneName": "BeKhoeManh", "category": 4},
+    {"name": "VoBongBay", "displayName": "Vỡ bóng bay (bé nhỏ)", "group": "Bé nhỏ", "sceneName": "VoBongBay", "category": 3},
+    {"name": "SanKyDieu", "displayName": "Sàn kỳ diệu (bé nhỏ)", "group": "Bé nhỏ", "sceneName": "SanKyDieu", "category": 7},
+    {"name": "CauBacQua", "displayName": "Dài – ngắn, to – bé", "group": "So sánh", "sceneName": "CauBacQua", "category": 5},
+    {"name": "DatDoVaoCho", "displayName": "Đặt đồ vào chỗ (trên, dưới, trái, phải)", "group": "Vị trí, định hướng", "sceneName": "DatDoVaoCho", "category": 5},
+    {"name": "DongHoKhongLo", "displayName": "Đồng hồ khổng lồ", "group": "Thời gian", "sceneName": "DongHoKhongLo", "category": 0},
+    {"name": "CongHinh", "displayName": "Cổng hình", "group": "Hình học", "sceneName": "CongHinh", "category": 5}
   ]
 }

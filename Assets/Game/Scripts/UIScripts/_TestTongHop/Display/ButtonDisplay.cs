@@ -46,6 +46,11 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     Action<bool, Team, int[]> _leftOnDone;
     Action<bool, Team, int[]> _rightOnDone;
 
+    // ── Combined nhưng MỖI BÊN 1 câu riêng (SetupPerTeam) — dùng lại _left/_rightQuestionInd ──
+    bool                      _perTeamQuestions;
+
+    bool UsesOwnQuestions => _isIndependent || _perTeamQuestions;
+
     // ─── IAnswerDisplay ───────────────────────────────────────────────────────
 
     public void SetPartialCorrectCallback(Action<Team> cb) => _onPartialCorrect = cb;
@@ -53,6 +58,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     public void Setup(QuestionData q, Action<bool, Team, int[]> onResult, Action<Team> onPlayerFailed)
     {
         _current             = q;
+        _perTeamQuestions    = false;
         _onResult            = onResult;
         _onPlayerFailed      = onPlayerFailed;
         _onPartialCorrect    = null;
@@ -74,6 +80,37 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
 
         SetupGroup(leftButtons,  leftOrder,  valid, q, Team.Left);
         SetupGroup(rightButtons, rightOrder, valid, q, Team.Right);
+
+        gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Combined (cùng nhịp round, callback như <see cref="Setup"/>) nhưng MỖI BÊN CÓ CÂU HỎI RIÊNG —
+    /// để 2 bạn đứng cạnh nhau không nhìn đáp án của nhau. Đáp án đúng luôn có mặt ở mỗi bên.
+    /// </summary>
+    public void SetupPerTeam(QuestionData leftQ, QuestionData rightQ,
+                             Action<bool, Team, int[]> onResult, Action<Team> onPlayerFailed)
+    {
+        _current             = leftQ;
+        _perTeamQuestions    = true;
+        _leftQuestionInd     = leftQ;
+        _rightQuestionInd    = rightQ;
+        _onResult            = onResult;
+        _onPlayerFailed      = onPlayerFailed;
+        _onPartialCorrect    = null;
+        _leftValidator       = new AnswerValidator(leftQ);
+        _rightValidator      = new AnswerValidator(rightQ);
+        _leftAnsweredWrong   = false;
+        _rightAnsweredWrong  = false;
+        _leftFinalised       = false;
+        _rightFinalised      = false;
+        _leftSelectTimes.Clear();
+        _rightSelectTimes.Clear();
+
+        var leftValid  = BuildValidList(leftQ);
+        var rightValid = BuildValidList(rightQ);
+        SetupGroup(leftButtons,  PickSlots(leftValid,  leftButtons.Length,  leftQ.correctAnswers),  leftValid,  leftQ,  Team.Left);
+        SetupGroup(rightButtons, PickSlots(rightValid, rightButtons.Length, rightQ.correctAnswers), rightValid, rightQ, Team.Right);
 
         gameObject.SetActive(true);
     }
@@ -129,6 +166,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
         UnityEditor.Selection.activeGameObject = null;
 #endif
         _isIndependent    = false;
+        _perTeamQuestions = false;
         _leftQuestionInd  = null;
         _rightQuestionInd = null;
         _leftOnDone       = null;
@@ -144,6 +182,12 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     /// </summary>
     public void RevealCorrectAnswer()
     {
+        if (_perTeamQuestions)
+        {
+            if (_leftQuestionInd?.correctAnswers != null)  HighlightCorrectOnGroup(leftButtons,  _leftQuestionInd.correctAnswers);
+            if (_rightQuestionInd?.correctAnswers != null) HighlightCorrectOnGroup(rightButtons, _rightQuestionInd.correctAnswers);
+            return;
+        }
         if (_current?.correctAnswers == null) return;
         HighlightCorrectOnGroup(leftButtons,  _current.correctAnswers);
         HighlightCorrectOnGroup(rightButtons, _current.correctAnswers);
@@ -188,7 +232,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
         if (isLeft ? _leftFinalised : _rightFinalised) return;
 
         // Resolve câu hỏi của player này (shared hoặc independent)
-        var myQuestion = _isIndependent
+        var myQuestion = UsesOwnQuestions
             ? (isLeft ? _leftQuestionInd : _rightQuestionInd)
             : _current;
         if (myQuestion == null) return;
@@ -364,7 +408,7 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     public void ResetTeamAttempt(Team team)
     {
         bool isLeft = team == Team.Left;
-        var question = _isIndependent ? (isLeft ? _leftQuestionInd : _rightQuestionInd) : _current;
+        var question = UsesOwnQuestions ? (isLeft ? _leftQuestionInd : _rightQuestionInd) : _current;
         if (question == null) return;
 
         if (isLeft) { _leftFinalised = false; _leftAnsweredWrong = false; _leftValidator = new AnswerValidator(question); _leftSelectTimes.Clear(); }

@@ -10,16 +10,18 @@ using Random = UnityEngine.Random;
 /// "Tổng hợp Toán" — 1 scene, tự sinh câu hỏi nối tiếp theo từng đoạn (mỗi đoạn 3 câu), rồi random
 /// cộng/trừ/điền dấu cho tới hết giờ (không giới hạn số câu, chỉ giới hạn bởi GameSettings.GameTime).
 ///
-///   1) Nhận biết số   — nghe âm thanh (Audio/SoDem/N) → chọn chữ số   (nội dung như game SoDem)
+///   1) Nhận biết số   — nghe âm thanh (Audio/SoDem/N) → chọn chữ số   (CÙNG số/âm thanh 2 bên, đáp án nhiễu KHÁC nhau)
 ///   2) Đếm (dễ)       — đếm 1-5 con vật                                (như Counting5)
-///   3) Đếm            — đếm 1-10 con vật                               (như Counting)
-///   4) Cộng chữ số    — A + B = ?                                      (như AddNumberDigit)
-///   5) Trừ chữ số     — A - B = ?, trong phạm vi 10                    (như SubNumberDigit)
-///   6) Điền dấu       — A ? B → chọn &lt; = &gt;                            (như SoSanhSo2DauChuSo)
-///   7+) Random cộng / trừ / điền dấu (cộng/trừ có thể ẩn số hạng đầu hoặc giữa, vd "3 + ? = 7")
+///   3) Đếm            — đếm 6-10 con vật (không lặp lại phạm vi 5)     (như Counting)
+///   4) Cộng chữ số    — A + B = ?  (chỉ ẩn kết quả)                    (như AddNumberDigit)
+///   5) Trừ chữ số     — A - B = ?  (chỉ ẩn kết quả), phạm vi 10        (như SubNumberDigit)
+///   6) Điền dấu       — A ? B → chọn &lt; = &gt;                            (như SoSanhSoChuSo)
+///   7+) Random cộng / trừ / điền dấu
 ///
-/// Combined mode + WaitForBothTeams: 2 đội cùng 1 câu, mỗi đội ghi điểm riêng. Câu hỏi hiện ở CẢ 2 nửa màn hình
-/// (chờ cả 2 đội xong mới sang câu; mỗi nửa 1 QuestionPanel, bố cục ô A/B/C + đáp án lấy theo AddNumberGame); đáp án dùng ButtonDisplay của Kit.
+/// Combined mode + WaitForBothTeams: 2 đội cùng nhịp (cả 2 xong mới sang câu), mỗi đội ghi điểm riêng.
+/// Từ đoạn 2 trở đi MỖI BÊN CÓ CÂU RIÊNG (đáp án đúng 2 bên luôn khác nhau → không chép được của nhau); chỉ câu
+/// "nhận biết số" (cùng audio) hai bên giống nhau nhưng đáp án nhiễu khác. Hiển thị: mỗi nửa 1 QuestionPanel
+/// (bố cục ô A/B/C + đáp án lấy theo AddNumberGame); đáp án dùng ButtonDisplay.SetupPerTeam của Kit.
 /// </summary>
 public class TongHopToanController : MiniGameControllerBase
 {
@@ -36,6 +38,18 @@ public class TongHopToanController : MiniGameControllerBase
     }
 
     enum Kind { Recognize, CountEasy, Count, Add, Sub, Sign }
+
+    /// <summary>Câu hỏi của MỘT bên (0 = trái, 1 = phải).</summary>
+    class TeamQ
+    {
+        public QuestionData q;
+        public int value;                          // Recognize: số cần nghe · Count*: số icon
+        public int answerKey;                      // giá trị đáp án đúng — dùng để ép 2 bên khác nhau
+        public readonly string[] parts = new string[3];   // chữ trên ô A, B, C (ô bị ẩn để rỗng)
+        public int hiddenSlot = -1;
+        public string op = "+";
+        public Sprite animal;
+    }
 
     // Thứ tự cố định 6 đoạn × 3 câu; sau đó random trong RandomKinds.
     const int QuestionsPerSegment = 3;
@@ -59,26 +73,42 @@ public class TongHopToanController : MiniGameControllerBase
 
     int _questionNumber;          // số câu đã phát ra (0-based, dùng chọn đoạn)
     Kind _currentKind;
-    int _currentValue;            // Recognize: số cần nghe · Count*: số icon
-    readonly string[] _parts = new string[3];   // chữ trên ô A, B, C (ô bị ẩn để rỗng)
+    readonly TeamQ[] _tq = { new TeamQ(), new TeamQ() };   // [0] trái, [1] phải
+    PerTeamDisplay _display;
     int _teamsDone;
-    int _hiddenSlot = -1;
-    string _op = "+";
     bool _audioLoopOn;
     Coroutine _audioLoop;
 
     protected override void Start()
     {
+        _display = new PerTeamDisplay(buttonDisplay, _tq);   // trước base.Start(): FSM có thể gọi GetDisplayForQuestion
         base.Start();
         if (buttonDisplay != null) buttonDisplay.WaitBothTeams = WaitBothActive;
         if (backButton != null) backButton.onClick.AddListener(GoBackToMenu);
         ClearQuestionVisuals();
     }
 
-    protected override IAnswerDisplay GetDisplayForQuestion(QuestionData q) => buttonDisplay;
+    protected override IAnswerDisplay GetDisplayForQuestion(QuestionData q) => _display;
 
     // Kết hợp nhưng KHÔNG ai thắng trước: mỗi đội trả lời xong câu của mình, cả 2 xong mới sang câu mới.
     protected override bool WaitForBothTeams => true;
+
+    // Log round đúng câu của từng bên (CurrentQuestion chỉ là câu của bên trái).
+    protected override QuestionData QuestionForTeam(Team team, QuestionData shared)
+        => team == Team.Right && _tq[1].q != null ? _tq[1].q : shared;
+
+    /// <summary>Cầu nối: base gọi Setup(1 câu chung), ta chuyển thành 2 câu riêng cho ButtonDisplay.</summary>
+    sealed class PerTeamDisplay : IAnswerDisplay
+    {
+        readonly ButtonDisplay _inner;
+        readonly TeamQ[] _tq;
+        public PerTeamDisplay(ButtonDisplay inner, TeamQ[] tq) { _inner = inner; _tq = tq; }
+
+        public void Setup(QuestionData q, Action<bool, Team, int[]> onResult, Action<Team> onPlayerFailed)
+            => _inner.SetupPerTeam(_tq[0].q, _tq[1].q, onResult, onPlayerFailed);
+        public void HidePlayerAnswers(Team team) => _inner.HidePlayerAnswers(team);
+        public void Cleanup() => _inner.Cleanup();
+    }
 
     // ── Sinh câu ─────────────────────────────────────────────────────────────
 
@@ -88,39 +118,64 @@ public class TongHopToanController : MiniGameControllerBase
         _currentKind = segment < Segments.Length
             ? Segments[segment]
             : RandomKinds[Random.Range(0, RandomKinds.Length)];
-        bool randomPhase = segment >= Segments.Length;
-        string id = $"THT_{_questionNumber + 1:00}_{_currentKind}";
+        string id = $"THT_{_questionNumber + 1:00}_{_currentKind}";   // pipeline đánh giá parse THT_<số>_<Kind> — giữ nguyên
         _questionNumber++;
-        _hiddenSlot = -1;
 
-        switch (_currentKind)
+        // Nhận biết số: cùng 1 số cho 2 bên (cùng audio), đáp án nhiễu khác nhau.
+        int recognizeValue = Random.Range(0, 11);
+        _tq[0] = Make(_currentKind, id, null, recognizeValue);
+        _tq[1] = Make(_currentKind, id, _tq[0], recognizeValue);
+        return _tq[0].q;
+    }
+
+    /// <summary>Sinh câu cho 1 bên. `other` = câu bên kia (null nếu đang sinh bên đầu) → ép đáp án đúng khác nhau.</summary>
+    TeamQ Make(Kind kind, string id, TeamQ other, int recognizeValue)
+    {
+        TeamQ t = null;
+        for (int tries = 0; tries < 30; tries++)
         {
-            case Kind.Recognize: return MakeRecognize(id);
-            case Kind.CountEasy: return MakeCount(id, Random.Range(1, 6));
-            case Kind.Count:     return MakeCount(id, Random.Range(1, 11));
-            case Kind.Add:       return MakeEquation(id, isAdd: true, hideAnyOperand: randomPhase);
-            case Kind.Sub:       return MakeEquation(id, isAdd: false, hideAnyOperand: randomPhase);
-            default:             return MakeSign(id);
+            t = kind switch
+            {
+                Kind.Recognize => MakeRecognize(id, recognizeValue, other),
+                Kind.CountEasy => MakeCount(id, kind, Random.Range(1, 6)),
+                Kind.Count     => MakeCount(id, kind, Random.Range(6, 11)),   // 6-10: không lặp lại phạm vi 5
+                Kind.Add       => MakeEquation(id, kind, isAdd: true),
+                Kind.Sub       => MakeEquation(id, kind, isAdd: false),
+                _              => MakeSign(id, kind),
+            };
+            if (kind == Kind.Recognize || other == null || t.answerKey != other.answerKey) break;
         }
+        return t;
     }
 
-    QuestionData MakeRecognize(string id)
+    TeamQ MakeRecognize(string id, int value, TeamQ other)
     {
-        _currentValue = Random.Range(0, 11);
-        _hiddenSlot = 1;
-        var opts = Options(_currentValue, 3, 0, 10, out int correct);
-        return Build(id, _currentKind, $"Nghe số {_currentValue}", opts, correct);
+        var t = new TeamQ { value = value, answerKey = value, hiddenSlot = 1 };
+        // Bên phải tránh đáp án nhiễu của bên trái (vd 8: trái 3-8-5, phải 8-2-6).
+        HashSet<int> avoid = null;
+        if (other != null)
+        {
+            avoid = new HashSet<int>();
+            foreach (var a in other.q.answers) if (int.TryParse(a, out int v) && v != value) avoid.Add(v);
+        }
+        var opts = Options(value, 3, 0, 10, out int correct, avoid);
+        t.q = Build(id, _currentKind, $"Nghe số {value}", opts, correct);
+        return t;
     }
 
-    QuestionData MakeCount(string id, int n)
+    TeamQ MakeCount(string id, Kind kind, int n)
     {
-        _currentValue = n;
-        int lo = Mathf.Max(1, n - 2);
-        var opts = Options(n, 4, lo, lo + 4, out int correct);
-        return Build(id, _currentKind, $"Đếm {n} con vật", opts, correct);
+        var t = new TeamQ { value = n, answerKey = n, animal = CountingAnimalPicker.GetRandom() };
+        List<string> opts;
+        int correct;
+        if (kind == Kind.CountEasy) opts = Options(n, 4, 1, 5, out correct);
+        else opts = Options(n, 4, Mathf.Max(1, n - 3), Mathf.Min(10, n + 3), out correct);
+        t.q = Build(id, kind, $"Đếm {n} con vật", opts, correct);
+        return t;
     }
 
-    QuestionData MakeEquation(string id, bool isAdd, bool hideAnyOperand)
+    /// <summary>A ± B = ? — CHỈ ẩn kết quả (ô C), không ẩn số hạng A/B.</summary>
+    TeamQ MakeEquation(string id, Kind kind, bool isAdd)
     {
         int a, b, c;
         if (isAdd)
@@ -135,47 +190,57 @@ public class TongHopToanController : MiniGameControllerBase
             b = Random.Range(1, a);
             c = a - b;
         }
-        // Đoạn cố định: luôn ẩn kết quả (A ± B = ?). Đoạn random: ẩn 1 trong 3 vị trí.
-        int hidden = hideAnyOperand ? Random.Range(0, 3) : 2;
-        int[] vals = { a, b, c };
-        _hiddenSlot = hidden;
-        _op = isAdd ? "+" : "-";
-        for (int i = 0; i < 3; i++) _parts[i] = i == hidden ? "" : vals[i].ToString();
-        string desc = $"{(hidden == 0 ? "?" : a.ToString())} {_op} {(hidden == 1 ? "?" : b.ToString())} = {(hidden == 2 ? "?" : c.ToString())}";
-        var opts = Options(vals[hidden], 4, 0, 10, out int correct);
-        return Build(id, _currentKind, desc, opts, correct);
+        var t = new TeamQ { answerKey = c, hiddenSlot = 2, op = isAdd ? "+" : "-" };
+        t.parts[0] = a.ToString();
+        t.parts[1] = b.ToString();
+        t.parts[2] = "";
+        var opts = Options(c, 4, 0, 10, out int correct);
+        t.q = Build(id, kind, $"{a} {t.op} {b} = ?", opts, correct);
+        return t;
     }
 
-    QuestionData MakeSign(string id)
+    TeamQ MakeSign(string id, Kind kind)
     {
         int a = Random.Range(1, 11);
         int b = Random.value < 0.3f ? a : Random.Range(1, 11);
         string[] signs = { "<", "=", ">" };
         int correct = a < b ? 0 : a == b ? 1 : 2;
-        _parts[0] = a.ToString();
-        _parts[1] = "";
-        _parts[2] = b.ToString();
-        _hiddenSlot = 1;
-        return Build(id, _currentKind, $"{a} ? {b}", new List<string>(signs), correct);
+        var t = new TeamQ { answerKey = correct, hiddenSlot = 1 };
+        t.parts[0] = a.ToString();
+        t.parts[1] = "";
+        t.parts[2] = b.ToString();
+        t.q = Build(id, kind, $"{a} ? {b}", new List<string>(signs), correct);
+        return t;
     }
 
-    /// <summary>`count` đáp án số khác nhau trong [min,max], chắc chắn có `correctValue`, đã xáo.</summary>
-    static List<string> Options(int correctValue, int count, int min, int max, out int correctIndex)
+    /// <summary>`count` đáp án số khác nhau trong [min,max], chắc chắn có `correctValue`, đã xáo.
+    /// `avoid` (tuỳ chọn) = các số nhiễu nên tránh (dùng khi bên kia đã dùng) — hết số khác thì mới lấy lại.</summary>
+    static List<string> Options(int correctValue, int count, int min, int max, out int correctIndex, HashSet<int> avoid = null)
     {
         var set = new List<int> { correctValue };
-        int guard = 0;
-        while (set.Count < count && guard++ < 200)
+        var pool = new List<int>();
+        var fallback = new List<int>();
+        for (int v = min; v <= max; v++)
         {
-            int v = Random.Range(min, max + 1);
-            if (!set.Contains(v)) set.Add(v);
+            if (v == correctValue) continue;
+            if (avoid != null && avoid.Contains(v)) fallback.Add(v); else pool.Add(v);
         }
-        for (int i = set.Count - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            (set[i], set[j]) = (set[j], set[i]);
-        }
+        Shuffle(pool);
+        Shuffle(fallback);
+        pool.AddRange(fallback);
+        for (int i = 0; i < pool.Count && set.Count < count; i++) set.Add(pool[i]);
+        Shuffle(set);
         correctIndex = set.IndexOf(correctValue);
         return set.ConvertAll(v => v.ToString());
+    }
+
+    static void Shuffle<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 
     static QuestionData Build(string id, Kind kind, string description, List<string> answers, int correct) => new QuestionData
@@ -193,21 +258,19 @@ public class TongHopToanController : MiniGameControllerBase
         correctAnswers = new[] { correct },
     };
 
-    // ── Hiển thị câu hỏi (cả 2 nửa màn hình) ─────────────────────────────────
+    // ── Hiển thị câu hỏi (mỗi nửa màn hình 1 câu) ────────────────────────────
 
     protected override void OnQuestionShown(QuestionData q)
     {
         ClearQuestionVisuals();
         _teamsDone = 0;
-        Sprite animal = (_currentKind == Kind.CountEasy || _currentKind == Kind.Count)
-            ? CountingAnimalPicker.GetRandom() : null;
-        ShowOn(leftPanel, animal);
-        ShowOn(rightPanel, animal);
-        if (_currentKind == Kind.Recognize) StartAudioLoop(_currentValue);
+        ShowOn(leftPanel, _tq[0]);
+        ShowOn(rightPanel, _tq[1]);
+        if (_currentKind == Kind.Recognize) StartAudioLoop(_tq[0].value);
         StartCoroutine(RelayoutAnswersNextFrame());
     }
 
-    void ShowOn(QuestionPanel p, Sprite animal)
+    void ShowOn(QuestionPanel p, TeamQ t)
     {
         if (p == null) return;
         switch (_currentKind)
@@ -218,20 +281,20 @@ public class TongHopToanController : MiniGameControllerBase
 
             case Kind.CountEasy:
             case Kind.Count:
-                ShowIcons(p, _currentValue, animal);
+                ShowIcons(p, t.value, t.animal);
                 break;
 
             case Kind.Add:
             case Kind.Sub:
-                for (int i = 0; i < 3; i++) SetSlot(p, i, _parts[i], hidden: i == _hiddenSlot);
-                SetLabel(p.opLabel, _op);
+                for (int i = 0; i < 3; i++) SetSlot(p, i, t.parts[i], hidden: i == t.hiddenSlot);
+                SetLabel(p.opLabel, t.op);
                 SetLabel(p.equalsLabel, "=");
                 break;
 
             default: // Sign
-                SetSlot(p, 0, _parts[0], hidden: false);
+                SetSlot(p, 0, t.parts[0], hidden: false);
                 SetSlot(p, 1, "", hidden: true);
-                SetSlot(p, 2, _parts[2], hidden: false);
+                SetSlot(p, 2, t.parts[2], hidden: false);
                 break;
         }
     }

@@ -186,6 +186,17 @@ public static class GameRegistry
 
         Set(0, 23, "TongHopToan", "Tổng hợp Toán", "TongHopToanGame", Engine.MiniGameKit, group: "Ôn tập chung");
 
+        // ── FloorStory: mỗi game 1 scene riêng (Tools → FloorStoryGame → Build ALL Scenes), chung FloorStoryController ──
+        Set(0, 7,  "NgayCuaBe",   "Một ngày của Bé",         "NgayCuaBe", Engine.MiniGameKit, group: "Thời gian");
+        Set(0, 5,  "HinhHoc",     "Xây nhà hình học",        "HinhHoc", Engine.MiniGameKit, group: "Hình học");
+        Set(4, 2,  "BeKhoeManh",  "Chăm bạn Bi (khỏe mạnh)", "BeKhoeManh", Engine.MiniGameKit, group: "Sức khỏe");
+        Set(3, 12, "VoBongBay",   "Vỡ bóng bay (bé nhỏ)",    "VoBongBay", Engine.MiniGameKit, group: "Bé nhỏ");
+        Set(7, 2,  "SanKyDieu",   "Sàn kỳ diệu (bé nhỏ)",    "SanKyDieu", Engine.MiniGameKit, group: "Bé nhỏ");
+        Set(5, 3,  "CauBacQua",   "Dài – ngắn, to – bé",     "CauBacQua", Engine.MiniGameKit, group: "So sánh");
+        Set(5, 4,  "DatDoVaoCho", "Đặt đồ vào chỗ (trên, dưới, trái, phải)", "DatDoVaoCho", Engine.MiniGameKit, group: "Vị trí, định hướng");
+        Set(0, 12, "DongHoKhongLo", "Đồng hồ khổng lồ",      "DongHoKhongLo", Engine.MiniGameKit, group: "Thời gian");
+        Set(5, 5,  "CongHinh",    "Cổng hình",               "CongHinh", Engine.MiniGameKit, group: "Hình học");
+
         // <GENERIC-GAMES>
     }
 

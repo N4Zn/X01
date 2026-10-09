@@ -100,6 +100,13 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Build APK Release (Tools/Build/Profile/Release) rồi test K02: game Tổng hợp Toán (Ôn tập chung) + không còn console lỗi — (2026-10-08)
 - [ ] `GameRegistry.cs`: (0,17)/(0,18) bị gán 2 lần (SubNumber5/SubNumber vs SoSanhSoChuSo/SoSanhSo2DauChuSo) → đổi index; index trống nhóm 0: 5, 7, 12 — (2026-10-08)
 
+## FloorStory + sửa TongHopToan (2026-10-09) — chưa mở Unity, mới compile-check Roslyn
+- [ ] Mở Unity compile; chạy **Tools → FloorStoryGame → Build ALL Scenes** (9 scene trong `Assets/Game/Scenes/FloorStory/`); mở & Play từng game: NgayCuaBe, HinhHoc, CongHinh, BeKhoeManh, VoBongBay, SanKyDieu, CauBacQua, DatDoVaoCho, DongHoKhongLo — (2026-10-09)
+- [ ] Build APK (aar controlui đã build lại, chưa `git add`) + test K02: chạm LiDAR vào thẻ/số/vòng sáng ăn không, 2 bên chơi độc lập, log `class_rounds` có đúng id/đáp án — (2026-10-09)
+- [ ] Bổ sung ảnh `Story/Day/*`, `Story/Health/*` (xem `docs/floor-story-game.md`), icon menu 8 game, giọng đọc đề; map `game_hp` cho pipeline đánh giá — (2026-10-09)
+- [ ] TongHopToan: mỗi bên câu riêng (đếm/cộng/trừ/dấu), chỉ ẩn kết quả C, đếm 6-10 ở đoạn 3; thử trên K02 — `ButtonDisplay.SetupPerTeam` + hook `QuestionForTeam` ở MiniGameControllerBase — (2026-10-09)
+- [ ] Thứ trong tuần + chữ cái: chờ user chọn phương án (đã bỏ Tàu 7 toa và Đi nét chữ) — (2026-10-09)
+
 ## Đánh giá năng lực học sinh (2026-10-08)
 - [ ] Mai: nhận log K02 bổ sung → chạy `python -I -X utf8 docs/danh-gia-nang-luc/tool/pipeline/run.py --from <ngày> --to <ngày>` (đọc thẳng Google Sheet), cập nhật Excel + phiếu A4; Minh Trí / Hòa Vũ / Minh Anh (`CASA-22001`) cần điểm — (2026-10-08)
 - [ ] Kéo `roster.json` mới nhất từ K02 (backup 06/10 chưa có Minh Anh) để lấy alias/ngày sinh thật, kiểm lại mã `CASA-YYNNN` — (2026-10-08)

@@ -660,8 +660,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     // last recognized for that slot by PlayerRecognitionService. One shared insertion point here
     // covers every MiniGameKit-derived game without needing per-subclass wiring.
 
+    /// <summary>Combined mà mỗi bên có câu hỏi RIÊNG (vd TongHopToan): trả câu của `team` để log đúng nội dung/đáp án
+    /// (mặc định: câu chung CurrentQuestion).</summary>
+    protected virtual QuestionData QuestionForTeam(Team team, QuestionData shared) => shared;
+
     void LogRoundResult(Team team, QuestionData q, int[] playerAnswer, bool correct, float answerTimeSec)
     {
+        q = QuestionForTeam(team, q);
         int slot = team == Team.Left ? 0 : 1;
         int round = playMode == MiniGamePlayMode.Independent
             ? (team == Team.Left ? _leftRoundIndex : _rightRoundIndex)
