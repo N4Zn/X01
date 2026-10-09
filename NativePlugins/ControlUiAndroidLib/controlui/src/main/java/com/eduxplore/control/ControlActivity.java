@@ -552,6 +552,19 @@ public class ControlActivity extends Activity {
         panelGames.post(() -> panelGames.scrollTo(0, keepY));
     }
 
+    /** Ảnh nền thẻ game: assets/game_tiles/&lt;name&gt;.jpg (480x288). Cache theo tên; thiếu file → null (thẻ giữ nền màu + chỉ tên). */
+    private final Map<String, android.graphics.Bitmap> tileCache = new java.util.HashMap<>();
+
+    private android.graphics.Bitmap tileBitmap(String gameName) {
+        if (tileCache.containsKey(gameName)) return tileCache.get(gameName);
+        android.graphics.Bitmap bmp = null;
+        try (InputStream is = getAssets().open("game_tiles/" + gameName + ".jpg")) {
+            bmp = android.graphics.BitmapFactory.decodeStream(is);
+        } catch (Exception ignored) { /* không có ảnh cho game này */ }
+        tileCache.put(gameName, bmp);
+        return bmp;
+    }
+
     /** 1 thẻ game trong lưới. Game chưa có scene thật (isImplemented()==false, placeholder) vẫn chọn/tô sáng
      *  được như thường — chỉ nút BẮT ĐẦU CHƠI bị khoá (xem renderBottomBar) nên bấm không chạy gì. */
     private View buildGameCard(GameItem item) {
@@ -574,7 +587,30 @@ public class ControlActivity extends Activity {
         name.setTextColor(0xFF111111);
         name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
         name.setGravity(Gravity.CENTER);
-        card.addView(name);
+
+        android.graphics.Bitmap tile = tileBitmap(item.name);
+        if (tile != null) {
+            // Có ảnh thẻ (assets/game_tiles/<name>.jpg): ảnh phủ kín, tên game nằm sát đáy. Viền thẻ (chọn/không) giữ nguyên ở lớp ngoài.
+            final int border = UiUtil.dp(this, sel ? 3 : 1);
+            card.setPadding(border, border, border, border);
+            card.setGravity(Gravity.NO_GRAVITY);
+            FrameLayout frame = new FrameLayout(this);
+            final float radius = UiUtil.dp(this, 10);
+            frame.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius); }
+            });
+            frame.setClipToOutline(true);
+            ImageView img = new ImageView(this);
+            img.setImageBitmap(tile);
+            img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            frame.addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            FrameLayout.LayoutParams nlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+            nlp.bottomMargin = UiUtil.dp(this, 2);
+            frame.addView(name, nlp);
+            card.addView(frame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        } else {
+            card.addView(name);
+        }
         // Thẻ chỉ có tên game: học phần đã có cột bên trái để lọc, và danh sách chỉ chứa game chạy được.
         card.setOnClickListener(v -> {
             selectedGameName = item.name;

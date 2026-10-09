@@ -155,5 +155,32 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/TongHopToanGame/TongHopToanGame.unity
     guid: 775d696e27356704691ca3e0cc7aa685
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/NgayCuaBe.unity
+    guid: da47eaa52b975ba43909bc4c9cb9fee8
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/HinhHoc.unity
+    guid: d521dd2c2b5fbdd43be987f5cfb282af
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/CongHinh.unity
+    guid: db5aa3036797bd14188d386089572116
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/BeKhoeManh.unity
+    guid: 221ed36cd5ab79d44aa129bc4e2c5de1
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/VoBongBay.unity
+    guid: e34df1e63997af74cb8a19ae5258e133
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/SanKyDieu.unity
+    guid: adc5a595fe29a8748b3f4b56438a3bf9
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/CauBacQua.unity
+    guid: d20135ee47b3b5f40847daed34a2416a
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/DatDoVaoCho.unity
+    guid: 568f0ecc27d0bbd46a60cb8a06fc922d
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/DongHoKhongLo.unity
+    guid: c8ad21f63e2b3384e9f082cae132a0d9
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

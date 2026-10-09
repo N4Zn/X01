@@ -21,7 +21,7 @@ public sealed class BeKhoeManhWorld : StoryWorld
 
     sealed class Need
     {
-        public string key, image, prompt;
+        public string key, state, fallback, prompt;   // state: Story/Bi/<state> (bộ ảnh Bi riêng); fallback: ảnh Family/* cũ
         public Item[] good, bad;
     }
 
@@ -55,33 +55,42 @@ public sealed class BeKhoeManhWorld : StoryWorld
 
         _needs = new[]
         {
-            new Need { key = "an",   image = "Family/hungry",  prompt = "Bi đói bụng! Cho Bi ăn gì?",
+            new Need { key = "an",   state = "hungry",  fallback = "Family/hungry",  prompt = "Bi đói bụng! Cho Bi ăn gì?",
                        good = fruitItems.ToArray(), bad = new[] { Candy, Soda } },
-            new Need { key = "uong", image = "Family/thirsty", prompt = "Bi khát nước! Bi cần uống gì?",
+            new Need { key = "uong", state = "thirsty", fallback = "Family/thirsty", prompt = "Bi khát nước! Bi cần uống gì?",
                        good = new[] { new Item("Nước lọc", "SaveEnvironment/giot_nuoc", true) }, bad = new[] { Soda, Candy } },
-            new Need { key = "ngu",  image = "Family/sleepy",  prompt = "Bi buồn ngủ! Bi cần gì?",
+            new Need { key = "ngu",  state = "sleepy",  fallback = "Family/sleepy",  prompt = "Bi buồn ngủ! Bi cần gì?",
                        good = new[] { new Item("Đi ngủ", "NatureKit/Isometric/bed_NE", true) },
                        bad = new[] { new Item("Xem tivi", "Story/Health/xem_tivi", false, "Xem tivi khuya hại mắt!"),
                                      new Item("Chơi điện thoại", "Story/Health/dien_thoai", false, "Chơi điện thoại nhiều hại mắt!") } },
-            new Need { key = "van_dong", image = "Family/sad", prompt = "Bi chán quá! Bi cần làm gì?",
+            new Need { key = "van_dong", state = "bored", fallback = "Family/sad", prompt = "Bi chán quá! Bi cần làm gì?",
                        good = new[] { new Item("Chạy nhảy", "Story/Health/chay_nhay", true) },
                        bad = new[] { new Item("Nằm xem tivi", "Story/Health/xem_tivi", false, "Bi cần vận động cho khỏe!"), Pizza } },
-            new Need { key = "ve_sinh", image = "Family/hot", prompt = "Tay Bi bẩn rồi! Bi cần gì?",
+            new Need { key = "ve_sinh", state = "dirty", fallback = "Family/sad", prompt = "Tay Bi bẩn rồi! Bi cần gì?",
                        good = new[] { new Item("Rửa tay", "Story/Health/rua_tay", true) },
                        bad = new[] { new Item("Lau vào áo", "Story/Health/lau_ao", false, "Tay vẫn còn vi khuẩn đấy!"),
                                      new Item("Ăn luôn", "Story/Health/an_luon", false, "Tay bẩn có vi khuẩn, phải rửa trước!") } },
+            new Need { key = "lanh", state = "cold", fallback = "Family/cold", prompt = "Bi lạnh quá! Bi cần gì?",
+                       good = new[] { new Item("Mặc áo ấm", "Story/Health/ao_am", true) },
+                       bad = new[] { new Item("Cởi áo", "Story/Health/coi_ao", false, "Cởi áo ra sẽ càng lạnh, dễ ốm!"),
+                                     new Item("Ăn kem", "Story/Health/an_kem", false, "Ăn kem lúc lạnh sẽ ho đấy!") } },
         };
     }
 
     protected override void Build()
     {
-        StoryUI.Fill(root, "Bg", StoryUI.Hex("#FFF1D6"));
-        StoryUI.Pic(root, "Floor", ShapeSprites.Square, StoryUI.Hex("#F3D9A4"), P(0.5f, 0.10f), new Vector2(W, H * 0.26f));
-        var flowers = StoryUI.Load("NatureKit/Isometric/flower_redA_NE");
-        if (flowers != null)
+        // Nền vườn màu nước có sẵn (Resources/Background); thiếu thì màu phẳng như cũ.
+        var garden = StoryUI.Load("Background/Carrot_BG");
+        if (garden != null)
         {
-            StoryUI.Pic(root, "FlowerL", flowers, Color.white, P(0.09f, 0.50f), Vector2.one * U * 0.14f);
-            StoryUI.Pic(root, "FlowerR", StoryUI.Load("NatureKit/Isometric/flower_yellowA_NE") ?? flowers, Color.white, P(0.91f, 0.50f), Vector2.one * U * 0.14f);
+            var bg = StoryUI.Pic(root, "Garden", garden, Color.white, Vector2.zero, new Vector2(W, H));
+            bg.preserveAspect = false;
+            StoryUI.Fill(root, "Dim", new Color(1f, 1f, 1f, 0.12f));
+        }
+        else
+        {
+            StoryUI.Fill(root, "Bg", StoryUI.Hex("#FFF1D6"));
+            StoryUI.Pic(root, "Floor", ShapeSprites.Square, StoryUI.Hex("#F3D9A4"), P(0.5f, 0.10f), new Vector2(W, H * 0.26f));
         }
 
         for (int i = 0; i < 5; i++)
@@ -95,9 +104,10 @@ public sealed class BeKhoeManhWorld : StoryWorld
 
     float StageScale => 0.82f + 0.12f * Mathf.Min(_stage, 3);
 
-    void ShowBi(string imagePath)
+    /// <summary>Ảnh Bi: ưu tiên bộ ảnh riêng Story/Bi/&lt;state&gt; (cùng 1 nhân vật), thiếu thì dùng ảnh cảm xúc Family/*.</summary>
+    void ShowBi(string state, string fallbackPath)
     {
-        var s = StoryUI.Load(imagePath);
+        var s = StoryUI.Load("Story/Bi/" + state) ?? StoryUI.Load(fallbackPath);
         _bi.sprite = s;
         _bi.color = s != null ? Color.white : StoryUI.Hex("#F6B26B");
     }
@@ -108,10 +118,10 @@ public sealed class BeKhoeManhWorld : StoryWorld
     {
         ClearCards();
         _locked = false;
-        if (_bag.Count == 0) { var a = new[] { 0, 1, 2, 3, 4 }; Shuffle(a); _bag.AddRange(a); }
+        if (_bag.Count == 0) { var a = new[] { 0, 1, 2, 3, 4, 5 }; Shuffle(a); _bag.AddRange(a); }
         var need = _needs[_bag[0]]; _bag.RemoveAt(0);
 
-        ShowBi(need.image);
+        ShowBi(need.state, need.fallback);
         _biRt.localScale = Vector3.one * StageScale;
         _prompt.text = need.prompt;
         ctx.Voice("bi_" + need.key);
@@ -175,7 +185,7 @@ public sealed class BeKhoeManhWorld : StoryWorld
         Run(StoryUI.Fade(card.bg, 0f, 0.2f));
         if (card.icon != null) Run(StoryUI.Fade(card.icon, 0f, 0.2f));
         if (card.label != null) Run(StoryUI.Fade(card.label, 0f, 0.2f));
-        ShowBi("Family/happy");
+        ShowBi("happy", "Family/happy");
         Run(StoryUI.Bounce(_biRt, 0.15f, 0.5f));
         ctx.Sfx("plop");
 
