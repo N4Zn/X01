@@ -188,6 +188,64 @@ def ingest(cfg, rows):
     return rounds, st, not_roster
 
 
+def ingest_local(cfg, folder):
+    """Thư mục log local (GameLogs/YYYY-MM-DD_HHMMSS_<Game>.json của PlayerRecognitionService) → rounds.
+
+    Mỗi file = 1 phiên, mỗi ô (trái/phải) = 1 bé: bé của ô = tên (không phải tên chung) xuất hiện nhiều round nhất;
+    round chưa nhận diện (Player_x, Blue_1, Red_1) gán cho bé đó. `slot_override` / `skip_files` trong config để chốt tay.
+    Tên trong log local là tên app đã gán từ nhận diện nên tốt hơn log trên Sheet.
+    """
+    import glob
+    st = collections.Counter()
+    byname = student_lookup(cfg)
+    generic = set(cfg['generic_names'])
+    skip = set(cfg.get('skip_files', []))
+    ov = cfg.get('slot_override', {})
+    rounds, not_roster = [], collections.Counter()
+    for f in sorted(glob.glob(os.path.join(folder, '*.json'))):
+        base = os.path.basename(f)
+        if not re.match(r'^\d{4}-\d\d-\d\d_\d{6}_', base):
+            continue                      # file session kiểu cũ của GameLogger (Counting5_2026-...json)
+        st['files'] += 1
+        if base in skip:
+            st['files_skipped'] += 1
+            continue
+        try:
+            with open(f, encoding='utf-8-sig') as fh:
+                d = json.load(fh)
+        except Exception:
+            st['files_bad'] += 1          # 0 byte / hỏng
+            continue
+        es = [e for e in d.get('entries', []) if e.get('eventType') == 'round']
+        if not es:
+            continue
+        if int(es[0]['time'][:4]) < cfg['min_valid_year']:
+            st['bad_clock_or_test'] += len(es)
+            continue
+        for slot in ('left', 'right'):
+            rr = [e for e in es if e['slot'] == slot]
+            if not rr:
+                continue
+            cnt = collections.Counter(e['name'] for e in rr if e['name'] not in generic)
+            kid = ov.get(base + '|' + slot) or (cnt.most_common(1)[0][0] if cnt else None)
+            if not kid:
+                st['unassigned'] += len(rr)
+                continue
+            if kid not in byname:
+                not_roster[kid] += len(rr)
+                st['not_in_roster'] += len(rr)
+                continue
+            for i, e in enumerate(rr):
+                rounds.append({
+                    'key': 'l:%s:%s:%d' % (base, slot, i), 'ts': e['time'] + '.000',
+                    'code': byname[kid]['code'], 'name': byname[kid]['name'], 'game': norm_game(cfg, e['game']), 'slot': slot,
+                    'qid': e.get('questionId', ''), 'ok': bool(e['correct']), 't': float(e['answerTimeSec']),
+                    'round': e.get('round', ''), 'sess': base[:-5], 'dev': '', 'how': 'session',
+                })
+    st['rounds'] = len(rounds)
+    return rounds, st, not_roster
+
+
 # ── 3. DB theo học sinh (tích luỹ, lưu theo mã) ────────────────────────────────
 
 def db_dir(base=None):

@@ -2,6 +2,13 @@
 
 > **Cập nhật**: 2026-10-09 @ 3801ba44. Đọc log **trực tiếp từ Google Sheet** (không cần kéo file log về). Python 3.9+, chỉ cần `openpyxl` cho Excel.
 
+## Từ log local (tên bé chính xác nhất) + gộp nhiều ngày
+
+```bash
+python -I -X utf8 run.py --local C:/.../GameLogs --from 2026-10-08 --to 2026-10-09 --per-day --out C:/.../BaoCao
+```
+Ra `<out>/<từ>_<đến>/` (báo cáo gộp cả kỳ, Excel có thêm sheet "Theo ngày") và `<out>/<ngày>/` cho từng ngày có dữ liệu. Mỗi thư mục: Excel + `BaoCao_TatCa_*.pdf` + `pdf/<mã>_<tên>.pdf`. Chỉ đọc file `YYYY-MM-DD_HHMMSS_<Game>.json` (bỏ file 0 byte, file `skip_files`, ô `slot_override` trong `config.json`; bé của ô = tên nhận diện nhiều nhất trong phiên). Chạy lại 08/10 từ log local cho đúng số lần chấm đầu tiên (ví dụ Quốc An 99,8).
+
 ## Dùng hằng ngày (link Sheet cũ, không cần sửa Apps Script)
 
 Bấm đúp **`chay.bat`** (báo cáo hôm nay) hoặc `chay.bat 2026-10-09` (ngày khác). Tool tải CSV từ link Sheet trong `config.json`, lọc trùng/rác, gán bé, chấm điểm, ra `ketqua\<ngày>\`: `KetQua_Toán_<ngày>.xlsx`, `BaoCao_TatCa_<ngày>.pdf` (mỗi bé 1 trang A4), `pdf\<mã>_<tên>.pdf` từng bé. Cần Python 3 + `pip install openpyxl` + Chrome/Edge (in PDF). ~45 giây.

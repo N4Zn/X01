@@ -166,7 +166,7 @@
  "exclude_ranges": [
   {
    "from": "2026-10-08 00:00",
-   "to": "2026-10-08 15:46",
+   "to": "2026-10-08 15:45",
    "why": "phiên thử nghiệm (bấm bừa 0,1s)"
   }
  ],
@@ -189,5 +189,13 @@
   "few_total": 15
  },
  "name_priority": "schema",
- "name_priority_note": "schema = tin tên trong dòng log dạng mới (có team), dòng GameLogger cũ dùng nhận diện gần nhất; app = luôn tin tên; recognition = luôn dùng nhận diện"
+ "name_priority_note": "schema = tin tên trong dòng log dạng mới (có team), dòng GameLogger cũ dùng nhận diện gần nhất; app = luôn tin tên; recognition = luôn dùng nhận diện",
+ "skip_files": [
+  "2026-10-08_161209_Counting.json"
+ ],
+ "skip_files_note": "161209_Counting trùng phiên 161210 (cùng phiên, tên khác)",
+ "slot_override": {
+  "2026-10-08_161210_Counting.json|right": "Đinh Nguyễn Cát Tường"
+ },
+ "slot_override_note": "ca mơ hồ do user chốt: 161210_Counting ô phải = Cát Tường"
 }

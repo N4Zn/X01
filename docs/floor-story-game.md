@@ -17,7 +17,7 @@
 |---|---|---|
 | `NgayCuaBe` | Các buổi trong ngày: trời đổi theo buổi, chọn việc hợp buổi | `Story/Day/*` (chưa có → `Family/*` hoặc thẻ chữ) |
 | `HinhHoc` | Xây nhà từ bóng đen: tròn/vuông/tam giác/chữ nhật | không cần (vẽ bằng code) |
-| `BeKhoeManh` | Bi cần ăn/uống/ngủ/vận động/vệ sinh; đủ 5 sao → Bi lớn | `Story/Food/*` (32 trái cây, đã chép), `SaveEnvironment/*`, `NatureKit` (giường), `Story/Health/*` (chưa có → thẻ chữ) |
+| `BeKhoeManh` | Bi cần ăn/uống/ngủ/vận động/vệ sinh/giữ ấm (6 nhu cầu); đủ 5 sao → Bi lớn. Nền vườn `Background/Carrot_BG` | `Story/Bi/<hungry thirsty sleepy bored dirty cold happy>` (cùng 1 nhân vật; thiếu → `Family/*`, là các bé KHÁC NHAU nên chưa liền mạch), `Story/Food/*` (32 trái cây, đã chép), `SaveEnvironment/*`, `NatureKit` (giường), `Story/Health/*` (chưa có → thẻ chữ) |
 | `CongHinh` | Đi qua cổng hình (1 → 2 → 3 cổng liên tiếp), vị trí cổng xáo mỗi lượt | không cần (vẽ bằng code), con vật `GameImages/Animal/*` |
 | `VoBongBay` | Bé nhỏ: vỡ bóng đúng màu → con vật chui ra | `Balloon/*`, `GameImages/Animal/*` (có sẵn) |
 | `SanKyDieu` | Bé nhỏ: chạm đâu mọc hoa/sao/tim/bóng/cây đó (không đúng/sai) | NatureKit + hình code |

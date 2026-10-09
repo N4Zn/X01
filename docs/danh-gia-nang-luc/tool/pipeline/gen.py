@@ -69,7 +69,7 @@ def page(d):
     for sid,v in sess.items():
         g=v[0]['game']; ok=sum(x['ok'] for x in v); okt=[x['t'] for x in v if x['ok'] and x['t']>=0.5]
         dots=''.join('<i class="%s" style="height:%dpx"></i>'%('' if x['ok'] else 'x',max(4,min(22,round(x['t']*1.6)))) for x in v)
-        sh+='<div class="srow"><div class="t"><b>%s</b><br><span class="muted">%s:%s - %d/%d đúng - TB %.1fs</span></div><div class="dots">%s</div></div>'%(GN.get(g,g),sid[11:13],sid[13:15],ok,len(v),sum(okt)/len(okt) if okt else 0,dots)
+        sh+='<div class="srow"><div class="t"><b>%s</b><br><span class="muted">%s%s:%s - %d/%d đúng - TB %.1fs</span></div><div class="dots">%s</div></div>'%(GN.get(g,g),(sid[8:10]+'/'+sid[5:7]+' ') if '->' in PERIOD else '',sid[11:13],sid[13:15],ok,len(v),sum(okt)/len(okt) if okt else 0,dots)
     ps=[(h,hp[h]) for h in HP if h in hp]
     best=max(ps,key=lambda x:(x[1]['pt'],x[1]['n'])); worst=min(ps,key=lambda x:(x[1]['pt'],-x[1]['n']))
     allt=[x['t'] for x in rs if x['ok'] and x['t']>=0.5]; tm=sum(allt)/len(allt)

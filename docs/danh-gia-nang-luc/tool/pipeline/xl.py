@@ -5,7 +5,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from edux_lib import LEVEL_NAMES, level
 
 
-def build(cfg, out, stats, excluded, not_roster, path, period):
+def build(cfg, out, stats, excluded, not_roster, path, period, by_day=None):
     f = cfg['formula']
     HP = cfg['hp_order']
     lv = lambda p: LEVEL_NAMES[level(f, p)]
@@ -92,6 +92,25 @@ def build(cfg, out, stats, excluded, not_roster, path, period):
     w3['A1'].font = Font(bold=True)
     w3.column_dimensions['A'].width = 70
     w3.column_dimensions['B'].width = 14
+
+    if by_day:
+        wd = wb.create_sheet('Theo ngày', 1)
+        days = sorted(by_day)
+        wd.append(['ID', 'Tên thường gọi'] + sum([['%s: điểm' % d[5:].replace('-', '/'), 'số câu'] for d in days], []) + ['Cả kỳ: điểm', 'số câu'])
+        by = {d: {o['code']: o for o in by_day[d]} for d in days}
+        for o in out:
+            r = [o['code'], o['alias']]
+            for d in days:
+                x = by[d].get(o['code'])
+                r += [round(x['toan'], 1) if x and 'toan' in x else None, x['n'] if x else 0]
+            r += [round(o['toan'], 1) if 'toan' in o else None, o['n']]
+            wd.append(r)
+        for c in wd[1]:
+            c.font = Font(bold=True, color='FFFFFF')
+            c.fill = head
+            c.alignment = Alignment(horizontal='center', wrap_text=True)
+        wd.column_dimensions['A'].width = 13
+        wd.column_dimensions['B'].width = 16
 
     w4 = wb.create_sheet('Chưa có điểm')
     w4.append(['ID', 'Tên đầy đủ', 'Tên thường gọi', 'Ghi chú'])
