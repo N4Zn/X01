@@ -84,6 +84,8 @@ def student_lookup(cfg):
         d[s['name']] = s
         if s.get('alias'):
             d.setdefault(s['alias'], s)
+        for a in s.get('also', []):          # tên cũ/biệt danh khác còn xuất hiện trong log
+            d.setdefault(a, s)
     return d
 
 
@@ -328,6 +330,34 @@ def session_label(cfg, rows_sorted, gap):
         x['_sess'] = cur[k]
 
 
+DIAG = {   # mã -> (nhãn ngắn, lời khuyên, màu)
+    'good': ('Thành thạo', 'Đúng và nhanh: có thể tăng độ khó.', '#1f7a52'),
+    'ok': ('Khá chắc', 'Đúng, tốc độ vừa phải: luyện thêm cho quen.', '#1f7a52'),
+    'slow_ok': ('Biết nhưng chậm', 'Đúng nhiều nhưng cần nhiều thời gian: kiến thức có rồi, cần luyện cho thạo.', '#4a7fb0'),
+    'fast_wrong': ('Nhanh nhưng hay nhầm', 'Trả lời vội/đoán: nhắc bé nhìn kỹ rồi mới chọn; không phải do chưa biết.', '#c0782a'),
+    'slow_wrong': ('Chậm và sai: chưa nắm', 'Chưa biết cách làm nên lâu và sai: cần dạy lại, làm mẫu từng bước.', '#b23a3a'),
+    'shaky': ('Chưa vững', 'Đúng chưa đều, tốc độ vừa: luyện thêm.', '#8a6d1a'),
+    'few': ('Chưa đủ dữ liệu', 'Quá ít câu để kết luận.', '#8a929c'),
+}
+
+
+def diagnose(cfg, a):
+    """Nhận định 1 học phần của 1 bé từ danh sách câu `a` (dict có ok, t). Không gộp giữa các học phần:
+    nhanh+sai (vội/đoán) khác hẳn chậm+sai (chưa biết)."""
+    g = cfg['diag']
+    n = len(a)
+    ts = sorted(x['t'] for x in a)
+    tmed = ts[n // 2] if n % 2 else (ts[n // 2 - 1] + ts[n // 2]) / 2
+    acc = 100.0 * sum(x['ok'] for x in a) / n
+    if n < g['min_n']:
+        code = 'few'
+    elif acc >= g['acc_ok']:
+        code = 'good' if tmed <= g['fast_s'] else 'slow_ok' if tmed >= g['slow_s'] else 'ok'
+    else:
+        code = 'fast_wrong' if tmed <= g['fast_s'] else 'slow_wrong' if tmed >= g['slow_s'] else 'shaky'
+    return dict(code=code, tmed=tmed, acc=acc, n=n, few=n < g['few_n'])
+
+
 def score(cfg, db_rows, date_from=None, date_to=None):
     """DB → (out theo học sinh, rows dùng để vẽ phiếu, thống kê loại trừ)."""
     f = cfg['formula']
@@ -377,7 +407,8 @@ def score(cfg, db_rows, date_from=None, date_to=None):
             tm = sum(ts) / len(ts) if ts else None
             k = speed_k(f, tm) if tm is not None else 1.0
             acc = ok / len(a)
-            d['hp'][hp] = dict(n=len(a), ok=ok, acc=100 * acc, t=tm, k=k, pt=min(100, f['base'] * acc * k), low=len(a) < f['low_sample'])
+            d['hp'][hp] = dict(n=len(a), ok=ok, acc=100 * acc, t=tm, k=k, pt=min(100, f['base'] * acc * k), low=len(a) < f['low_sample'],
+                               diag=diagnose(cfg, a))
         if d['hp']:
             d['toan'] = sum(v['pt'] for v in d['hp'].values()) / len(d['hp'])
         d['sess'] = sorted({r['sess'] for r in rs})

@@ -48,8 +48,11 @@
   {
    "code": "CASA-21008",
    "name": "Đào Khánh Ngọc",
-   "alias": "É",
-   "class": "5 tuổi"
+   "alias": "Nghé",
+   "class": "5 tuổi",
+   "also": [
+    "É"
+   ]
   },
   {
    "code": "CASA-21009",
@@ -197,5 +200,13 @@
  "slot_override": {
   "2026-10-08_161210_Counting.json|right": "Đinh Nguyễn Cát Tường"
  },
- "slot_override_note": "ca mơ hồ do user chốt: 161210_Counting ô phải = Cát Tường"
+ "slot_override_note": "ca mơ hồ do user chốt: 161210_Counting ô phải = Cát Tường",
+ "diag": {
+  "fast_s": 5,
+  "slow_s": 9,
+  "acc_ok": 75,
+  "min_n": 2,
+  "few_n": 5
+ },
+ "diag_note": "Nhận định theo TỪNG học phần (không gộp): dùng trung vị thời gian mọi câu; fast_s/slow_s = ngưỡng nhanh/chậm (giây); acc_ok = % đúng coi là chính xác; <min_n câu: chưa đủ dữ liệu; <few_n: ít mẫu"
 }

@@ -1,4 +1,6 @@
-import json,re,math,collections,html,os
+import json,re,math,collections,html,os,sys
+sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
+import edux_lib as EL
 HERE=os.path.dirname(os.path.abspath(__file__))
 T=os.path.join(HERE,'..','..','mau','tien-bo-toan-a4.html')
 css=re.search(r'<style>(.*?)</style>',open(T,encoding='utf8').read(),re.S).group(1)
@@ -19,6 +21,10 @@ td.l{white-space:nowrap}
 .dots i.x{background:#b23a3a}
 .srow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px;border-bottom:1px solid var(--line);padding:5px 0;align-items:center}
 .srow .t{font-size:11px;line-height:1.25}.srow .t b{font-weight:600;font-size:12px}
+.drow{display:grid;grid-template-columns:78px minmax(0,1fr);gap:8px;border-bottom:1px solid var(--line);padding:4px 0;font-size:11.5px;line-height:1.3}
+.drow .dh{font-weight:600}
+.dpill{display:inline-block;padding:0 7px;border-radius:9px;font-size:10.5px;font-weight:600;color:#fff;white-space:nowrap}
+.dn{color:var(--muted);font-size:10.5px}.dtx{margin-top:1px}
 .warn{font-size:10.5px;color:var(--flat);margin-top:3px}
 """
 out = []; rows = []; CALL = {}; HP = []; GN = {}; PERIOD = ''; F = {}
@@ -59,9 +65,14 @@ def page(d):
     for h in HP:
         if h in hp:
             p=hp[h]['pt']
-            bars+='<div class="brow"><div class="blab">%s</div><div class="bt"><span class="tick" style="left:25%%">25</span><span class="tick" style="left:50%%">50</span><span class="tick" style="left:75%%">75</span><div class="lane"><div class="bar" style="width:%.1f%%"></div></div></div><div class="bx">%.0f</div></div>'%(h,min(p,100),p)
+            bars+='<div class="brow"><div class="blab">%s</div><div class="bt"><span class="tick" style="left:25%%">25</span><span class="tick" style="left:50%%">50</span><span class="tick" style="left:75%%">75</span><div class="lane"><div class="bar" style="width:%.1f%%;background:%s"></div></div></div><div class="bx">%.0f</div></div>'%(h,min(p,100),['#b23a3a','#c0782a','#4a7fb0','#1f7a52'][lv(p)],p)
         else:
             bars+='<div class="brow"><div class="blab muted">%s</div><div class="muted" style="font-size:11px;padding:6px 0">chưa có điểm</div><div></div></div>'%h
+    dg=''
+    for h in HP:
+        if h not in hp: continue
+        v_=hp[h]['diag']; lab,adv,col=EL.DIAG[v_['code']]
+        dg+='<div class="drow"><div class="dh">%s</div><div><span class="dpill" style="background:%s">%s</span> <span class="dn">đúng %d/%d - TB %.1fs/câu%s</span><div class="dtx">%s</div></div></div>'%(h,col,e(lab),hp[h]['ok'],hp[h]['n'],v_['tmed'],' - ít mẫu' if v_['few'] else '',e(adv))
     sess=collections.OrderedDict()
     for r in sorted(rs,key=lambda r:r['ts']):
         sess.setdefault(r['sess'],[]).append(r)
@@ -77,7 +88,9 @@ def page(d):
     ins='<li><b>Mạnh nhất:</b> %s (%.0f điểm)</li>'%(best[0],best[1]['pt'])
     if len(ps)>1 and worst[1]['pt']<best[1]['pt']-1:
         ins+='<li><b>Cần luyện:</b> %s (%.0f điểm, đúng %d/%d)</li>'%(worst[0],worst[1]['pt'],worst[1]['ok'],worst[1]['n'])
-    ins+='<li><b>Tốc độ:</b> %s, TB %.1f giây/câu đúng</li>'%(sp,tm)
+    att=[(h,hp[h]['diag']) for h in HP if h in hp and hp[h]['diag']['code'] in ('fast_wrong','slow_wrong','slow_ok','shaky')]
+    for h,dg_ in att:
+        ins+='<li><b>%s:</b> %s</li>'%(h,e(EL.DIAG[dg_['code']][0].lower()))
     miss=[h for h in HP if h not in hp]
     if miss: ins+='<li><b>Chưa có điểm:</b> %s</li>'%e(', '.join(miss))
     gap=[(h,F['cuts'][2]-v['pt']) for h,v in ps if v['pt']<F['cuts'][2]]
@@ -104,6 +117,7 @@ def page(d):
       {W}</section>
     <section><h2>Điểm từng học phần <small>mốc {F['cuts'][0]} / {F['cuts'][1]} / {F['cuts'][2]}</small></h2>{bars}
       <div class="legend"><b>{F['cuts'][0]}</b> Mức 2 - <b>{F['cuts'][1]}</b> Mức 3 - <b>{F['cuts'][2]}</b> Đạt mục tiêu</div></section>
+    <section><h2>Nhận định từng học phần <small>đánh giá riêng từng học phần, không gộp: nhanh-sai khác chậm-sai</small></h2>{dg}</section>
     <section><h2>Nhịp trả lời trong buổi <small>mỗi cột là một câu, cao = lâu, đỏ = sai</small></h2>{sh}</section>
   </div>
   <aside class="aside">
@@ -127,5 +141,9 @@ def build(cfg_,out_,rows_,outdir,period):
     os.makedirs(outdir,exist_ok=True)
     for d in ds:
         open(os.path.join(outdir,d['code']+'.html'),'w',encoding='utf8').write(doc([page(d)],'Hồ sơ Toán '+d['name']))
-    open(os.path.join(outdir,'TatCa.html'),'w',encoding='utf8').write(doc([page(d) for d in ds],'Hồ sơ Toán '+period))
+    import class_page
+    cp=class_page.page(cfg_,out,rows,period)   # trang tổng hợp cả lớp
+    if cp:
+        open(os.path.join(outdir,'LopHoc.html'),'w',encoding='utf8').write(doc([cp],'Tổng hợp lớp '+period).replace('</style>',class_page.CSS+'</style>',1))
+    open(os.path.join(outdir,'TatCa.html'),'w',encoding='utf8').write(doc(([cp] if cp else [])+[page(d) for d in ds],'Hồ sơ Toán '+period).replace('</style>',class_page.CSS+'</style>',1))
     return len(ds)

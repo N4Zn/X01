@@ -9,6 +9,13 @@ python -I -X utf8 run.py --local C:/.../GameLogs --from 2026-10-08 --to 2026-10-
 ```
 Ra `<out>/<từ>_<đến>/` (báo cáo gộp cả kỳ, Excel có thêm sheet "Theo ngày") và `<out>/<ngày>/` cho từng ngày có dữ liệu. Mỗi thư mục: Excel + `BaoCao_TatCa_*.pdf` + `pdf/<mã>_<tên>.pdf`. Chỉ đọc file `YYYY-MM-DD_HHMMSS_<Game>.json` (bỏ file 0 byte, file `skip_files`, ô `slot_override` trong `config.json`; bé của ô = tên nhận diện nhiều nhất trong phiên). Chạy lại 08/10 từ log local cho đúng số lần chấm đầu tiên (ví dụ Quốc An 99,8).
 
+## Nhận định theo từng học phần (không gộp) + trang tổng hợp lớp
+
+- Mỗi (bé, học phần) được nhận định riêng (`edux_lib.diagnose`, ngưỡng ở `config.json` mục `diag`): trung vị thời gian mọi câu + % đúng → *Thành thạo / Khá chắc / Biết nhưng chậm / **Nhanh nhưng hay nhầm** (vội, đoán) / **Chậm và sai: chưa nắm** (chưa học) / Chưa vững / Chưa đủ dữ liệu*. Nhanh-sai và chậm-sai là hai chuyện khác nhau, không được gộp thành "kém và chậm". Phiếu từng bé có mục "Nhận định từng học phần".
+- Trang tổng hợp lớp (`class_page.py`, trang đầu của `BaoCao_TatCa_*.pdf` và file `TongHopLop_*.pdf`, ảnh `anh/00_TongHopLop.png`): đồ thị chính xác x tốc độ, mỗi chấm = 1 bé x 1 học phần, chỉ ghi tên chấm cần chú ý; phân bố mức; điểm TB học phần; bảng xếp hạng. `mode='kid'` trong `class_page.page` cho bản 1 chấm/bé (gộp học phần).
+- Ảnh PNG từng bé (`anh/<mã>_<tên>.png`, 1588x2246) thay cho PDF lẻ. Nếu PDF cũ đang mở trong trình xem, tool ghi thêm file `*_moi.pdf` thay vì ghi đè.
+- Tên thường gọi đổi trong `config.json` (`alias`; `also` = tên cũ vẫn nhận diện trong log, vd Nghé, trước là É).
+
 ## Dùng hằng ngày (link Sheet cũ, không cần sửa Apps Script)
 
 Bấm đúp **`chay.bat`** (báo cáo hôm nay) hoặc `chay.bat 2026-10-09` (ngày khác). Tool tải CSV từ link Sheet trong `config.json`, lọc trùng/rác, gán bé, chấm điểm, ra `ketqua\<ngày>\`: `KetQua_Toán_<ngày>.xlsx`, `BaoCao_TatCa_<ngày>.pdf` (mỗi bé 1 trang A4), `pdf\<mã>_<tên>.pdf` từng bé. Cần Python 3 + `pip install openpyxl` + Chrome/Edge (in PDF). ~45 giây.

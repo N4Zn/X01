@@ -8,7 +8,7 @@ Ví dụ:
   python -I -X utf8 run.py --local C:/.../GameLogs --from 2026-10-08 --to 2026-10-09 --per-day
       -> ketqua/2026-10-08/, ketqua/2026-10-09/ (từng ngày) + ketqua/2026-10-08_2026-10-09/ (gộp cả kỳ)
   python -I -X utf8 run.py --from 2026-10-09            (Sheet, 1 ngày -> ketqua/)
-Mỗi thư mục kết quả có: KetQua_<môn>_<kỳ>.xlsx, BaoCao_TatCa_<kỳ>.pdf (mỗi bé 1 trang A4), pdf/<mã>_<tên>.pdf, phieu/*.html, out.json.
+Mỗi thư mục kết quả có: KetQua_<môn>_<kỳ>.xlsx, BaoCao_TatCa_<kỳ>.pdf (trang đầu = tổng hợp lớp, rồi mỗi bé 1 trang A4), TongHopLop_<kỳ>.pdf, anh/<mã>_<tên>.png (ảnh từng bé), phieu/*.html, out.json.
 """
 import argparse
 import json
@@ -34,11 +34,28 @@ def find_browser():
 
 def to_pdf(browser, html, pdf):
     """In 1 file HTML ra PDF A4 bằng Chrome/Edge headless (profile tạm để không đụng Chrome đang mở)."""
+    if os.path.exists(pdf):
+        try:
+            os.remove(pdf)
+        except OSError:                      # file đang mở trong trình xem PDF -> ghi tên khác, không dùng bản cũ
+            base, ext = os.path.splitext(pdf)
+            pdf = base + '_moi' + ext
+            print('  (file cũ đang mở, ghi thành %s)' % os.path.basename(pdf))
     with tempfile.TemporaryDirectory() as prof:
         subprocess.run([browser, '--headless=new', '--disable-gpu', '--no-pdf-header-footer', '--user-data-dir=' + prof,
                         '--print-to-pdf=' + os.path.abspath(pdf), 'file:///' + os.path.abspath(html).replace(os.sep, '/')],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180)
     return os.path.exists(pdf) and os.path.getsize(pdf) > 0
+
+
+def to_png(browser, html, png, scale=2):
+    """Chụp 1 trang A4 (794x1123 px @96dpi, nhân scale) ra PNG bằng Chrome/Edge headless."""
+    with tempfile.TemporaryDirectory() as prof:
+        subprocess.run([browser, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--user-data-dir=' + prof,
+                        '--window-size=794,1123', '--force-device-scale-factor=%d' % scale, '--screenshot=' + os.path.abspath(png),
+                        'file:///' + os.path.abspath(html).replace(os.sep, '/')],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180)
+    return os.path.exists(png) and os.path.getsize(png) > 0
 
 
 def fmt_period(dfrom, dto):
@@ -85,14 +102,19 @@ def report(cfg, db_rows, st, not_roster, dfrom, dto, outdir, a, by_day=None):
                 allp = os.path.join(outdir, 'BaoCao_TatCa_%s.pdf' % tag)
                 if to_pdf(br, os.path.join(pd, 'TatCa.html'), allp):
                     print('PDF gộp:', allp)
-                od = os.path.join(outdir, 'pdf')
+                lh = os.path.join(pd, 'LopHoc.html')
+                if os.path.exists(lh) and to_pdf(br, lh, os.path.join(outdir, 'TongHopLop_%s.pdf' % tag)):
+                    print('PDF tổng hợp lớp:', os.path.join(outdir, 'TongHopLop_%s.pdf' % tag))
+                od = os.path.join(outdir, 'anh')
                 os.makedirs(od, exist_ok=True)
                 ok = 0
+                if os.path.exists(lh):
+                    to_png(br, lh, os.path.join(od, '00_TongHopLop.png'))
                 for d in out:
                     if 'toan' in d:
-                        nm = '%s_%s.pdf' % (d['code'], (d['alias'] or d['name']).replace(' ', ''))
-                        ok += to_pdf(br, os.path.join(pd, d['code'] + '.html'), os.path.join(od, nm))
-                print('PDF từng bé: %d file' % ok)
+                        nm = '%s_%s.png' % (d['code'], (d['alias'] or d['name']).replace(' ', ''))
+                        ok += to_png(br, os.path.join(pd, d['code'] + '.html'), os.path.join(od, nm))
+                print('Ảnh PNG từng bé: %d file ->' % ok, od)
     return out
 
 
