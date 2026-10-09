@@ -114,3 +114,5 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Build APK Unity rồi test K02: log Sheet mới (`deviceId/sessionId/rid`, mọi game độc lập đẩy qua `LogRound`, POST ≤200 dòng) — sau đó chạy `pipeline/compare_local.py` xem online = local (2026-10-09)
 - [ ] Dán `docs/apps-script/Code.gs` (hoặc sửa script hiện có map cột theo tên + loại trùng `rid`) vào Apps Script rồi Deploy → New version; kiểm tra Sheet có cột mới (2026-10-09)
 - [ ] Sheet đang để "ai có link đều xem" và chứa tên bé — cân nhắc khoá, tải CSV bằng tài khoản (2026-10-09)
+- [ ] Hòa Vũ / Minh Anh chưa có điểm: cho chơi Tổng hợp Toán rồi chạy lại; hoặc quyết định thêm `SoSanhSo` vào `scored_games` (cần xác nhận game độc lập) và có đưa log `2025-04-14` (đồng hồ K02 sai, thực tế trước 06/10) vào "ngày chưa rõ" không (2026-10-09)
+- [ ] Nhận định học phần nhiều bé chỉ 2–3 câu ("ít mẫu"): cần nhiều câu hơn mỗi học phần; ngưỡng `diag` (5s/9s/75%) do tôi tự chọn — user duyệt lại (2026-10-09)

@@ -2,7 +2,7 @@
 
 > **TL;DR**: Báo cáo năng lực kiểu InBody (1 trang A4) dựng từ log raw của game. Học sinh định danh `CASA-YYNNN`; chỉ game chơi độc lập được tính điểm; điểm học phần = `min(100, 80 × %đúng × hệ số tốc độ)`; môn = TB học phần; TỔNG = TB môn. Tool web dựng báo cáo nằm ở `tool/`.
 > **Đọc khi**: sửa công thức điểm, thêm trường vào log phục vụ báo cáo, làm DB theo học sinh, chỉnh/dựng lại tool báo cáo.
-> **Cập nhật**: 2026-10-09 (thêm pipeline đọc Google Sheet; tool web vẫn chạy trên dữ liệu mẫu)
+> **Cập nhật**: 2026-10-09 @ d7e0ea11 (pipeline đọc Sheet/log local, nhận định theo học phần, trang tổng hợp lớp: xem `tool/pipeline/README.md`; tool web vẫn chạy trên dữ liệu mẫu)
 
 ## Thư mục này
 
