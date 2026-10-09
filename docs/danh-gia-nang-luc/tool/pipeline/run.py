@@ -109,10 +109,10 @@ def report(cfg, db_rows, st, not_roster, dfrom, dto, outdir, a, by_day=None):
                 os.makedirs(od, exist_ok=True)
                 ok = 0
                 if os.path.exists(lh):
-                    to_png(br, lh, os.path.join(od, '00_TongHopLop.png'))
+                    to_png(br, lh, os.path.join(od, '00_TongHopLop_%s.png' % tag))
                 for d in out:
                     if 'toan' in d:
-                        nm = '%s_%s.png' % (d['code'], (d['alias'] or d['name']).replace(' ', ''))
+                        nm = '%s_%s_%s.png' % (d['code'], (d['alias'] or d['name']).replace(' ', ''), tag)   # tag = kỳ, tránh nhầm giữa các kỳ
                         ok += to_png(br, os.path.join(pd, d['code'] + '.html'), os.path.join(od, nm))
                 print('Ảnh PNG từng bé: %d file ->' % ok, od)
     return out

@@ -15,6 +15,7 @@ e = html.escape
 COL = ['#b23a3a', '#c0782a', '#4a7fb0', '#1f7a52']   # Mức 1..Đạt mục tiêu
 HPSHORT = {'Nhận biết số': 'NB số', 'Đếm': 'Đếm', 'Cộng': 'Cộng', 'Trừ': 'Trừ', 'So sánh': 'SS'}
 FLAG = ('fast_wrong', 'slow_wrong', 'slow_ok', 'shaky')
+SHORT = {'fast_wrong': 'nhanh-nhầm', 'slow_wrong': 'chậm-sai', 'slow_ok': 'đúng-chậm', 'shaky': 'chưa vững'}
 CSS = """
 .cl-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 4px}
 .cl-kpi div{border:1px solid var(--line);padding:5px 8px}
@@ -46,10 +47,12 @@ def kid_stats(cfg, out, rows):
             continue
         rs = [r for r in rows if r['code'] == d['code']]
         ok = sum(r['ok'] for r in rs)
-        ts = [r['t'] for r in rs if r['ok'] and r['t'] >= cfg['min_resp_sec']]
-        ks.append(dict(d=d, name=d['alias'] or d['name'], n=len(rs), acc=100.0 * ok / len(rs), t=sum(ts) / len(ts) if ts else None,
-                       score=d['toan'], lv=L.level(f, d['toan'])))
-    return [k for k in ks if k['t'] is not None]
+        ts = sorted(r['t'] for r in rs)       # trung vị mọi câu (không bị lệch bởi 1 câu treo 50s)
+        tmed = ts[len(ts) // 2] if len(ts) % 2 else (ts[len(ts) // 2 - 1] + ts[len(ts) // 2]) / 2
+        flags = [(h, d['hp'][h]['diag']) for h in cfg['hp_order'] if h in d['hp'] and d['hp'][h]['diag']['code'] in FLAG]
+        ks.append(dict(d=d, name=d['alias'] or d['name'], n=len(rs), acc=100.0 * ok / len(rs), t=tmed,
+                       score=d['toan'], lv=L.level(f, d['toan']), flags=flags))
+    return ks
 
 
 def hp_points(cfg, out):
@@ -66,7 +69,7 @@ def hp_points(cfg, out):
 def kid_points(cfg, ks):
     f = cfg['formula']
     return [dict(x=k['t'], y=k['acc'], n=k['n'], color=COL[k['lv']], hollow=k['n'] < f['few_total'], label=k['name'], code='',
-                 kid=k['name'], hp='') for k in ks]
+                 kid=k['name'], hp='', ring='#c0782a' if k['flags'] else None) for k in ks]
 
 
 def scatter(cfg, pts, mode='hp'):
@@ -121,7 +124,9 @@ def scatter(cfg, pts, mode='hp'):
     # chấm tốt vẽ trước (mờ), chấm cần chú ý vẽ sau cho nổi
     for x, y, r, p in sorted(P, key=lambda t: t[3]['label'] is not None):
         op = '0.15' if p['hollow'] else ('0.5' if (p['label'] is None and mode == 'hp') else '0.9')
-        s.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" fill-opacity="%s" stroke="%s" stroke-width="1.5"/>' % (x, y, r, p['color'], op, p['color']))
+        ring = p.get('ring')
+        s.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" fill-opacity="%s" stroke="%s" stroke-width="%s"/>'
+                 % (x, y, r + (1.5 if ring else 0), p['color'], op, ring or p['color'], '2.6' if ring else '1.5'))
     labels = []
     for x, y, r, p in P:
         if not p['label']:
@@ -156,7 +161,7 @@ def scatter(cfg, pts, mode='hp'):
     return ''.join(s)
 
 
-def page(cfg, out, rows, period, mode='hp'):
+def page(cfg, out, rows, period, mode='kid'):
     f = cfg['formula']
     g = cfg['diag']
     HP = cfg['hp_order']
@@ -215,15 +220,17 @@ def page(cfg, out, rows, period, mode='hp'):
                 cells += '<td class="h" style="background:%s%s">%.0f</td>' % (COL[L.level(f, v)], ';opacity:.6' if k['d']['hp'][h]['low'] else '', v)
             else:
                 cells += '<td class="muted">-</td>'
-        tr += ('<tr><td>%d</td><td class="l"><b>%s</b></td><td class="num"><b>%.0f</b></td>%s<td class="num">%.0f%%</td><td class="num">%.1f</td>'
-               '<td class="num">%d%s</td><td><span class="pill l%d">%s</span></td></tr>') % (
-            i, e(k['name']), k['score'], cells, k['acc'], k['t'], k['n'], '*' if k['n'] < f['few_total'] else '', k['lv'], L.LEVEL_NAMES[k['lv']])
+        note = '; '.join('%s: %s' % (HPSHORT.get(h, h), SHORT[dg['code']]) for h, dg in k['flags'])
+        tr += ('<tr><td>%d</td><td class="l"><b>%s</b></td><td class="num"><b>%.0f</b></td>%s'
+               '<td class="num">%d%s</td><td class="l" style="white-space:normal;font-size:10px;line-height:1.2;color:#8a4b0f">%s</td>'
+               '<td><span class="pill l%d">%s</span></td></tr>') % (
+            i, e(k['name']), k['score'], cells, k['n'], '*' if k['n'] < f['few_total'] else '', e(note), k['lv'], L.LEVEL_NAMES[k['lv']])
     hdr = ''.join('<th>%s</th>' % h for h in HP)
     cls = ', '.join(sorted({d['class'] for d in out if d.get('class')})) or ''
     if mode == 'kid':
-        pts, title, sub = kid_points(cfg, ks), 'Chính xác và tốc độ', 'mỗi chấm là một bé (gộp mọi học phần); chấm to = nhiều câu; rỗng = ít mẫu; màu = mức'
+        pts, title, sub = kid_points(cfg, ks), 'Chính xác và tốc độ', 'mỗi chấm là một bé (gộp mọi học phần: chỉ để nhìn tổng quan); chấm to = nhiều câu; rỗng = ít mẫu; viền cam = có học phần cần chú ý'
         legend = ('<span style="color:%s">●</span> Đạt mục tiêu &nbsp;<span style="color:%s">●</span> Mức 3 &nbsp;<span style="color:%s">●</span> Mức 2 &nbsp;'
-                  '<span style="color:%s">●</span> Mức 1') % (COL[3], COL[2], COL[1], COL[0])
+                  '<span style="color:%s">●</span> Mức 1 &nbsp;<span style="color:#c0782a">◎</span> viền cam: xem cột "Cần chú ý" (nhận định riêng từng học phần)') % (COL[3], COL[2], COL[1], COL[0])
     else:
         pts, title, sub = hp_points(cfg, out), 'Chính xác và tốc độ theo học phần', 'mỗi chấm = 1 bé x 1 học phần (không gộp); chỉ ghi tên chấm cần chú ý; rỗng = ít mẫu'
         legend = ''.join('<span style="color:%s">●</span> %s &nbsp;' % (L.DIAG[c][2], L.DIAG[c][0]) for c in ('good', 'slow_ok', 'fast_wrong', 'slow_wrong', 'few'))
@@ -248,7 +255,7 @@ def page(cfg, out, rows, period, mode='hp'):
       <section><h2>Cần chú ý theo học phần</h2><ul class="ins cl-ins">{ins}{summ}</ul></section>
     </aside>
   </div>
-  <section style="margin-top:8px"><h2>Bảng xếp hạng <small>ô màu = điểm học phần theo mức; mờ = ít mẫu</small></h2>
-    <table class="cl"><tr><th>#</th><th>Bé</th><th>Điểm</th>{hdr}<th>% đúng</th><th>Giây/câu</th><th>Số câu</th><th style="width:88px">Mức</th></tr>{tr}</table></section>
+  <section style="margin-top:8px"><h2>Bảng xếp hạng <small>ô màu = điểm học phần theo mức; mờ = ít mẫu; nhầm = trả lời vội/đoán, sai = chưa nắm</small></h2>
+    <table class="cl"><tr><th>#</th><th>Bé</th><th>Điểm</th>{hdr}<th>Số câu</th><th>Cần chú ý (theo học phần)</th><th style="width:88px">Mức</th></tr>{tr}</table></section>
   <div class="foot"><span>Điểm = {f['base']:g} × tỉ lệ đúng × hệ số tốc độ (tối đa 100). Nhận định từng học phần theo trung vị thời gian mọi câu và % đúng.</span><span>Kỳ báo cáo: {e(period)}. * ít mẫu.</span></div>
 </main>'''
