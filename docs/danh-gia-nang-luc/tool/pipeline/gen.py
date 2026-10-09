@@ -1,5 +1,6 @@
 import json,re,math,collections,html,os
-T='docs/danh-gia-nang-luc/mau/tien-bo-toan-a4.html'
+HERE=os.path.dirname(os.path.abspath(__file__))
+T=os.path.join(HERE,'..','..','mau','tien-bo-toan-a4.html')
 css=re.search(r'<style>(.*?)</style>',open(T,encoding='utf8').read(),re.S).group(1)
 css+="""
 body{padding:0;background:#fff}
@@ -20,11 +21,8 @@ td.l{white-space:nowrap}
 .srow .t{font-size:11px;line-height:1.25}.srow .t b{font-weight:600;font-size:12px}
 .warn{font-size:10.5px;color:var(--flat);margin-top:3px}
 """
-out=json.load(open('out.json',encoding='utf8')); rows=json.load(open('rows.json',encoding='utf8'))
-CALL={'Ngô Quốc An':'Quốc An','Đặng Minh Anh':'Ỉn','Nguyễn Đăng Bách':'Đăng Bách','Nguyễn Ngọc Bảo Châu':'Bảo Châu','Vũ Đình Khánh':'Đình Khánh','Nguyễn Anh Khôi':'Dino','Tạ Ngọc Khuê':'Ngọc Khuê','Nguyễn Phương Linh':'Phương Linh','Đào Khánh Ngọc':'É','Phạm Minh Ngọc':'Minh Ngọc','Đặng Tâm Như':'Tâm Như','Nguyễn Hà Linh Phương':'Linh Phương','Dư Thanh Trà':'Bông','Doãn Minh Trí':'Minh Trí','Đinh Nguyễn Cát Tường':'Cát Tường','Nguyễn Hòa Vũ':'Hòa Vũ','Trần Bảo Vy':'Em Bé','Trương Thảo Vy':'Thảo Vy'}
-HP=['Nhận biết số','Đếm','Cộng','Trừ','So sánh']
-GN={'Counting5':'Đếm đến 5','Counting':'Đếm đến 10','AddNumber5Digit':'Cộng trong 5 (chữ số)','TongHopToan':'Tổng hợp Toán'}
-def lv(p): return 3 if p>=75 else 2 if p>=50 else 1 if p>=25 else 0
+out = []; rows = []; CALL = {}; HP = []; GN = {}; PERIOD = ''; F = {}
+def lv(p): return 3 if p>=F['cuts'][2] else 2 if p>=F['cuts'][1] else 1 if p>=F['cuts'][0] else 0
 LN=['Mức 1','Mức 2','Mức 3','Đạt mục tiêu']
 e=html.escape
 def radar(hp):
@@ -48,7 +46,7 @@ def radar(hp):
     return s
 
 def page(d):
-    name=d['name']; call=CALL[name]; hp=d['hp']; rs=[r for r in rows if r['kid']==name]
+    name=d['name']; call=d['alias'] or name; hp=d['hp']; rs=[r for r in rows if r['code']==d['code']]
     tot=d['toan']; n=d['n']
     tr=''
     for h in HP:
@@ -71,7 +69,7 @@ def page(d):
     for sid,v in sess.items():
         g=v[0]['game']; ok=sum(x['ok'] for x in v); okt=[x['t'] for x in v if x['ok'] and x['t']>=0.5]
         dots=''.join('<i class="%s" style="height:%dpx"></i>'%('' if x['ok'] else 'x',max(4,min(22,round(x['t']*1.6)))) for x in v)
-        sh+='<div class="srow"><div class="t"><b>%s</b><br><span class="muted">%s:%s - %d/%d đúng - TB %.1fs</span></div><div class="dots">%s</div></div>'%(GN[g],sid[11:13],sid[13:15],ok,len(v),sum(okt)/len(okt) if okt else 0,dots)
+        sh+='<div class="srow"><div class="t"><b>%s</b><br><span class="muted">%s:%s - %d/%d đúng - TB %.1fs</span></div><div class="dots">%s</div></div>'%(GN.get(g,g),sid[11:13],sid[13:15],ok,len(v),sum(okt)/len(okt) if okt else 0,dots)
     ps=[(h,hp[h]) for h in HP if h in hp]
     best=max(ps,key=lambda x:(x[1]['pt'],x[1]['n'])); worst=min(ps,key=lambda x:(x[1]['pt'],-x[1]['n']))
     allt=[x['t'] for x in rs if x['ok'] and x['t']>=0.5]; tm=sum(allt)/len(allt)
@@ -82,15 +80,15 @@ def page(d):
     ins+='<li><b>Tốc độ:</b> %s, TB %.1f giây/câu đúng</li>'%(sp,tm)
     miss=[h for h in HP if h not in hp]
     if miss: ins+='<li><b>Chưa có điểm:</b> %s</li>'%e(', '.join(miss))
-    gap=[(h,75-v['pt']) for h,v in ps if v['pt']<75]
-    goal='<dt>Điểm hiện tại</dt><dd class="num">%.0f</dd><dt>Điểm mục tiêu</dt><dd class="num">75</dd>'%tot
+    gap=[(h,F['cuts'][2]-v['pt']) for h,v in ps if v['pt']<F['cuts'][2]]
+    goal='<dt>Điểm hiện tại</dt><dd class="num">%.0f</dd><dt>Điểm mục tiêu</dt><dd class="num">%d</dd>'%(tot,F['cuts'][2])
     if gap:
         for h,g in sorted(gap,key=lambda x:-x[1]): goal+='<dt>Luyện %s</dt><dd class="num">+%.0f</dd>'%(h.lower(),g)
     else:
         goal+='<dt>Học phần đã chơi</dt><dd>đều đạt</dd>'
     low=[h for h,v in ps if v['low']]
     warns=[]
-    if n<15: warns.append('Chỉ %d câu tính điểm, kết quả mang tính tham khảo.'%n)
+    if n<F['few_total']: warns.append('Chỉ %d câu tính điểm, kết quả mang tính tham khảo.'%n)
     if low: warns.append('* Học phần dưới 10 câu: ít mẫu (%s).'%e(', '.join(low)))
     L=lv(tot)
     W=''.join('<div class="warn">'+w+'</div>' for w in warns)
@@ -98,14 +96,14 @@ def page(d):
   <div class="top"><img class="logo" src="logo.png" alt="EduXplore" height="58"><div class="dev">[Hồ sơ năng lực Toán] [Báo cáo theo buổi chơi]</div></div>
   <div class="idbar" style="grid-template-columns:1fr 1.8fr .9fr .8fr 1.4fr">
     <div><small>Mã HS</small><b>{d['code']}</b></div><div><small>Họ và tên</small><b>{e(name)}</b></div>
-    <div><small>Tên gọi</small><b>{e(call)}</b></div><div><small>Lớp</small><b>5 tuổi</b></div>
-    <div><small>Kỳ báo cáo</small><b class="num">08/10/2026</b></div></div>
+    <div><small>Tên gọi</small><b>{e(call)}</b></div><div><small>Lớp</small><b>{e(d['class'])}</b></div>
+    <div><small>Kỳ báo cáo</small><b class="num">{PERIOD}</b></div></div>
   <div class="cols"><div class="main">
-    <section><h2>Phân tích kỹ năng <small>điểm = 80 × tỉ lệ đúng × hệ số tốc độ</small></h2>
+    <section><h2>Phân tích kỹ năng <small>điểm = {F['base']:g} × tỉ lệ đúng × hệ số tốc độ</small></h2>
       <table><tr><th>Kỹ năng</th><th class="dk">Điểm</th><th>Đúng/Số câu</th><th>Chính xác (%)</th><th>Thời gian (giây)</th><th>Hệ số tốc độ</th><th style="width:92px">Mức</th></tr>{tr}</table>
       {W}</section>
-    <section><h2>Điểm từng học phần <small>mốc 25 / 50 / 75</small></h2>{bars}
-      <div class="legend"><b>25</b> Mức 2 - <b>50</b> Mức 3 - <b>75</b> Đạt mục tiêu</div></section>
+    <section><h2>Điểm từng học phần <small>mốc {F['cuts'][0]} / {F['cuts'][1]} / {F['cuts'][2]}</small></h2>{bars}
+      <div class="legend"><b>{F['cuts'][0]}</b> Mức 2 - <b>{F['cuts'][1]}</b> Mức 3 - <b>{F['cuts'][2]}</b> Đạt mục tiêu</div></section>
     <section><h2>Nhịp trả lời trong buổi <small>mỗi cột là một câu, cao = lâu, đỏ = sai</small></h2>{sh}</section>
   </div>
   <aside class="aside">
@@ -115,15 +113,19 @@ def page(d):
     <section><h2>Mục tiêu</h2><dl class="kv">{goal}</dl></section>
     <section><h2>Nhận xét</h2><ul class="ins">{ins}</ul></section>
   </aside></div>
-  <div class="foot"><span>Hệ số tốc độ: 1,25 nếu TB ≤ 5s, 1,0 nếu ≥ 20s, tuyến tính ở giữa. Điểm tối đa 100.</span><span>Dữ liệu một buổi (08/10/2026), chưa có xu hướng theo tháng.</span></div>
+  <div class="foot"><span>Hệ số tốc độ: {F['kmax']:g} nếu TB ≤ {F['tfast']:g}s, 1,0 nếu ≥ {F['tslow']:g}s, tuyến tính ở giữa. Điểm tối đa 100.</span><span>Kỳ báo cáo: {PERIOD}. Chưa có xu hướng theo tháng / chuẩn theo tuổi.</span></div>
 </main>'''
 
 def doc(pages,title):
     return '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>%s</title><style>%s</style></head><body>%s</body></html>'%(title,css,''.join(pages))
 
-ds=[d for d in out if 'toan' in d]
-os.makedirs('rep',exist_ok=True)
-for d in ds:
-    open('rep/%s.html'%d['code'],'w',encoding='utf8').write(doc([page(d)],'Hồ sơ Toán '+d['name']))
-open('rep/TatCa.html','w',encoding='utf8').write(doc([page(d) for d in ds],'Hồ sơ Toán 08-10-2026'))
-print(len(ds))
+def build(cfg_,out_,rows_,outdir,period):
+    """Ghi outdir/<mã>.html + TatCa.html (cần logo.png cạnh). Trả số phiếu."""
+    global out,rows,CALL,HP,GN,PERIOD,F
+    out,rows,HP,GN,PERIOD,F=out_,rows_,cfg_['hp_order'],cfg_['game_names'],period,cfg_['formula']
+    ds=[d for d in out if 'toan' in d]
+    os.makedirs(outdir,exist_ok=True)
+    for d in ds:
+        open(os.path.join(outdir,d['code']+'.html'),'w',encoding='utf8').write(doc([page(d)],'Hồ sơ Toán '+d['name']))
+    open(os.path.join(outdir,'TatCa.html'),'w',encoding='utf8').write(doc([page(d) for d in ds],'Hồ sơ Toán '+period))
+    return len(ds)

@@ -2,7 +2,7 @@
 
 > **TL;DR**: Báo cáo năng lực kiểu InBody (1 trang A4) dựng từ log raw của game. Học sinh định danh `CASA-YYNNN`; chỉ game chơi độc lập được tính điểm; điểm học phần = `min(100, 80 × %đúng × hệ số tốc độ)`; môn = TB học phần; TỔNG = TB môn. Tool web dựng báo cáo nằm ở `tool/`.
 > **Đọc khi**: sửa công thức điểm, thêm trường vào log phục vụ báo cáo, làm DB theo học sinh, chỉnh/dựng lại tool báo cáo.
-> **Cập nhật**: 2026-10-08 (tổng hợp từ phiên thiết kế; tool chạy trên dữ liệu mẫu, CHƯA thử với log thật từ máy K02)
+> **Cập nhật**: 2026-10-09 (thêm pipeline đọc Google Sheet; tool web vẫn chạy trên dữ liệu mẫu)
 
 ## Thư mục này
 
@@ -83,8 +83,8 @@ Mọi tham số chỉnh được trong mục 5 của tool: điểm gốc 80, h�
 ## Việc còn mở / cần làm
 
 1. **Lệch với ControlActivity**: `ScoreStore.java` (điểm hiện trên máy) vẫn chỉ tính `đúng ÷ đã chơi`, **chưa có tốc độ**. Muốn khớp với báo cáo thì phải sửa `ScoreStore.phanScores`/`scorePct` (+ nơi hiển thị) theo công thức mục 5. Hiện hai nơi cho hai con số khác nhau.
-2. **Log chưa đủ định danh**: Sheets `recognition`/`round_end` thiếu `deviceId`, `sessionId`, `studentId`; round không ghi cờ chế độ chơi (độc lập/2 người). Hiện tool suy ra từ `clicks`/`side`. Nên thêm vào phía Unity để khỏi phải đoán.
-3. **DB theo học sinh**: so sánh nhiều tháng cần log tích luỹ. Hướng đã thống nhất: sau khi nhận diện được học sinh và có dữ liệu từ Google Sheet online thì tách và ghép vào DB từng học sinh, lưu theo ID. Chưa làm; tool hiện chỉ đọc file import (config lưu `localStorage` của trình duyệt).
+2. **Định danh log**: đã thêm `deviceId`, `sessionId`, `rid` vào mọi dòng Sheet và đẩy đủ game độc lập qua `LogRound` (2026-10-09, xem `docs/sheets-report.md` mục "Khớp log online – local") — **chưa compile/test trên K02, chưa deploy Apps Script mới**. Vẫn chưa có `studentId` và cờ chế độ chơi (độc lập/2 người) trong log; pipeline dùng danh sách `scored_games`.
+3. **DB theo học sinh**: pipeline `tool/pipeline/` đọc thẳng Google Sheet, gán học sinh, gộp dồn vào `db/<mã>.jsonl` (lưu theo ID). Còn lại: tool web `bao-cao-nang-luc.html` chưa đọc DB này (vẫn import file); phiếu A4 từ pipeline chưa có xu hướng nhiều tháng.
 4. **Độ khó**: chưa dùng, coi mỗi game cùng một độ khó. Làm sau.
 5. **Chuẩn theo lứa tuổi**: chưa có; tạm dùng ngưỡng cố định 25/50/75 trên điểm.
 6. **Chưa làm trong tool**: biểu đồ lịch sử chỉ vẽ TỔNG (chưa vẽ riêng từng môn); "Mục tiêu" và "Nhận xét" gộp học phần của mọi môn.
@@ -101,4 +101,4 @@ Mọi tham số chỉnh được trong mục 5 của tool: điểm gốc 80, h�
 - **Ít mẫu**: học phần < 10 câu đánh `*`; bé < 15 câu tổng ghi "ÍT DỮ LIỆU"; học phần chưa chơi ghi "chưa có điểm" (không tính 0).
 - **Mã HS**: roster thật nằm trên K02 `/sdcard/EduXplore/roster.json` (bản backup 06/10 có 17 bé lớp 5 tuổi + lớp Dev, có `alias`). `CASA-21001..21017` xếp theo tên (chữ cuối) rồi họ đệm — **không** theo thứ tự ghi danh. Đặng Minh Anh (4 tuổi, alias Ỉn, add 06–07/10) = `CASA-22001`.
 - **Chưa có điểm** (log 08/10): Doãn Minh Trí, Nguyễn Hòa Vũ, Đặng Minh Anh.
-- Kết quả đầu ra (ngoài repo): `Downloads/GameLogs/KetQua_Toan_20261008.xlsx`, `Downloads/GameLogs/BaoCao_HS_20261008/*.pdf` (15 phiếu + file gộp). Phiếu một-ngày không có xu hướng tháng/chuẩn tuổi/TB lớp.
+- **Từ 2026-10-09** cùng kỳ này chạy lại được trực tiếp từ Google Sheet bằng `tool/pipeline/run.py` (xem `tool/pipeline/README.md`; đối chiếu Sheet–local ở đó). Kết quả đầu ra bản chạy từ file local (ngoài repo): `Downloads/GameLogs/KetQua_Toan_20261008.xlsx`, `Downloads/GameLogs/BaoCao_HS_20261008/*.pdf` (15 phiếu + file gộp). Phiếu một-ngày không có xu hướng tháng/chuẩn tuổi/TB lớp.

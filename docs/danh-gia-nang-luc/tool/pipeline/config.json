@@ -1,0 +1,193 @@
+{
+ "_doc": "Cấu hình pipeline đánh giá năng lực. Sửa file này, không sửa code. Xem README.md cùng thư mục.",
+ "sheet_csv_url": "https://docs.google.com/spreadsheets/d/13ywPIzwh_C0H4O5FAe9jMb9ubtx0ivDx4lL7wTwvGVs/export?format=csv&gid=0",
+ "mon": "Toán",
+ "roster": [
+  {
+   "code": "CASA-21001",
+   "name": "Ngô Quốc An",
+   "alias": "Quốc An",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21002",
+   "name": "Nguyễn Đăng Bách",
+   "alias": "Đăng Bách",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21003",
+   "name": "Nguyễn Ngọc Bảo Châu",
+   "alias": "Bảo Châu",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21004",
+   "name": "Vũ Đình Khánh",
+   "alias": "Đình Khánh",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21005",
+   "name": "Nguyễn Anh Khôi",
+   "alias": "Dino",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21006",
+   "name": "Tạ Ngọc Khuê",
+   "alias": "Ngọc Khuê",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21007",
+   "name": "Nguyễn Phương Linh",
+   "alias": "Phương Linh",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21008",
+   "name": "Đào Khánh Ngọc",
+   "alias": "É",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21009",
+   "name": "Phạm Minh Ngọc",
+   "alias": "Minh Ngọc",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21010",
+   "name": "Đặng Tâm Như",
+   "alias": "Tâm Như",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21011",
+   "name": "Nguyễn Hà Linh Phương",
+   "alias": "Linh Phương",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21012",
+   "name": "Dư Thanh Trà",
+   "alias": "Bông",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21013",
+   "name": "Doãn Minh Trí",
+   "alias": "Minh Trí",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21014",
+   "name": "Đinh Nguyễn Cát Tường",
+   "alias": "Cát Tường",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21015",
+   "name": "Nguyễn Hòa Vũ",
+   "alias": "Hòa Vũ",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21016",
+   "name": "Trần Bảo Vy",
+   "alias": "Em Bé",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-21017",
+   "name": "Trương Thảo Vy",
+   "alias": "Thảo Vy",
+   "class": "5 tuổi"
+  },
+  {
+   "code": "CASA-22001",
+   "name": "Đặng Minh Anh",
+   "alias": "Ỉn",
+   "class": "4 tuổi"
+  }
+ ],
+ "roster_note": "Mã theo roster K02 backup 06/10: lớp 5 tuổi xếp theo tên (chữ cuối) rồi họ đệm — KHÔNG theo thứ tự ghi danh. Thay bằng roster.json thật khi có (xem docs/danh-gia-nang-luc/README.md).",
+ "generic_names": [
+  "Player_1",
+  "Player_2",
+  "Player 1",
+  "Player 2",
+  "Blue_1",
+  "Red_1",
+  "?",
+  "",
+  "Red",
+  "Blue"
+ ],
+ "game_alias": {
+  "TongHopToanGame": "TongHopToan",
+  "DemQuaGame": "DemQua"
+ },
+ "scored_games": [
+  "Counting5",
+  "Counting",
+  "TongHopToan",
+  "AddNumber5Digit"
+ ],
+ "scored_note": "Chỉ game chơi độc lập mới tính điểm. DemQua/ChuCaiThuong bị loại (08/10: DemQua chỉ thử 1 loại quả; ChuCaiThuong là thi đấu). Thêm game vào đây sau khi xác nhận nó độc lập.",
+ "game_hp": {
+  "Counting5": "Đếm",
+  "Counting": "Đếm",
+  "AddNumber5Digit": "Cộng"
+ },
+ "tht_hp": {
+  "Recognize": "Nhận biết số",
+  "CountEasy": "Đếm",
+  "Count": "Đếm",
+  "Add": "Cộng",
+  "Sub": "Trừ",
+  "Sign": "So sánh"
+ },
+ "hp_order": [
+  "Nhận biết số",
+  "Đếm",
+  "Cộng",
+  "Trừ",
+  "So sánh"
+ ],
+ "game_names": {
+  "Counting5": "Đếm đến 5",
+  "Counting": "Đếm đến 10",
+  "AddNumber5Digit": "Cộng trong 5 (chữ số)",
+  "TongHopToan": "Tổng hợp Toán"
+ },
+ "min_valid_year": 2026,
+ "exclude_ranges": [
+  {
+   "from": "2026-10-08 00:00",
+   "to": "2026-10-08 15:46",
+   "why": "phiên thử nghiệm (bấm bừa 0,1s)"
+  }
+ ],
+ "min_rounds_per_session": 5,
+ "min_resp_sec": 0.5,
+ "recog_max_gap_sec": 600,
+ "session_gap_sec": 300,
+ "formula": {
+  "base": 80,
+  "kmax": 1.25,
+  "tfast": 5,
+  "tslow": 20,
+  "window": 50,
+  "cuts": [
+   25,
+   50,
+   75
+  ],
+  "low_sample": 10,
+  "few_total": 15
+ },
+ "name_priority": "schema",
+ "name_priority_note": "schema = tin tên trong dòng log dạng mới (có team), dòng GameLogger cũ dùng nhận diện gần nhất; app = luôn tin tên; recognition = luôn dùng nhận diện"
+}

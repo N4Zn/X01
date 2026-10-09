@@ -101,6 +101,9 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] `GameRegistry.cs`: (0,17)/(0,18) bị gán 2 lần (SubNumber5/SubNumber vs SoSanhSoChuSo/SoSanhSo2DauChuSo) → đổi index; index trống nhóm 0: 5, 7, 12 — (2026-10-08)
 
 ## Đánh giá năng lực học sinh (2026-10-08)
-- [ ] Mai: nhận log K02 bổ sung → chạy lại `docs/danh-gia-nang-luc/tool/pipeline/` (score→res→xl→gen), cập nhật Excel + phiếu A4; Minh Trí / Hòa Vũ / Minh Anh (`CASA-22001`) cần điểm — (2026-10-08)
+- [ ] Mai: nhận log K02 bổ sung → chạy `python -I -X utf8 docs/danh-gia-nang-luc/tool/pipeline/run.py --from <ngày> --to <ngày>` (đọc thẳng Google Sheet), cập nhật Excel + phiếu A4; Minh Trí / Hòa Vũ / Minh Anh (`CASA-22001`) cần điểm — (2026-10-08)
 - [ ] Kéo `roster.json` mới nhất từ K02 (backup 06/10 chưa có Minh Anh) để lấy alias/ngày sinh thật, kiểm lại mã `CASA-YYNNN` — (2026-10-08)
 - [ ] Log chưa đủ định danh/chế độ chơi (xem README mục "Việc còn mở"); đồng hồ K02 nhảy `2025-04-14` làm log lệch ngày — cân nhắc đồng bộ giờ lúc boot — (2026-10-08)
+- [ ] Build APK Unity rồi test K02: log Sheet mới (`deviceId/sessionId/rid`, mọi game độc lập đẩy qua `LogRound`, POST ≤200 dòng) — sau đó chạy `pipeline/compare_local.py` xem online = local (2026-10-09)
+- [ ] Dán `docs/apps-script/Code.gs` (hoặc sửa script hiện có map cột theo tên + loại trùng `rid`) vào Apps Script rồi Deploy → New version; kiểm tra Sheet có cột mới (2026-10-09)
+- [ ] Sheet đang để "ai có link đều xem" và chứa tên bé — cân nhắc khoá, tải CSV bằng tài khoản (2026-10-09)

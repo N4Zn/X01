@@ -200,21 +200,9 @@ public class GameLogger
             clicks                = new List<ClickRecord>()
         });
 
-        // Track E: đồng bộ Google Sheet liên tục — xem SheetsSyncManager.
-        SheetsSyncManager.Enqueue(new Dictionary<string, object>
-        {
-            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
-            {"eventType", "round_end"},
-            {"gameName", _gameName},
-            {"round", round},
-            {"questionId", questionId},
-            {"topic", topic},
-            {"side", team.ToString()},
-            {"playerName", playerName},
-            {"isCorrect", isCorrect},
-            {"winnerName", isCorrect ? playerName : ""},
-            {"responseTimeSec", responseTimeRounded},
-        });
+        // KHÔNG đẩy round_end lên Sheet ở đây: `playerName` của GameLogger là tên lúc vào ván (hay cũ/sai).
+        // Round độc lập được đẩy từ PlayerRecognitionService.LogRound (tên đã nhận diện, khớp log local) —
+        // xem TestTongHopController.PlayerLoop.
     }
 
     // ── Export ────────────────────────────────────────────────────────────────

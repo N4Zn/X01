@@ -833,7 +833,7 @@ public class TestTongHopController : MonoBehaviour
             // LogRound() thêm ở OnAnswerResult() không bao giờ chạy tới đây — xác nhận qua test
             // thật trên K02 (điểm 3-6 lên đúng nhưng panel live báo "chưa nhận diện được ai").
             PlayerRecognitionService.Instance.LogRound(playerIdx, roundNum,
-                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime, "", q.id, pushSheets: false);
+                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime, "", q.id, pushSheets: true, topic: q.topic ?? "");
 
             if (team == Team.Left) _leftRoundsCompleted++; else _rightRoundsCompleted++;
 

@@ -267,10 +267,10 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     /// recognized for that slot. Safe to call even if RecognizeSlot was never called for this slot
     /// (falls back to the current GameSessionManager display name).
     /// Trả về tên đã gán cho round (cùng tên ghi vào log local). pushSheets=false khi nơi gọi tự đẩy dòng
-    /// round_end lên Sheet (MiniGameControllerBase, GameLogger) — mặc định true để game cũ chỉ gọi LogRound
+    /// round_end lên Sheet (MiniGameControllerBase, GameLogger) — topic: môn/chủ đề của câu (nếu có). Mặc định true để game cũ chỉ gọi LogRound
     /// cũng có log online khớp log local.
     /// </summary>
-    public string LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "", bool pushSheets = true)
+    public string LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "", bool pushSheets = true, string topic = "")
     {
         string name = (slot == 0 || slot == 1) ? _lastName[slot] : null;
         // 1 vs 1: cả ván chỉ có 1 người mỗi bên → mọi round ghi tên người đang giữ chỗ, kể cả round không nhận ra ai.
@@ -315,7 +315,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         // Log online khớp log local: dòng round_end đẩy từ ĐÚNG dữ liệu vừa ghi vào file (cùng tên, slot, round).
         if (pushSheets)
         {
-            SheetsSyncManager.Enqueue(new Dictionary<string, object>
+            var row = new Dictionary<string, object>
             {
                 {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
                 {"eventType", "round_end"},
@@ -331,7 +331,9 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
                 {"answer", answer ?? ""},
                 {"correct", correct},
                 {"responseTimeSec", Math.Round(answerTimeSec, 2)},
-            });
+            };
+            if (!string.IsNullOrEmpty(topic)) row["topic"] = topic;
+            SheetsSyncManager.Enqueue(row);
         }
         return name;
     }
