@@ -1,6 +1,6 @@
 # Pipeline chấm điểm: Google Sheet → DB theo học sinh → Excel + phiếu A4
 
-> **Cập nhật**: 2026-10-09. Đọc log **trực tiếp từ Google Sheet** (không cần kéo file log về). Python 3.9+, chỉ cần `openpyxl` cho Excel.
+> **Cập nhật**: 2026-10-09 @ 3801ba44. Đọc log **trực tiếp từ Google Sheet** (không cần kéo file log về). Python 3.9+, chỉ cần `openpyxl` cho Excel.
 
 ## Dùng hằng ngày (link Sheet cũ, không cần sửa Apps Script)
 
