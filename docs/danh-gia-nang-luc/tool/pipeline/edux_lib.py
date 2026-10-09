@@ -26,8 +26,20 @@ def load_config(path=None):
 def fetch_csv(url_or_path):
     """URL (export csv) hoặc đường dẫn file .csv → list[dict]."""
     if re.match(r'https?://', url_or_path):
-        with urllib.request.urlopen(url_or_path, timeout=120) as r:
-            raw = r.read().decode('utf-8-sig')
+        raw = None
+        try:
+            with urllib.request.urlopen(url_or_path, timeout=20) as r:
+                raw = r.read().decode('utf-8-sig')
+        except Exception as e:  # một số máy Python bị treo SSL handshake trong khi curl vẫn tải được
+            print('urllib lỗi (%s) - thử curl' % type(e).__name__)
+            import subprocess
+            import tempfile
+            tmp = os.path.join(tempfile.gettempdir(), 'edux_sheet.csv')
+            subprocess.run(['curl', '-sL', '--max-time', '180', '-o', tmp, url_or_path], check=True)
+            with open(tmp, encoding='utf-8-sig') as f:
+                raw = f.read()
+        if raw.lstrip().lower().startswith('<!doctype html') or '<html' in raw[:200].lower():
+            raise RuntimeError('Sheet không trả về CSV (có thể chưa mở quyền xem bằng link): %s' % url_or_path)
     else:
         with open(url_or_path, encoding='utf-8-sig') as f:
             raw = f.read()

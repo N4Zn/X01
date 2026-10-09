@@ -2,6 +2,13 @@
 
 > **Cập nhật**: 2026-10-09. Đọc log **trực tiếp từ Google Sheet** (không cần kéo file log về). Python 3.9+, chỉ cần `openpyxl` cho Excel.
 
+## Dùng hằng ngày (link Sheet cũ, không cần sửa Apps Script)
+
+Bấm đúp **`chay.bat`** (báo cáo hôm nay) hoặc `chay.bat 2026-10-09` (ngày khác). Tool tải CSV từ link Sheet trong `config.json`, lọc trùng/rác, gán bé, chấm điểm, ra `ketqua\<ngày>\`: `KetQua_Toán_<ngày>.xlsx`, `BaoCao_TatCa_<ngày>.pdf` (mỗi bé 1 trang A4), `pdf\<mã>_<tên>.pdf` từng bé. Cần Python 3 + `pip install openpyxl` + Chrome/Edge (in PDF). ~45 giây.
+
+Đọc thông báo cuối khi chạy: **⚠ tên ngoài lớp ≥5 round** (bé mới chưa có trong `roster` → thêm vào `config.json`), **⚠ dòng sai đồng hồ** (K02 chưa đồng bộ giờ lúc mở máy → các dòng đó bị bỏ), "Loại khi tính điểm".
+Với app/Sheet cũ: game `AddNumber5Digit`/`ChuCaiThuong` không có trên Sheet (không tính được điểm Cộng từ game đó); `Counting`/`Counting5` gán bé theo nhận diện gần nhất (~79% khớp).
+
 ## Chạy
 
 ```bash
