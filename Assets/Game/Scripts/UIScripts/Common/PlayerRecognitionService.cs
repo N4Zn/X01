@@ -103,6 +103,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         _gen[0]++; _gen[1]++;
         for (int s = 0; s < 2; s++) SetSessionName(s, DefaultName(s));
         _sessionFileName = $"{DateTime.Now:yyyy-MM-dd_HHmmss}_{gameName}.json";
+        // Mọi dòng Sheet sau đây mang sessionId = tên file log local → ghép 1-1 với file trên máy.
+        SheetsSyncManager.CurrentSessionId = Path.GetFileNameWithoutExtension(_sessionFileName);
     }
 
     /// <summary>
@@ -264,8 +266,11 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     /// question text, given answer, correct/wrong, and time taken — merged with whoever was last
     /// recognized for that slot. Safe to call even if RecognizeSlot was never called for this slot
     /// (falls back to the current GameSessionManager display name).
+    /// Trả về tên đã gán cho round (cùng tên ghi vào log local). pushSheets=false khi nơi gọi tự đẩy dòng
+    /// round_end lên Sheet (MiniGameControllerBase, GameLogger) — mặc định true để game cũ chỉ gọi LogRound
+    /// cũng có log online khớp log local.
     /// </summary>
-    public void LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "")
+    public string LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "", bool pushSheets = true)
     {
         string name = (slot == 0 || slot == 1) ? _lastName[slot] : null;
         // 1 vs 1: cả ván chỉ có 1 người mỗi bên → mọi round ghi tên người đang giữ chỗ, kể cả round không nhận ra ai.
@@ -306,6 +311,29 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         // Đẩy từng round sang ControlActivity (tính điểm 50 round gần nhất + lịch sử chi tiết từng câu).
         GameControlBridge.Instance?.PushRound(name, recognized, _currentGameName ?? "Unknown", slot == 0 ? "left" : "right",
             round, questionId ?? "", question ?? "", answer ?? "", correctAnswer ?? "", correct, (float)Math.Round(answerTimeSec, 2));
+
+        // Log online khớp log local: dòng round_end đẩy từ ĐÚNG dữ liệu vừa ghi vào file (cùng tên, slot, round).
+        if (pushSheets)
+        {
+            SheetsSyncManager.Enqueue(new Dictionary<string, object>
+            {
+                {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
+                {"eventType", "round_end"},
+                {"gameName", _currentGameName ?? "Unknown"},
+                {"gameVariant", GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : ""},
+                {"slot", slot},
+                {"team", slot == 0 ? "Left" : "Right"},
+                {"playerName", name},
+                {"recognized", recognized},
+                {"round", round},
+                {"questionId", questionId ?? ""},
+                {"question", question ?? ""},
+                {"answer", answer ?? ""},
+                {"correct", correct},
+                {"responseTimeSec", Math.Round(answerTimeSec, 2)},
+            });
+        }
+        return name;
     }
 
     /// <summary>Điểm/số liệu gộp theo TỪNG người chơi thật (tên nhận diện được) trong 1 bên

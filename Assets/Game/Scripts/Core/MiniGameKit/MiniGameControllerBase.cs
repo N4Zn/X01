@@ -669,15 +669,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         string questionDesc = DescribeQuestionForLog(q);
         string answerDesc = DescribeAnswerForLog(q, playerAnswer);
         string correctDesc = DescribeCorrectForLog(q);
-        PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec, correctDesc, q != null ? q.id : "");
+        // LogRound trả về tên đã gán cho round (cùng tên trong log local) → dòng Sheet dùng đúng tên đó.
+        string playerName = PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec, correctDesc, q != null ? q.id : "", pushSheets: false);
 
         // Track E: đồng bộ Google Sheet liên tục — điểm chèn DUY NHẤT này phủ được mọi game
         // dựng trên MiniGameKit (không cần sửa từng subclass). Xem SheetsSyncManager.
         // eventType + playerName: thiếu ở bản trước — mọi log khác (GameLogger, PlayerRecognitionService)
         // đều có 2 field này, thiếu khiến cột eventType trống, không lọc/nhận biết được ai trả lời.
-        string playerName = GameSessionManager.Instance != null && GameSessionManager.Instance.Players.Count > slot
-            ? GameSessionManager.Instance.Players[slot].PlayerName
-            : (team == Team.Left ? "Player 1" : "Player 2");
         SheetsSyncManager.Enqueue(new Dictionary<string, object>
         {
             {"timestamp", System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},

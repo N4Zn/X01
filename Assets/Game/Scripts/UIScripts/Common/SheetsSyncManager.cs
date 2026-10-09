@@ -30,6 +30,28 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
         public string webAppUrl = "";
         public bool enabled = true;
         public float intervalSeconds = 3f;
+        // Tên máy hiển thị trên Sheet (vd "K02-01"). Rỗng = lấy mã thiết bị Android rút gọn.
+        public string deviceId = "";
+    }
+
+    // Mỗi POST tối đa bấy nhiêu dòng: gửi bù hàng nghìn dòng trong 1 request làm Apps Script chạy quá
+    // timeout, app tưởng lỗi và gửi lại → Sheet bị trùng dòng (từng gặp: ~80% dòng trùng).
+    private const int MaxRowsPerPost = 200;
+    private const int PostTimeoutSec = 30;
+
+    /// <summary>Mã phiên (= tên file log local, do PlayerRecognitionService.BeginGameSession đặt).</summary>
+    public static string CurrentSessionId = "";
+
+    static string _deviceId;
+    static string DeviceId
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(_deviceId)) return _deviceId;
+            string id = SystemInfo.deviceUniqueIdentifier ?? "";
+            _deviceId = id.Length > 8 ? id.Substring(0, 8) : (id.Length > 0 ? id : "unknown");
+            return _deviceId;
+        }
     }
 
     private const string ConfigFileName = "sheets_sync_config.json";
@@ -118,6 +140,7 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
                 return;
             }
             _config = JsonUtility.FromJson<SyncConfig>(File.ReadAllText(path));
+            if (!string.IsNullOrEmpty(_config.deviceId)) _deviceId = _config.deviceId;
             Debug.Log($"[SheetsSyncManager] LoadConfig: enabled={_config.enabled} interval={_config.intervalSeconds}s "
                 + $"url={(string.IsNullOrEmpty(_config.webAppUrl) ? "(CHƯA SET)" : "đã set")}");
         }
@@ -137,6 +160,11 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
     /// background thread).</summary>
     public static void Enqueue(Dictionary<string, object> row)
     {
+        // Gắn chung cho MỌI dòng: máy, phiên, và rid (mã duy nhất của dòng — dòng gửi lại do mạng chập chờn
+        // vẫn mang cùng rid nên Apps Script / tool có thể loại trùng).
+        if (!row.ContainsKey("deviceId")) row["deviceId"] = DeviceId;
+        if (!row.ContainsKey("sessionId")) row["sessionId"] = CurrentSessionId ?? "";
+        if (!row.ContainsKey("rid")) row["rid"] = System.Guid.NewGuid().ToString("N").Substring(0, 12);
         string json = EncodeJsonObject(row);
         lock (Lock) { PendingRowsJson.Add(json); }
         AppendPending(json);
@@ -153,8 +181,9 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
             lock (Lock)
             {
                 if (PendingRowsJson.Count == 0) continue;
-                batch = new List<string>(PendingRowsJson);
-                PendingRowsJson.Clear();
+                int take = Mathf.Min(MaxRowsPerPost, PendingRowsJson.Count);
+                batch = PendingRowsJson.GetRange(0, take);
+                PendingRowsJson.RemoveRange(0, take);
             }
 
             string payload = "{\"rows\":[" + string.Join(",", batch) + "]}";
@@ -170,7 +199,7 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
             req.uploadHandler = new UploadHandlerRaw(body);
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");
-            req.timeout = 10;
+            req.timeout = PostTimeoutSec;
             yield return req.SendWebRequest();
 
 #if UNITY_2020_1_OR_NEWER

@@ -450,7 +450,7 @@ public class TestTongHopController : MonoBehaviour
         {
             int failSlot = team == Team.Left ? 0 : 1;
             PlayerRecognitionService.Instance.LogRound(failSlot, LogRoundNumber(team), DescribeQuestion(_currentQuestion),
-                "(trả lời sai)", false, Time.time - _questionStartTime, "", _currentQuestion.id);
+                "(trả lời sai)", false, Time.time - _questionStartTime, "", _currentQuestion.id, pushSheets: false);
         }
         MusicManager.Instance?.PlayWrongSfx();
         ShowWrongIcon(team);
@@ -477,7 +477,7 @@ public class TestTongHopController : MonoBehaviour
         if (_loggedThisRound.Add(team))
             PlayerRecognitionService.Instance.LogRound(slot, LogRoundNumber(team),
                 DescribeQuestion(_currentQuestion), DescribeGivenAnswer(_currentQuestion, playerAnswer), isCorrect, responseTime,
-                "", _currentQuestion?.id ?? "");
+                "", _currentQuestion?.id ?? "", pushSheets: false);
 
         _lastCorrect = isCorrect;
         _lastTeam    = team;
@@ -833,7 +833,7 @@ public class TestTongHopController : MonoBehaviour
             // LogRound() thêm ở OnAnswerResult() không bao giờ chạy tới đây — xác nhận qua test
             // thật trên K02 (điểm 3-6 lên đúng nhưng panel live báo "chưa nhận diện được ai").
             PlayerRecognitionService.Instance.LogRound(playerIdx, roundNum,
-                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime, "", q.id);
+                DescribeQuestion(q), DescribeGivenAnswer(q, givenAnswer), isCorrect, indAnswerTime, "", q.id, pushSheets: false);
 
             if (team == Team.Left) _leftRoundsCompleted++; else _rightRoundsCompleted++;
 
