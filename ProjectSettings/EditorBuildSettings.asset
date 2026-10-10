@@ -182,5 +182,23 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/FloorStory/DongHoKhongLo.unity
     guid: c8ad21f63e2b3384e9f082cae132a0d9
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/TrungMauSac.unity
+    guid: 13128938991500f4d9cf2d01c65c1540
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/HinhDonGian.unity
+    guid: 973dd62a89eb1a642b032628c6d19404
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/NhoChuoiHinh.unity
+    guid: f71b08a016c07da49bd37cc04b1acdba
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/LatTheNhoGiong.unity
+    guid: 0f6b7db56f901ff4ba79c6daca9bd37f
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/NangNhe.unity
+    guid: c17ec719088237a4ea17d9cdcc4078a4
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/DemKhoiHop.unity
+    guid: 00000000000000000000000000000000
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

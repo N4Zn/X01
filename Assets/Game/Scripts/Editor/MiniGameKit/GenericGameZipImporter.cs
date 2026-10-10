@@ -53,6 +53,17 @@ public static class GenericGameZipImporter
     static void ImportAll(string[] zips)
     {
         if (zips.Length == 0) { Debug.LogWarning("[GenericGameZipImporter] Không có file .zip nào."); return; }
+        // Gói thay ảnh FloorStory (meta.kind = "floorstory") đi đường riêng — không tạo scene GenericGame.
+        var generic = new List<string>();
+        foreach (var z in zips)
+        {
+            if (!FloorStoryPackImporter.IsPack(z)) { generic.Add(z); continue; }
+            try { int n = FloorStoryPackImporter.ImportZip(z); Debug.Log($"[FloorStoryPack] {Path.GetFileName(z)}: {n} ảnh thay thế."); }
+            catch (Exception e) { Debug.LogError($"[FloorStoryPack] Lỗi import '{z}': {e}"); }
+        }
+        AssetDatabase.Refresh();
+        zips = generic.ToArray();
+        if (zips.Length == 0) return;
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
         if (!File.Exists(MiniGameSceneBuilderHelpers.ToAbsolutePath(TemplateScene)))
             GenericGamePlayerSceneBuilder.BuildScene(); // scene mẫu chưa có → dựng 1 lần

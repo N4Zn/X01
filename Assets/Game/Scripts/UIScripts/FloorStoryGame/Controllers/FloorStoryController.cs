@@ -33,7 +33,13 @@ public class FloorStoryController : MiniGameControllerBase
         if (backButton != null) backButton.onClick.AddListener(GoBackToMenu);
 
         string game = !string.IsNullOrEmpty(gameName) ? gameName : GameSessionManager.ResolveActiveGameName("NgayCuaBe");
-        var ctx = new StoryContext { runner = this, voice = voiceSource };
+        StoryUI.PackGame = game;   // ảnh thay thế của gói zip: Resources/StoryPack/<game>/...
+        var ctx = new StoryContext
+        {
+            runner = this, voice = voiceSource,
+            sharedSeed = Environment.TickCount & 0xFFFFF,
+            addPoint = t => ScoreManager?.AddPoint(t),
+        };
         _left = CreateWorld(game);
         _right = CreateWorld(game);
         _left.Init(ctx, leftWorldRoot, Team.Left);
@@ -56,6 +62,12 @@ public class FloorStoryController : MiniGameControllerBase
             case "DatDoVaoCho": return new DatDoWorld();
             case "DongHoKhongLo": return new DongHoKhongLoWorld();
             case "CongHinh":   return new CongHinhWorld();
+            case "TrungMauSac":   return new TrungMauWorld();
+            case "HinhDonGian":   return new HinhDonGianWorld();
+            case "NhoChuoiHinh":  return new NhoChuoiHinhWorld();
+            case "LatTheNhoGiong": return new LatTheWorld();
+            case "NangNhe":       return new NangNheWorld();
+            case "DemKhoiHop":    return new DemKhoiWorld();
             default:
                 Debug.LogWarning($"[FloorStory] Không biết game '{game}', dùng NgayCuaBe.");
                 return new NgayCuaBeWorld();
@@ -80,12 +92,31 @@ public class FloorStoryController : MiniGameControllerBase
             rightWorldRoot.gameObject.SetActive(true);
         }
         var world = team == Team.Left ? _left : _right;
+        int mine = team == Team.Left ? 0 : 1, other = 1 - mine;
+        int taskIdx = _begun[mine]++;      // lượt thứ taskIdx (0-based) của đội này
         bool finished = false;
-        world.BeginTask(q, (correct, answer) =>
+        Action begin = () => world.BeginTask(q, (correct, answer) =>
         {
             if (finished) return;
             finished = true;
+            _finished[mine]++;
             onDone(correct, team, answer);
         });
+
+        // Chế độ chung: lượt k chỉ bắt đầu khi đội kia đã xong k lượt (đội xong trước chờ). Giữ BeginTask chứ không giữ onDone
+        // để thời gian trả lời ghi log vẫn đúng.
+        if (!world.Synchronized || _finished[other] >= taskIdx) begin();
+        else StartCoroutine(WaitPartner(world, other, taskIdx, begin));
+    }
+
+    readonly int[] _begun = new int[2];
+    readonly int[] _finished = new int[2];
+
+    System.Collections.IEnumerator WaitPartner(StoryWorld world, int other, int taskIdx, Action begin)
+    {
+        world.SetWaiting(true);
+        while (_finished[other] < taskIdx) yield return null;
+        world.SetWaiting(false);
+        begin();
     }
 }

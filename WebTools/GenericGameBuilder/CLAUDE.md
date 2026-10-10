@@ -36,6 +36,10 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - Chưa port: hold 1.8s ở spawn flow / SumToTarget; chưa test trong Editor (game mẫu `GhepAnhConThieu`).
 - File reveal gốc là fork của bản cũ — KHÔNG ghi đè builder bằng nó (mất `waitBothTeams`, chữ số viền, `effFx` gộp từng phần).
 
+## Chế độ gói FloorStory (2026-10-10)
+- Zip có `meta.kind="floorstory"` + `meta.floorStory.images[]` (`{key,label,group,file,default}`) → body có class `fs-mode`: ẩn `main`/Chơi thử/Lưu thành, hiện `#fsPanel` (thẻ ảnh: Thay ảnh, kéo-thả, ↺ Gốc, Đặt lại tất cả). Code: khối "Gói FloorStory" trước `importGamePackage` (`fsPack/fsReplace/renderFsPanel/updateFsMode`). Thay ảnh = `fileToAsset(file,'fs')` rồi gán `img.file`; `file===default` = chưa thay.
+- Xuất dùng `doExport` bình thường (meta giữ nguyên). Round/layout rỗng mặc định — Unity bỏ qua. Tạo gói: `Tools/floorstory_pack/make_packs.py`; import: Unity `FloorStoryPackImporter`. Chi tiết `docs/floor-story-game.md`.
+
 ## Wait-to-do (làm sau, chưa ưu tiên)
 - [ ] **Safari: chưa chơi thử (Play/preview) được** — builder chạy trên trình duyệt Safari không vào được chế độ chơi thử. Chưa điều tra nguyên nhân (nghi: autoplay audio bị chặn, `requestAnimationFrame`/API chưa hỗ trợ, hoặc cú pháp JS/CSS Safari không nhận). Khi làm: test trên Safari thật (macOS/iOS), mở Web Inspector xem lỗi Console. Hiện dùng Chrome/Edge.
 

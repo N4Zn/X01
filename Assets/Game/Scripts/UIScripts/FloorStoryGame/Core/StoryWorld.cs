@@ -50,6 +50,41 @@ public abstract class StoryWorld
 
     protected Coroutine Run(IEnumerator e) => ctx.Run(e);
 
+    /// <summary>true = chế độ CHUNG: 2 đội cùng 1 câu (cùng seed), đội xong trước phải chờ đội kia xong mới sang câu tiếp
+    /// (controller giữ BeginTask của lượt sau). Mặc định false = mỗi đội nhịp riêng.</summary>
+    public virtual bool Synchronized => false;
+
+    int _taskNo;
+
+    /// <summary>Random của lượt hiện tại — cùng seed ở cả 2 đội (ctx.sharedSeed + số thứ tự lượt), dùng khi Synchronized
+    /// để 2 bên ra CÙNG câu hỏi. Gọi đúng 1 lần ở đầu BeginTask.</summary>
+    protected System.Random NextTaskRng()
+    {
+        _taskNo++;
+        return new System.Random(ctx.sharedSeed * 7919 + _taskNo * 104729);
+    }
+
+    Text _waitLabel;
+
+    /// <summary>Hiện/ẩn "Chờ bạn nhé..." khi đội này xong trước (chế độ Synchronized).</summary>
+    public void SetWaiting(bool on)
+    {
+        if (on)
+        {
+            if (_waitLabel != null) return;
+            _waitLabel = StoryUI.Label(root, "Chờ bạn nhé...", 34, StoryUI.Hex("#FFE27A"), P(0.5f, 0.045f), new Vector2(W * 0.8f, H * 0.09f));
+            _waitLabel.transform.SetAsLastSibling();
+        }
+        else if (_waitLabel != null)
+        {
+            UnityEngine.Object.Destroy(_waitLabel.gameObject);
+            _waitLabel = null;
+        }
+    }
+
+    /// <summary>Cộng điểm trực tiếp cho đội này (game tự chấm nhiều điểm trong 1 lượt, vd mỗi cặp thẻ).</summary>
+    protected void AddPoint() => ctx.addPoint?.Invoke(team);
+
     /// <summary>Điền các field chung cho log.</summary>
     protected static void Describe(QuestionData info, string id, string topic, string description, string[] answers, int correct)
     {

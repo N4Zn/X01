@@ -7,10 +7,12 @@ using UnityEditor;
 public class FloorStoryTextureImportProcessor : AssetPostprocessor
 {
     const string WatchedFolder = "/Resources/Story/";
+    const string PackFolder = "/Resources/StoryPack/";   // ảnh thay thế từ gói zip (FloorStoryPackImporter)
 
     void OnPreprocessTexture()
     {
-        if (!assetPath.Replace('\\', '/').Contains(WatchedFolder)) return;
+        string ap = assetPath.Replace('\\', '/');
+        if (!ap.Contains(WatchedFolder) && !ap.Contains(PackFolder)) return;
 
         var importer = (TextureImporter)assetImporter;
         importer.textureType = TextureImporterType.Sprite;

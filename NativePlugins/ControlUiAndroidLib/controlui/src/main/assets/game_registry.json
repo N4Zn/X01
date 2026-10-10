@@ -67,6 +67,12 @@
     {"name": "CauBacQua", "displayName": "Dài – ngắn, to – bé", "group": "Thử nghiệm", "sceneName": "CauBacQua", "category": 0},
     {"name": "DatDoVaoCho", "displayName": "Đặt đồ vào chỗ (trên, dưới, trái, phải)", "group": "Thử nghiệm", "sceneName": "DatDoVaoCho", "category": 0},
     {"name": "DongHoKhongLo", "displayName": "Đồng hồ khổng lồ", "group": "Thử nghiệm", "sceneName": "DongHoKhongLo", "category": 0},
-    {"name": "CongHinh", "displayName": "Cổng hình", "group": "Thử nghiệm", "sceneName": "CongHinh", "category": 0}
+    {"name": "CongHinh", "displayName": "Cổng hình", "group": "Thử nghiệm", "sceneName": "CongHinh", "category": 0},
+    {"name": "TrungMauSac", "displayName": "Trứng màu sắc", "group": "Thử nghiệm", "sceneName": "TrungMauSac", "category": 0},
+    {"name": "HinhDonGian", "displayName": "Nhận biết hình đơn giản", "group": "Thử nghiệm", "sceneName": "HinhDonGian", "category": 0},
+    {"name": "NhoChuoiHinh", "displayName": "Nhớ chuỗi hình", "group": "Thử nghiệm", "sceneName": "NhoChuoiHinh", "category": 0},
+    {"name": "LatTheNhoGiong", "displayName": "Lật thẻ giống nhau", "group": "Thử nghiệm", "sceneName": "LatTheNhoGiong", "category": 0},
+    {"name": "NangNhe", "displayName": "Nặng hay nhẹ", "group": "Thử nghiệm", "sceneName": "NangNhe", "category": 0},
+    {"name": "DemKhoiHop", "displayName": "Đếm khối hộp", "group": "Thử nghiệm", "sceneName": "DemKhoiHop", "category": 0}
   ]
 }

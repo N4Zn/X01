@@ -48,18 +48,33 @@ public static class StoryUI
 
     static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
 
-    /// <summary>Tải sprite từ Resources (null nếu chưa có ảnh). Chấp nhận cả texture chưa đặt kiểu Sprite.</summary>
+    /// <summary>Tên game đang chạy (= tên scene). Ảnh trong `Resources/StoryPack/&lt;PackGame&gt;/&lt;path&gt;` (từ gói zip thay ảnh) thắng ảnh gốc.</summary>
+    public static string PackGame = "";
+
+    /// <summary>Tải sprite từ Resources (null nếu chưa có ảnh). Ưu tiên ảnh thay thế của gói (StoryPack/&lt;game&gt;/&lt;path&gt;, rồi StoryPack/_all/&lt;path&gt;).</summary>
     public static Sprite Load(string path)
     {
         if (string.IsNullOrEmpty(path)) return null;
-        if (Sprites.TryGetValue(path, out var s) && s != null) return s;
+        if (!string.IsNullOrEmpty(PackGame))
+        {
+            var o = LoadRaw("StoryPack/" + PackGame + "/" + path) ?? LoadRaw("StoryPack/_all/" + path);
+            if (o != null) return o;
+        }
+        return LoadRaw(path);
+    }
+
+    /// <summary>Tải sprite từ Resources (null nếu chưa có ảnh). Chấp nhận cả texture chưa đặt kiểu Sprite.</summary>
+    static Sprite LoadRaw(string path)
+    {
+        // Cache cả kết quả "không có ảnh" (null thật) để khỏi Resources.Load lặp lại mỗi lượt; sprite đã bị huỷ thì tải lại.
+        if (Sprites.TryGetValue(path, out var s) && (s != null || ReferenceEquals(s, null))) return s;
         s = Resources.Load<Sprite>(path);
         if (s == null)
         {
             var t = Resources.Load<Texture2D>(path);
             if (t != null) s = Sprite.Create(t, new Rect(0, 0, t.width, t.height), new Vector2(0.5f, 0.5f), 100f);
         }
-        if (s != null) Sprites[path] = s;
+        Sprites[path] = s;
         return s;
     }
 
@@ -342,6 +357,10 @@ public sealed class StoryContext
 {
     public MonoBehaviour runner;
     public AudioSource voice;
+    /// <summary>Seed chung của 2 đội (cho game Synchronized ra cùng câu hỏi).</summary>
+    public int sharedSeed;
+    /// <summary>Cộng 1 điểm cho đội (ScoreManager.AddPoint).</summary>
+    public Action<Team> addPoint;
 
     public Coroutine Run(IEnumerator e) => runner != null ? runner.StartCoroutine(e) : null;
 

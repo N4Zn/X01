@@ -196,6 +196,13 @@ public static class GameRegistry
         Set(0, 27, "CauBacQua", "Dài – ngắn, to – bé", "CauBacQua", Engine.MiniGameKit, group: "Thử nghiệm");
         Set(0, 28, "DatDoVaoCho", "Đặt đồ vào chỗ (trên, dưới, trái, phải)", "DatDoVaoCho", Engine.MiniGameKit, group: "Thử nghiệm");
         Set(0, 29, "DongHoKhongLo", "Đồng hồ khổng lồ", "DongHoKhongLo", Engine.MiniGameKit, group: "Thử nghiệm");
+        // Bé 3 tuổi
+        Set(0, 30, "TrungMauSac", "Trứng màu sắc", "TrungMauSac", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 31, "HinhDonGian", "Nhận biết hình đơn giản", "HinhDonGian", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 32, "NhoChuoiHinh", "Nhớ chuỗi hình", "NhoChuoiHinh", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 33, "LatTheNhoGiong", "Lật thẻ giống nhau", "LatTheNhoGiong", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 34, "NangNhe", "Nặng hay nhẹ", "NangNhe", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 35, "DemKhoiHop", "Đếm khối hộp", "DemKhoiHop", Engine.MiniGameKit, group: "Thử nghiệm");
 
         // <GENERIC-GAMES>
     }
