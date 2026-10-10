@@ -92,7 +92,7 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Launcher, Quản lý lớp, FaceEnroll | `docs/launcher-roster.md` |
 | Log/report/Google Sheets | `docs/sheets-report.md` |
 | Báo cáo đánh giá năng lực học sinh (công thức điểm, mã HS, tool dựng báo cáo) | `docs/danh-gia-nang-luc/README.md` |
-| Game FloorStory (Ngày của bé, Hình học, Bé khỏe mạnh, Vỡ bóng bay, Sàn kỳ diệu, Dài-ngắn, Trên-dưới, Đồng hồ khổng lồ) | `docs/floor-story-game.md` |
+| Game FloorStory (Ngày của bé, Hình học, Bé khỏe mạnh, Vỡ bóng bay, Sàn kỳ diệu, Dài-ngắn, Trên-dưới, Đồng hồ khổng lồ) | `docs/floor-story-game.md`, `docs/floor-story-mechanics.md` (web builder "flow") |
 | Import zip GenericGame, scene riêng | `docs/generic-game-import.md`, `WebTools/GenericGameBuilder/CLAUDE.md` |
 | Build `.aar` (Android modules) | `/build-aar` hoặc `sh Tools/build-aar.sh changed`, `handoff/build-aar.md` |
 | Giao thức Java↔Unity (message, JSON settings) | `docs/contracts/java-unity-bridge.md` |
@@ -119,3 +119,4 @@ Dự án web riêng, ghi chú đầy đủ tại `WebTools/GenericGameBuilder/CL
 - 2026-09: Track A K02 dual-display + LiDAR touch; Launcher riêng; Quản lý lớp; calib vùng tương tác.
 - 2026-10-03: GenericGame import zip → scene riêng; lớp/điểm thật (hết mock); USB/audio K02 cấu hình bằng root.
 - 2026-10-04: settings chuyển sang ControlActivity (JSON contract); wait-clear dùng chung; đóng băng 7 game; chuẩn hoá docs (tách CLAUDE.md), LFS, workflow agent (`AGENTS.md`, `handoff/`).
+- 2026-10-10: FloorStory "flow" — 16 game thành dữ liệu zip, web builder dựng/chơi thử/xuất, Unity có engine C# + importer (chưa chạy Editor); ADR 0007.

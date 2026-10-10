@@ -107,6 +107,18 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] TongHopToan: mỗi bên câu riêng (đếm/cộng/trừ/dấu), chỉ ẩn kết quả C, đếm 6-10 ở đoạn 3; thử trên K02 — `ButtonDisplay.SetupPerTeam` + hook `QuestionForTeam` ở MiniGameControllerBase — (2026-10-09)
 - [ ] Thứ trong tuần + chữ cái: chờ user chọn phương án (đã bỏ Tàu 7 toa và Đi nét chữ) — (2026-10-09)
 
+## FloorStory flow — zip game (2026-10-10) — Unity chưa chạy, mới compile-check Roslyn + test parity logic
+- [ ] Mở Unity compile ; **Tools → FloorStoryGame → Import Pack Zips** thư mục ; mở  Play từng game, so với web (hiển thị/hoạt hình C# chưa ai nhìn) — (2026-10-10)
+- [ ]  là game mới: import tự đăng ký registry → build lại aar (JAVA_HOME=/c/Program Files/Android/Android Studio/jbr
+Module cần build:controlui
+Tiền điều kiện OK.
+>>> Build controlui (:controlui:assembleRelease)
+    OK: Assets/Plugins/Android/controlui-release.aar (1638255 byte)
+
+XONG. Gợi ý: git add Assets/Plugins/Android/controlui-release.aar   (aar vào LFS tự động) — rồi build lại APK trong Unity.), test K02 — (2026-10-10)
+- [ ] Flow chưa có giọng đọc; khác world cũ: HinhHoc (khung nét đứt), TrungMauSac (nở nốt trứng còn lại), VoBongBay (bóng bay lên) — (2026-10-10)
+- [ ] Thay world code tay bằng flow hẳn (xoá  + ) sau khi flow ổn trên K02 — (2026-10-10)
+
 ## Đánh giá năng lực học sinh (2026-10-08)
 - [ ] Mai: nhận log K02 bổ sung → chạy `python -I -X utf8 docs/danh-gia-nang-luc/tool/pipeline/run.py --from <ngày> --to <ngày>` (đọc thẳng Google Sheet), cập nhật Excel + phiếu A4; Minh Trí / Hòa Vũ / Minh Anh (`CASA-22001`) cần điểm — (2026-10-08)
 - [ ] Kéo `roster.json` mới nhất từ K02 (backup 06/10 chưa có Minh Anh) để lấy alias/ngày sinh thật, kiểm lại mã `CASA-YYNNN` — (2026-10-08)
