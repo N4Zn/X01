@@ -58,7 +58,7 @@ public static class FloorStoryPackImporter
                 using (var r = new StreamReader(e.Open()))
                 {
                     var root = JsonUtility.FromJson<Root>(r.ReadToEnd());
-                    return root != null && root.meta != null && root.meta.kind == "floorstory";
+                    return root != null && root.meta != null && (root.meta.kind == "floorstory" || root.meta.kind == "fsdata");
                 }
             }
         }
@@ -75,6 +75,7 @@ public static class FloorStoryPackImporter
             if (je == null) throw new Exception("Không có game.json");
             Root root;
             using (var r = new StreamReader(je.Open())) root = JsonUtility.FromJson<Root>(r.ReadToEnd());
+            if (root?.meta?.kind == "fsdata") return ImportFlow(z, zipPath);
             var pack = root?.meta?.floorStory;
             if (pack == null || string.IsNullOrEmpty(pack.game) || pack.images == null) throw new Exception("Không phải gói FloorStory (thiếu meta.floorStory)");
 
@@ -107,5 +108,48 @@ public static class FloorStoryPackImporter
             }
         }
         return written;
+    }
+
+    const string FlowRoot = "Assets/Game/Resources/StoryData";
+
+    /// <summary>
+    /// Gói "flow" (meta.kind = "fsdata", soạn trên web builder; docs/floor-story-mechanics.md): ghi dữ liệu + ảnh vào
+    /// Resources/StoryData/&lt;gameId&gt;/ (game.json = meta.fsData), dựng scene nếu chưa có, đăng ký game nếu chưa có.
+    /// FloorStoryController thấy StoryData/&lt;gameId&gt;/game thì chạy FlowWorld thay cho world code tay. Trả về số file ghi.
+    /// </summary>
+    static int ImportFlow(ZipArchive z, string zipPath)
+    {
+        var je = z.GetEntry("game.json");
+        string text; using (var r = new StreamReader(je.Open())) text = r.ReadToEnd();
+        var rootObj = FsJson.Parse(text);
+        var meta = J.Obj(rootObj, "meta"); var fsData = J.Obj(meta, "fsData");
+        if (fsData == null) throw new Exception("Thiếu meta.fsData");
+        string gid = J.Str(meta, "gameId"); if (string.IsNullOrEmpty(gid)) gid = Path.GetFileNameWithoutExtension(zipPath);
+        string title = J.Str(fsData, "title", J.Str(meta, "displayName", gid));
+        string dir = $"{FlowRoot}/{gid}";
+        string absDir = MiniGameSceneBuilderHelpers.ToAbsolutePath(dir);
+        if (Directory.Exists(absDir)) AssetDatabase.DeleteAsset(dir);
+        Directory.CreateDirectory(absDir);
+        File.WriteAllText(absDir + "/game.json", FsJson.Stringify(fsData), new System.Text.UTF8Encoding(false));
+        int n = 1;
+        foreach (var e in z.Entries)
+        {
+            if (!e.FullName.StartsWith("assets/") || e.FullName.EndsWith("/")) continue;
+            using (var src = e.Open()) using (var dst = File.Create(absDir + "/" + Path.GetFileName(e.FullName))) src.CopyTo(dst);
+            n++;
+        }
+        AssetDatabase.Refresh();
+        string scenePath = "Assets/Game/Scenes/FloorStory/" + gid + ".unity";
+        if (!File.Exists(MiniGameSceneBuilderHelpers.ToAbsolutePath(scenePath)))
+        {
+            if (UnityEditor.SceneManagement.EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) FloorStorySceneBuilder.BuildScene(gid);
+        }
+        if (!GenericGameRegistryWriter.IsRegistered(gid))
+        {
+            var rr = GenericGameRegistryWriter.Register(gid, title, 0, "Thử nghiệm");
+            if (rr.registered) Debug.Log($"[FloorStoryPack] Đã đăng ký '{gid}'. Nhớ build lại aar: sh Tools/build-aar.sh controlui (K02 mới thấy game).");
+        }
+        Debug.Log($"[FloorStoryPack] Flow '{gid}': {n} file → {dir}");
+        return n;
     }
 }

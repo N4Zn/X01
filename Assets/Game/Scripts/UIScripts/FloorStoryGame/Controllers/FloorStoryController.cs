@@ -51,6 +51,13 @@ public class FloorStoryController : MiniGameControllerBase
 
     static StoryWorld CreateWorld(string game)
     {
+        // Game "flow" soạn trên web builder: Resources/StoryData/<game>/game.json (FloorStoryPackImporter) → FlowWorld.
+        var flow = Resources.Load<TextAsset>("StoryData/" + game + "/game");
+        if (flow != null)
+        {
+            try { return new FlowWorld(game, (System.Collections.Generic.Dictionary<string, object>)FsJson.Parse(flow.text)); }
+            catch (Exception e) { Debug.LogError($"[FloorStory] Dữ liệu flow '{game}' lỗi, dùng world mặc định: {e.Message}"); }
+        }
         switch (game)
         {
             case "NgayCuaBe":  return new NgayCuaBeWorld();

@@ -48,6 +48,9 @@
 - **Runtime**: `StoryUI.Load(path)` thử `StoryPack/<game>/<path>`, rồi `StoryPack/_all/<path>` (thay cho mọi game), rồi ảnh gốc; `StoryUI.PackGame` do `FloorStoryController` đặt. Điểm móc ảnh cho game vẽ bằng code: `Story/Shapes/<tron|vuong|tamgiac|chunhat|sao|tim|thoi>` (HinhDonGian), `Story/Icons/<sun|moon|flower|star|heart|cake|icecream|cup>` (StoryIcons → NhoChuoiHinh + LatThe), `Story/Egg/<màu>` (TrungMauSac).
 - Ảnh thay nên là PNG nền trong suốt; HinhDonGian giữ màu cố định của từng hình, TrungMauSac giữ đúng màu trứng. Chưa chạy thử trong Unity.
 
+## Game sinh động từ web builder ("flow") — 2026-10-10
+Game mới nên soạn trên web builder (nguồn → hiển thị → chấm, chơi thử, xuất zip). Schema + luật + việc Unity còn lại: `docs/floor-story-mechanics.md`. Zip mẫu: `WebTools/FloorStoryFlows/`. **Unity chưa chạy được các zip này.**
+
 ## Lưu ý / chưa làm
 - Trái/phải trong `DatDoVaoCho` tính theo MÀN HÌNH (bé quay mặt vào màn chiếu).
 - Pipeline đánh giá năng lực (`docs/danh-gia-nang-luc/tool/pipeline/` config `game_hp`): chưa map các game này → cần thêm; topic dạng `HinhHoc_NhanBietHinh`, `NgayCuaBe_BuoiTrongNgay`, `BeKhoeManh_<need>`, `CauBacQua_DaiNgan|ToBe`, `DatDoVaoCho_ViTri`, `DongHoKhongLo_DatGio|DocGio`.
