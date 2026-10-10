@@ -1,0 +1,275 @@
+{
+ "title": "Cổng hình",
+ "sync": false,
+ "theme": {
+  "bg": "#D8F0FF",
+  "floor": "#8ED36B"
+ },
+ "items": [
+  {
+   "id": "tron",
+   "label": "Hình tròn",
+   "shape": "circle",
+   "color": "#FF8A3D",
+   "tags": {
+    "kind": "gate",
+    "aw": 1,
+    "ah": 1
+   }
+  },
+  {
+   "id": "vuong",
+   "label": "Hình vuông",
+   "shape": "square",
+   "color": "#4D96FF",
+   "tags": {
+    "kind": "gate",
+    "aw": 1,
+    "ah": 1
+   }
+  },
+  {
+   "id": "tamgiac",
+   "label": "Hình tam giác",
+   "shape": "triangle",
+   "color": "#E0453F",
+   "tags": {
+    "kind": "gate",
+    "aw": 1.05,
+    "ah": 0.95
+   }
+  },
+  {
+   "id": "chunhat",
+   "label": "Hình chữ nhật",
+   "shape": "square",
+   "color": "#2FB26B",
+   "tags": {
+    "kind": "gate",
+    "aw": 1.2,
+    "ah": 0.78
+   }
+  },
+  {
+   "id": "rabbit",
+   "label": "Thỏ",
+   "image": "animal_rabbit.png",
+   "src": "GameImages/Animal/rabbit",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "dog",
+   "label": "Chó",
+   "image": "animal_dog.png",
+   "src": "GameImages/Animal/dog",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "duck",
+   "label": "Vịt",
+   "image": "animal_duck.png",
+   "src": "GameImages/Animal/duck",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "pig",
+   "label": "Lợn",
+   "image": "animal_pig.png",
+   "src": "GameImages/Animal/pig",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "chick",
+   "label": "Gà con",
+   "image": "animal_chick.png",
+   "src": "GameImages/Animal/chick",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "bear",
+   "label": "Gấu",
+   "image": "animal_bear.png",
+   "src": "GameImages/Animal/bear",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  }
+ ],
+ "flow": {
+  "objects": [
+   {
+    "role": "actor",
+    "look": {
+     "item": "=randItem(\"kind\",\"animal\")"
+    },
+    "x": 0.5,
+    "y": 0.45,
+    "w": 0.17,
+    "anim": {
+     "type": "bob",
+     "amp": 0.012,
+     "speed": 3
+    }
+   }
+  ],
+  "gen": {
+   "type": "sequence",
+   "p": {
+    "where": "item.tags.kind==\"gate\"",
+    "kinds": 4,
+    "startLen": 1,
+    "maxLen": 3,
+    "growEvery": 3,
+    "lenBy": "task",
+    "distinct": 1
+   }
+  },
+  "views": [
+   {
+    "type": "strip",
+    "p": {
+     "y": 0.835,
+     "slotU": 0.09,
+     "plain": 1
+    }
+   },
+   {
+    "type": "props",
+    "p": {
+     "layout": "fixed",
+     "pos": [
+      [
+       0.26,
+       0.64
+      ],
+      [
+       0.74,
+       0.64
+      ],
+      [
+       0.26,
+       0.26
+      ],
+      [
+       0.74,
+       0.26
+      ]
+     ],
+     "size": "0.27",
+     "preset": "none",
+     "tpl": [
+      {
+       "look": {
+        "shape": "=opt.shape",
+        "color": "=opt.color"
+       },
+       "w": "=size*opt.tags.aw",
+       "h": "=size*opt.tags.ah"
+      },
+      {
+       "look": {
+        "shape": "=opt.shape",
+        "color": "#1B2442"
+       },
+       "w": "=size*opt.tags.aw*.62",
+       "h": "=size*opt.tags.ah*.62"
+      },
+      {
+       "look": {
+        "text": "=opt.label",
+        "fs": 0.052,
+        "color": "#FFFFFF"
+       },
+       "dy": "=-size*.62",
+       "w": 0.5,
+       "h": 0.08
+      }
+     ]
+    }
+   }
+  ],
+  "judge": {
+   "type": "order",
+   "p": {
+    "finishSec": 1.2
+   }
+  },
+  "text": {
+   "prompt": "{{len(q.seq)==1?\"Tìm cổng \":\"Đi qua cổng: \"}}{names}",
+   "wrong": "Đây là {name}. Tìm đúng cổng nhé!",
+   "say": ""
+  },
+  "on": {
+   "step": [
+    {
+     "do": "sfx",
+     "k": "up"
+    },
+    {
+     "do": "move",
+     "on": "@actor",
+     "to": "@tapped",
+     "sec": 0.45
+    },
+    {
+     "do": "bounce",
+     "on": "@tapped",
+     "amount": 0.12,
+     "sec": 0.4
+    },
+    {
+     "do": "say",
+     "text": "{{tapped.name}}!",
+     "fy": 0.74,
+     "sec": 1
+    },
+    {
+     "do": "if",
+     "cond": "!last",
+     "then": [
+      {
+       "do": "move",
+       "on": "@actor",
+       "to": {
+        "fx": 0.5,
+        "fy": 0.45
+       },
+       "sec": 0.4
+      }
+     ]
+    }
+   ],
+   "right": [
+    {
+     "do": "confetti",
+     "at": "@tapped",
+     "n": 14
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Đi qua các cổng hình theo thứ tự (1 → 3 cổng)."
+}

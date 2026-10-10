@@ -1,0 +1,91 @@
+{
+ "title": "Nhớ chuỗi hình",
+ "sync": false,
+ "theme": {
+  "bg": "#FFF3E0",
+  "floor": "#FFE0B2"
+ },
+ "items": [
+  {
+   "id": "sun",
+   "label": "Mặt trời",
+   "icon": "sun"
+  },
+  {
+   "id": "moon",
+   "label": "Mặt trăng",
+   "icon": "moon"
+  },
+  {
+   "id": "flower",
+   "label": "Bông hoa",
+   "icon": "flower"
+  },
+  {
+   "id": "star",
+   "label": "Ngôi sao",
+   "icon": "star"
+  },
+  {
+   "id": "heart",
+   "label": "Trái tim",
+   "icon": "heart"
+  },
+  {
+   "id": "cake",
+   "label": "Cái bánh",
+   "icon": "cake"
+  },
+  {
+   "id": "icecream",
+   "label": "Cây kem",
+   "icon": "icecream"
+  },
+  {
+   "id": "cup",
+   "label": "Cốc sữa",
+   "icon": "cup"
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "sequence",
+   "p": {}
+  },
+  "views": [
+   {
+    "type": "strip",
+    "p": {},
+    "reveal": {
+     "mode": "sequential",
+     "showSec": 0.6,
+     "hold": 1.2,
+     "holdPerItem": 0.35,
+     "then": "cover"
+    }
+   },
+   {
+    "type": "cards",
+    "p": {
+     "y": 0.33,
+     "sizeU": 0.2,
+     "tall": 1,
+     "fig": 0.8
+    },
+    "appear": "afterReveal"
+   }
+  ],
+  "judge": {
+   "type": "order",
+   "p": {}
+  },
+  "text": {
+   "prompt": "Nhìn kỹ nè! Nhớ thứ tự nhé",
+   "ready": "Chọn theo thứ tự, từ TRÁI sang PHẢI",
+   "say": "Giỏi quá!",
+   "sayOk": "Đúng rồi!"
+  }
+ },
+ "version": 3,
+ "desc": "Hiện từng hình rồi úp lại → chạm theo đúng thứ tự trái → phải."
+}

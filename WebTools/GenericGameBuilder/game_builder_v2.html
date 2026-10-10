@@ -276,7 +276,30 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
 /* ── Chế độ gói FloorStory (meta.kind = "floorstory"): chỉ thay ảnh, không soạn round ── */
 #fsPanel{display:none; flex:1; min-height:0; overflow-y:auto; padding:18px 22px 40px;}
 body.fs-mode #fsPanel{display:block;}
-body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-mode #gameDisplayName{display:none;}
+body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-mode #gameDisplayName,
+body.fsd-mode main, body.fsd-mode #btnPlaytest, body.fsd-mode #btnSaveAs, body.fsd-mode #gameDisplayName{display:none;}
+
+/* ── Game cơ chế FloorStory (meta.kind = "fsdata"): soạn dữ liệu cơ chế + chơi thử trên web + xuất zip cho Unity ── */
+#fsdPanel{display:none; flex:1; min-height:0;}
+body.fsd-mode #fsdPanel{display:grid; grid-template-columns:310px minmax(300px,1fr) minmax(420px,560px);}
+#fsdPanel .col{padding:14px;}
+#fsdPanel h2{margin:0 0 6px; font-size:15px; text-transform:none; letter-spacing:0; color:var(--text);}
+.fsd-desc{font-size:12px; color:var(--text-dim); margin:0 0 10px; line-height:1.5;}
+.fsd-row{display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px;}
+.fsd-row > label{margin:0; flex:0 0 118px; font-size:12px;}
+.fsd-row input[type=text], .fsd-row input[type=number]{flex:1; min-width:0; padding:5px 7px;}
+.fsd-row input[type=color]{width:34px; height:28px; padding:1px;}
+.fsd-sec{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-dim); font-weight:700; margin:14px 0 4px;}
+.fsd-item{display:flex; align-items:center; gap:6px; padding:6px; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; background:var(--panel); flex-wrap:wrap;}
+.fsd-thumb{position:relative; width:44px; height:44px; flex:0 0 44px; border-radius:8px; overflow:hidden;
+  background:repeating-conic-gradient(#d8dae8 0 25%, #f4f5fb 0 50%) 0 0/12px 12px;}
+.fsd-item input[type=text]{width:110px; padding:4px 6px;} .fsd-item input.num{width:56px; padding:4px 6px;}
+.fsd-item select{padding:4px 6px; max-width:96px;} .fsd-item input[type=color]{width:30px; height:26px; padding:1px;}
+.fsd-item .btn{padding:3px 7px; font-size:12px;}
+.fsd-bar{display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;}
+#fsdHost{width:100%; aspect-ratio:1024/540; background:#0b0c14; border-radius:10px; overflow:hidden;}
+#fsdHost:fullscreen{aspect-ratio:auto; border-radius:0;}
+@media (max-width:1100px){ body.fsd-mode #fsdPanel{grid-template-columns:1fr; overflow-y:auto;} }
 #fsPanel h1{font-size:20px; margin:0 0 4px;}
 #fsPanel .fs-intro{color:var(--text-dim); font-size:13px; margin:0 0 6px; max-width:860px;}
 #fsPanel .fs-how{background:var(--accent-soft); border-radius:10px; padding:10px 14px; font-size:12.5px; margin:10px 0 14px; max-width:860px; line-height:1.55;}
@@ -312,6 +335,7 @@ body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-m
     <input id="gameDisplayName" placeholder="Tên hiển thị game…">
     <span class="spacer"></span>
     <button class="btn" id="btnOpenGame">⇧ Mở game đã xuất</button>
+    <button class="btn" id="btnNewFs" title="Tạo game mới từ 1 cơ chế FloorStory có sẵn (chọn đáp án, nhớ chuỗi, lật thẻ, so sánh, đếm)">＋ Game cơ chế</button>
     <button class="btn" id="btnSaveAs">⎘ Lưu thành game khác</button>
     <input type="file" id="openGameInput" accept=".zip" style="display:none">
     <button class="btn" id="btnPlaytest">▶ Chơi thử</button>
@@ -523,6 +547,44 @@ body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-m
     <div class="fs-bar"><span class="fs-count" id="fsCount"></span><button class="btn sm danger" id="fsResetAll">↺ Đặt lại tất cả về ảnh gốc</button></div>
     <div id="fsGroups"></div>
   </section>
+
+  <!-- Game cơ chế FloorStory (meta.kind = "fsdata") -->
+  <section id="fsdPanel">
+    <div class="col" id="fsdLeft">
+      <h2 id="fsdMechName"></h2>
+      <p class="fsd-desc" id="fsdMechDesc"></p>
+      <div class="fsd-row"><label>Game ID</label><input type="text" id="fsdId" placeholder="VD: NhoChuoiHinh2"></div>
+      <div class="fsd-row"><label>Tên game</label><input type="text" id="fsdTitle"></div>
+      <div class="fsd-row"><label title="2 đội cùng 1 câu hỏi; đội xong trước chờ đội kia"><input type="checkbox" id="fsdSync"> Chế độ chung (2 đội cùng câu, chờ nhau)</label></div>
+      <div class="fsd-row"><label>Màu nền</label><input type="color" id="fsdBg"><label style="flex:0 0 auto">Màu sàn</label><input type="color" id="fsdFloor"></div>
+      <div class="fsd-sec">Tham số cơ chế</div>
+      <div id="fsdParams"></div>
+    </div>
+    <div class="col" id="fsdMid">
+      <div class="fsd-sec" style="margin-top:0">Danh sách vật (<span id="fsdItemCount"></span>)</div>
+      <p class="fsd-desc" id="fsdItemsHelp"></p>
+      <div id="fsdItems"></div>
+      <div class="fsd-bar"><button class="btn sm" id="fsdAddItem">＋ Thêm vật</button><button class="btn sm" id="fsdAddIcons">＋ Thêm 8 icon dựng sẵn</button></div>
+    </div>
+    <div class="col" id="fsdRight">
+      <div class="fsd-bar">
+        <button class="btn primary" id="fsdPlay">▶ Chơi thử</button><button class="btn" id="fsdStop">■ Dừng</button>
+        <button class="btn" id="fsdFull" title="Toàn màn hình">⛶</button>
+        <label class="chk" style="margin:0"><input type="checkbox" id="fsdMute"> Tắt tiếng</label>
+      </div>
+      <div id="fsdHost"></div>
+      <p class="fsd-desc" style="margin-top:8px">Chơi thử mô phỏng đúng luật Unity: 2 đội chơi song song, đúng ngay lần đầu +1 điểm, sai 2 lần có gợi ý. Chưa có giọng đọc (Unity dùng file StoryVoice/*.mp3). Sửa tham số/vật thì bấm ▶ lại (đang chạy sẽ tự khởi động lại).</p>
+      <div class="fsd-bar"><b style="font-size:12px">Xuất:</b> <span style="font-size:12px;color:var(--text-dim)">bấm "⇩ Xuất gói game" → Unity: Tools → FloorStoryGame → Import Pack Zips.</span></div>
+    </div>
+  </section>
+
+  <dialog id="fsNewDlg" style="border:1px solid var(--border); border-radius:14px; padding:18px; background:var(--panel); color:var(--text); min-width:340px">
+    <h2 style="margin:0 0 10px; font-size:16px">Game mới từ cơ chế FloorStory</h2>
+    <div class="fsd-row"><label>Mẫu</label><select id="fsNewTpl" style="flex:1"></select></div>
+    <p class="fsd-desc" id="fsNewDesc"></p>
+    <div class="fsd-row"><label>Game ID</label><input type="text" id="fsNewId" placeholder="không dấu, VD: NhanBietMau"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px"><button class="btn" id="fsNewCancel">Huỷ</button><button class="btn primary" id="fsNewOk">Tạo</button></div>
+  </dialog>
 </div>
 
 <div id="playtest">
@@ -542,6 +604,1434 @@ body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-m
 <input type="file" id="fsFileInput" accept="image/*" style="display:none">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!--FS-JS-BEGIN-->
+<script>
+/* FloorStory web engine — phần lõi (port của StoryUI/ShapeSprites/StoryWorld/FloorStoryController bên Unity).
+   Nguồn thật: WebTools/GenericGameBuilder/fs/*.js → nhúng vào game_builder_v2.html bằng Tools/floorstory_pack/inline_web.py.
+   Toạ độ: gốc ở GIỮA phần tử cha, y hướng LÊN (giống RectTransform). Mỗi "thế giới" của 1 đội = 512×500. */
+(function(){
+'use strict';
+const FSW = window.FSW = window.FSW || {};
+
+// ── tiện ích ─────────────────────────────────────────────────────────────────
+const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+const lerp = (a,b,t)=> a + (b-a)*t;
+const smooth = t=> t*t*(3-2*t);
+const outBack = t=>{ const c1 = 1.70158, c3 = c1 + 1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); };
+function hex(h){
+  h = String(h||'#ff00ff').replace('#','');
+  if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+  const n = parseInt(h.slice(0,6), 16);
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255, a: h.length >= 8 ? parseInt(h.slice(6,8),16)/255 : 1 };
+}
+const col = (r,g,b,a)=> ({ r, g, b, a: a==null ? 1 : a });
+const WHITE = col(255,255,255,1);
+const rgba = c=> `rgba(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)},${c.a})`;
+const mix = (a,b,t)=> col(lerp(a.r,b.r,t), lerp(a.g,b.g,t), lerp(a.b,b.b,t), lerp(a.a,b.a,t));
+
+/** Random có seed (mulberry32) — cùng seed ở 2 đội → cùng câu hỏi (chế độ chung). */
+class Rng {
+  constructor(seed){ this.s = (seed>>>0) || 1; }
+  next(){ let t = this.s += 0x6D2B79F5; t = Math.imul(t ^ t>>>15, t|1); t ^= t + Math.imul(t ^ t>>>7, t|61); return ((t ^ t>>>14)>>>0) / 4294967296; }
+  int(n){ return Math.floor(this.next()*n); }
+  range(a,b){ return a + this.int(b-a); }
+}
+
+// ── hình học sinh bằng canvas (cùng công thức ShapeSprites.cs) → mask-image ─────
+const N = 128;
+const STAR = (()=>{ const p=[]; for (let i=0;i<10;i++){ const a=Math.PI*.5+i*Math.PI/5, r=i%2===0?.98:.4; p.push([Math.cos(a)*r, Math.sin(a)*r]); } return p; })();
+function inPoly(poly,x,y){ let ins=false; for (let i=0,j=poly.length-1;i<poly.length;j=i++){ if ((poly[i][1]>y)!==(poly[j][1]>y) && x < (poly[j][0]-poly[i][0])*(y-poly[i][1])/(poly[j][1]-poly[i][1])+poly[i][0]) ins=!ins; } return ins; }
+const INSIDE = {
+  circle:  (x,y)=> x*x+y*y <= .9025,
+  diamond: (x,y)=> Math.abs(x)+Math.abs(y) <= .95,
+  triangle:(x,y)=>{ if (y < -.85 || y > .9) return false; const t=(.9-y)/1.75; return Math.abs(x) <= t*.95; },
+  star:    (x,y)=> inPoly(STAR,x,y),
+  heart:   (x,y)=>{ const hx=x*1.3, hy=y*1.3+.1, a=hx*hx+hy*hy-1; return a*a*a - hx*hx*hy*hy*hy <= 0; },
+  moon:    (x,y)=>{ const o=x*x+y*y <= .81; const cx=x-.42, cy=y-.18; return o && !(cx*cx+cy*cy <= .6084); },
+  flower:  (x,y)=>{ if (x*x+y*y <= .0729) return true; for (let i=0;i<5;i++){ const a=Math.PI*.5+i*Math.PI*2/5, dx=x-Math.cos(a)*.58, dy=y-Math.sin(a)*.58; if (dx*dx+dy*dy <= .1296) return true; } return false; },
+};
+const maskCache = {};
+function shapeURL(name){
+  if (maskCache[name]) return maskCache[name];
+  const f = INSIDE[name]; if (!f) return null;
+  const c = document.createElement('canvas'); c.width = c.height = N;
+  const ctx = c.getContext('2d'), im = ctx.createImageData(N,N);
+  for (let j=0;j<N;j++) for (let i=0;i<N;i++){
+    let acc = 0;
+    for (let sy=0;sy<3;sy++) for (let sx=0;sx<3;sx++){
+      const x = ((i+(sx+.5)/3)/N)*2-1, y = 1-((j+(sy+.5)/3)/N)*2;   // y lên trên
+      if (f(x,y)) acc++;
+    }
+    const k = (j*N+i)*4; im.data[k]=im.data[k+1]=im.data[k+2]=255; im.data[k+3]=Math.round(acc*255/9);
+  }
+  ctx.putImageData(im,0,0);
+  return (maskCache[name] = c.toDataURL('image/png'));
+}
+
+// ── Node = RectTransform + Graphic ───────────────────────────────────────────
+let cssDone = false;
+function injectCss(){
+  if (cssDone) return; cssDone = true;
+  const s = document.createElement('style');
+  s.textContent = `
+.fs-stage-wrap{position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0b0c14;}
+.fs-stage{position:absolute; left:0; top:0; width:1024px; height:540px; transform-origin:0 0; background:#111; font-family:'Baloo 2','Quicksand','Inter',system-ui,sans-serif; user-select:none; -webkit-user-select:none; touch-action:manipulation;}
+.fs-n{position:absolute; left:50%; top:50%; box-sizing:border-box; pointer-events:none; transform-origin:50% 50%;}
+.fs-fill{left:0; top:0; width:100%; height:100%; transform:none;}
+.fs-t{display:flex; align-items:center; justify-content:center; text-align:center; font-weight:800; line-height:1.05; overflow:visible; word-break:break-word;}
+.fs-hud{position:absolute; left:0; top:0; width:1024px; height:40px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; color:#fff; font-weight:800; font-size:20px; background:#1b1d2b; z-index:3;}
+.fs-hud .fs-ttl{font-size:15px; opacity:.8;}
+.fs-div{position:absolute; left:511px; top:40px; width:2px; height:500px; background:#000; z-index:2;}
+`;
+  document.head.appendChild(s);
+}
+
+class Node {
+  constructor(parent, kind, x, y, w, h){
+    this.kind = kind; this.parent = parent && parent.el ? parent : null; this.kids = []; this.dead = false;
+    const el = this.el = document.createElement('div');
+    el.className = 'fs-n' + (kind === 'text' ? ' fs-t' : '');
+    this._x = x||0; this._y = y||0; this._w = w||0; this._h = h||0; this._sx = 1; this._sy = 1; this._rot = 0;
+    this._color = WHITE; this._sprite = null; this._pa = true; this._sliced = false; this._fill = false; this._tap = null;
+    if (this.parent){ this.parent.kids.push(this); this.parent.el.appendChild(el); }
+    else if (parent && parent.appendChild) parent.appendChild(el);
+    this._layout();
+  }
+  get x(){ return this._x; } set x(v){ this._x = v; this._layout(); }
+  get y(){ return this._y; } set y(v){ this._y = v; this._layout(); }
+  get w(){ return this._w; } set w(v){ this._w = v; this._layout(); }
+  get h(){ return this._h; } set h(v){ this._h = v; this._layout(); }
+  get sx(){ return this._sx; } set sx(v){ this._sx = v; this._layout(); }
+  get sy(){ return this._sy; } set sy(v){ this._sy = v; this._layout(); }
+  get scale(){ return this._sx; } set scale(v){ this._sx = this._sy = v; this._layout(); }
+  get rot(){ return this._rot; } set rot(v){ this._rot = v; this._layout(); }
+  setPos(x,y){ this._x = x; this._y = y; this._layout(); }
+  setSize(w,h){ this._w = w; this._h = h; this._layout(); this._paint(); }
+  _layout(){
+    const st = this.el.style;
+    if (this._fill) return;
+    st.width = this._w + 'px'; st.height = this._h + 'px';
+    st.transform = `translate(${this._x - this._w/2}px,${-this._y - this._h/2}px) rotate(${-this._rot}deg) scale(${this._sx},${this._sy})`;
+  }
+  get color(){ return this._color; } set color(c){ this._color = c; this._paint(); }
+  get alpha(){ return this._color.a; } set alpha(a){ this._color = col(this._color.r, this._color.g, this._color.b, a); this._paint(); }
+  get sprite(){ return this._sprite; } set sprite(s){ this._sprite = s; this._paint(); }
+  get preserveAspect(){ return this._pa; } set preserveAspect(v){ this._pa = v; this._paint(); }
+  get sliced(){ return this._sliced; } set sliced(v){ this._sliced = v; this._paint(); }
+  get active(){ return this.el.style.display !== 'none'; } set active(v){ this.el.style.display = v ? '' : 'none'; }
+  _paint(){
+    if (this.kind === 'text'){ this.el.style.color = rgba(this._color); return; }
+    if (this.kind !== 'img') return;
+    const st = this.el.style, s = this._sprite, c = this._color;
+    st.opacity = 1; st.backgroundImage = 'none'; st.webkitMaskImage = st.maskImage = 'none';
+    st.borderRadius = '0'; st.backgroundColor = 'transparent';
+    const size = this._pa ? 'contain' : '100% 100%';
+    if (s && typeof s === 'object' && s.url){
+      st.backgroundImage = `url("${s.url}")`; st.backgroundSize = size; st.backgroundRepeat = 'no-repeat'; st.backgroundPosition = 'center';
+      st.opacity = c.a;
+    } else if (s && typeof s === 'object' && s.svg){
+      st.backgroundImage = `url("${s.svg}")`; st.backgroundSize = size; st.backgroundRepeat = 'no-repeat'; st.backgroundPosition = 'center';
+      st.opacity = c.a;
+    } else {
+      st.backgroundColor = rgba(c);
+      const name = typeof s === 'string' ? s : null;
+      if (name === 'rrect'){ st.borderRadius = Math.min(22, Math.min(this._w, this._h)/2) + 'px'; }
+      else if (name && name !== 'square' && shapeURL(name)){
+        const u = `url("${shapeURL(name)}")`;
+        st.webkitMaskImage = st.maskImage = u;
+        st.webkitMaskSize = st.maskSize = size; st.webkitMaskRepeat = st.maskRepeat = 'no-repeat'; st.webkitMaskPosition = st.maskPosition = 'center';
+      }
+    }
+  }
+  // chữ
+  get text(){ return this.el.textContent; }
+  set text(t){ this.el.textContent = t; this.fit(); }
+  fit(){
+    if (this.kind !== 'text') return;
+    const el = this.el; let fs = this._fs || 30; el.style.fontSize = fs + 'px';
+    const min = Math.max(10, (this._fs||30)/2);
+    let guard = 40;
+    while (guard-- > 0 && fs > min && (el.scrollHeight > this._h + 2 || el.scrollWidth > this._w + 2)){ fs -= 2; el.style.fontSize = fs + 'px'; }
+  }
+  setAsLast(){ if (this.parent) this.parent.el.appendChild(this.el); else if (this.el.parentNode) this.el.parentNode.appendChild(this.el); }
+  destroy(){
+    if (this.dead) return;
+    this.dead = true;
+    if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    if (this.parent){ const i = this.parent.kids.indexOf(this); if (i >= 0) this.parent.kids.splice(i,1); }
+    const mark = n=>{ n.dead = true; n.kids.forEach(mark); };
+    this.kids.slice().forEach(mark);
+  }
+}
+
+// ── UI helpers (StoryUI) ────────────────────────────────────────────────────
+const UI = {
+  rect(parent, x,y,w,h){ return new Node(parent, 'rect', x,y,w,h); },
+  pic(parent, sprite, color, x,y,w,h, raycast){
+    const n = new Node(parent, 'img', x,y,w,h); n._sprite = sprite; n._color = color || WHITE; n._paint();
+    if (raycast) n.el.style.pointerEvents = 'auto';
+    return n;
+  },
+  fill(parent, color, sprite){
+    const n = new Node(parent, 'img', 0,0,0,0); n._fill = true; n.el.classList.add('fs-fill'); n.el.style.width = '100%'; n.el.style.height = '100%'; n.el.style.transform = 'none';
+    n._sprite = sprite || null; n._color = color || WHITE; n._paint(); return n;
+  },
+  label(parent, text, fontSize, color, x,y,w,h, outline){
+    const n = new Node(parent, 'text', x,y,w,h); n._fs = fontSize; n._color = color || WHITE;
+    n.el.style.color = rgba(n._color);
+    if (outline !== false) n.el.style.textShadow = '2px 2px 0 rgba(0,0,0,.85), -2px 2px 0 rgba(0,0,0,.85), 2px -2px 0 rgba(0,0,0,.85), -2px -2px 0 rgba(0,0,0,.85)';
+    n.text = text;
+    return n;
+  },
+  onTap(node, cb){
+    node._tap = cb;
+    if (!node._tapBound){
+      node._tapBound = true;
+      node.el.style.pointerEvents = 'auto';
+      node.el.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); if (node._tap && !node.dead) node._tap(e); });
+    }
+  },
+  /** Vùng chạm vô hình phủ kín; trả về toạ độ local (gốc giữa, y lên). */
+  tapArea(parent, cb){
+    const n = UI.fill(parent, col(255,255,255,0));
+    n.el.style.pointerEvents = 'auto';
+    n.el.addEventListener('pointerdown', e=>{
+      const r = n.el.getBoundingClientRect(), k = r.width / (parent._w || 512);
+      cb({ x: (e.clientX - r.left) / k - (parent._w||512)/2, y: -((e.clientY - r.top) / k - (parent._h||500)/2) });
+    });
+    return n;
+  },
+  /** Thẻ bấm: nền bo góc + (ảnh) + (chữ). `sprite` null → chỉ chữ. */
+  card(parent, sprite, label, bg, x,y,w,h, onTap, fontSize){
+    fontSize = fontSize || 30;
+    const c = { basePos:{x,y} };
+    const b = UI.pic(parent, 'rrect', bg, x,y,w,h, true); b.sliced = true; b.preserveAspect = false; b._paint();
+    c.rt = c.bg = b; c.hasIcon = !!sprite;
+    if (sprite){
+      const lh = label ? h*.24 : 0;
+      c.icon = UI.pic(b, sprite, WHITE, 0, lh*.5, w*.86, h*.9 - lh);
+    }
+    if (label){
+      c.label = sprite ? UI.label(b, label, Math.max(18, fontSize-8), WHITE, 0, -h*.38, w*.96, h*.26)
+                       : UI.label(b, label, fontSize, WHITE, 0, 0, w*.92, h*.86);
+    }
+    if (onTap) UI.onTap(b, onTap);
+    return c;
+  },
+};
+
+// ── Tween (generator): `yield* tween(...)` ───────────────────────────────────
+const T = { dt: 0.016 };
+function* moveTo(n, to, dur){
+  if (!n || n.dead) return; const f = { x:n.x, y:n.y };
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; const k = smooth(t/dur); n.setPos(lerp(f.x,to.x,k), lerp(f.y,to.y,k)); yield null; }
+  if (!n.dead) n.setPos(to.x,to.y);
+}
+function* moveResize(n, to, toSize, dur){
+  if (!n || n.dead) return; const f = { x:n.x, y:n.y, w:n.w, h:n.h };
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; const k = smooth(t/dur); n._x = lerp(f.x,to.x,k); n._y = lerp(f.y,to.y,k); n._w = lerp(f.w,toSize.x,k); n._h = lerp(f.h,toSize.y,k); n._layout(); yield null; }
+  if (!n.dead){ n._x = to.x; n._y = to.y; n._w = toSize.x; n._h = toSize.y; n._layout(); }
+}
+function* scaleTo(n, to, dur, overshoot){
+  if (!n || n.dead) return; const f = n.scale;
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; const k = t/dur; n.scale = lerp(f, to, overshoot ? outBack(k) : smooth(k)); yield null; }
+  if (!n.dead) n.scale = to;
+}
+function* popIn(n, dur){ if (!n || n.dead) return; n.scale = 0; yield* scaleTo(n, 1, dur == null ? .35 : dur, true); }
+function* shake(n, dur, amp){
+  dur = dur == null ? .4 : dur; amp = amp == null ? 14 : amp;
+  if (!n || n.dead) return; const o = { x:n.x, y:n.y };
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; n.setPos(o.x + Math.sin(t*50)*amp*(1-t/dur), o.y); yield null; }
+  if (!n.dead) n.setPos(o.x,o.y);
+}
+function* bounce(n, amount, dur){
+  amount = amount == null ? .25 : amount; dur = dur == null ? .5 : dur;
+  if (!n || n.dead) return; const b = { x:n.sx, y:n.sy };
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; const k = 1 + amount*Math.sin(t/dur*Math.PI); n._sx = b.x*k; n._sy = b.y*k; n._layout(); yield null; }
+  if (!n.dead){ n._sx = b.x; n._sy = b.y; n._layout(); }
+}
+function* fade(n, to, dur){
+  if (!n || n.dead) return; const f = n.alpha;
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; n.alpha = lerp(f,to,t/dur); yield null; }
+  if (!n.dead) n.alpha = to;
+}
+function* colorTo(n, to, dur){
+  if (!n || n.dead) return; const f = n.color;
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; n.color = mix(f,to,smooth(t/dur)); yield null; }
+  if (!n.dead) n.color = to;
+}
+function* pulse(n, alive, amount, speed){
+  amount = amount == null ? .12 : amount; speed = speed == null ? 6 : speed;
+  if (!n || n.dead) return; const b = { x:n.sx, y:n.sy }; let t = 0;
+  while (!n.dead && alive()){ t += T.dt*speed; const k = 1 + amount*(.5+.5*Math.sin(t)); n._sx = b.x*k; n._sy = b.y*k; n._layout(); yield null; }
+  if (!n.dead){ n._sx = b.x; n._sy = b.y; n._layout(); }
+}
+
+// ── Âm thanh (bíp WebAudio; không có giọng thật — Unity dùng StoryVoice/*.mp3) ──
+let ac = null;
+function tone(f, d, type, v, delay){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    ac = ac || new AC(); const t0 = ac.currentTime + (delay||0);
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(v == null ? .12 : v, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+    o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + d + .02);
+  }catch(e){}
+}
+const SFX = {
+  right(){ tone(523,.12,'triangle'); tone(659,.12,'triangle',.12,.1); tone(784,.2,'triangle',.12,.2); },
+  wrong(){ tone(180,.25,'sawtooth',.08); },
+  tap(){ tone(380,.06,'square',.05); }, pop(){ tone(620,.07,'sine'); }, plop(){ tone(300,.1,'sine'); },
+  wood(){ tone(160,.15,'triangle',.15); }, powerup(){ [523,659,784,1047].forEach((f,i)=> tone(f,.12,'triangle',.1,i*.07)); },
+  star(){ tone(880,.15,'sine'); }, up(){ tone(440,.1,'sine'); tone(660,.12,'sine',.1,.08); }, bell(){ tone(1046,.3,'sine'); },
+};
+
+// ── Icon ghép từ hình (port StoryIcons.cs) ───────────────────────────────────
+const ICON_KEYS = ['sun','moon','flower','star','heart','cake','icecream','cup'];
+const ICON_NAMES = { sun:'Mặt trời', moon:'Mặt trăng', flower:'Bông hoa', star:'Ngôi sao', heart:'Trái tim', cake:'Cái bánh', icecream:'Cây kem', cup:'Cốc sữa' };
+function iconParts(key){
+  const P = (sh,c,x,y,w,h,rot,free)=> ({ sh, c, x, y, w, h, rot: rot||0, free: !!free });
+  switch (key){
+    case 'sun': { const a=[]; for (let i=0;i<8;i++){ const an=i*Math.PI/4; a.push(P('rrect','#FFB300',Math.cos(an)*.41,Math.sin(an)*.41,.11,.24,an*180/Math.PI-90,true)); }
+      a.push(P('circle','#FFD23F',0,0,.58,.58), P('circle','#7A4B00',-.08,.04,.05,.05), P('circle','#7A4B00',.08,.04,.05,.05)); return a; }
+    case 'moon': return [P('moon','#FFE066',0,0,.92,.92), P('star','#FFF3B0',.28,.26,.16,.16)];
+    case 'flower': return [P('flower','#FF6FB5',0,0,.92,.92), P('circle','#FFD23F',0,0,.26,.26)];
+    case 'star': return [P('star','#FFC107',0,0,.92,.92)];
+    case 'heart': return [P('heart','#F44336',0,0,.88,.88)];
+    case 'cake': return [P('rrect','#E0E0E0',0,-.38,.98,.1,0,true), P('rrect','#F7A1C4',0,-.17,.84,.36,0,true), P('rrect','#FFF3E0',0,.10,.64,.28,0,true),
+                         P('square','#4DA6FF',0,.31,.07,.18,0,true), P('circle','#FF8F00',0,.44,.1,.14)];
+    case 'icecream': return [P('triangle','#E0A458',0,-.22,.46,.6,180), P('circle','#FF8FB3',0,.08,.54,.54), P('circle','#8D5A3B',0,.30,.38,.38), P('circle','#E53935',.02,.47,.1,.1)];
+    case 'cup': return [P('rrect','#5DADE2',-.04,-.04,.56,.64,0,true), P('square','#FFFFFF',-.04,0,.56,.1,0,true), P('square','#5DADE2',.34,0,.1,.34,0,true),
+                        P('square','#5DADE2',.28,.15,.16,.09,0,true), P('square','#5DADE2',.28,-.15,.16,.09,0,true), P('circle','#FFFFFF',-.04,.30,.48,.1,0,true)];
+    default: return [P('circle','#CCCCCC',0,0,.8,.8)];
+  }
+}
+function buildIcon(parent, key, x, y, s){
+  const root = UI.rect(parent, x, y, s, s);
+  iconParts(key).forEach(p=>{
+    const n = UI.pic(root, p.sh, hex(p.c), p.x*s, p.y*s, p.w*s, p.h*s);
+    if (p.sh === 'rrect'){ n.sliced = true; n.preserveAspect = false; n._paint(); }
+    else if (p.free || p.sh === 'square'){ n.preserveAspect = false; n._paint(); }
+    if (p.rot) n.rot = p.rot;
+  });
+  return root;
+}
+
+// ── Khối hộp 3D đẳng cự (SVG) ───────────────────────────────────────────────
+const cubeCache = {};
+function cubeSprite(color){
+  const key = rgba(color); if (cubeCache[key]) return cubeCache[key];
+  const sh = k=> rgba(col(clamp(color.r*k,0,255), clamp(color.g*k,0,255), clamp(color.b*k,0,255), 1));
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>`
+    + `<polygon points='50,0 100,25 50,50 0,25' fill='${sh(1.12)}' stroke='rgba(0,0,0,.3)' stroke-width='1'/>`
+    + `<polygon points='0,25 50,50 50,100 0,75' fill='${sh(.86)}' stroke='rgba(0,0,0,.3)' stroke-width='1'/>`
+    + `<polygon points='50,50 100,25 100,75 50,100' fill='${sh(.68)}' stroke='rgba(0,0,0,.3)' stroke-width='1'/></svg>`;
+  return (cubeCache[key] = { svg: 'data:image/svg+xml;utf8,' + encodeURIComponent(svg) });
+}
+
+Object.assign(FSW, { clamp, lerp, smooth, outBack, hex, col, WHITE, rgba, mix, Rng, Node, UI, T, SFX, ICON_KEYS, ICON_NAMES, buildIcon, cubeSprite, injectCss,
+  tw: { moveTo, moveResize, scaleTo, popIn, shake, bounce, fade, colorTo, pulse } });
+})();
+
+</script>
+<script>
+/* FloorStory — ngôn ngữ biểu thức nhỏ (dùng cho: điều kiện lọc vật, gán biến, ràng buộc thuộc tính cảnh, tham số hành động, mẫu câu {{...}}).
+   Bản C# (FloorStoryGame/Flow/FsExpr.cs) PHẢI cho cùng kết quả. Kiểu giá trị: số, chuỗi, bool, danh sách.
+   Cú pháp:  số | 'chuỗi' | "chuỗi" | $biến | đường.dẫn (item.tags.kind, q.gap, tapped.key ...) | f(a,b) | ! - * / % + - < <= > >= == != && || | c ? a : b
+   Hàm: label(id) tag(id,k) min max abs floor ceil round sqrt sin cos rand() randi(a,b) pick(i,a,b,..) has(csv,x) len(x) at(list,i) list(..) shuf(list|csv) str num upper lower cap var(tên) item(id) randItem(tag,giá_trị) hex(r,g,b)
+   Phạm vi (scope): { vars, q, item, i, n, tapped, w } — `w` = world (rand dùng w.rng, item()/randItem() dùng w.items). */
+(function(){
+'use strict';
+const F = window.FSW;
+
+// ── tokenizer ──
+function tokenize(s){
+  const t = []; let i = 0;
+  while (i < s.length){
+    const c = s[i];
+    if (c === ' ' || c === '\t' || c === '\n' || c === '\r'){ i++; continue; }
+    if (/[0-9.]/.test(c) && (c !== '.' || /[0-9]/.test(s[i+1]||''))){ let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ k:'num', v:parseFloat(s.slice(i,j)) }); i = j; continue; }
+    if (c === '"' || c === "'"){ let j = i+1; let out = ''; while (j < s.length && s[j] !== c){ out += s[j]; j++; } t.push({ k:'str', v:out }); i = j+1; continue; }
+    if (c === '$' || /[A-Za-z_]/.test(c)){ let j = i+1; while (j < s.length && /[A-Za-z0-9_.]/.test(s[j])) j++; t.push({ k: c === '$' ? 'var' : 'id', v: s.slice(c === '$' ? i+1 : i, j) }); i = j; continue; }
+    const two = s.substr(i,2);
+    if (['==','!=','<=','>=','&&','||'].indexOf(two) >= 0){ t.push({ k:'op', v:two }); i += 2; continue; }
+    if ('+-*/%<>!?:(),'.indexOf(c) >= 0){ t.push({ k:'op', v:c }); i++; continue; }
+    throw new Error('Biểu thức: ký tự lạ "' + c + '" trong: ' + s);
+  }
+  return t;
+}
+// ── parser (precedence climbing) → AST ──
+function parse(src){
+  const toks = tokenize(src); let p = 0;
+  const peek = ()=> toks[p], next = ()=> toks[p++], isOp = v=> toks[p] && toks[p].k === 'op' && toks[p].v === v;
+  function expect(v){ if (!isOp(v)) throw new Error('Biểu thức: thiếu "' + v + '" trong: ' + src); p++; }
+  function ternary(){ const c = or(); if (isOp('?')){ p++; const a = ternary(); expect(':'); const b = ternary(); return { t:'?', c, a, b }; } return c; }
+  function bin(sub, ops){ let l = sub(); while (peek() && peek().k === 'op' && ops.indexOf(peek().v) >= 0){ const o = next().v; l = { t:'b', o, l, r: sub() }; } return l; }
+  const or = ()=> bin(and, ['||']), and = ()=> bin(eq, ['&&']), eq = ()=> bin(rel, ['==','!=']), rel = ()=> bin(add, ['<','<=','>','>=']), add = ()=> bin(mul, ['+','-']), mul = ()=> bin(un, ['*','/','%']);
+  function un(){ if (isOp('!')){ p++; return { t:'!', e: un() }; } if (isOp('-')){ p++; return { t:'neg', e: un() }; } return prim(); }
+  function prim(){
+    const t = next(); if (!t) throw new Error('Biểu thức: thiếu vế phải: ' + src);
+    if (t.k === 'num') return { t:'n', v:t.v };
+    if (t.k === 'str') return { t:'s', v:t.v };
+    if (t.k === 'var') return { t:'var', v:t.v };
+    if (t.k === 'id'){
+      if (isOp('(')){ p++; const args = []; if (!isOp(')')){ do { args.push(ternary()); if (isOp(',')) p++; else break; } while (true); } expect(')'); return { t:'f', n:t.v, a:args }; }
+      return { t:'id', v:t.v };
+    }
+    if (t.k === 'op' && t.v === '('){ const e = ternary(); expect(')'); return e; }
+    throw new Error('Biểu thức: lỗi cú pháp gần "' + t.v + '" trong: ' + src);
+  }
+  const e = ternary(); if (p < toks.length) throw new Error('Biểu thức: thừa ký tự trong: ' + src);
+  return e;
+}
+const cache = {};
+const toNum = v=> typeof v === 'number' ? v : typeof v === 'boolean' ? (v ? 1 : 0) : (v === '' || v == null ? 0 : (isNaN(+v) ? 0 : +v));
+const isNumLike = v=> typeof v === 'number' || typeof v === 'boolean' || (typeof v === 'string' && v !== '' && !isNaN(+v));
+const truthy = v=> Array.isArray(v) ? v.length > 0 : (typeof v === 'string' ? (v !== '' && v !== '0' && v !== 'false') : !!v);
+const eqv = (a,b)=> (isNumLike(a) && isNumLike(b)) ? toNum(a) === toNum(b) : String(a == null ? '' : a) === String(b == null ? '' : b);
+function path(scope, dotted){
+  const parts = dotted.split('.'); let cur = scope;
+  for (const k of parts){ if (cur == null) return ''; cur = cur[k]; }
+  return cur === undefined || cur === null ? '' : cur;
+}
+const num = toNum;
+const FN = {
+  min:(s,a)=> Math.min(...a.map(toNum)), max:(s,a)=> Math.max(...a.map(toNum)), abs:(s,a)=> Math.abs(toNum(a[0])), floor:(s,a)=> Math.floor(toNum(a[0])), ceil:(s,a)=> Math.ceil(toNum(a[0])),
+  round:(s,a)=> Math.round(toNum(a[0])), sqrt:(s,a)=> Math.sqrt(toNum(a[0])), sin:(s,a)=> Math.sin(toNum(a[0])), cos:(s,a)=> Math.cos(toNum(a[0])),
+  rand:(s)=> s.w.rng.next(), randi:(s,a)=> toNum(a[0]) + s.w.rng.int(Math.max(1, toNum(a[1]) - toNum(a[0]))),
+  pick:(s,a)=>{ const i = Math.max(0, Math.min(a.length-2, Math.floor(toNum(a[0])))); return a[1+i]; },
+  has:(s,a)=> String(a[0]).split(',').map(x=>x.trim()).indexOf(String(a[1])) >= 0,
+  len:(s,a)=> Array.isArray(a[0]) ? a[0].length : String(a[0]).length, at:(s,a)=>{ const l = Array.isArray(a[0]) ? a[0] : []; const v = l[Math.floor(toNum(a[1]))]; return v === undefined ? '' : v; },
+  list:(s,a)=> a, str:(s,a)=> String(a[0]), num:(s,a)=> toNum(a[0]), upper:(s,a)=> String(a[0]).toUpperCase(), lower:(s,a)=> String(a[0]).toLowerCase(),
+  cap:(s,a)=>{ const x = String(a[0]); return x.charAt(0).toUpperCase() + x.slice(1); },
+  shuf:(s,a)=>{ let l = Array.isArray(a[0]) && a.length === 1 ? a[0].slice() : (a.length === 1 && typeof a[0] === 'string' ? a[0].split(',').map(x=> isNumLike(x) ? +x : x.trim()) : a.slice()); for (let i=l.length-1;i>0;i--){ const j = s.w.rng.int(i+1); [l[i],l[j]] = [l[j],l[i]]; } return l; },
+  var:(s,a)=>{ const v = s.vars[String(a[0])]; return v === undefined ? 0 : v; },
+  item:(s,a)=> s.w.items.find(i=> i.id === String(a[0])) || '',
+  label:(s,a)=>{ const i = s.w.items.find(x=> x.id === String(a[0])); return i ? (i.label || i.id) : ''; },
+  tag:(s,a)=>{ const i = s.w.items.find(x=> x.id === String(a[0])); const v = i && i.tags ? i.tags[String(a[1])] : ''; return v === undefined ? '' : v; },
+  randItem:(s,a)=>{ const l = s.w.items.filter(i=> eqv(((i.tags||{})[String(a[0])]), a[1])); return l.length ? l[s.w.rng.int(l.length)].id : ''; },
+};
+function ev(n, s){
+  switch (n.t){
+    case 'n': case 's': return n.v;
+    case 'var': { const v = s.vars[n.v]; return v === undefined ? 0 : v; }
+    case 'id': return path(s, n.v);
+    case 'neg': return -toNum(ev(n.e, s));
+    case '!': return !truthy(ev(n.e, s));
+    case '?': return truthy(ev(n.c, s)) ? ev(n.a, s) : ev(n.b, s);
+    case 'f': { const f = FN[n.n]; if (!f) throw new Error('Hàm không có: ' + n.n); return f(s, n.a.map(x=> ev(x, s))); }
+    case 'b': {
+      if (n.o === '&&'){ const l = ev(n.l, s); return truthy(l) ? ev(n.r, s) : l; }
+      if (n.o === '||'){ const l = ev(n.l, s); return truthy(l) ? l : ev(n.r, s); }
+      const l = ev(n.l, s), r = ev(n.r, s);
+      switch (n.o){
+        case '+': return (typeof l === 'string' || typeof r === 'string') && !(isNumLike(l) && isNumLike(r) && typeof l !== 'string' && typeof r !== 'string') ? String(l) + String(r) : toNum(l) + toNum(r);
+        case '-': return toNum(l) - toNum(r); case '*': return toNum(l) * toNum(r); case '/': return toNum(r) === 0 ? 0 : toNum(l) / toNum(r); case '%': return toNum(r) === 0 ? 0 : toNum(l) % toNum(r);
+        case '==': return eqv(l, r); case '!=': return !eqv(l, r);
+        case '<': return toNum(l) < toNum(r); case '<=': return toNum(l) <= toNum(r); case '>': return toNum(l) > toNum(r); case '>=': return toNum(l) >= toNum(r);
+      }
+    }
+  }
+  throw new Error('Biểu thức: nút lạ ' + n.t);
+}
+function evalExpr(src, scope){ const ast = cache[src] || (cache[src] = parse(src)); return ev(ast, scope); }
+/** Giá trị tham số: chuỗi bắt đầu bằng "=" là biểu thức; còn lại giữ nguyên. */
+function val(v, scope){ return (typeof v === 'string' && v.charAt(0) === '=') ? evalExpr(v.slice(1), scope) : v; }
+/** Mẫu câu: {tên} lấy từ vars của Q (viết HOA = in hoa); {{biểu thức}} tính theo scope. */
+function template(tpl, qvars, scope){
+  return String(tpl == null ? '' : tpl)
+    .replace(/\{\{(.+?)\}\}/g, (m, e)=> { try { const r = evalExpr(e, scope); return Array.isArray(r) ? r.join(',') : String(r); } catch(err){ return m; } })
+    .replace(/\{(\w+)\}/g, (m, k)=>{
+      if (qvars && qvars[k] !== undefined) return qvars[k];
+      const lk = k.toLowerCase(); if (k === k.toUpperCase() && qvars && qvars[lk] !== undefined) return String(qvars[lk]).toUpperCase();
+      return m;
+    });
+}
+F.expr = { eval: evalExpr, val, template, toNum, truthy, eqv, parse };
+})();
+
+</script>
+<script>
+/* FloorStory web engine — World (StoryWorld.cs) + Game (FloorStoryController.cs: 2 đội, chế độ chung, điểm +1 khi đúng ngay lần đầu). */
+(function(){
+'use strict';
+const F = window.FSW;
+const { UI, hex, col, WHITE, Rng, tw, T, SFX, buildIcon } = F;
+
+const CONFETTI = ['#FFD93D','#FF6B6B','#6BCB77','#4D96FF','#FF9F45','#C77DFF'];
+const SHAPES = ['circle','square','rect','triangle','diamond','star','heart','moon','flower'];
+
+class World {
+  constructor(game, team, rootNode, data){
+    this.g = game; this.team = team; this.root = rootNode; this.data = data; this.W = 512; this.H = 500;
+    this.rng = new Rng((Math.random()*1e9) | 0); this._taskNo = 0; this._wait = null;
+    this.p = data.p || {};
+    this.build();
+  }
+  get U(){ return Math.min(this.W, this.H); }
+  get sync(){ return !!this.data.sync; }
+  get items(){ return this.data.items || []; }
+  /** Tham số số học (p.key) — thiếu thì dùng mặc định `d`. */
+  num(key, d){ const v = this.p[key]; return (v === undefined || v === null || v === '' || isNaN(+v)) ? d : +v; }
+  str(key, d){ const v = this.p[key]; return (v === undefined || v === null || v === '') ? d : String(v); }
+  P(fx, fy){ return { x:(fx-.5)*this.W, y:(fy-.5)*this.H }; }
+  rand(a, b){ return this.rng.range(a, b); }
+  shuffle(arr, r){ r = r || this.rng; for (let i=arr.length-1;i>0;i--){ const j = r.int(i+1); [arr[i],arr[j]] = [arr[j],arr[i]]; } return arr; }
+  run(gen){ return this.g.run(gen); }
+  nextTaskRng(){ this._taskNo++; return new Rng(this.g.sharedSeed*7919 + this._taskNo*104729); }
+  addPoint(){ this.g.addPoint(this.team); }
+  sfx(k){ this.g.sfx(k); }
+  right(){ this.g.sfx('right'); }
+  voice(text){ this.g.speak(text); }
+  img(name){ return this.g.imgUrl(name); }
+  theme(key, d){ const t = this.data.theme || {}; return t[key] || d; }
+
+  build(){}              // dựng phần cố định (1 lần)
+  beginTask(info, done){} // bắt đầu 1 lượt; gọi done(đúngNgayLầnĐầu, đáp án) đúng 1 lần
+  describe(info, id, topic, desc, answers, correct){ Object.assign(info, { id, topic, description: desc, answers, correct }); }
+
+  /** Vẽ 1 vật theo "diện mạo" item: ảnh > icon dựng sẵn > hình + màu. `size` = cạnh hộp. */
+  drawItem(parent, item, x, y, size){
+    if (item && item.image){ const u = this.img(item.image); if (u) return UI.pic(parent, { url:u }, WHITE, x, y, size, size); }
+    if (item && item.icon && F.ICON_KEYS.indexOf(item.icon) >= 0) return buildIcon(parent, item.icon, x, y, size);
+    const sh = (item && item.shape) || 'circle';
+    const rect = sh === 'rect';
+    const n = UI.pic(parent, rect ? 'square' : sh, hex((item && item.color) || '#90A4AE'), x, y, size*(rect?1.5:1), size*(rect?.95:1));
+    n.preserveAspect = false; n._paint();
+    return n;
+  }
+  /** Tên hiển thị của item (label, hoặc tên icon). */
+  nameOf(item){ return (item && (item.label || (item.icon && F.ICON_NAMES[item.icon]) || item.id)) || ''; }
+
+  confetti(cx, cy, count, sound){
+    count = count || 16;
+    const shapes = ['star','heart','circle'];
+    for (let i=0;i<count;i++){
+      const n = UI.pic(this.root, shapes[i%3], hex(CONFETTI[i%CONFETTI.length]), cx, cy, this.U*.055, this.U*.055);
+      n.setAsLast();
+      const ang = (i/count)*Math.PI*2 + this.rng.next()*.4, dist = this.U*(.22 + this.rng.next()*.28);
+      this.run(tw.moveTo(n, { x: cx + Math.cos(ang)*dist, y: cy + Math.sin(ang)*dist }, .8));
+      this.run(this._fadeDestroy(n, .5, .5));
+    }
+    if (sound !== false) this.sfx('powerup');
+  }
+  *_fadeDestroy(n, delay, dur){ yield delay; if (!n.dead) yield* tw.fade(n, 0, dur); n.destroy(); }
+  say(text, pos, color, seconds){
+    const t = UI.label(this.root, text, 34, color || WHITE, pos.x, pos.y, this.W*.92, 90); t.setAsLast();
+    this.run(this._sayRoutine(t, seconds == null ? 1.6 : seconds));
+  }
+  *_sayRoutine(t, s){ yield* tw.popIn(t, .25); yield s; if (!t.dead) yield* tw.fade(t, 0, .3); t.destroy(); }
+  setWaiting(on){
+    if (on){ if (this._wait) return; this._wait = UI.label(this.root, 'Chờ bạn nhé...', 34, hex('#FFE27A'), 0, this.P(.5,.045).y, this.W*.8, 45); this._wait.setAsLast(); }
+    else if (this._wait){ this._wait.destroy(); this._wait = null; }
+  }
+}
+
+class Game {
+  constructor(host, data, opts){
+    F.injectCss();
+    this.data = data; this.opts = opts || {}; this.stopped = false;
+    this.tasks = []; this.sharedSeed = (Math.random()*1e6) | 0;
+    this.scores = [0, 0]; this.begun = [0, 0]; this.finished = [0, 0];
+    host.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.className = 'fs-stage-wrap';
+    const stage = document.createElement('div'); stage.className = 'fs-stage';
+    wrap.appendChild(stage); host.appendChild(wrap);
+    this.wrap = wrap; this.stage = stage;
+    const hud = document.createElement('div'); hud.className = 'fs-hud';
+    hud.innerHTML = '<span id="fsHudL">Đội trái: 0</span><span class="fs-ttl"></span><span id="fsHudR">Đội phải: 0</span>';
+    hud.querySelector('.fs-ttl').textContent = data.title || '';
+    stage.appendChild(hud); this.hudL = hud.children[0]; this.hudR = hud.children[2];
+    const div = document.createElement('div'); div.className = 'fs-div'; stage.appendChild(div);
+    this.worlds = [0,1].map(i=>{
+      const root = new F.Node(stage, 'rect', 0, 0, 512, 500);
+      root.el.style.cssText += `;left:${i*512}px;top:40px;transform:none;overflow:hidden;`;
+      const W = Game.WorldClass;
+      return new W(this, i, root, data);
+    });
+    this._fit = ()=>{ const r = wrap.getBoundingClientRect(); const k = Math.min(r.width/1024, r.height/540) || 1; stage.style.transform = `scale(${k})`; stage.style.left = Math.max(0,(r.width-1024*k)/2) + 'px'; stage.style.top = Math.max(0,(r.height-540*k)/2) + 'px'; };
+    this._fit(); window.addEventListener('resize', this._fit);
+    if (window.ResizeObserver){ this._ro = new ResizeObserver(this._fit); this._ro.observe(wrap); }
+    this._last = performance.now();
+    this._timer = setInterval(()=> this._tick(), 16);
+    this.worlds.forEach((w,i)=> this.run(this._teamLoop(i)));
+  }
+  run(gen){ const t = { gen, wait: 0, dead: false }; this.tasks.push(t); return t; }
+  _tick(){
+    const now = performance.now(); let dt = (now - this._last)/1000; this._last = now; dt = Math.min(dt, .1); T.dt = dt;
+    for (let i = this.tasks.length-1; i >= 0; i--){
+      const t = this.tasks[i];
+      if (t.dead){ this.tasks.splice(i,1); continue; }
+      if (t.wait > 0){ t.wait -= dt; continue; }
+      let r; try{ r = t.gen.next(); }catch(e){ console.error('[FloorStory]', e); t.dead = true; this.tasks.splice(i,1); continue; }
+      if (r.done){ this.tasks.splice(i,1); continue; }
+      if (typeof r.value === 'number') t.wait = r.value;
+    }
+    const sec = now/1000; this.worlds.forEach(w=>{ try{ if (w.update) w.update(dt, sec); }catch(e){ console.error('[FloorStory update]', e); } });
+  }
+  *_teamLoop(i){
+    const world = this.worlds[i], other = 1 - i;
+    yield .3;
+    while (!this.stopped){
+      const taskIdx = this.begun[i]++;
+      let done = false;
+      const info = {};
+      const begin = ()=> world.beginTask(info, (correct, ans)=>{
+        if (done) return; done = true; this.finished[i]++;
+        if (correct) this.addPoint(i);
+      });
+      if (!world.sync || this.finished[other] >= taskIdx) begin();
+      else { world.setWaiting(true); while (this.finished[other] < taskIdx && !this.stopped) yield null; world.setWaiting(false); begin(); }
+      while (!done && !this.stopped) yield null;
+      yield .4;
+    }
+  }
+  addPoint(team){ this.scores[team]++; (team === 0 ? this.hudL : this.hudR).textContent = (team === 0 ? 'Đội trái: ' : 'Đội phải: ') + this.scores[team]; }
+  sfx(k){ if (this.opts.mute) return; (SFX[k] || SFX.tap)(); }
+  speak(text){
+    if (this.opts.mute || !text || !window.speechSynthesis) return;
+    try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(text).replace(/[!?.]/g,'')); u.lang = 'vi-VN'; u.rate = .9; speechSynthesis.speak(u); }catch(e){}
+  }
+  imgUrl(name){ return this.opts.imgUrl ? this.opts.imgUrl(name) : null; }
+  stop(){
+    this.stopped = true; clearInterval(this._timer); window.removeEventListener('resize', this._fit);
+    if (this._ro) this._ro.disconnect();
+    try{ if (window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+    this.tasks.length = 0;
+    if (this.wrap.parentNode) this.wrap.parentNode.removeChild(this.wrap);
+  }
+}
+Game.WorldClass = null; // do fs_flow.js gán (FlowWorld)
+
+F.World = World; F.Game = Game; F.SHAPES = SHAPES;
+})();
+
+</script>
+<script>
+/* FloorStory — cảnh (scene objects có ràng buộc `bind`), biến trạng thái (vars) và danh sách hành động (actions).
+   Bản C# tương ứng: FloorStoryGame/Flow/FsScene.cs + FsActions.cs (PHẢI khớp). Biểu thức: fs_expr.js.
+
+   Obj (đối tượng cảnh):  { id, role, look, x, y, dx, dy, w, h, fill, rot, alpha, scale, z:'back|front', show, anim, smooth, bind:{prop:expr}, repeat:{n,dx,dy}, forEachItem:{where} }
+     look: { shape,color } | { image } | { item:'id'|'=expr' } | { icon } | { text,fs,color } | { kind:'rrect',color } | { kind:'hand',len,thick,color }
+     x,y: toạ độ 0..1 của world (gốc dưới-trái, như P()); w,h: theo đơn vị U (h mặc định = w); dx,dy: lệch (đơn vị U); số hoặc "=biểu thức".
+     bind: mỗi frame tính lại, làm mượt (smooth giây): show x y w h scale rot alpha color(#hex) item text
+   Hành động ({do:...}; tham số "=biểu thức" được tính lúc chạy):
+     sfx{k} say{text,fy,color,sec} confetti{at,n} bounce{on,amount,sec} shake{on} pulse{on,sec} move{on,to,sec,wait} scale{on,to,sec} fade{on,to,sec} tint{on,color,sec}
+     rotate{on,to,sec} show{on} hide{on} pop{on} destroy{on} spawn{look,at,size,pop,id} set{var,expr} inc{var,by,mod} bag{var,values} pickItem{var,tag,value}
+     if{cond,then,else} wait{sec} fly{from,to,sec,look} par{acts} text{on,text} std{ev:'right'|'wrong'}
+   Đích (on/at/to/from): "@tapped" "@target" "@actor" "#id" | "=biểu thức(trả id)" | {fx,fy} */
+(function(){
+'use strict';
+const F = window.FSW, { UI, hex, col, WHITE, tw, World, T } = F, X = F.expr;
+
+function* rotTo(n, to, dur){
+  if (!n || n.dead) return; const f = n.rot; dur = dur || 0;
+  if (dur <= 0){ n.rot = to; return; }
+  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; n.rot = F.lerp(f, to, F.smooth(t/dur)); yield null; }
+  if (!n.dead) n.rot = to;
+}
+tw.rotTo = rotTo;
+
+const P = World.prototype;
+P.scope = function(extra){ return Object.assign({ wr:this.W/this.U, hr:this.H/this.U, vars:this.vars, q: Object.assign({}, this._Q||{}, (this._Q||{}).v||{}, { targetItem: (this._Q && this._Q.items && this._Q.target >= 0) ? (this._Q.items[this._Q.target] || '') : '' }), w:this }, extra||{}); };
+P.ev = function(v, extra){ return X.val(v, this.scope(extra)); };
+P.num = function(v, d, extra){ const r = this.ev(v, extra); const n = X.toNum(r); return (v === undefined || v === null || v === '') ? d : n; };
+
+/** Vẽ 1 "diện mạo" tại (x,y) px, cỡ w×h px. */
+P.drawLook = function(parent, look, x, y, w, h, extra){
+  look = look || {}; const ev = v=> this.ev(v, extra);
+  const kind = look.kind;
+  if (kind === 'hand'){
+    const root = UI.rect(parent, x, y, 0, 0), len = (+ev(look.len)||.3)*this.U, th = (+ev(look.thick)||.03)*this.U;
+    const b = UI.pic(root, 'square', hex(ev(look.color)||'#2A2F55'), 0, len/2, th, len); b.preserveAspect = false; return root;
+  }
+  if (look.text !== undefined){
+    const n = UI.label(parent, String(ev(look.text)), Math.round((+ev(look.fs)||.06)*this.U), hex(ev(look.color)||'#FFFFFF'), x, y, w||this.U, h||this.U*.2, look.outline !== 0);
+    return n;
+  }
+  const itemId = look.item !== undefined ? String(ev(look.item)) : null;
+  if (itemId){
+    const it = this.items.find(i=> i.id === itemId);
+    if (it){ const n = this.drawItem(parent, it, x, y, Math.min(w, h) || w); if (w && h && !(it.image || it.icon)){ n.setSize(w, h); } return n; }
+  }
+  if (look.image){ const u = this.img(String(ev(look.image))); if (u) return UI.pic(parent, { url:u }, WHITE, x, y, w, h); }
+  if (look.icon) return F.buildIcon(parent, String(ev(look.icon)), x, y, Math.min(w, h));
+  const sh = ev(look.shape) || (kind === 'rrect' ? 'rrect' : 'square'), n = UI.pic(parent, sh === 'rect' ? 'square' : sh, hex(ev(look.color)||'#90A4AE'), x, y, w, h);
+  n.preserveAspect = false; if (sh === 'rrect') n.sliced = true; n._paint(); return n;
+};
+
+/** Tạo 1 đối tượng cảnh (đã bung repeat/forEachItem). */
+P.makeObj = function(spec, parent, store, extra){
+  const sc = ()=> Object.assign({}, extra||{}), ev = v=> this.ev(v, extra);
+  const W = this.W, H = this.H, U = this.U;
+  const fx = +ev(spec.x == null ? .5 : spec.x), fy = +ev(spec.y == null ? .5 : spec.y);
+  const w = (+ev(spec.w == null ? .2 : spec.w))*U, h = (spec.h == null ? +ev(spec.w == null ? .2 : spec.w) : +ev(spec.h))*U;
+  const pos = spec.rel ? { x:0, y:0 } : this.P(fx, fy);
+  const o = { spec, extra: extra || {}, id: spec.id ? String(ev(spec.id)) : null, role: spec.role || null, cur: {}, animOn: true, dead: false, t0: this.rng.next()*6.28 };
+  if (spec.fill){
+    const lk = spec.look || {}, itId = lk.item !== undefined ? String(ev(lk.item)) : '', itm = itId ? this.items.find(i=> i.id === itId) : null, url = lk.image ? this.img(String(ev(lk.image))) : (itm && itm.image ? this.img(itm.image) : null);
+    o.node = url ? UI.fill(parent, WHITE, { url }) : UI.fill(parent, hex(ev(lk.color)||'#FFFFFF'));
+    if (url) o.node.preserveAspect = false;
+  }
+  else o.node = this.drawLook(parent, spec.look, pos.x + (+ev(spec.dx||0))*U, pos.y + (+ev(spec.dy||0))*U, w, h, extra);
+  o.x0 = o.node.x; o.y0 = o.node.y;
+  if (spec.rot !== undefined) o.node.rot = +ev(spec.rot); if (spec.scale !== undefined) o.node.scale = +ev(spec.scale);
+  if (spec.alpha !== undefined) o.node.alpha = +ev(spec.alpha);
+  if (spec.show !== undefined) o.node.active = X.truthy(ev(spec.show));
+  store.push(o); return o;
+};
+P.makeObjs = function(specs, parent, store, extra){
+  (specs || []).forEach(spec=>{
+    if (spec.forEachItem){
+      this.items.forEach((it, idx)=>{
+        const ex = Object.assign({}, extra||{}, { item: it, idx });
+        if (spec.forEachItem.where && !X.truthy(this.ev('=' + spec.forEachItem.where, ex))) return;
+        this.makeObj(spec, parent, store, ex);
+      });
+    } else if (spec.repeat){
+      const n = Math.round(+this.ev(spec.repeat.n, extra));
+      for (let i=0;i<n;i++){
+        const s = Object.assign({}, spec); s.x = (+this.ev(spec.x == null ? .5 : spec.x, extra)) + i*(+spec.repeat.dx||0); s.y = (+this.ev(spec.y == null ? .5 : spec.y, extra)) + i*(+spec.repeat.dy||0); delete s.repeat;
+        this.makeObj(s, parent, store, Object.assign({}, extra||{}, { i, n }));
+      }
+    } else this.makeObj(spec, parent, store, extra);
+  });
+};
+/** Mỗi frame: tính lại `bind` + hoạt hình nhẹ (bob/pulse). */
+P.updateObjs = function(list, dt, time){
+  const U = this.U;
+  list.forEach(o=>{
+    const nd = o.node; if (!nd || nd.dead) return;
+    const sp = o.spec, bind = sp.bind;
+    if (bind){
+      const smooth = sp.smooth == null ? .3 : +sp.smooth, k = smooth <= 0 ? 1 : 1 - Math.exp(-dt/(smooth/3));
+      Object.keys(bind).forEach(prop=>{
+        let tv; try { tv = X.eval(String(bind[prop]), this.scope(o.extra)); } catch(e){ return; }
+        const num = X.toNum(tv), cur = o.cur;
+        switch (prop){
+          case 'show': nd.active = X.truthy(tv); break;
+          case 'item': if (cur.item !== String(tv)){ cur.item = String(tv); this._relook(o, { item: String(tv) }); } break;
+          case 'text': nd.text = String(tv); break;
+          case 'color': { const c = hex(String(tv)); nd.color = cur.color ? F.mix(nd.color, c, k) : c; cur.color = 1; break; }
+          case 'x': { const px = this.P(num, 0).x; o.x0 = cur.x === undefined ? px : o.x0 + (px - o.x0)*k; cur.x = 1; if (!o.moving) nd.x = o.x0; break; }
+          case 'y': { const py = this.P(0, num).y; o.y0 = cur.y === undefined ? py : o.y0 + (py - o.y0)*k; cur.y = 1; if (!o.moving) nd.y = o.y0; break; }
+          case 'w': { const v = num*U; nd.setSize(cur.w === undefined ? v : nd.w + (v - nd.w)*k, nd.h); cur.w = 1; break; }
+          case 'h': { const v = num*U; nd.setSize(nd.w, cur.h === undefined ? v : nd.h + (v - nd.h)*k); cur.h = 1; break; }
+          case 'scale': nd.scale = cur.scale === undefined ? num : nd.scale + (num - nd.scale)*k; cur.scale = 1; break;
+          case 'rot': nd.rot = cur.rot === undefined ? num : nd.rot + (num - nd.rot)*k; cur.rot = 1; break;
+          case 'alpha': nd.alpha = cur.alpha === undefined ? num : nd.alpha + (num - nd.alpha)*k; cur.alpha = 1; break;
+        }
+      });
+    }
+    const an = sp.anim;
+    if (an && o.animOn && !o.moving){
+      const amp = (+an.amp || .012)*U, sp2 = +an.speed || 3, s = Math.sin(time*sp2 + o.t0);
+      if (an.type === 'pulse') nd.scale = 1 + (+an.amp || .06)*(.5+.5*s); else nd.y = o.y0 + s*amp;
+    }
+  });
+};
+P._relook = function(o, look){
+  const old = o.node, parent = old.parent || this.root, w = old.w, h = old.h, x = old.x, y = old.y;
+  const n = this.drawLook(parent, look, x, y, w, h, o.extra); n.rot = old.rot; o.node = n; old.destroy();
+  if (o.spec.show === undefined) n.active = true;
+};
+P.objById = function(id){ return (this.objs.concat(this.taskObjs)).find(o=> o.id === id && o.node && !o.node.dead) || null; };
+P.objByRole = function(role){ return (this.objs.concat(this.taskObjs)).find(o=> o.role === role && o.node && !o.node.dead) || null; };
+
+// ── đích của hành động ──
+P.nodesOf = function(spec, cx){
+  if (spec == null) return [];
+  if (typeof spec === 'object' && spec.fx !== undefined) return [];
+  let s = X.val(spec, this.scope(cx));
+  if (typeof s !== 'string') return [];
+  if (s === '@tapped') return cx && cx.tapped ? [cx.tapped.node] : [];
+  if (s === '@target') return (this.elems||[]).filter(e=> e.key === (this._Q||{}).target).map(e=> e.node);
+  if (s === '@actor'){ const o = this.objByRole('actor'); return o ? [o.node] : []; }
+  if (s.charAt(0) === '#'){ const o = this.objById(s.slice(1)); return o ? [o.node] : []; }
+  const o = this.objById(s); return o ? [o.node] : [];
+};
+P.pointOf = function(spec, cx){
+  if (spec && typeof spec === 'object' && spec.ref !== undefined){ const b = this.pointOf(spec.ref, cx); return { x: b.x + (+this.ev(spec.dx||0, cx))*this.U, y: b.y + (+this.ev(spec.dy||0, cx))*this.U }; }
+  if (spec && typeof spec === 'object' && spec.fx !== undefined){ const p = this.P(+this.ev(spec.fx, cx), +this.ev(spec.fy, cx)); return { x: p.x + (+this.ev(spec.dx||0, cx))*this.U, y: p.y + (+this.ev(spec.dy||0, cx))*this.U }; }
+  const ns = this.nodesOf(spec, cx); if (ns.length){ const o = this._objOf(ns[0]); return { x: ns[0].x, y: ns[0].y }; }
+  if (cx && cx.tap && (spec === '@tap')) return cx.tap;
+  return { x:0, y:0 };
+};
+P._objOf = function(node){ return (this.objs.concat(this.taskObjs)).find(o=> o.node === node) || null; };
+P._moveObj = function*(node, to, sec){
+  const o = this._objOf(node);
+  if (o){ o.moving = true; }
+  yield* tw.moveTo(node, to, sec);
+  if (o){ o.x0 = to.x; o.y0 = to.y; o.moving = false; }
+};
+
+P.runActs = function*(list, cx){
+  cx = cx || {};
+  for (const a of (list || [])){
+    const n = k=> this.num(a[k], undefined, cx), nz = (k, d)=> (a[k] === undefined ? d : this.num(a[k], d, cx));
+    switch (a.do){
+      case 'sfx': this.sfx(String(this.ev(a.k, cx) || 'tap')); break;
+      case 'std': if (a.ev === 'wrong') yield* this._stdWrong(cx); else yield* this._stdRight(cx); break;
+      case 'say': this.say(X.template(a.text, (this._Q||{}).vars, this.scope(cx)), this.P(.5, nz('fy', .14)), hex(this.ev(a.color, cx) || '#FFFFFF'), nz('sec', 1.6)); break;
+      case 'confetti': { const p = a.at ? this.pointOf(a.at, cx) : { x:0, y:0 }; this.confetti(p.x, p.y, nz('n', 12), a.sound !== 0); break; }
+      case 'bounce': this.nodesOf(a.on, cx).forEach(nd=> this.run(tw.bounce(nd, nz('amount', .25), nz('sec', .5)))); break;
+      case 'shake': this.nodesOf(a.on, cx).forEach(nd=> this.run(tw.shake(nd, nz('sec', .35), nz('amp', 10)))); break;
+      case 'pulse': this.nodesOf(a.on, cx).forEach(nd=> this.run(tw.pulse(nd, ()=> true, .12, 7))); break;
+      case 'move': { const to = this.pointOf(a.to, cx), sec = nz('sec', .5);
+        const ns = this.nodesOf(a.on, cx); const gens = ns.map(nd=> this._moveObj(nd, to, sec));
+        if (a.wait === 0) gens.forEach(g=> this.run(g)); else { gens.slice(1).forEach(g=> this.run(g)); if (gens[0]) yield* gens[0]; } break; }
+      case 'scale': { const g = this.nodesOf(a.on, cx).map(nd=> tw.scaleTo(nd, nz('to', 1), nz('sec', .4), !!a.overshoot)); if (a.wait === 0) g.forEach(x=> this.run(x)); else { g.slice(1).forEach(x=> this.run(x)); if (g[0]) yield* g[0]; } break; }
+      case 'fade': { const g = this.nodesOf(a.on, cx).map(nd=> tw.fade(nd, nz('to', 0), nz('sec', .3))); if (a.wait === 0) g.forEach(x=> this.run(x)); else { g.slice(1).forEach(x=> this.run(x)); if (g[0]) yield* g[0]; } break; }
+      case 'tint': { const c = hex(String(this.ev(a.color, cx))); const g = this.nodesOf(a.on, cx).map(nd=> tw.colorTo(nd, c, nz('sec', .3))); if (a.wait === 0) g.forEach(x=> this.run(x)); else { g.slice(1).forEach(x=> this.run(x)); if (g[0]) yield* g[0]; } break; }
+      case 'rotate': { const g = this.nodesOf(a.on, cx).map(nd=> rotTo(nd, nz('to', 0), nz('sec', .5))); if (a.wait === 0) g.forEach(x=> this.run(x)); else { g.slice(1).forEach(x=> this.run(x)); if (g[0]) yield* g[0]; } break; }
+      case 'show': this.nodesOf(a.on, cx).forEach(nd=> nd.active = true); break;
+      case 'hide': this.nodesOf(a.on, cx).forEach(nd=> nd.active = false); break;
+      case 'pop': this.nodesOf(a.on, cx).forEach(nd=>{ nd.active = true; this.run(tw.popIn(nd, nz('sec', .3))); }); break;
+      case 'destroy': this.nodesOf(a.on, cx).forEach(nd=> nd.destroy()); break;
+      case 'spawn': { const p = a.at ? this.pointOf(a.at, cx) : { x:0, y:0 }, s = nz('size', .2)*this.U, sw = a.w !== undefined ? nz('w', .2)*this.U : s, sh = a.h !== undefined ? nz('h', .2)*this.U : s;
+        const o = { spec:{}, extra:{}, id: a.id ? String(this.ev(a.id, cx)) : null, role: a.role || null, cur:{}, animOn:true, t0:0 };
+        o.node = this.drawLook(this.root, a.look, p.x, p.y, sw, sh, cx); o.x0 = o.node.x; o.y0 = o.node.y; this.taskObjs.push(o);
+        if (a.pop !== 0) this.run(tw.popIn(o.node, .3)); break; }
+      case 'set': this.vars[String(this.ev(a.var, cx))] = this.ev(a.expr, cx); break;
+      case 'inc': { const vn = String(this.ev(a.var, cx)); let v = X.toNum(this.vars[vn]) + nz('by', 1); if (a.mod !== undefined){ const m = this.num(a.mod, 0, cx); if (m > 0) v = ((v % m) + m) % m; } this.vars[vn] = v; break; }
+      case 'bag': { const vals = String(this.ev(a.values, cx)).split(',').map(s=> s.trim()); const key = a.var; const bag = this._bags[key] = this._bags[key] && this._bags[key].length ? this._bags[key] : this.shuffle(vals.slice());
+        this.vars[key] = bag.shift(); break; }
+      case 'pickItem': this.vars[a.var] = this.ev('=randItem(' + JSON.stringify(a.tag) + ',' + JSON.stringify(a.value) + ')', cx) || ''; break;
+      case 'if': yield* this.runActs(X.truthy(this.ev('=' + String(a.cond), cx)) ? a.then : a.else, cx); break;
+      case 'wait': yield nz('sec', .3); break;
+      case 'text': this.nodesOf(a.on, cx).forEach(nd=> nd.text = X.template(a.text, (this._Q||{}).vars, this.scope(cx))); break;
+      case 'par': { const hs = (a.acts || []).map(l=> { const st = { done:false }; this.run((function*(self, l2){ yield* self.runActs(Array.isArray(l2) ? l2 : [l2], cx); st.done = true; })(this, l)); return st; }); while (hs.some(h=> !h.done)) yield null; break; }
+      case 'fly': { const from = cx.tapped ? { x: cx.tapped.node.x, y: cx.tapped.node.y } : { x:0, y:0 }, to = this.pointOf(a.to, cx), sz = this.nodesOf(a.to, cx)[0];
+        const s0 = cx.tapped ? Math.min(cx.tapped.node.w, cx.tapped.node.h)*.8 : this.U*.2;
+        const look = a.look || { item: '=tapped.item' }; const o = { spec:{}, extra:{}, id:null, role:null, cur:{}, animOn:false, t0:0 };
+        o.node = this.drawLook(this.root, look, from.x, from.y, s0, s0, Object.assign({}, cx, { tapped: Object.assign({}, cx.tapped, { item: cx.tapped && cx.tapped.itemId }) }));
+        o.node.setAsLast(); this.taskObjs.push(o);
+        const sx = sz ? sz.w : s0, sy = sz ? sz.h : s0;
+        yield* tw.moveResize(o.node, to, { x: sx, y: sy }, nz('sec', .5)); o.node.destroy(); break; }
+    }
+  }
+};
+P._stdRight = function*(cx){
+  const Q = this._Q || {}, T2 = (this.flow && this.flow.text) || {}; this.right();
+  (this.elems||[]).filter(e=> e.key === Q.target).forEach(e=>{ if (e.kind === 'card') e.node.color = hex('#C8F7C5'); this.run(tw.bounce(e.fig || e.node, .3, .6)); this.confetti(e.node.x, e.node.y, 10, false); });
+  if (T2.say) this.say(X.template(T2.say, Q.vars, this.scope(cx)), this.P(.5, .14), hex('#1B5E20'), 1.6);
+};
+P._stdWrong = function*(cx){
+  const T2 = (this.flow && this.flow.text) || {}, el = cx.tapped; this.sfx('tap'); if (el) this.run(tw.shake(el.node, .35, 10));
+  if (T2.wrong) this.say(X.template(T2.wrong, Object.assign({}, (this._Q||{}).vars, { name: el ? el.name : '', NAME: el ? el.name : '' }), this.scope(cx)), this.P(.5, .14), hex('#BF360C'), 1.3);
+};
+})();
+
+</script>
+<script>
+/* FloorStory web engine — "flow" = 1 câu hỏi sinh động, ghép từ các MÔ-ĐUN độc lập (7 lớp):
+     1 gen   (nguồn)    : bốc vật từ kho → Q (câu hỏi dạng dữ liệu): set | match | calc | values | sequence | pairs | number
+     2 views (hiển thị) : vẽ Q: cards | strip | grid | seesaw | stack | props | floor   (mỗi view có thể có reveal = hiện n giây rồi úp/ẩn)
+     3 reveal (thời gian): gắn vào view
+     4/5 judge (chạm/chấm): equals | order | pairs | taps
+     6 on    (phản hồi) : danh sách hành động theo sự kiện start/right/wrong/step/end (fs_act.js)
+     7 vars + scene     : trạng thái thế giới qua các lượt + đối tượng cảnh có ràng buộc (fs_act.js)
+   Bập bênh, đống khối chỉ là VIEW. Dữ liệu 1 game = fsData v3 — docs/floor-story-mechanics.md.
+   QUAN TRỌNG: luật ở đây PHẢI khớp bản C# bên Unity (FloorStoryGame/Flow/*.cs). Sửa 1 bên thì sửa bên kia. */
+(function(){
+'use strict';
+const F = window.FSW;
+const { UI, hex, col, WHITE, tw, World, Game, cubeSprite } = F, X = F.expr;
+
+// ── Khai báo mô-đun (form builder + mặc định cho cả web lẫn Unity) ───────────────────────
+const I = (label, def, min, max, help)=> ({ label, type:'int', def, min, max, help });
+const FL = (label, def, min, max, help)=> ({ label, type:'float', def, min, max, help });
+const S = (label, def, help)=> ({ label, type:'text', def, help });
+const J = (label, def, help)=> ({ label, type:'json', def, help });
+const SEL = (label, def, opts, help)=> ({ label, type:'select', def, opts, help });
+const MOD = {
+  gen: {
+    set: { name:'Bốc n vật, hỏi 1 vật', desc:'Bốc n vật từ kho; 1 vật là đáp án. Có thể lọc đáp án/vật nhiễu bằng biểu thức (theo tag + biến) và buộc vật nhiễu khác nhóm.',
+      minItems: p=> Math.max(2, p.n||3),
+      p: { n:I('Số vật mỗi câu',3,2,6), startItems:I('Số vật mở sẵn lúc đầu',3,2,99,'Chỉ các vật đầu danh sách được hỏi lúc đầu (99 = tất cả)'), addItems:I('Mỗi đợt mở thêm (vật)',2,0,10), every:I('Mở thêm sau mỗi (lượt)',4,1,30),
+           targetWhere:S('Lọc đáp án (biểu thức)','', 'vd: item.tags.period == $period'), otherWhere:S('Lọc vật nhiễu (biểu thức)','','vd: item.tags.period != $period'),
+           distinctBy:S('Vật nhiễu khác nhau theo tag','','tên tag, vd: period'), noRepeat:I('Không lặp đáp án liền kề (1/0)',0,0,1) },
+      vars:'{label} = tên vật đáp án' },
+    match: { name:'Chủ thể → đáp án theo thuộc tính', desc:'Chọn 1 chủ thể (vật) và các lựa chọn; đáp án = lựa chọn có id bằng tag của chủ thể (hoặc ngẫu nhiên nếu không đặt tag). Dùng cho: hình nào lấp chỗ trống, đặt đồ vào vị trí, cửa vừa cỡ, giờ trên đồng hồ...',
+      minItems:()=> 2,
+      p: { subjectWhere:S('Lọc chủ thể (biểu thức)','','vd: item.tags.part == 1'), optionsWhere:S('Lọc lựa chọn (biểu thức)','','vd: item.tags.kind2 == "zone"'), n:I('Số lựa chọn',3,2,12),
+           answerTag:S('Tag của chủ thể trỏ tới id đáp án','','trống = đáp án ngẫu nhiên'), shuffle:I('Xáo lựa chọn (1/0)',1,0,1), noRepeat:I('Không lặp chủ thể/đáp án liền kề (1/0)',0,0,1) },
+      vars:'{subject} = tên chủ thể, {label} = tên đáp án' },
+    calc: { name:'Tính giá trị bằng biểu thức', desc:'Sinh biến ngẫu nhiên (defs) và danh sách lựa chọn kèm giá trị tính được (options); đáp án = lớn nhất/nhỏ nhất. Dùng cho: bắc cầu (khúc gỗ dài hơn sông).',
+      minItems:()=> 1,
+      p: { defs:J('Biến (JSON: tên → biểu thức)','{}'), options:J('Lựa chọn (JSON: [{item,v}])','[]'), answer:SEL('Đáp án','max',['max','min']), shuffle:I('Xáo lựa chọn (1/0)',1,0,1) },
+      vars:'{label} = tên lựa chọn đúng' },
+    values: { name:'Bốc vật khác "giá trị", hỏi lớn/nhỏ nhất', desc:'Bốc 2 (rồi 3) vật có giá trị khác nhau; đáp án = vật có giá trị LỚN nhất (hoặc NHỎ nhất khi hỏi ngược).', minItems:()=> 2,
+      p: { threeAfter:I('Lên 3 vật sau (lượt đúng ngay lần đầu)',4,1,30), lessAfter:I('Bắt đầu hỏi "nhỏ" sau (lượt đúng)',2,0,30), lessEvery:I('Hỏi "nhỏ" mỗi (lượt)',3,2,10),
+           wordMore:S('Từ "lớn"','nặng'), wordLess:S('Từ "nhỏ"','nhẹ'), suffix2:S('Đuôi khi 2 vật','hơn'), suffix3:S('Đuôi khi 3 vật','nhất') },
+      vars:'{word} = từ lớn/nhỏ, {suffix} = hơn/nhất, {label} = tên vật đáp án' },
+    none: { name:'Không có câu hỏi', desc:'Không sinh câu hỏi (dùng cho game chạm tự do như Sàn kỳ diệu).', minItems:()=> 0, p: {}, vars:'' },
+    sequence: { name:'Chuỗi hình', desc:'Bốc k loại hình rồi xếp thành chuỗi dài dần (có thể lặp hình hoặc bắt khác nhau).', minItems: p=> Math.max(3, p.kinds||4),
+      p: { where:S('Lọc vật được bốc (biểu thức)','','vd: item.tags.kind == "shape"'), kinds:I('Số loại hình mỗi lượt',4,3,6), startLen:I('Chuỗi bắt đầu dài',1,1,6), maxLen:I('Chuỗi dài tối đa',6,1,8), growEvery:I('Dài thêm 1 sau mỗi (lượt)',2,1,10),
+           lenBy:SEL('Đếm theo','ok',['ok','task'],'ok = lượt đúng ngay lần đầu; task = mọi lượt'), distinct:I('Mọi hình trong chuỗi khác nhau (1/0)',0,0,1) },
+      vars:'{len} = độ dài chuỗi, {names} = tên các hình nối bằng ", rồi "' },
+    pairs: { name:'Các cặp thẻ giống nhau', desc:'Bốc số cặp tăng dần (mỗi bảng +1 cặp); mỗi vật xuất hiện 2 lần, xáo trộn.', minItems: p=> Math.max(2, p.startPairs||2),
+      p: { startPairs:I('Số cặp bảng đầu',2,2,6), maxPairs:I('Số cặp tối đa',6,2,8) }, vars:'{pairs} = số cặp' },
+    number: { name:'Một số đếm', desc:'Chọn 1 số (tăng dần theo lượt) + các số gần nó làm đáp án. Dùng với view "Đống khối" để đếm.', minItems:()=> 0,
+      p: { minStart:I('Số nhỏ nhất lúc đầu',1,1,6), startMax:I('Số lớn nhất lúc đầu',3,2,12), maxCount:I('Số lớn nhất tối đa',10,3,12), growEvery:I('Tăng độ khó sau mỗi (lượt đúng ngay lần đầu)',2,1,10),
+           options:I('Số đáp án',3,2,4), objectId:S('Vật cần đếm (id; trống = khối hộp 3D)','') },
+      vars:'{count} = số đúng' },
+  },
+  view: {
+    cards: { name:'Hàng thẻ', desc:'Hàng thẻ chạm được: hiện các vật của câu hỏi, hoặc các số đáp án.',
+      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF') } },
+    strip: { name:'Dải hình (theo chuỗi)', desc:'Hàng ô hiện các hình của chuỗi theo thứ tự. Thường dùng với "Hiện n giây rồi úp".',
+      p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1) } },
+    grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1) } },
+    seesaw: { name:'Bập bênh', desc:'Các vật đứng trên bập bênh; bên giá trị LỚN hơn chúi xuống. Chạm vào chính vật. 3 vật = 2 bập bênh nối nhau.', p: {} },
+    stack: { name:'Đống khối 3D', desc:'Đống khối (hoặc vật) đẳng cự với đúng số lượng của câu hỏi.', p: { color:SEL('Màu khối','random',['random','#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA']) } },
+    props: { name:'Vật đặt tự do (props)', desc:'Mỗi lựa chọn là 1 vật tại 1 vị trí (hàng, cột, vòng tròn, lưới, ngẫu nhiên, cố định). Hình dạng mỗi vật vẽ theo mẫu `tpl` (danh sách đối tượng, biểu thức dùng opt/i/n/size). Dùng cho: trứng, bóng bay, cổng, cửa, khúc gỗ, vùng đặt đồ, số trên đồng hồ...',
+      p: { layout:SEL('Bố cục','row',['row','col','circle','grid','random','fixed']), x0:FL('Từ x',.15,0,1), x1:FL('Đến x',.85,0,1), y0:FL('Từ y',.46,0,1), y1:FL('Đến y',.46,0,1),
+           cx:FL('Tâm x (vòng tròn)',.5,0,1), cy:FL('Tâm y (vòng tròn)',.46,0,1), r:FL('Bán kính (đơn vị U)',.3,.05,.6), startDeg:FL('Góc bắt đầu (độ, theo kim đồng hồ từ số 12)',0,-360,360),
+           cols:I('Số cột (lưới)',3,1,8), hU:FL('Chiều cao cố định (đơn vị U; 0 = theo tỉ lệ)',0,0,1), yExpr:S('Vị trí dọc theo biểu thức (opt/i/n/size)',''), pos:J('Vị trí cố định (JSON [[x,y],..])','[]'), size:S('Cỡ (đơn vị U, số hoặc =biểu thức)','0.2'), tall:FL('Tỉ lệ cao/rộng',1,.3,3),
+           preset:SEL('Mẫu hình','bare',['bare','card','zone','none'],'khi `tpl` trống'), tpl:J('Mẫu hình (JSON: danh sách đối tượng, ưu tiên hơn mẫu)','[]'), anim:SEL('Hoạt hình','none',['none','bob','float','pulse']), labelBelow:I('Chữ tên dưới vật (1/0)',0,0,1) } },
+    floor: { name:'Nền chạm (floor)', desc:'Vùng chạm phủ kín world; mỗi lần chạm sinh sự kiện "step" kèm vị trí chạm (dùng với chấm "Đếm lượt chạm").', p: {} },
+  },
+  judge: {
+    equals: { name:'Chạm đúng đáp án', desc:'Chạm vật/số đúng = đúng; sai thì thử lại. Đúng/sai chạy hành động on.right / on.wrong (mặc định: bounce + confetti + câu khen; rung + câu sai).',
+      p: { hintAfter:I('Gợi ý sau (lần sai)',2,1,5), finishSec:FL('Giây chờ trước câu sau',1.8,.5,4) } },
+    order: { name:'Chạm theo đúng thứ tự chuỗi', desc:'Chạm các vật theo thứ tự chuỗi. Mỗi bước đúng chạy on.step; xong chạy on.right. Nếu có view "Dải hình" thì ô tương ứng lật ra.',
+      p: { hintAfter:I('Gợi ý sau (lần sai ở 1 bước)',2,1,5), finishSec:FL('Giây chờ trước câu sau',2.2,.5,4) } },
+    pairs: { name:'Lật 2 thẻ ghép cặp', desc:'Chạm lật 2 thẻ: giống nhau thì ăn (+1 điểm ngay), khác nhau thì úp lại sau vài giây.',
+      p: { hideSec:FL('Giây hiện thẻ sai trước khi úp lại',1.5,.8,4), bonus:I('Thưởng khi xong bảng không nhầm (1/0)',1,0,1), finishSec:FL('Giây chờ trước bảng sau',2.2,.5,4) } },
+    taps: { name:'Đếm lượt chạm', desc:'Mỗi lần chạm trên view "Nền chạm" chạy on.step; đủ số lần thì xong lượt (on.right). Không có đúng/sai.',
+      p: { count:I('Số lần chạm mỗi lượt',6,1,30), finishSec:FL('Giây chờ trước lượt sau',1,.2,4) } },
+  },
+  reveal: {
+    p: { mode:SEL('Hiện','none',['none','sequential','all'],'none = hiện luôn; sequential = từng vật cách nhau; all = cùng lúc'), showSec:FL('Giây giữa 2 vật',.6,.2,3), hold:FL('Giữ thêm (giây)',1.2,0,6), holdPerItem:FL('Giữ thêm mỗi vật (giây)',.35,0,2),
+         then:SEL('Sau đó','cover',['cover','hide','keep'],'cover = úp (dấu ?); hide = ẩn; keep = giữ nguyên') },
+  },
+  text: { prompt:'Câu hỏi lúc đầu', ready:'Câu hỏi sau khi hiện xong (nếu có)', say:'Câu khen khi đúng', sayOk:'Câu khen khi đúng nhưng đã sai trước đó (nếu có)', wrong:'Câu khi chạm sai', first:'Câu riêng cho lượt đầu (nếu có)' },
+};
+
+// ── tiện ích ─────────────────────────────────────────────────────────────────
+function par(kind, spec, key){
+  const defs = ((MOD[kind]||{})[spec.type] || {}).p || {}, d = (defs[key]||{}).def, v = (spec.p||{})[key], t = (defs[key]||{}).type;
+  if (t === 'text' || t === 'select' || t === 'json') return (v === undefined || v === null) ? d : v;
+  const n = parseFloat(v); return (v === undefined || v === null || v === '' || isNaN(n)) ? d : n;
+}
+const jpar = (kind, spec, key, d)=>{ const v = par(kind, spec, key); if (v && typeof v === 'object') return v; try { return JSON.parse(v); } catch(e){ return d; } };
+const PALETTE = ['#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA'];
+const tagOf = (it, k)=> ((it && it.tags) || {})[k];
+const sceneFor = (w, extra)=> w.scope(extra);
+
+// ═════════════════════════ GEN ═════════════════════════════════════════════════
+const GEN = {
+  set(w, spec){
+    const r = w.sync ? w.nextTaskRng() : w.rng, items = w.items, P = k=> par('gen', spec, k), n = Math.min(P('n'), items.length);
+    const allowed = Math.min(items.length, Math.max(n, P('startItems') + P('addItems')*Math.floor((w.taskNo-1)/Math.max(1, P('every')))));
+    const tw_ = P('targetWhere'), ow_ = P('otherWhere'), dist = P('distinctBy');
+    if (!tw_ && !ow_ && !dist){
+      const idx = []; for (let i=0;i<allowed;i++) idx.push(i); w.shuffle(idx, r);
+      const picks = idx.slice(0, n).map(i=> items[i]), target = r.int(n), name = w.nameOf(picks[target]);
+      return { items: picks, target, vars:{ label:name }, id:'SET_' + (picks[target].id||name), desc:'Chọn ' + name, answers: picks.map(p=> w.nameOf(p)) };
+    }
+    const pool = items.slice(0, allowed), ok = (it, e)=> !e || X.truthy(w.ev('=' + e, { item: it }));
+    let tp = pool.filter(it=> ok(it, tw_)); if (!tp.length) tp = pool.slice();
+    if (P('noRepeat') && w._lastTarget && tp.length > 1) tp = tp.filter(it=> it.id !== w._lastTarget);
+    const target = tp[r.int(tp.length)]; w._lastTarget = target.id;
+    let others = w.shuffle(pool.filter(it=> it !== target && ok(it, ow_)), r);
+    if (dist){
+      const used = new Set([String(tagOf(target, dist))]), chosen = [];
+      others.forEach(it=>{ if (chosen.length < n-1 && !used.has(String(tagOf(it, dist)))){ used.add(String(tagOf(it, dist))); chosen.push(it); } });
+      others.forEach(it=>{ if (chosen.length < n-1 && chosen.indexOf(it) < 0) chosen.push(it); });
+      others = chosen;
+    } else others = others.slice(0, n-1);
+    const picks = w.shuffle([target].concat(others), r), ti = picks.indexOf(target), name = w.nameOf(target);
+    return { items: picks, target: ti, vars:{ label:name }, id:'SET_' + (target.id||name), desc:'Chọn ' + name, answers: picks.map(p=> w.nameOf(p)) };
+  },
+  match(w, spec){
+    const r = w.sync ? w.nextTaskRng() : w.rng, P = k=> par('gen', spec, k), ok = (it, e)=> !e || X.truthy(w.ev('=' + e, { item: it }));
+    const subjPool = w.items.filter(it=> ok(it, P('subjectWhere'))), optPool = w.items.filter(it=> ok(it, P('optionsWhere')) && (P('optionsWhere') || it !== undefined));
+    let sp = subjPool.length ? subjPool : w.items.slice();
+    if (P('noRepeat') && w._lastSubject && sp.length > 1) sp = sp.filter(it=> it.id !== w._lastSubject);
+    const subject = sp[r.int(sp.length)]; w._lastSubject = subject.id;
+    const pool = optPool.filter(it=> it !== subject), n = Math.min(P('n'), pool.length), tag = P('answerTag');
+    let ans = tag ? pool.find(it=> it.id === String(tagOf(subject, tag))) : null;
+    if (!ans){ let c = pool; if (P('noRepeat') && w._lastAns && c.length > 1) c = c.filter(it=> it.id !== w._lastAns); ans = c[r.int(c.length)]; }
+    w._lastAns = ans.id;
+    let options;
+    if (P('shuffle')) options = w.shuffle([ans].concat(w.shuffle(pool.filter(it=> it !== ans), r).slice(0, n-1)), r);
+    else { options = pool.slice(0, n); if (options.indexOf(ans) < 0) options[options.length-1] = ans; }
+    return { items: options, target: options.indexOf(ans), subject, vars:{ subject: w.nameOf(subject), label: w.nameOf(ans) }, id:'MATCH_' + (subject.id||'') + '_' + ans.id, desc:'Ghép ' + w.nameOf(subject), answers: options.map(p=> w.nameOf(p)) };
+  },
+  calc(w, spec){
+    const r = w.sync ? w.nextTaskRng() : w.rng, P = k=> par('gen', spec, k), Qv = {}, defs = jpar('gen', spec, 'defs', {}), opts = jpar('gen', spec, 'options', []);
+    const scope = ()=> ({ q: Object.assign({ v: Qv }, Qv) });
+    Object.keys(defs).forEach(k=>{ Qv[k] = w.ev('=' + defs[k], scope()); });
+    let list = opts.map(o=> ({ item: w.items.find(i=> i.id === String(w.ev(o.item, scope()))) || w.items[0], v: X.toNum(w.ev('=' + o.v, scope())) }));
+    if (P('shuffle')) w.shuffle(list, r);
+    let ti = 0; list.forEach((o,i)=>{ if (P('answer') === 'min' ? o.v < list[ti].v : o.v > list[ti].v) ti = i; });
+    return { items: list.map(o=> o.item), optv: list.map(o=> o.v), v: Qv, target: ti, vars:{ label: w.nameOf(list[ti].item) }, id:'CALC_' + ti, desc:'Chọn theo giá trị', answers: list.map(o=> w.nameOf(o.item)) };
+  },
+  values(w, spec){
+    const P = k=> par('gen', spec, k), byVal = {};
+    w.items.forEach(it=>{ const v = +it.value || 0; (byVal[v] = byVal[v] || []).push(it); });
+    const vals = Object.keys(byVal).map(Number).sort((a,b)=> a-b);
+    const n = (w.ok >= P('threeAfter') && vals.length >= 3) ? 3 : 2;
+    const less = w.ok >= P('lessAfter') && w.taskNo % P('lessEvery') === 0;
+    let chosen;
+    if (n === 3) chosen = vals.length === 3 ? vals.slice() : w.shuffle(vals.slice()).slice(0,3).sort((a,b)=>a-b);
+    else if (w.ok < 2) chosen = [vals[0], vals[vals.length-1]];
+    else chosen = w.shuffle(vals.slice()).slice(0,2);
+    const items = chosen.map(v=> byVal[v][w.rand(0, byVal[v].length)]); w.shuffle(items);
+    let target = 0; for (let i=1;i<n;i++) if (less ? (+items[i].value < +items[target].value) : (+items[i].value > +items[target].value)) target = i;
+    const word = less ? P('wordLess') : P('wordMore'), suffix = n === 2 ? P('suffix2') : P('suffix3');
+    return { items, target, vars:{ word, suffix, label:w.nameOf(items[target]) }, id:'VAL_' + (items[target].id||target) + (less?'_min':'_max') + n, desc:'Con nào ' + word + ' ' + suffix, answers: items.map(p=> w.nameOf(p)) };
+  },
+  none(w, spec){ return { items: [], target: -1, vars:{}, id:'NONE', desc:'', answers:[] }; },
+  sequence(w, spec){
+    const P = k=> par('gen', spec, k), srcItems = P('where') ? w.items.filter(it=> X.truthy(w.ev('=' + P('where'), { item: it }))) : w.items, kinds = Math.min(P('kinds'), srcItems.length);
+    const cnt = P('lenBy') === 'task' ? (w.taskNo - 1) : w.ok;
+    const len = Math.min(P('maxLen'), P('startLen') + Math.floor(cnt / Math.max(1, P('growEvery'))));
+    const all = srcItems.map((_,i)=> i); w.shuffle(all);
+    const items = all.slice(0, kinds).map(i=> srcItems[i]); let seq = [];
+    if (P('distinct')){ const idx = items.map((_,i)=> i); w.shuffle(idx); seq = idx.slice(0, Math.min(len, kinds)); }
+    else for (let i=0;i<len;i++){
+      let v, g = 0;
+      do { v = w.rand(0, kinds); g++; } while (g < 30 && ((len <= 3 && seq.indexOf(v) >= 0) || (i >= 2 && seq[i-1] === v && seq[i-2] === v)));
+      seq.push(v);
+    }
+    return { items, seq, target: seq[0], vars:{ len: seq.length, names: seq.map(i=> w.nameOf(items[i]).toLowerCase()).join(', rồi ') }, id:'SEQ_' + seq.length + '_' + seq.join('-'), desc:'Chuỗi ' + seq.length + ' hình', answers: items.map(p=> w.nameOf(p)) };
+  },
+  pairs(w, spec){
+    const P = k=> par('gen', spec, k);
+    const pairs = Math.max(2, Math.min(P('maxPairs'), P('startPairs') + (w.taskNo-1), w.items.length));
+    const all = w.items.map((_,i)=> i); w.shuffle(all);
+    const faces = []; for (let i=0;i<pairs;i++) faces.push(i, i); w.shuffle(faces);
+    return { items: all.slice(0, pairs).map(i=> w.items[i]), faces, pairs, vars:{ pairs }, id:'PAIRS_' + pairs, desc:'Lật thẻ giống nhau: ' + pairs + ' cặp', answers:[faces.join(',')] };
+  },
+  number(w, spec){
+    const P = k=> par('gen', spec, k), lv = Math.floor(w.ok / Math.max(1, P('growEvery'))), maxC = Math.min(12, P('maxCount'));
+    const lo = Math.min(P('minStart') + lv, 4), hi = Math.min(P('startMax') + 2*lv, maxC);
+    const count = w.rand(Math.min(lo, hi), hi + 1), opts = [count]; let g = 0;
+    while (opts.length < P('options') && g++ < 80){ const v = count + w.rand(-2, 3); if (v >= 1 && v <= 12 && opts.indexOf(v) < 0) opts.push(v); }
+    w.shuffle(opts);
+    const obj = w.items.find(i=> i.id === P('objectId')) || null;
+    return { items: obj ? [obj] : [], options: opts, number: count, target: opts.indexOf(count), vars:{ count }, id:'NUM_' + count, desc:'Đếm ' + count, answers: opts.map(String) };
+  },
+};
+
+// ═════════════════════════ VIEW ════════════════════════════════════════════════
+// V = { elems:[{node,key,kind,name,fig,item}], parts:[{show(),cover(),hide()}], hideAll(), setActive(b), intro(): generator, ready }
+const PRESET_TPL = {
+  bare: [{ look:{ item:'=opt.id' }, w:'=size' }],
+  card: [{ look:{ kind:'rrect', color:'#FFFFFF' }, w:'=size', h:'=size*1.1', alpha:.96 }, { look:{ item:'=opt.id' }, w:'=size*.66' }],
+  zone: [{ look:{ shape:'circle', color:'#FFFFFF' }, w:'=size', alpha:.38 }, { look:{ shape:'circle', color:'#FFFFFF' }, w:'=size*.75', alpha:.35 }],
+  none: [],
+};
+const VIEW = {
+  cards(w, spec, Q){
+    const P = k=> par('view', spec, k), isNum = P('source') === 'options', list = isNum ? Q.options : Q.items, n = list.length;
+    const spacing = n <= 3 ? .31 : n === 4 ? .24 : .72/(n-1), cs = Math.min(w.U*P('sizeU'), w.W*spacing*.93), tall = P('tall');
+    const elems = [];
+    list.forEach((it, i)=>{
+      const pos = w.P(.5 + (i - (n-1)/2)*spacing, P('y'));
+      let card, fig = null;
+      if (isNum) card = UI.card(w.root, null, String(it), hex('#7E57C2'), pos.x, pos.y, cs, cs*tall, null, 72).rt;
+      else {
+        card = UI.card(w.root, null, '', hex(P('bg')), pos.x, pos.y, cs, cs*tall, null).rt; card.alpha = .96;
+        fig = w.drawItem(card, it, 0, P('label') ? cs*tall*.1 : 0, cs*P('fig'));
+        if (P('label')) UI.label(card, w.nameOf(it), 22, hex('#3A2A12'), 0, -cs*tall*.38, cs*.96, cs*tall*.26, false);
+      }
+      w.track(card);
+      elems.push({ node: card, key: i, kind:'card', name: isNum ? String(it) : w.nameOf(it), fig, item: isNum ? null : it, itemId: isNum ? '' : it.id });
+    });
+    return { elems, parts: [], ready: true, hideAll(){}, cover(){}, hide(){},
+      setActive(b){ elems.forEach(e=>{ e.node.active = b; if (b) w.run(tw.popIn(e.node, .25)); }); },
+      *intro(){ elems.forEach(e=> w.run(tw.popIn(e.node, .3))); } };
+  },
+  props(w, spec, Q){
+    const P = k=> par('view', spec, k), list = Q.items, n = list.length, U = w.U, layout = P('layout');
+    const tplIn = jpar('view', spec, 'tpl', []), tpl = (tplIn && tplIn.length) ? tplIn : PRESET_TPL[P('preset')] || [];
+    const posIn = jpar('view', spec, 'pos', []), tall = P('tall'), elems = [], pts = [];
+    const sizeOf = (i, it)=> { const ex = { opt: Object.assign({}, it, { v: (Q.optv||[])[i] }), i, n, item: it }; return +w.ev(P('size'), ex) || .2; };
+    const area = { x0:P('x0'), x1:P('x1'), y0:P('y0'), y1:P('y1') };
+    if (layout === 'row') list.forEach((_,i)=> pts.push(w.P(n > 1 ? area.x0 + (area.x1-area.x0)*i/(n-1) : (area.x0+area.x1)/2, area.y0)));
+    else if (layout === 'col') list.forEach((_,i)=> pts.push(w.P(area.x0, n > 1 ? area.y0 + (area.y1-area.y0)*i/(n-1) : area.y0)));
+    else if (layout === 'circle') list.forEach((_,i)=>{ const a = (P('startDeg') + i*360/n)*Math.PI/180, c = w.P(P('cx'), P('cy')); pts.push({ x: c.x + Math.sin(a)*P('r')*U, y: c.y + Math.cos(a)*P('r')*U }); });
+    else if (layout === 'grid'){ const cols = P('cols'), rows = Math.ceil(n/cols); list.forEach((_,i)=>{ const r = Math.floor(i/cols), c = i%cols; pts.push(w.P(area.x0 + (area.x1-area.x0)*(cols > 1 ? c/(cols-1) : .5), area.y0 + (area.y1-area.y0)*(rows > 1 ? r/(rows-1) : 0))); }); }
+    else if (layout === 'fixed') list.forEach((_,i)=>{ const p = posIn[i] || [.5,.5]; pts.push(w.P(p[0], p[1])); });
+    else { // random: tránh đè nhau
+      const placed = [], s0 = sizeOf(0, list[0]) * U;
+      list.forEach(()=>{ let best = null, bs = 1e18; for (let a=0;a<80;a++){ const c = w.P(area.x0 + w.rng.next()*(area.x1-area.x0), area.y0 + w.rng.next()*(area.y1-area.y0)); let sc = 0; placed.forEach(q=>{ const d = Math.hypot(c.x-q.x, c.y-q.y); if (d < s0) sc += s0 - d; }); if (sc < bs){ bs = sc; best = c; if (sc === 0) break; } } placed.push(best); pts.push(best); });
+    }
+    list.forEach((it, i)=>{
+      const s = sizeOf(i, it), ex = { opt: Object.assign({}, it, { v: (Q.optv||[])[i] }), i, n, item: it, size: s };
+      const hh = P('hU') > 0 ? P('hU')*U : s*U*tall, py = P('yExpr') ? w.P(0, +w.ev(P('yExpr'), ex)).y : pts[i].y;
+      const cont = UI.pic(w.root, null, col(255,255,255,0), pts[i].x, py, s*U, hh, true); cont.preserveAspect = false; w.track(cont);
+      w.makeObjs(tpl.map(t=> Object.assign({ rel:true }, t)), cont, w.taskObjs, ex);
+      if (P('labelBelow')) UI.label(cont, w.nameOf(it), 26, WHITE, 0, -hh*.5 - U*.045, U*.5, U*.08);
+      if (P('anim') !== 'none') w.taskObjs.push({ node: cont, spec:{ anim:{ type: P('anim') === 'pulse' ? 'pulse' : 'bob', amp: P('anim') === 'float' ? .02 : .012, speed: P('anim') === 'float' ? 1.6 : 3 } }, extra:{}, cur:{}, animOn:true, x0: cont.x, y0: cont.y, t0: w.rng.next()*6.28 });
+      elems.push({ node: cont, key: i, kind:'prop', name: w.nameOf(it), fig: null, item: it, itemId: it.id });
+    });
+    return { elems, parts: [], ready: true, hideAll(){}, cover(){}, hide(){}, setActive(b){ elems.forEach(e=>{ e.node.active = b; if (b) w.run(tw.popIn(e.node, .25)); }); },
+      *intro(){ elems.forEach(e=> w.run(tw.popIn(e.node, .3))); } };
+  },
+  floor(w, spec, Q){
+    const V = { elems: [], parts: [], ready: true, onTap: null, hideAll(){}, cover(){}, hide(){}, setActive(){}, *intro(){} };
+    const a = UI.tapArea(w.root, p=>{ if (V.onTap) V.onTap(p); }); w.track(a);
+    return V;
+  },
+  strip(w, spec, Q){
+    const P = k=> par('view', spec, k), len = Q.seq.length, slot = Math.min(w.U*P('slotU'), w.W*.92/len*.9), gap = slot*.1, rowW = len*slot + (len-1)*gap;
+    const bg = [], face = [], qq = [], y = w.P(.5, P('y')).y, plain = !!P('plain');
+    for (let i=0;i<len;i++){
+      const b = UI.pic(w.root, 'rrect', plain ? col(255,255,255,0) : col(255,255,255,.9), -rowW/2 + slot/2 + i*(slot+gap), y, slot, slot); b.sliced = true; b.preserveAspect = false; w.track(b); bg.push(b);
+      const q = UI.label(b, '?', Math.round(slot*.6), hex('#90A4AE'), 0, 0, slot, slot, false); q.active = false; qq.push(q);
+      face.push(w.drawItem(b, Q.items[Q.seq[i]], 0, 0, slot*.82));
+    }
+    return { elems: [], bg, ready: true,
+      parts: face.map((f,i)=> ({ show(){ f.active = true; qq[i].active = false; w.run(tw.popIn(f, .3)); }, cover(){ f.active = false; qq[i].active = true; }, hide(){ f.active = false; qq[i].active = false; } })),
+      hideAll(){ face.forEach((f,i)=>{ f.active = false; qq[i].active = false; }); }, setActive(){}, *intro(){},
+      mark(i){ face[i].active = true; qq[i].active = false; w.run(tw.popIn(face[i], .3)); bg[i].color = plain ? bg[i].color : hex('#C8F7C5'); if (plain) w.run(tw.fade(face[i], .4, .3)); },
+      pulseSlot(i, alive){ w.run(tw.pulse(bg[i], alive, .06, 6)); } };
+  },
+  grid(w, spec, Q){
+    const P = k=> par('view', spec, k), total = Q.faces.length, pairs = Q.pairs, rows = pairs <= 5 ? 2 : 3, cols = Math.ceil(total/rows);
+    const areaW = w.W*.94, areaH = w.H*.76, cs = Math.min(areaW/cols, areaH/rows)*.88, stepX = areaW/cols, stepY = areaH/rows, origin = w.P(.5,.47);
+    const covered = !!P('covered'), elems = [];
+    Q.faces.forEach((fi, i)=>{
+      const r = Math.floor(i/cols), c = i % cols;
+      const holder = UI.pic(w.root, null, col(255,255,255,0), origin.x + (c-(cols-1)/2)*stepX, origin.y + ((rows-1)/2 - r)*stepY, cs, cs, true); holder.preserveAspect = false; w.track(holder);
+      const back = UI.pic(holder, 'rrect', hex('#26A69A'), 0, 0, cs, cs); back.sliced = true; back.preserveAspect = false; UI.label(back, '?', Math.round(cs*.6), WHITE, 0, 0, cs, cs);
+      const front = UI.pic(holder, 'rrect', WHITE, 0, 0, cs, cs); front.sliced = true; front.preserveAspect = false; w.drawItem(front, Q.items[fi], 0, 0, cs*.82);
+      back.active = covered; front.active = !covered;
+      elems.push({ node: holder, key: fi, kind:'flip', back, front, faceUp: !covered, matched:false, name: w.nameOf(Q.items[fi]) });
+    });
+    return { elems, ready: true,
+      parts: elems.map(e=> ({ show(){ e.back.active = false; e.front.active = true; e.faceUp = true; }, cover(){ e.back.active = true; e.front.active = false; e.faceUp = false; }, hide(){ e.node.active = false; } })),
+      hideAll(){ elems.forEach(e=>{ e.back.active = true; e.front.active = false; e.faceUp = false; }); },
+      setActive(){}, *intro(){ elems.forEach(e=> w.run(tw.popIn(e.node, .25))); },
+      *flip(e, up){
+        e.faceUp = up; const rt = e.node; if (rt.dead) return;
+        for (let t=0;t<.12;t+=F.T.dt){ if (rt.dead) return; rt.sx = F.lerp(1,0,t/.12); yield null; }
+        if (rt.dead) return; e.back.active = !up; e.front.active = up;
+        for (let t=0;t<.12;t+=F.T.dt){ if (rt.dead) return; rt.sx = F.lerp(0,1,t/.12); yield null; }
+        if (!rt.dead) rt.sx = 1;
+      } };
+  },
+  seesaw(w, spec, Q){
+    const n = Q.items.length, U = w.U, W = w.W, size = n === 2 ? U*.30 : U*.20, plankLen = W*(n === 2 ? .86 : .80), thick = U*.04;
+    const pivotY = n === 2 ? [.30] : [.60,.25], pairs = n === 2 ? [[0,1]] : [[0,1],[1,2]], elems = [], saws = [];
+    pairs.forEach((pr, s)=>{
+      const pv = w.P(.5, pivotY[s]), sw = { pivot: pv, animal:[null,null], local:[{x:0,y:0},{x:0,y:0}], items:[] };
+      w.track(UI.pic(w.root, 'triangle', hex('#8D6E63'), pv.x, pv.y - U*.055, U*.14, U*.13));
+      const plank = UI.pic(w.root, 'rrect', hex('#C98B4B'), pv.x, pv.y, plankLen, thick); plank.sliced = true; plank.preserveAspect = false; w.track(plank); sw.plank = plank;
+      const swap = w.rand(0,2) === 0;
+      for (let side=0; side<2; side++){
+        const ii = pr[swap ? 1 - side : side], it = Q.items[ii];
+        const a = w.drawItem(w.root, it, pv.x, pv.y, size); w.track(a);
+        if (n === 2) UI.label(a, w.nameOf(it), 30, WHITE, 0, size*.62, size*1.6, size*.3);
+        sw.animal[side] = a; sw.items[side] = it; sw.local[side] = { x:(side === 0 ? -1 : 1)*plankLen*.32, y: thick*.5 + size*.5 };
+        elems.push({ node: a, key: ii, kind:'item', name: w.nameOf(it), fig: null, item: it, itemId: it.id });
+      }
+      setAngle(sw, 0); saws.push(sw);
+    });
+    function setAngle(sw, deg){
+      sw.plank.rot = deg; const a = deg*Math.PI/180, c = Math.cos(a), s = Math.sin(a);
+      for (let i=0;i<2;i++){ const l = sw.local[i], an = sw.animal[i]; if (an && !an.dead) an.setPos(sw.pivot.x + l.x*c - l.y*s, sw.pivot.y + l.x*s + l.y*c); }
+    }
+    const V = { elems, parts: [], ready: false, hideAll(){}, setActive(){}, cover(){}, hide(){},
+      *intro(){
+        elems.forEach(e=> w.run(tw.popIn(e.node, .35)));
+        const A = 15; yield .5;
+        for (let t=0;t<.7;t+=F.T.dt){ const wob = Math.sin(t*14)*2.5; saws.forEach(sw=>{ if (!sw.plank.dead) setAngle(sw, wob); }); yield null; }
+        const tg = saws.map(sw=> (+sw.items[0].value > +sw.items[1].value) ? A : -A);
+        w.sfx('wood');
+        for (let t=0;t<.9;t+=F.T.dt){ const e = F.outBack(t/.9); saws.forEach((sw,i)=>{ if (!sw.plank.dead) setAngle(sw, tg[i]*e); }); yield null; }
+        saws.forEach((sw,i)=>{ if (!sw.plank.dead) setAngle(sw, tg[i]); });
+        V.ready = true;
+      } };
+    return V;
+  },
+  stack(w, spec, Q){
+    const P = k=> par('view', spec, k), count = Q.number, U = w.U, W = w.W, H = w.H;
+    const heights = makeStack(w, count), cp = P('color');
+    const color = hex(cp === 'random' ? PALETTE[w.rand(0, PALETTE.length)] : cp), obj = Q.items[0] || null;
+    const s = Math.min(W*.9/6.2, H*.52/6.2, U*.11), cells = [];
+    for (let x=0;x<3;x++) for (let y=0;y<3;y++) for (let z=0;z<heights[x][y];z++) cells.push([x,y,z]);
+    cells.sort((a,b)=> (a[0]+a[1]+a[2]) - (b[0]+b[1]+b[2]));
+    const iso = c=> ({ x:(c[0]-c[1])*s, y:-(c[0]+c[1])*s*.5 + c[2]*s });
+    let minX=1e9, maxX=-1e9, minY=1e9, maxY=-1e9;
+    cells.forEach(c=>{ const p = iso(c); minX=Math.min(minX,p.x-s); maxX=Math.max(maxX,p.x+s); minY=Math.min(minY,p.y-s); maxY=Math.max(maxY,p.y+s); });
+    const pc = w.P(.5,.60), center = { x: pc.x - (minX+maxX)/2, y: pc.y - (minY+maxY)/2 };
+    const cubes = cells.map(c=>{
+      const p = iso(c), n = obj ? w.drawItem(w.root, obj, center.x+p.x, center.y+p.y, 2*s*.9) : UI.pic(w.root, cubeSprite(color), WHITE, center.x+p.x, center.y+p.y, 2*s, 2*s);
+      n.scale = 0; w.track(n); return n;
+    });
+    const V = { elems: [], ready: true, center, solvedAt: { x:center.x, y:center.y + s },
+      parts: cubes.map(c=> ({ show(){ w.run(tw.popIn(c, .25)); }, cover(){ c.scale = 0; }, hide(){ c.scale = 0; } })),
+      hideAll(){ cubes.forEach(c=> c.scale = 0); }, setActive(){},
+      *intro(){ for (const c of cubes){ if (c.dead) return; w.run(tw.popIn(c, .25)); yield .07; } },
+      *countAloud(onDone){
+        const badges = [];
+        for (let i=0;i<cubes.length;i++){
+          if (cubes[i].dead) return;
+          const b = UI.pic(w.root, 'circle', col(38,26,77,.85), cubes[i].x, cubes[i].y + s*.5, s*.85, s*.85); UI.label(b, String(i+1), Math.round(s*.7), WHITE, 0, 0, s*.85, s*.85);
+          badges.push(b); w.track(b); w.run(tw.popIn(b, .2)); w.sfx('tap'); yield .4;
+        }
+        if (onDone) onDone(); yield 1.6; badges.forEach(b=> b.destroy());
+      },
+      solved(cb){ w.run(V.countAloud(cb)); },
+      hintExtra(){ if (!V._counted){ V._counted = true; w.run(V.countAloud(null)); } } };
+    return V;
+  },
+};
+function makeStack(w, count){
+  const R = n=> w.rand(0, n);
+  for (let at=0; at<80; at++){
+    const h = [[0,0,0],[0,0,0],[0,0,0]]; h[R(3)][R(3)] = 1; let placed = 1, g = 0;
+    while (placed < count && g++ < 200){
+      const x = R(3), y = R(3); if (h[x][y] >= 3) continue;
+      let sup = h[x][y] > 0;
+      if (!sup) for (let dx=-1; dx<=1 && !sup; dx++) for (let dy=-1; dy<=1 && !sup; dy++){ const nx=x+dx, ny=y+dy; if (nx>=0&&nx<3&&ny>=0&&ny<3&&h[nx][ny]>0) sup = true; }
+      if (!sup) continue; h[x][y]++; placed++;
+    }
+    if (placed === count && noHidden(h)) return h;
+  }
+  const f = [[0,0,0],[0,0,0],[0,0,0]]; for (let i=0;i<count;i++) f[i%3][Math.floor(i/3)%3]++; return f;
+}
+function noHidden(h){
+  for (let x=0;x<3;x++) for (let y=0;y<3;y++) for (let z=0;z<h[x][y];z++){
+    if (h[x][y] > z+1 && x+1<3 && h[x+1][y] > z && y+1<3 && h[x][y+1] > z) return false;
+  }
+  return true;
+}
+
+// ═════════════════════════ JUDGE ═══════════════════════════════════════════════
+const allElems = V=> V.reduce((a,v)=> a.concat(v.elems.map(e=> Object.assign(e, { view: v }))), []);
+const JUDGE = {
+  equals(w, spec, Q, V, finish){
+    const P = k=> par('judge', spec, k);
+    let mistakes = 0, firstWrong = -1, hint = false, answered = false, busy = false;
+    const elems = allElems(V).filter(e=> e.key != null);
+    const onTap = function*(el){
+      if (!w.active || answered || busy || !w.isReady()) return;
+      const cx = { tapped: el, tap: { x: el.node.x, y: el.node.y }, mistakes };
+      if (el.key === Q.target){
+        answered = true; hint = false; busy = true;
+        yield* w.fire('right', cx, w._stdRight.bind(w));
+        const solved = V.find(v=> v.solved);
+        if (solved){ const st = { done:false }; w.run(solved.countAloud(()=> st.done = true)); while (!st.done){ if (w.stale(Q)) return; yield null; } w.confetti(solved.solvedAt.x, solved.solvedAt.y, 14); }
+        yield P('finishSec');
+        if (w.stale(Q)) return;
+        yield* w.fire('end', cx);
+        finish(mistakes === 0, [mistakes === 0 ? Q.target : firstWrong]);
+      } else {
+        mistakes++; if (firstWrong < 0) firstWrong = el.key; busy = true;
+        yield* w.fire('wrong', cx, w._stdWrong.bind(w));
+        busy = false;
+        if (w.stale(Q)) return;
+        if (mistakes >= P('hintAfter') && !hint){
+          hint = true; V.forEach(v=> v.hintExtra && v.hintExtra());
+          elems.filter(e=> e.key === Q.target).forEach(e=> w.run(tw.pulse(e.node, ()=> hint && !answered, .12, 7)));
+        }
+      }
+    };
+    elems.forEach(el=> UI.onTap(el.node, ()=> w.run(onTap(el))));
+  },
+  order(w, spec, Q, V, finish){
+    const P = k=> par('judge', spec, k), T = w.flow.text || {}, strip = V.find(v=> v.mark);
+    const elems = allElems(V).filter(e=> e.key != null), len = Q.seq.length, taps = [];
+    let cur = 0, stepMist = 0, total = 0, hint = false, finished = false, busy = false;
+    const onTap = function*(el){
+      if (!w.active || !w.isReady() || finished || busy) return;
+      taps.push(el.key);
+      const cx = { tapped: el, tap: { x: el.node.x, y: el.node.y }, step: cur, last: false };
+      if (el.key === Q.seq[cur]){
+        hint = false; stepMist = 0; const my = cur; cur++;
+        if (strip) strip.mark(my);
+        const last = cur >= len; cx.last = last;
+        if (last) finished = true;
+        yield* w.fire('step', cx, function*(){ w.right(); w.run(tw.bounce(el.node, .15, .3)); });
+        if (last){
+          const perfect = total === 0;
+          yield* w.fire('right', cx, function*(){ w.confetti(0, w.H*.05, 14); w.say(X.template(perfect ? (T.say||'') : (T.sayOk||T.say||''), Q.vars, w.scope(cx)), w.P(.5,.55), hex('#1B5E20'), 1.6); });
+          yield P('finishSec'); if (w.stale(Q)) return;
+          yield* w.fire('end', cx); finish(perfect, taps.slice());
+        } else if (strip){ const nx = cur; strip.pulseSlot(nx, ()=> w.active && !finished && cur === nx); }
+      } else {
+        total++; stepMist++; busy = true; yield* w.fire('wrong', cx, function*(){ w.sfx('tap'); w.run(tw.shake(el.node, .35, 10)); const t = T.wrong ? X.template(T.wrong, Object.assign({}, Q.vars, { name: el.name }), w.scope(cx)) : ''; if (t) w.say(t, w.P(.5,.14), hex('#BF360C'), 1.3); }); busy = false;
+        if (w.stale(Q)) return;
+        if (stepMist >= P('hintAfter') && !hint){
+          hint = true; const at = cur, want = elems.find(e=> e.key === Q.seq[cur]);
+          if (want) w.run(tw.pulse(want.node, ()=> hint && cur === at && !finished, .15, 7));
+        }
+      }
+    };
+    elems.forEach(el=> UI.onTap(el.node, ()=> w.run(onTap(el))));
+    if (strip) w.onReadyOnce(()=> strip.pulseSlot(0, ()=> w.active && !finished && cur === 0));
+  },
+  pairs(w, spec, Q, V, finish){
+    const P = k=> par('judge', spec, k), T = w.flow.text || {}, grid = V.find(v=> v.flip);
+    if (!grid) throw new Error('Cách chấm "ghép cặp" cần 1 view "Lưới thẻ".');
+    let mistakes = 0, matched = 0, busy = false; const open = [];
+    const resolve = function*(a, b){
+      yield .45; if (!w.active || w.stale(Q)) return;
+      if (a.key === b.key){
+        a.matched = b.matched = true; matched++; w.right(); w.addPoint();
+        w.confetti(a.node.x, a.node.y, 6, false); w.confetti(b.node.x, b.node.y, 6, false);
+        w.run(tw.bounce(a.node, .25, .4)); yield* tw.bounce(b.node, .25, .4);
+        w.run(tw.scaleTo(a.node, 0, .25)); yield* tw.scaleTo(b.node, 0, .25);
+        if (!a.node.dead) a.node.active = false; if (!b.node.dead) b.node.active = false;
+        busy = false;
+        if (matched >= Q.pairs){
+          const perfect = mistakes === 0;
+          w.confetti(0, 0, 16); w.say(X.template(perfect ? T.say : (T.sayOk || T.say), Q.vars, w.scope()), w.P(.5,.5), hex('#1B5E20'), 1.8);
+          yield P('finishSec'); finish(!!P('bonus') && perfect, [mistakes]);
+        }
+      } else {
+        mistakes++; w.sfx('plop'); yield* tw.shake(b.node, .3, 8);
+        yield Math.max(0, P('hideSec') - .75);
+        if (!w.active || w.stale(Q)) return;
+        w.run(grid.flip(a, false)); yield* grid.flip(b, false); busy = false;
+      }
+    };
+    allElems(V).forEach(el=> UI.onTap(el.node, ()=>{
+      if (!w.active || !w.isReady() || busy || el.matched || el.faceUp) return;
+      w.sfx('tap'); w.run(grid.flip(el, true)); open.push(el);
+      if (open.length < 2) return;
+      busy = true; const a = open[0], b = open[1]; open.length = 0; w.run(resolve(a, b));
+    }));
+  },
+  taps(w, spec, Q, V, finish){
+    const P = k=> par('judge', spec, k), fl = V.find(v=> 'onTap' in v);
+    if (!fl) throw new Error('Cách chấm "đếm lượt chạm" cần 1 view "Nền chạm".');
+    let count = 0, done = false;
+    fl.onTap = function(p){
+      if (!w.active || done || !w.isReady()) return;
+      count++; const cx = { tap: p, step: count - 1 };
+      w.run((function*(){
+        yield* w.fire('step', cx);
+        if (count >= P('count') && !done){
+          done = true; yield* w.fire('right', cx, function*(){ w.right(); }); yield P('finishSec'); if (w.stale(Q)) return; yield* w.fire('end', cx); finish(true, [count]);
+        }
+      })());
+    };
+  },
+};
+
+// ═════════════════════════ WORLD ═══════════════════════════════════════════════
+const flowsOf = d=> (d.flows && d.flows.length) ? d.flows : (d.flow ? [d.flow] : []);
+class FlowWorld extends World {
+  build(){
+    this._items = []; this.ok = 0; this.taskNo = 0; this.gen = 0; this.active = false; this._ready = false; this._readyCbs = [];
+    this.vars = JSON.parse(JSON.stringify(this.data.vars || {})); this._bags = {}; this.objs = []; this.taskObjs = []; this.elems = []; this._Q = null; this.flow = flowsOf(this.data)[0];
+    const TH = this.data.theme || {}, bgc = TH.bg === undefined ? '#E3F2FD' : TH.bg, flc = TH.floor === undefined ? '#BBDEFB' : TH.floor;   // '' = không vẽ
+    if (bgc) UI.fill(this.root, hex(bgc));
+    if (flc){ const f = UI.pic(this.root, 'square', hex(flc), 0, this.P(.5,.06).y, this.W, this.H*.14); f.preserveAspect = false; }
+    this.makeObjs((this.data.scene || []).filter(o=> o.z !== 'front'), this.root, this.objs, {});
+    this.makeObjs((this.data.scene || []).filter(o=> o.z === 'front'), this.root, this.objs, {});
+    this.prompt = UI.label(this.root, '', 40, WHITE, 0, this.P(.5,.92).y, this.W*.94, this.H*.13);
+  }
+  update(dt, time){ this.updateObjs(this.objs.concat(this.taskObjs), dt, time); }
+  track(n){ this._items.push(n); return n; }
+  clearItems(){
+    this.gen++; this.active = false; this._items.forEach(n=>{ if (n && n.destroy) n.destroy(); }); this._items = []; this._readyCbs = [];
+    this.taskObjs.forEach(o=>{ if (o.node && o.node.destroy) o.node.destroy(); }); this.taskObjs = []; this.elems = [];
+  }
+  stale(Q){ return Q !== this._Q; }
+  isReady(){ return this._ready; }
+  onReadyOnce(cb){ if (this._ready) cb(); else this._readyCbs.push(cb); }
+  /** Chạy hành động của sự kiện `ev` (on[ev]); không có thì chạy mặc định `std` (generator function). */
+  *fire(ev, cx, std){
+    const list = ((this.flow.on || {})[ev]) || [];
+    if (list.length) yield* this.runActs(list, cx); else if (std) yield* std(cx);
+  }
+  /** Chạy hành động tức thì (không chờ) — dùng cho on.start trước khi sinh câu hỏi. */
+  exec(list){ const g = this.runActs(list, {}); for (let i=0;i<1000;i++){ const r = g.next(); if (r.done) break; } }
+  beginTask(info, done){
+    this.clearItems(); this.active = true; this.taskNo++; this._ready = false;
+    const flows = flowsOf(this.data); this.flow = flows[this.data.flowPick === 'random' ? this.rng.int(flows.length) : (this.taskNo-1) % flows.length];
+    const f = this.flow, gen = this.gen, T = f.text || {};
+    this.vars._task = this.taskNo; this.vars._ok = this.ok;
+    if ((f.on || {}).start) this.exec(f.on.start);
+    const Q = this._Q = GEN[f.gen.type](this, f.gen);
+    Object.assign(info, { id:Q.id, topic:f.gen.type, description:Q.desc, answers:Q.answers, correct:Q.target });
+    this.makeObjs((f.objects || []).filter(o=> o.z !== 'front'), this.root, this.taskObjs, {});
+    const first = this.taskNo === 1 && T.first ? T.first : T.prompt;
+    this.prompt.text = X.template(first, Q.vars, this.scope()); this.voice(this.prompt.text);
+    const V = (f.views || []).map(s=> VIEW[s.type](this, s, Q));
+    this.makeObjs((f.objects || []).filter(o=> o.z === 'front'), this.root, this.taskObjs, {});
+    this.objs.filter(o=> (o.spec||{}).z === 'front').forEach(o=> o.node.setAsLast()); this.prompt.setAsLast();
+    this.elems = allElems(V);
+    if ((f.on || {}).setup) this.exec(f.on.setup);
+    const finish = (ok, ans)=>{ if (ok) this.ok++; done(ok, ans); };
+    JUDGE[f.judge.type](this, f.judge, Q, V, finish);
+    this.run(this._present(f, V, Q, gen, T));
+  }
+  *_present(f, V, Q, gen, T){
+    const specs = f.views || [];
+    const revs = V.map((v,i)=> ({ v, r: specs[i].reveal || {} })).filter(o=> (o.r.mode || 'none') !== 'none');
+    const defer = V.filter((v,i)=> specs[i].appear === 'afterReveal' && revs.length);
+    defer.forEach(v=> v.elems.forEach(e=> e.node.active = false));
+    revs.forEach(o=> o.v.hideAll());
+    const intros = V.filter(v=> !revs.some(o=> o.v === v) && defer.indexOf(v) < 0);
+    intros.forEach(v=> this.run(v.intro()));
+    if (revs.length){
+      yield .5;
+      for (const o of revs){
+        if (gen !== this.gen) return;
+        const r = o.r, P = k=> par('reveal', { type:'p', p: r }, k), parts = o.v.parts;
+        if (r.mode === 'all'){ parts.forEach(p=> p.show()); yield P('showSec'); }
+        else for (const p of parts){ if (gen !== this.gen) return; p.show(); this.sfx('pop'); yield P('showSec'); }
+        yield P('hold') + P('holdPerItem')*parts.length;
+        if (gen !== this.gen) return;
+        if (r.then === 'hide') parts.forEach(p=> p.hide()); else if (r.then !== 'keep') parts.forEach(p=> p.cover());
+        this.sfx('plop');
+      }
+      defer.forEach(v=>{ v.elems.forEach(e=>{ e.node.active = true; this.run(tw.popIn(e.node, .25)); }); });
+      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.voice(this.prompt.text); }
+    }
+    while (V.some(v=> v.ready === false)) { if (gen !== this.gen) return; yield null; }
+    this._ready = true; const cbs = this._readyCbs; this._readyCbs = []; cbs.forEach(cb=> cb());
+  }
+}
+Game.WorldClass = FlowWorld;
+
+F.MOD = MOD; F.par = par; F.flowsOf = flowsOf; F.GEN = GEN; F.FlowWorld = FlowWorld;
+/** Kiểm tra cấu hình trước khi chạy/xuất; trả về chuỗi lỗi hoặc null. */
+F.validate = function(d){
+  const flows = flowsOf(d); if (!flows.length) return 'Thiếu cấu hình flow.';
+  for (let fi = 0; fi < flows.length; fi++){
+    const f = flows[fi], tag = flows.length > 1 ? `[flow ${fi+1}] ` : '';
+    if (!f.gen || !f.judge || !f.views) return tag + 'Thiếu cấu hình flow.';
+    const g = MOD.gen[f.gen.type]; if (!g) return tag + 'Nguồn không có: ' + f.gen.type;
+    const gp = {}; Object.keys(g.p).forEach(k=> gp[k] = par('gen', f.gen, k));
+    const need = g.minItems(gp); if ((d.items||[]).length < need) return `${tag}Nguồn "${g.name}" cần ít nhất ${need} vật (đang có ${(d.items||[]).length}).`;
+    if (f.gen.type === 'values' && new Set((d.items||[]).map(i=> +i.value || 0)).size < 2) return tag + 'Cần ít nhất 2 giá trị khác nhau (cột "Giá trị").';
+    if (!f.views.length) return tag + 'Cần ít nhất 1 view hiển thị.';
+    for (const v of f.views) if (!MOD.view[v.type]) return tag + 'View không có: ' + v.type;
+    if (!MOD.judge[f.judge.type]) return tag + 'Cách chấm không có: ' + f.judge.type;
+    const has = t=> f.views.some(v=> v.type === t), gt = f.gen.type, jt = f.judge.type;
+    if (jt === 'order' && gt !== 'sequence') return tag + 'Chấm "theo thứ tự" cần nguồn "Chuỗi hình".';
+    if (jt === 'pairs' && (gt !== 'pairs' || !has('grid'))) return tag + 'Chấm "ghép cặp" cần nguồn "Các cặp thẻ" + view "Lưới thẻ".';
+    if (jt === 'equals' && gt === 'pairs') return tag + 'Nguồn "Các cặp thẻ" chỉ chấm được bằng "ghép cặp".';
+    if (jt === 'taps' && !has('floor')) return tag + 'Chấm "đếm lượt chạm" cần view "Nền chạm".';
+    if (has('seesaw') && gt !== 'values') return tag + 'View "Bập bênh" cần nguồn "Bốc vật khác giá trị".';
+    if (has('stack') && gt !== 'number') return tag + 'View "Đống khối" cần nguồn "Một số đếm".';
+    if (has('strip') && gt !== 'sequence') return tag + 'View "Dải hình" cần nguồn "Chuỗi hình".';
+    if (has('grid') && gt !== 'pairs') return tag + 'View "Lưới thẻ" cần nguồn "Các cặp thẻ".';
+    if ((jt === 'equals' || jt === 'order') && !f.views.some(v=> ['cards','seesaw','props'].indexOf(v.type) >= 0)) return tag + 'Cần view chạm được (Hàng thẻ / Bập bênh / Vật đặt tự do).';
+    for (const k of ['tpl','pos','defs','options']){ for (const o of [f.views.map(v=> v.p), [f.gen.p]].reduce((a,b)=> a.concat(b), [])){ const v = o && o[k]; if (typeof v === 'string' && v.trim()){ try { JSON.parse(v); } catch(e){ return `${tag}JSON sai ở "${k}": ${e.message}`; } } } }
+  }
+  return null;
+};
+/** Chơi thử: host = DOM; data = fsData; opts = { imgUrl(name)→url, mute }. Trả về Game (có .stop()). */
+F.play = function(host, data, opts){ return new Game(host, JSON.parse(JSON.stringify(data)), opts); };
+})();
+
+</script>
+<script>
+window.FSW.TEMPLATES = {"BeKhoeManh": {"name": "Chăm bạn Bi (khỏe mạnh)", "desc": "Bi cần gì thì cho cái đó; đủ 5 sao thì Bi lớn lên.", "data": {"title": "Chăm bạn Bi (khỏe mạnh)", "sync": false, "theme": {"bg": "#FFF1D6", "floor": ""}, "items": [{"id": "bi_an", "label": "Bi đói bụng! Cho Bi ăn gì?", "image": "bi_hungry.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "bi_uong", "label": "Bi khát nước! Bi cần uống gì?", "image": "bi_thirsty.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "bi_ngu", "label": "Bi buồn ngủ! Bi cần gì?", "image": "bi_sleepy.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "bi_van_dong", "label": "Bi chán quá! Bi cần làm gì?", "image": "bi_bored.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "bi_ve_sinh", "label": "Tay Bi bẩn rồi! Bi cần gì?", "image": "bi_dirty.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "bi_lanh", "label": "Bi lạnh quá! Bi cần gì?", "image": "bi_cold.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "bi_happy", "label": "Bi vui", "image": "bi_happy.png", "shape": "circle", "color": "#F6B26B", "tags": {"bi": 1}}, {"id": "garden", "label": "Nền vườn", "image": "garden_bg.png", "shape": "circle", "color": "#CCCCCC"}, {"id": "f_apple", "label": "Táo", "image": "food_apple.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_banana", "label": "Chuối", "image": "food_banana.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_orange", "label": "Cam", "image": "food_orange.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_strawberry", "label": "Dâu tây", "image": "food_strawberry.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_watermelon", "label": "Dưa hấu", "image": "food_watermelon.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_grape", "label": "Nho", "image": "food_grape.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_mango", "label": "Xoài", "image": "food_mango.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_pineapple", "label": "Dứa", "image": "food_pineapple.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_pear", "label": "Lê", "image": "food_pear.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_peach", "label": "Đào", "image": "food_peach.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_kiwi", "label": "Kiwi", "image": "food_kiwi.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_papaya", "label": "Đu đủ", "image": "food_papaya.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_dragon_fruit", "label": "Thanh long", "image": "food_dragon_fruit.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "f_avocado", "label": "Bơ", "image": "food_avocado.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "carrot", "label": "Cà rốt", "image": "carrot.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "thuc_an", "label": "Bữa cơm", "image": "thuc_an.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "an"}}, {"id": "keo", "label": "Kẹo", "image": "vo_keo.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "an,uong", "why": "Ăn nhiều kẹo sẽ sâu răng!"}}, {"id": "soda", "label": "Nước ngọt", "image": "vo_lon_coca.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "an,uong", "why": "Nước ngọt không tốt cho Bi!"}}, {"id": "banh", "label": "Bánh ngọt", "image": "mieng_pizza.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "van_dong", "why": "Ăn vặt nhiều thì hết đói bữa chính!"}}, {"id": "nuoc", "label": "Nước lọc", "image": "giot_nuoc.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "uong"}}, {"id": "giuong", "label": "Đi ngủ", "image": "bed.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "ngu"}}, {"id": "tivi", "label": "Xem tivi", "image": "health_xem_tivi.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "ngu,van_dong", "why": "Xem tivi khuya hại mắt!"}}, {"id": "dienthoai", "label": "Chơi điện thoại", "image": "health_dien_thoai.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "ngu", "why": "Chơi điện thoại nhiều hại mắt!"}}, {"id": "chaynhay", "label": "Chạy nhảy", "image": "health_chay_nhay.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "van_dong"}}, {"id": "ruatay", "label": "Rửa tay", "image": "health_rua_tay.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "ve_sinh"}}, {"id": "lauao", "label": "Lau vào áo", "image": "health_lau_ao.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "ve_sinh", "why": "Tay vẫn còn vi khuẩn đấy!"}}, {"id": "anluon", "label": "Ăn luôn", "image": "health_an_luon.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "ve_sinh", "why": "Tay bẩn có vi khuẩn, phải rửa trước!"}}, {"id": "aoam", "label": "Mặc áo ấm", "image": "health_ao_am.png", "shape": "circle", "color": "#CCCCCC", "tags": {"good": "lanh"}}, {"id": "coiao", "label": "Cởi áo", "image": "health_coi_ao.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "lanh", "why": "Cởi áo ra sẽ càng lạnh, dễ ốm!"}}, {"id": "ankem", "label": "Ăn kem", "image": "health_an_kem.png", "shape": "circle", "color": "#CCCCCC", "tags": {"bad": "lanh", "why": "Ăn kem lúc lạnh sẽ ho đấy!"}}], "vars": {"need": "an", "stars": 0, "stage": 0}, "scene": [{"fill": true, "look": {"item": "garden"}}, {"fill": true, "look": {"color": "#FFFFFF"}, "alpha": 0.12}, {"look": {"shape": "star", "color": "#CFC6B2"}, "x": 0.3, "y": 0.945, "w": 0.075, "bind": {"color": "$stars>0?\"#FFC83D\":\"#CFC6B2\""}, "smooth": 0.2}, {"look": {"shape": "star", "color": "#CFC6B2"}, "x": 0.4, "y": 0.945, "w": 0.075, "bind": {"color": "$stars>1?\"#FFC83D\":\"#CFC6B2\""}, "smooth": 0.2}, {"look": {"shape": "star", "color": "#CFC6B2"}, "x": 0.5, "y": 0.945, "w": 0.075, "bind": {"color": "$stars>2?\"#FFC83D\":\"#CFC6B2\""}, "smooth": 0.2}, {"look": {"shape": "star", "color": "#CFC6B2"}, "x": 0.6, "y": 0.945, "w": 0.075, "bind": {"color": "$stars>3?\"#FFC83D\":\"#CFC6B2\""}, "smooth": 0.2}, {"look": {"shape": "star", "color": "#CFC6B2"}, "x": 0.7, "y": 0.945, "w": 0.075, "bind": {"color": "$stars>4?\"#FFC83D\":\"#CFC6B2\""}, "smooth": 0.2}, {"id": "bi", "role": "actor", "look": {"item": "bi_an"}, "x": 0.5, "y": 0.585, "w": 0.36, "h": 0.47, "bind": {"item": "\"bi_\"+$need", "scale": "0.82+0.12*min($stage,3)"}}], "flow": {"gen": {"type": "set", "p": {"n": 3, "startItems": 99, "targetWhere": "item.tags.good==$need", "otherWhere": "has(item.tags.bad,$need)"}}, "views": [{"type": "cards", "p": {"y": 0.145, "sizeU": 0.28, "tall": 1.05, "fig": 0.8, "label": 1, "bg": "#FFFFFF"}}], "judge": {"type": "equals", "p": {"finishSec": 0.3}}, "text": {"prompt": "{{label(\"bi_\"+$need)}}", "wrong": "{{tag(tapped.itemId,\"why\")}}"}, "on": {"start": [{"do": "bag", "var": "need", "values": "an,uong,ngu,van_dong,ve_sinh,lanh"}], "wrong": [{"do": "sfx", "k": "tap"}, {"do": "shake", "on": "@tapped"}, {"do": "shake", "on": "#bi", "sec": 0.45, "amp": 16}, {"do": "say", "text": "{{tag(tapped.itemId,\"why\")||\"Bi không cần cái này!\"}}", "fy": 0.4, "color": "#FFE27A", "sec": 1.8}], "right": [{"do": "sfx", "k": "right"}, {"do": "move", "on": "@tapped", "to": {"fx": 0.5, "fy": 0.53}, "sec": 0.45, "wait": 0}, {"do": "scale", "on": "@tapped", "to": 0.4, "sec": 0.45}, {"do": "hide", "on": "@tapped"}, {"do": "set", "var": "need", "expr": "\"happy\""}, {"do": "bounce", "on": "#bi", "amount": 0.15, "sec": 0.5}, {"do": "sfx", "k": "plop"}, {"do": "inc", "var": "stars"}, {"do": "if", "cond": "$stars>=5", "then": [{"do": "set", "var": "stars", "expr": "5"}, {"do": "inc", "var": "stage"}, {"do": "say", "text": "Bi lớn lên rồi! Khỏe quá!", "fy": 0.4, "color": "#FFE27A", "sec": 2}, {"do": "confetti", "at": "#bi", "n": 22}, {"do": "wait", "sec": 1.6}, {"do": "set", "var": "stars", "expr": "0"}], "else": [{"do": "say", "text": "Bi khỏe hơn rồi!", "fy": 0.4, "sec": 1.2}, {"do": "wait", "sec": 0.8}]}]}}, "version": 3, "desc": "Bi cần gì thì cho cái đó; đủ 5 sao thì Bi lớn lên."}}, "CauBacQua": {"name": "Dài – ngắn, to – bé", "desc": "Luân phiên: chọn khúc gỗ dài hơn sông / chọn cửa vừa cỡ con vật.", "data": {"title": "Dài – ngắn, to – bé", "sync": false, "theme": {"bg": "#D9F1FF", "floor": ""}, "items": [{"id": "rabbit", "label": "Thỏ", "image": "animal_rabbit.png", "shape": "circle", "color": "#F3F3F3"}, {"id": "carrot", "label": "Cà rốt", "image": "carrot.png", "shape": "triangle", "color": "#FF8A3D"}, {"id": "longlog", "label": "Dài", "shape": "rrect", "color": "#A0652D"}, {"id": "shortlog", "label": "Ngắn", "shape": "rrect", "color": "#A0652D"}, {"id": "chick", "label": "Gà con", "image": "animal_chick.png", "shape": "circle", "color": "#F6B26B", "value": 0, "tags": {"kind": "pet3", "door": "door0"}}, {"id": "dog", "label": "Chó", "image": "animal_dog.png", "shape": "circle", "color": "#F6B26B", "value": 1, "tags": {"kind": "pet3", "door": "door1"}}, {"id": "elephant", "label": "Voi", "image": "animal_elephant.png", "shape": "circle", "color": "#F6B26B", "value": 2, "tags": {"kind": "pet3", "door": "door2"}}, {"id": "door0", "label": "cửa bé", "shape": "rrect", "color": "#6FB7E9", "value": 0, "tags": {"kind": "door"}}, {"id": "door1", "label": "cửa vừa", "shape": "rrect", "color": "#F2B24C", "value": 1, "tags": {"kind": "door"}}, {"id": "door2", "label": "cửa to", "shape": "rrect", "color": "#E0627F", "value": 2, "tags": {"kind": "door"}}], "flowPick": "alternate", "flows": [{"objects": [{"look": {"shape": "square", "color": "#6CC24A"}, "x": "=0.5-q.gap/2-0.25", "y": 0.52, "w": "=0.5*wr", "h": 0.16}, {"look": {"shape": "square", "color": "#6CC24A"}, "x": "=0.5+q.gap/2+0.25", "y": 0.52, "w": "=0.5*wr", "h": 0.16}, {"look": {"shape": "square", "color": "#4DA6FF"}, "x": 0.5, "y": 0.5, "w": "=q.gap*wr", "h": 0.2}, {"id": "rabbit", "role": "actor", "look": {"item": "rabbit"}, "x": "=0.5-q.gap/2-0.08", "y": 0.67, "w": 0.17}, {"id": "carrot", "look": {"item": "carrot"}, "x": "=0.5+q.gap/2+0.08", "y": 0.65, "w": 0.13, "anim": {"type": "bob", "amp": 0.012, "speed": 3}}], "gen": {"type": "calc", "p": {"defs": {"gap": "pick(randi(0,3),0.3,0.4,0.5)", "rs": "shuf(0.5,0.65,0.8)"}, "options": [{"item": "longlog", "v": "gap*(1.18+0.12*rand())"}, {"item": "shortlog", "v": "gap*at(rs,0)"}, {"item": "shortlog", "v": "gap*at(rs,1)"}], "answer": "max", "shuffle": 1}}, "views": [{"type": "props", "p": {"layout": "col", "x0": 0.5, "y0": 0.36, "y1": 0.13, "size": "=opt.v*wr", "hU": 0.07, "preset": "none", "tpl": [{"look": {"kind": "rrect", "color": "#A0652D"}, "w": "=size", "h": 0.07}, {"look": {"shape": "circle", "color": "#D9A066"}, "dx": "=-size/2+0.0245", "w": 0.0434}, {"look": {"shape": "circle", "color": "#D9A066"}, "dx": "=size/2-0.0245", "w": 0.0434}]}}], "judge": {"type": "equals", "p": {"finishSec": 0.9}}, "text": {"prompt": "Chọn khúc gỗ DÀI hơn sông!"}, "on": {"wrong": [{"do": "sfx", "k": "wrong"}, {"do": "move", "on": "@tapped", "to": {"fx": 0.5, "fy": 0.615}, "sec": 0.5}, {"do": "say", "text": "Khúc gỗ NGẮN quá! Rơi xuống nước rồi", "fy": 0.8, "color": "#FFE27A", "sec": 1.5}, {"do": "sfx", "k": "plop"}, {"do": "move", "on": "@tapped", "to": {"fx": 0.5, "fy": 0.38}, "sec": 0.5}, {"do": "hide", "on": "@tapped"}], "right": [{"do": "sfx", "k": "right"}, {"do": "move", "on": "@tapped", "to": {"fx": 0.5, "fy": 0.615}, "sec": 0.5}, {"do": "say", "text": "Khúc gỗ DÀI nên bắc qua được!", "fy": 0.8, "sec": 2}, {"do": "sfx", "k": "wood"}, {"do": "bounce", "on": "@actor", "amount": 0.12, "sec": 0.9}, {"do": "move", "on": "@actor", "to": {"fx": "=0.5+q.gap/2+0.03", "fy": 0.67}, "sec": 1.0}, {"do": "sfx", "k": "plop"}, {"do": "scale", "on": "#carrot", "to": 0, "sec": 0.3, "wait": 0}, {"do": "confetti", "at": "@actor", "n": 10}]}}, {"objects": [{"role": "actor", "look": {"item": "=q.subject.id"}, "x": 0.5, "y": "=0.17+pick(q.subject.value,0.15,0.22,0.36)/2/hr-0.04/hr", "w": "=pick(q.subject.value,0.15,0.22,0.36)", "anim": {"type": "bob", "amp": 0.012, "speed": 3}}], "gen": {"type": "match", "p": {"subjectWhere": "item.tags.kind==\"pet3\"", "optionsWhere": "item.tags.kind==\"door\"", "n": 3, "answerTag": "door", "shuffle": 1}}, "views": [{"type": "props", "p": {"layout": "row", "x0": 0.2, "x1": 0.8, "y0": 0.5, "y1": 0.5, "size": "=pick(opt.value,0.14,0.21,0.30)", "tall": 1.5, "yExpr": "=0.43+pick(opt.value,0.22,0.32,0.44)/2/hr", "preset": "none", "tpl": [{"look": {"kind": "rrect", "color": "=opt.color"}, "w": "=size", "h": "=size*1.5"}, {"look": {"shape": "circle", "color": "#FFF4D6"}, "dx": "=size*.28", "w": 0.025}, {"look": {"text": "=pick(opt.value,\"BÉ\",\"VỪA\",\"TO\")", "fs": 0.052, "color": "#FFFFFF"}, "dy": "=size*.45", "w": "=size", "h": 0.1}]}}], "judge": {"type": "equals", "p": {"finishSec": 1.0}}, "text": {"prompt": "{subject} {{pick(q.subject.value,\"BÉ\",\"VỪA\",\"TO\")}} — đi cửa nào?", "wrong": "Cửa không vừa! Tìm cửa vừa hơn nhé!"}, "on": {"right": [{"do": "sfx", "k": "right"}, {"do": "say", "text": "{subject} đi cửa vừa khít!", "fy": 0.8, "sec": 2}, {"do": "scale", "on": "@actor", "to": 0.5, "sec": 0.7, "wait": 0}, {"do": "move", "on": "@actor", "to": "@tapped", "sec": 0.7}, {"do": "sfx", "k": "wood"}, {"do": "fade", "on": "@actor", "to": 0, "sec": 0.25, "wait": 0}, {"do": "bounce", "on": "@tapped", "amount": 0.1, "sec": 0.4}, {"do": "confetti", "at": "@tapped", "n": 10}]}}], "version": 3, "desc": "Luân phiên: chọn khúc gỗ dài hơn sông / chọn cửa vừa cỡ con vật."}}, "CongHinh": {"name": "Cổng hình", "desc": "Đi qua các cổng hình theo thứ tự (1 → 3 cổng).", "data": {"title": "Cổng hình", "sync": false, "theme": {"bg": "#D8F0FF", "floor": "#8ED36B"}, "items": [{"id": "tron", "label": "Hình tròn", "shape": "circle", "color": "#FF8A3D", "tags": {"kind": "gate", "aw": 1, "ah": 1}}, {"id": "vuong", "label": "Hình vuông", "shape": "square", "color": "#4D96FF", "tags": {"kind": "gate", "aw": 1, "ah": 1}}, {"id": "tamgiac", "label": "Hình tam giác", "shape": "triangle", "color": "#E0453F", "tags": {"kind": "gate", "aw": 1.05, "ah": 0.95}}, {"id": "chunhat", "label": "Hình chữ nhật", "shape": "square", "color": "#2FB26B", "tags": {"kind": "gate", "aw": 1.2, "ah": 0.78}}, {"id": "rabbit", "label": "Thỏ", "image": "animal_rabbit.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "dog", "label": "Chó", "image": "animal_dog.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "duck", "label": "Vịt", "image": "animal_duck.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "pig", "label": "Lợn", "image": "animal_pig.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "chick", "label": "Gà con", "image": "animal_chick.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "bear", "label": "Gấu", "image": "animal_bear.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}], "flow": {"objects": [{"role": "actor", "look": {"item": "=randItem(\"kind\",\"animal\")"}, "x": 0.5, "y": 0.45, "w": 0.17, "anim": {"type": "bob", "amp": 0.012, "speed": 3}}], "gen": {"type": "sequence", "p": {"where": "item.tags.kind==\"gate\"", "kinds": 4, "startLen": 1, "maxLen": 3, "growEvery": 3, "lenBy": "task", "distinct": 1}}, "views": [{"type": "strip", "p": {"y": 0.835, "slotU": 0.09, "plain": 1}}, {"type": "props", "p": {"layout": "fixed", "pos": [[0.26, 0.64], [0.74, 0.64], [0.26, 0.26], [0.74, 0.26]], "size": "0.27", "preset": "none", "tpl": [{"look": {"shape": "=opt.shape", "color": "=opt.color"}, "w": "=size*opt.tags.aw", "h": "=size*opt.tags.ah"}, {"look": {"shape": "=opt.shape", "color": "#1B2442"}, "w": "=size*opt.tags.aw*.62", "h": "=size*opt.tags.ah*.62"}, {"look": {"text": "=opt.label", "fs": 0.052, "color": "#FFFFFF"}, "dy": "=-size*.62", "w": 0.5, "h": 0.08}]}}], "judge": {"type": "order", "p": {"finishSec": 1.2}}, "text": {"prompt": "{{len(q.seq)==1?\"Tìm cổng \":\"Đi qua cổng: \"}}{names}", "wrong": "Đây là {name}. Tìm đúng cổng nhé!", "say": ""}, "on": {"step": [{"do": "sfx", "k": "up"}, {"do": "move", "on": "@actor", "to": "@tapped", "sec": 0.45}, {"do": "bounce", "on": "@tapped", "amount": 0.12, "sec": 0.4}, {"do": "say", "text": "{{tapped.name}}!", "fy": 0.74, "sec": 1}, {"do": "if", "cond": "!last", "then": [{"do": "move", "on": "@actor", "to": {"fx": 0.5, "fy": 0.45}, "sec": 0.4}]}], "right": [{"do": "confetti", "at": "@tapped", "n": 14}]}}, "version": 3, "desc": "Đi qua các cổng hình theo thứ tự (1 → 3 cổng)."}}, "DatDoVaoCho": {"name": "Đặt đồ vào chỗ (trên, dưới, trái, phải)", "desc": "Đặt con vật vào đúng chỗ: trên, dưới, trái, phải cái bàn.", "data": {"title": "Đặt đồ vào chỗ (trên, dưới, trái, phải)", "sync": false, "theme": {"bg": "#FFF1D6", "floor": ""}, "items": [{"id": "tren", "label": "trên", "shape": "circle", "color": "#FFFFFF", "value": 0, "tags": {"kind": "zone"}}, {"id": "duoi", "label": "dưới", "shape": "circle", "color": "#FFFFFF", "value": 1, "tags": {"kind": "zone"}}, {"id": "trai", "label": "bên trái", "shape": "circle", "color": "#FFFFFF", "value": 2, "tags": {"kind": "zone"}}, {"id": "phai", "label": "bên phải", "shape": "circle", "color": "#FFFFFF", "value": 3, "tags": {"kind": "zone"}}, {"id": "rabbit", "label": "chú thỏ", "image": "animal_rabbit.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}, {"id": "bear", "label": "chú gấu", "image": "animal_bear.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}, {"id": "dog", "label": "chú chó", "image": "animal_dog.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}, {"id": "chick", "label": "chú gà con", "image": "animal_chick.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}, {"id": "pig", "label": "chú lợn", "image": "animal_pig.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}, {"id": "duck", "label": "chú vịt", "image": "animal_duck.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}, {"id": "panda", "label": "gấu trúc", "image": "animal_panda.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "pet"}}], "scene": [{"look": {"shape": "square", "color": "#E7C08A"}, "x": 0.5, "y": 0.11, "w": 1.024, "h": 0.24}, {"look": {"shape": "square", "color": "#8A5A2B"}, "x": 0.5, "y": 0.5, "dx": -0.17, "dy": -0.115, "w": 0.04, "h": 0.17}, {"look": {"shape": "square", "color": "#8A5A2B"}, "x": 0.5, "y": 0.5, "dx": 0.17, "dy": -0.115, "w": 0.04, "h": 0.17}, {"look": {"kind": "rrect", "color": "#B9763A"}, "x": 0.5, "y": 0.5, "w": 0.46, "h": 0.06}, {"look": {"shape": "triangle", "color": "#FFFFFF"}, "x": 0.5, "y": 0.82, "w": 0.07, "bind": {"rot": "pick(q.target,0,180,90,-90)"}, "smooth": 0}], "flow": {"objects": [{"role": "actor", "look": {"item": "=q.subject.id"}, "x": 0.5, "y": 0.13, "w": 0.2, "anim": {"type": "bob", "amp": 0.012, "speed": 3}}], "gen": {"type": "match", "p": {"subjectWhere": "item.tags.kind==\"pet\"", "optionsWhere": "item.tags.kind==\"zone\"", "n": 4, "shuffle": 0, "noRepeat": 1}}, "views": [{"type": "props", "p": {"layout": "fixed", "pos": [[0.5, 0.63], [0.5, 0.36], [0.109, 0.5], [0.891, 0.5]], "size": "0.20", "preset": "zone", "anim": "pulse"}}], "judge": {"type": "equals", "p": {"finishSec": 1.3}}, "text": {"prompt": "Đặt {subject} {label} cái bàn", "wrong": "Không phải chỗ này!"}, "on": {"wrong": [{"do": "move", "on": "@actor", "to": "@tapped", "sec": 0.45}, {"do": "say", "text": "Không phải chỗ này!", "fy": 0.74, "color": "#FFE27A", "sec": 1.2}, {"do": "shake", "on": "@actor", "sec": 0.35, "amp": 10}, {"do": "wait", "sec": 0.35}, {"do": "move", "on": "@actor", "to": {"fx": 0.5, "fy": 0.13}, "sec": 0.4}], "right": [{"do": "sfx", "k": "right"}, {"do": "move", "on": "@actor", "to": "@tapped", "sec": 0.55}, {"do": "sfx", "k": "plop"}, {"do": "bounce", "on": "@actor", "amount": 0.2, "sec": 0.5}, {"do": "say", "text": "Đúng rồi! {{cap(q.subject.label)}} ở {label} cái bàn", "fy": 0.74, "sec": 2}, {"do": "confetti", "at": "@tapped", "n": 10}]}}, "version": 3, "desc": "Đặt con vật vào đúng chỗ: trên, dưới, trái, phải cái bàn."}}, "DemKhoiHop": {"name": "Đếm khối hộp", "desc": "Đống khối 3D → chạm số đúng; sai 2 lần thì đếm 1,2,3.", "data": {"title": "Đếm khối hộp", "sync": false, "theme": {"bg": "#F3E5F5", "floor": "#E1BEE7"}, "items": [], "flow": {"gen": {"type": "number", "p": {}}, "views": [{"type": "stack", "p": {}}, {"type": "cards", "p": {"source": "options", "y": 0.33, "sizeU": 0.22, "tall": 1}}], "judge": {"type": "equals", "p": {"finishSec": 2.2}}, "text": {"prompt": "Có bao nhiêu khối hộp?", "say": "{count} khối hộp!", "wrong": ""}}, "version": 3, "desc": "Đống khối 3D → chạm số đúng; sai 2 lần thì đếm 1,2,3."}}, "DongHoKhongLo": {"name": "Đồng hồ khổng lồ", "desc": "Luân phiên: đặt giờ / đọc giờ trên đồng hồ khổng lồ.", "data": {"title": "Đồng hồ khổng lồ", "sync": false, "theme": {"bg": "#FFF1D6", "floor": ""}, "items": [{"id": "h1", "label": "1", "shape": "circle", "color": "#CFE8FF", "value": 1, "tags": {"opt": 1}}, {"id": "h2", "label": "2", "shape": "circle", "color": "#CFE8FF", "value": 2, "tags": {"opt": 1}}, {"id": "h3", "label": "3", "shape": "circle", "color": "#CFE8FF", "value": 3, "tags": {"opt": 1}}, {"id": "h4", "label": "4", "shape": "circle", "color": "#CFE8FF", "value": 4, "tags": {"opt": 1}}, {"id": "h5", "label": "5", "shape": "circle", "color": "#CFE8FF", "value": 5, "tags": {"opt": 1}}, {"id": "h6", "label": "6", "shape": "circle", "color": "#CFE8FF", "value": 6, "tags": {"opt": 1}}, {"id": "h7", "label": "7", "shape": "circle", "color": "#CFE8FF", "value": 7, "tags": {"opt": 1}}, {"id": "h8", "label": "8", "shape": "circle", "color": "#CFE8FF", "value": 8, "tags": {"opt": 1}}, {"id": "h9", "label": "9", "shape": "circle", "color": "#CFE8FF", "value": 9, "tags": {"opt": 1}}, {"id": "h10", "label": "10", "shape": "circle", "color": "#CFE8FF", "value": 10, "tags": {"opt": 1}}, {"id": "h11", "label": "11", "shape": "circle", "color": "#CFE8FF", "value": 11, "tags": {"opt": 1}}, {"id": "h12", "label": "12", "shape": "circle", "color": "#CFE8FF", "value": 12, "tags": {"opt": 1}}, {"id": "s6", "label": "Na thức dậy lúc 6 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 6, "optid": "h6"}}, {"id": "s7", "label": "Na đi học lúc 7 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 7, "optid": "h7"}}, {"id": "s8", "label": "Lớp học bắt đầu lúc 8 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 8, "optid": "h8"}}, {"id": "s9", "label": "Na vẽ tranh lúc 9 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 9, "optid": "h9"}}, {"id": "s10", "label": "Na ăn trái cây lúc 10 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 10, "optid": "h10"}}, {"id": "s11", "label": "Na rửa tay lúc 11 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 11, "optid": "h11"}}, {"id": "s12", "label": "Cả nhà ăn cơm trưa lúc 12 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 12, "optid": "h12"}}, {"id": "s1", "label": "Na ngủ trưa lúc 1 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 1, "optid": "h1"}}, {"id": "s2", "label": "Na dậy chơi lúc 2 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 2, "optid": "h2"}}, {"id": "s3", "label": "Na ăn bánh lúc 3 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 3, "optid": "h3"}}, {"id": "s4", "label": "Na chơi ngoài sân lúc 4 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 4, "optid": "h4"}}, {"id": "s5", "label": "Na tắm lúc 5 giờ", "shape": "circle", "color": "#FFFFFF", "tags": {"story": 1, "hour": 5, "optid": "h5"}}], "scene": [{"look": {"shape": "circle", "color": "#3A3F6B"}, "x": 0.5, "y": 0.46, "w": 0.86}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "x": 0.5, "y": 0.46, "w": 0.8}, {"id": "minute", "look": {"kind": "hand", "len": 0.28, "thick": 0.022, "color": "#2A2F55"}, "x": 0.5, "y": 0.46}, {"id": "hand", "look": {"kind": "hand", "len": 0.2, "thick": 0.034, "color": "#E0453F"}, "x": 0.5, "y": 0.46}, {"look": {"shape": "circle", "color": "#2A2F55"}, "x": 0.5, "y": 0.46, "w": 0.05}, {"id": "digital", "look": {"text": "", "fs": 0.088, "color": "#2A2F55", "outline": 0}, "x": 0.5, "y": 0.06, "w": 0.5, "h": 0.1, "z": "front"}], "flows": [{"gen": {"type": "match", "p": {"subjectWhere": "item.tags.story==1 && ($_task>=4 || item.tags.hour%3==0)", "optionsWhere": "item.tags.opt==1", "n": 12, "answerTag": "optid", "shuffle": 0, "noRepeat": 1}}, "views": [{"type": "props", "p": {"layout": "circle", "cx": 0.5, "cy": 0.46, "r": 0.325, "startDeg": 30, "size": "0.15", "preset": "none", "tpl": [{"look": {"shape": "circle", "color": "=(opt.id==\"h3\"||opt.id==\"h6\"||opt.id==\"h9\"||opt.id==\"h12\")?\"#FFD27A\":\"#CFE8FF\""}, "w": "=size"}, {"look": {"text": "=opt.label", "fs": 0.088, "color": "#2A2F55", "outline": 0}, "w": 0.14, "h": 0.14}]}}], "judge": {"type": "equals", "p": {"finishSec": 1.5}}, "text": {"prompt": "{subject}\nĐặt đồng hồ {{q.subject.tags.hour}} giờ!", "wrong": ""}, "on": {"setup": [{"do": "rotate", "on": "#hand", "to": 0, "sec": 0}, {"do": "text", "on": "#digital", "text": ""}], "wrong": [{"do": "sfx", "k": "wrong"}, {"do": "rotate", "on": "#hand", "to": "=-((tapped.key+1)%12)*30", "sec": 0.6}, {"do": "say", "text": "Kim đang chỉ {{tapped.key+1}}, chưa phải {{q.subject.tags.hour}} giờ!", "fy": 0.12, "color": "#FFE27A", "sec": 1.4}, {"do": "wait", "sec": 1}, {"do": "rotate", "on": "#hand", "to": 0, "sec": 0.5}], "right": [{"do": "sfx", "k": "right"}, {"do": "rotate", "on": "#hand", "to": "=-(q.subject.tags.hour%12)*30", "sec": 0.7}, {"do": "text", "on": "#digital", "text": "{{q.subject.tags.hour}}:00"}, {"do": "bounce", "on": "@tapped", "amount": 0.2, "sec": 0.5}, {"do": "say", "text": "{{q.subject.tags.hour}} giờ! Giỏi quá!", "fy": 0.12, "sec": 1.8}, {"do": "confetti", "at": {"fx": 0.5, "fy": 0.46}, "n": 12}]}}, {"gen": {"type": "match", "p": {"subjectWhere": "item.tags.story==1 && ($_task>=4 || item.tags.hour%3==0)", "optionsWhere": "item.tags.opt==1", "n": 12, "answerTag": "optid", "shuffle": 0, "noRepeat": 1}}, "views": [{"type": "props", "p": {"layout": "circle", "cx": 0.5, "cy": 0.46, "r": 0.325, "startDeg": 30, "size": "0.15", "preset": "none", "tpl": [{"look": {"shape": "circle", "color": "=(opt.id==\"h3\"||opt.id==\"h6\"||opt.id==\"h9\"||opt.id==\"h12\")?\"#FFD27A\":\"#CFE8FF\""}, "w": "=size"}, {"look": {"text": "=opt.label", "fs": 0.088, "color": "#2A2F55", "outline": 0}, "w": 0.14, "h": 0.14}]}}], "judge": {"type": "equals", "p": {"finishSec": 1.5}}, "text": {"prompt": "Mấy giờ rồi?", "wrong": ""}, "on": {"setup": [{"do": "rotate", "on": "#hand", "to": "=-(q.subject.tags.hour%12)*30", "sec": 0}, {"do": "text", "on": "#digital", "text": ""}], "wrong": [{"do": "sfx", "k": "wrong"}, {"do": "say", "text": "Chưa đúng! Nhìn kim ngắn nhé", "fy": 0.12, "color": "#FFE27A", "sec": 1.4}, {"do": "shake", "on": "@tapped"}, {"do": "wait", "sec": 0.9}], "right": [{"do": "sfx", "k": "right"}, {"do": "text", "on": "#digital", "text": "{{q.subject.tags.hour}}:00"}, {"do": "bounce", "on": "@tapped", "amount": 0.2, "sec": 0.5}, {"do": "say", "text": "{{q.subject.tags.hour}} giờ! Giỏi quá!", "fy": 0.12, "sec": 1.8}, {"do": "confetti", "at": {"fx": 0.5, "fy": 0.46}, "n": 12}]}}], "flowPick": "alternate", "version": 3, "desc": "Luân phiên: đặt giờ / đọc giờ trên đồng hồ khổng lồ."}}, "HinhDonGian": {"name": "Nhận biết hình đơn giản", "desc": "Nghe tên hình → chạm đúng hình (mỗi hình 1 màu cố định). 2 đội cùng câu, chờ nhau.", "data": {"title": "Nhận biết hình đơn giản", "sync": true, "theme": {"bg": "#E3F2FD", "floor": "#BBDEFB"}, "items": [{"id": "tron", "label": "Hình tròn", "shape": "circle", "color": "#1E88E5"}, {"id": "vuong", "label": "Hình vuông", "shape": "square", "color": "#43A047"}, {"id": "tamgiac", "label": "Hình tam giác", "shape": "triangle", "color": "#FDD835"}, {"id": "chunhat", "label": "Hình chữ nhật", "shape": "rect", "color": "#FB8C00"}, {"id": "sao", "label": "Ngôi sao", "shape": "star", "color": "#8E24AA"}, {"id": "tim", "label": "Hình trái tim", "shape": "heart", "color": "#E53935"}, {"id": "thoi", "label": "Hình thoi", "shape": "diamond", "color": "#EC6FA7"}], "flow": {"gen": {"type": "set", "p": {}}, "views": [{"type": "cards", "p": {}}], "judge": {"type": "equals", "p": {}}, "text": {"prompt": "Chọn {LABEL}!", "say": "{label}!", "wrong": "Đây là {name} nè!"}}, "version": 3, "desc": "Nghe tên hình → chạm đúng hình (mỗi hình 1 màu cố định). 2 đội cùng câu, chờ nhau."}}, "HinhHoc": {"name": "Xây nhà hình học", "desc": "Xây nhà từ bóng đen: chọn hình vừa khít, hình bay vào chỗ, nhà xong thì xây nhà mới.", "data": {"title": "Xây nhà hình học", "sync": false, "theme": {"bg": "#CFEFFF", "floor": ""}, "items": [{"id": "chimney", "label": "ống khói", "shape": "square", "color": "#8D7B6A", "tags": {"part": 1, "kind": "chunhat", "requires": "roof", "shape": "square", "color": "#8D7B6A", "x": 0.66, "y": 0.76, "w": 0.07, "h": 0.13}}, {"id": "wall", "label": "thân nhà", "shape": "square", "color": "#F2C57C", "tags": {"part": 1, "kind": "chunhat", "requires": "", "shape": "square", "color": "#F2C57C", "x": 0.5, "y": 0.5, "w": 0.52, "h": 0.28}}, {"id": "roof", "label": "mái nhà", "shape": "triangle", "color": "#E0453F", "tags": {"part": 1, "kind": "tamgiac", "requires": "wall", "shape": "triangle", "color": "#E0453F", "x": 0.5, "y": 0.73, "w": 0.62, "h": 0.22}}, {"id": "roundwin", "label": "cửa sổ tròn", "shape": "circle", "color": "#BDE6FF", "tags": {"part": 1, "kind": "tron", "requires": "roof", "shape": "circle", "color": "#BDE6FF", "x": 0.5, "y": 0.72, "w": 0.1, "h": 0.1}}, {"id": "door", "label": "cửa ra vào", "shape": "square", "color": "#7A4A2A", "tags": {"part": 1, "kind": "chunhat", "requires": "wall", "shape": "square", "color": "#7A4A2A", "x": 0.5, "y": 0.425, "w": 0.11, "h": 0.19}}, {"id": "winl", "label": "cửa sổ trái", "shape": "square", "color": "#8ED0FF", "tags": {"part": 1, "kind": "vuong", "requires": "wall", "shape": "square", "color": "#8ED0FF", "x": 0.33, "y": 0.52, "w": 0.11, "h": 0.11}}, {"id": "winr", "label": "cửa sổ phải", "shape": "square", "color": "#8ED0FF", "tags": {"part": 1, "kind": "vuong", "requires": "wall", "shape": "square", "color": "#8ED0FF", "x": 0.67, "y": 0.52, "w": 0.11, "h": 0.11}}, {"id": "sun", "label": "mặt trời", "shape": "circle", "color": "#FFD93D", "tags": {"part": 1, "kind": "tron", "requires": "wall", "shape": "circle", "color": "#FFD93D", "x": 0.14, "y": 0.84, "w": 0.14, "h": 0.14}}, {"id": "ball", "label": "quả bóng", "shape": "circle", "color": "#FF6B6B", "tags": {"part": 1, "kind": "tron", "requires": "wall", "shape": "circle", "color": "#FF6B6B", "x": 0.18, "y": 0.33, "w": 0.09, "h": 0.09}}, {"id": "tron", "label": "Hình tròn", "shape": "circle", "color": "#FF8A3D", "tags": {"isKind": 1}}, {"id": "vuong", "label": "Hình vuông", "shape": "square", "color": "#4D96FF", "tags": {"isKind": 1}}, {"id": "tamgiac", "label": "Hình tam giác", "shape": "triangle", "color": "#E0453F", "tags": {"isKind": 1}}, {"id": "chunhat", "label": "Hình chữ nhật", "shape": "rect", "color": "#2FB26B", "tags": {"isKind": 1}}, {"id": "tree", "label": "Cây", "image": "decor_tree_oak.png", "shape": "circle", "color": "#CCCCCC"}], "vars": {"built": 0, "roofc": "#E0453F", "wallc": "#F2C57C", "built_chimney": 0, "built_wall": 0, "built_roof": 0, "built_roundwin": 0, "built_door": 0, "built_winl": 0, "built_winr": 0, "built_sun": 0, "built_ball": 0}, "scene": [{"look": {"shape": "square", "color": "#7ACB5B"}, "x": 0.5, "y": 0.12, "w": 1.024, "h": 0.27}, {"look": {"item": "tree"}, "x": 0.9, "y": 0.43, "w": 0.32}, {"forEachItem": {"where": "item.tags.part==1"}, "look": {"shape": "=item.tags.shape", "color": "#2F3B55"}, "alpha": 0.35, "x": "=item.tags.x", "y": "=item.tags.y", "w": "=item.tags.w", "h": "=item.tags.h", "bind": {"show": "var(\"built_\"+item.id)==0"}}, {"forEachItem": {"where": "item.tags.part==1"}, "look": {"shape": "=item.tags.shape", "color": "#FFF2A0"}, "x": "=item.tags.x", "y": "=item.tags.y", "w": "=item.tags.w", "h": "=item.tags.h", "anim": {"type": "pulse", "amp": 0.06, "speed": 7}, "bind": {"show": "q.subject.id==item.id && var(\"built_\"+item.id)==0", "alpha": "0.55"}}, {"forEachItem": {"where": "item.tags.part==1"}, "id": "=\"part_\"+item.id", "look": {"shape": "=item.tags.shape", "color": "=item.tags.color"}, "x": "=item.tags.x", "y": "=item.tags.y", "w": "=item.tags.w", "h": "=item.tags.h", "show": "0", "smooth": 0.3, "bind": {"show": "var(\"built_\"+item.id)==1", "color": "item.id==\"roof\"?$roofc:(item.id==\"wall\"?$wallc:((item.tags.shape==\"square\" && item.tags.w<.12 && item.tags.h<.12 && item.id!=\"ball\") && $built>=9 ? \"#FFF06B\" : item.tags.color))"}}], "flow": {"gen": {"type": "match", "p": {"subjectWhere": "item.tags.part==1 && var(\"built_\"+item.id)==0 && (item.tags.requires==\"\" || var(\"built_\"+item.tags.requires)==1)", "optionsWhere": "item.tags.isKind==1", "n": 3, "answerTag": "kind", "shuffle": 1}}, "views": [{"type": "cards", "p": {"y": 0.15, "sizeU": 0.28, "tall": 1.05, "fig": 0.58, "label": 1, "bg": "#FFF4D6"}}], "judge": {"type": "equals", "p": {"finishSec": 0.3}}, "text": {"prompt": "Xây {{q.subject.label}}: hình nào vừa khít?", "wrong": "Chưa vừa! Thử hình khác nhé"}, "on": {"right": [{"do": "sfx", "k": "right"}, {"do": "hide", "on": "@tapped"}, {"do": "fly", "to": "=\"part_\"+q.subject.id", "sec": 0.5, "look": {"item": "=tapped.itemId"}}, {"do": "set", "var": "=\"built_\"+q.subject.id", "expr": "1"}, {"do": "inc", "var": "built"}, {"do": "sfx", "k": "wood"}, {"do": "say", "text": "Đây là {{lower(tapped.name)}}!", "fy": 0.84}, {"do": "if", "cond": "$built>=9", "then": [{"do": "wait", "sec": 0.4}, {"do": "confetti", "at": {"fx": 0.5, "fy": 0.55}, "n": 20}, {"do": "say", "text": "Nhà xong rồi! Giỏi quá!", "fy": 0.84, "sec": 2, "color": "#FFE27A"}, {"do": "wait", "sec": 1.8}, {"do": "set", "var": "built_chimney", "expr": "0"}, {"do": "set", "var": "built_wall", "expr": "0"}, {"do": "set", "var": "built_roof", "expr": "0"}, {"do": "set", "var": "built_roundwin", "expr": "0"}, {"do": "set", "var": "built_door", "expr": "0"}, {"do": "set", "var": "built_winl", "expr": "0"}, {"do": "set", "var": "built_winr", "expr": "0"}, {"do": "set", "var": "built_sun", "expr": "0"}, {"do": "set", "var": "built_ball", "expr": "0"}, {"do": "set", "var": "built", "expr": "0"}, {"do": "set", "var": "roofc", "expr": "pick(randi(0,4),\"#E0453F\",\"#8E5BD8\",\"#2F9E8F\",\"#E8872E\")"}, {"do": "set", "var": "wallc", "expr": "pick(randi(0,4),\"#F2C57C\",\"#F4A6C0\",\"#9AD5A0\",\"#9FC9F2\")"}], "else": [{"do": "wait", "sec": 0.3}]}]}}, "version": 3, "desc": "Xây nhà từ bóng đen: chọn hình vừa khít, hình bay vào chỗ, nhà xong thì xây nhà mới."}}, "LatTheNhoGiong": {"name": "Lật thẻ giống nhau", "desc": "Lật 2 thẻ; giống nhau thì ăn +1 điểm, khác nhau thì úp lại.", "data": {"title": "Lật thẻ giống nhau", "sync": false, "theme": {"bg": "#E8F5E9", "floor": "#C8E6C9"}, "items": [{"id": "sun", "label": "Mặt trời", "icon": "sun"}, {"id": "moon", "label": "Mặt trăng", "icon": "moon"}, {"id": "flower", "label": "Bông hoa", "icon": "flower"}, {"id": "star", "label": "Ngôi sao", "icon": "star"}, {"id": "heart", "label": "Trái tim", "icon": "heart"}, {"id": "cake", "label": "Cái bánh", "icon": "cake"}, {"id": "icecream", "label": "Cây kem", "icon": "icecream"}, {"id": "cup", "label": "Cốc sữa", "icon": "cup"}], "flow": {"gen": {"type": "pairs", "p": {}}, "views": [{"type": "grid", "p": {"covered": 1}}], "judge": {"type": "pairs", "p": {}}, "text": {"first": "Chạm 2 thẻ giống nhau nhé!", "prompt": "Tìm các cặp giống nhau!", "say": "Giỏi quá! Không nhầm lần nào!", "sayOk": "Tìm đủ rồi!"}}, "version": 3, "desc": "Lật 2 thẻ; giống nhau thì ăn +1 điểm, khác nhau thì úp lại."}}, "NangNhe": {"name": "Nặng hay nhẹ", "desc": "Bập bênh nghiêng → chạm con nặng/nhẹ nhất.", "data": {"title": "Nặng hay nhẹ", "sync": false, "theme": {"bg": "#E1F5FE", "floor": "#A5D6A7"}, "items": [{"id": "rabbit", "label": "Thỏ", "image": "animal_rabbit.png", "shape": "circle", "color": "#F6B26B", "value": 1}, {"id": "duck", "label": "Vịt", "image": "animal_duck.png", "shape": "circle", "color": "#F6B26B", "value": 1}, {"id": "owl", "label": "Cú mèo", "image": "animal_owl.png", "shape": "circle", "color": "#F6B26B", "value": 1}, {"id": "frog", "label": "Ếch", "image": "animal_frog.png", "shape": "circle", "color": "#F6B26B", "value": 1}, {"id": "chick", "label": "Gà con", "image": "animal_chick.png", "shape": "circle", "color": "#F6B26B", "value": 1}, {"id": "parrot", "label": "Vẹt", "image": "animal_parrot.png", "shape": "circle", "color": "#F6B26B", "value": 1}, {"id": "bear", "label": "Gấu", "image": "animal_bear.png", "shape": "circle", "color": "#F6B26B", "value": 2}, {"id": "pig", "label": "Lợn", "image": "animal_pig.png", "shape": "circle", "color": "#F6B26B", "value": 2}, {"id": "goat", "label": "Dê", "image": "animal_goat.png", "shape": "circle", "color": "#F6B26B", "value": 2}, {"id": "dog", "label": "Chó", "image": "animal_dog.png", "shape": "circle", "color": "#F6B26B", "value": 2}, {"id": "monkey", "label": "Khỉ", "image": "animal_monkey.png", "shape": "circle", "color": "#F6B26B", "value": 2}, {"id": "penguin", "label": "Chim cánh cụt", "image": "animal_penguin.png", "shape": "circle", "color": "#F6B26B", "value": 2}, {"id": "elephant", "label": "Voi", "image": "animal_elephant.png", "shape": "circle", "color": "#F6B26B", "value": 3}, {"id": "hippo", "label": "Hà mã", "image": "animal_hippo.png", "shape": "circle", "color": "#F6B26B", "value": 3}, {"id": "rhino", "label": "Tê giác", "image": "animal_rhino.png", "shape": "circle", "color": "#F6B26B", "value": 3}, {"id": "buffalo", "label": "Trâu", "image": "animal_buffalo.png", "shape": "circle", "color": "#F6B26B", "value": 3}, {"id": "cow", "label": "Bò", "image": "animal_cow.png", "shape": "circle", "color": "#F6B26B", "value": 3}, {"id": "horse", "label": "Ngựa", "image": "animal_horse.png", "shape": "circle", "color": "#F6B26B", "value": 3}], "flow": {"gen": {"type": "values", "p": {}}, "views": [{"type": "seesaw", "p": {}}], "judge": {"type": "equals", "p": {"finishSec": 2.4}}, "text": {"prompt": "Con nào {WORD} {suffix}?", "say": "{label} {word} {suffix}!", "wrong": "Nhìn bên nào chúi xuống nhé!"}}, "version": 3, "desc": "Bập bênh nghiêng → chạm con nặng/nhẹ nhất."}}, "NgayCuaBe": {"name": "Một ngày của Bé", "desc": "Trời đổi theo buổi; chọn việc hợp với buổi (biến period).", "data": {"title": "Một ngày của Bé", "sync": false, "theme": {"bg": "", "floor": ""}, "items": [{"id": "thuc_day", "label": "Thức dậy", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 0}, "image": "day_thuc_day.png"}, {"id": "danh_rang", "label": "Đánh răng", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 0}, "image": "day_danh_rang.png"}, {"id": "an_sang", "label": "Ăn sáng", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 0}, "image": "day_an_sang.png"}, {"id": "di_hoc", "label": "Đi học", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 0}, "image": "day_di_hoc.png"}, {"id": "rua_tay", "label": "Rửa tay", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 1}, "image": "day_rua_tay.png"}, {"id": "an_trua", "label": "Ăn cơm trưa", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 1}, "image": "day_an_trua.png"}, {"id": "ngu_trua", "label": "Ngủ trưa", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 1}, "image": "day_ngu_trua.png"}, {"id": "ve_nha", "label": "Đi học về", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 2}, "image": "day_ve_nha.png"}, {"id": "choi_san", "label": "Chơi ngoài sân", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 2}, "image": "day_choi_san.png"}, {"id": "tam", "label": "Tắm", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 2}, "image": "day_tam.png"}, {"id": "an_toi", "label": "Ăn tối", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 3}, "image": "day_an_toi.png"}, {"id": "doc_truyen", "label": "Nghe kể chuyện", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 3}, "image": "day_doc_truyen.png"}, {"id": "di_ngu", "label": "Đi ngủ", "shape": "circle", "color": "#FFD27A", "tags": {"act": 1, "period": 3}, "image": "day_di_ngu.png"}, {"id": "na", "label": "Na", "image": "day_na.png", "shape": "circle", "color": "#FFD6AA"}, {"id": "decor_tree_oak", "label": "tree_oak", "image": "decor_tree_oak.png", "shape": "circle", "color": "#6CC24A"}, {"id": "decor_tree_default", "label": "tree_default", "image": "decor_tree_default.png", "shape": "circle", "color": "#6CC24A"}, {"id": "decor_flower_redA", "label": "flower_redA", "image": "decor_flower_redA.png", "shape": "circle", "color": "#6CC24A"}, {"id": "decor_flower_yellowB", "label": "flower_yellowB", "image": "decor_flower_yellowB.png", "shape": "circle", "color": "#6CC24A"}], "vars": {"period": 0}, "scene": [{"fill": true, "look": {"color": "#8FD3FF"}, "smooth": 0.7, "bind": {"color": "pick($period,\"#8FD3FF\",\"#4FB0FF\",\"#FFB070\",\"#1C2B63\")"}}, {"look": {"shape": "star", "color": "#FFFFCC"}, "x": 0.15, "y": 0.88, "w": 0.05, "alpha": 0, "smooth": 0.7, "bind": {"alpha": "$period==3?1:0"}}, {"look": {"shape": "star", "color": "#FFFFCC"}, "x": 0.32, "y": 0.78, "w": 0.05, "alpha": 0, "smooth": 0.7, "bind": {"alpha": "$period==3?1:0"}}, {"look": {"shape": "star", "color": "#FFFFCC"}, "x": 0.55, "y": 0.9, "w": 0.05, "alpha": 0, "smooth": 0.7, "bind": {"alpha": "$period==3?1:0"}}, {"look": {"shape": "star", "color": "#FFFFCC"}, "x": 0.68, "y": 0.7, "w": 0.05, "alpha": 0, "smooth": 0.7, "bind": {"alpha": "$period==3?1:0"}}, {"look": {"shape": "star", "color": "#FFFFCC"}, "x": 0.42, "y": 0.66, "w": 0.05, "alpha": 0, "smooth": 0.7, "bind": {"alpha": "$period==3?1:0"}}, {"look": {"shape": "star", "color": "#FFFFCC"}, "x": 0.9, "y": 0.9, "w": 0.05, "alpha": 0, "smooth": 0.7, "bind": {"alpha": "$period==3?1:0"}}, {"look": {"shape": "circle", "color": "#FFE27A"}, "x": 0.2, "y": 0.64, "w": 0.17, "smooth": 0.8, "bind": {"x": "pick($period,.2,.5,.82,.92)", "y": "pick($period,.64,.85,.6,-.1)", "color": "pick($period,\"#FFE27A\",\"#FFF04D\",\"#FF7A3D\",\"#FF7A3D\")"}}, {"look": {"shape": "moon", "color": "#FFFFD9"}, "x": 0.08, "y": -0.1, "w": 0.15, "alpha": 0, "smooth": 0.8, "bind": {"x": "$period==3?.78:.08", "y": "$period==3?.8:-.1", "alpha": "$period==3?1:0"}}, {"look": {"shape": "square", "color": "#6CC24A"}, "x": 0.5, "y": 0.07, "w": 1.024, "h": 0.22}, {"look": {"item": "decor_tree_oak"}, "x": 0.08, "y": 0.3, "w": 0.3}, {"look": {"item": "decor_tree_default"}, "x": 0.93, "y": 0.3, "w": 0.26}, {"look": {"item": "decor_flower_redA"}, "x": 0.3, "y": 0.2, "w": 0.1}, {"look": {"item": "decor_flower_yellowB"}, "x": 0.72, "y": 0.21, "w": 0.1}, {"id": "na", "role": "actor", "look": {"item": "na"}, "x": 0.5, "y": 0.5, "w": 0.36}, {"look": {"text": "=\"BUỔI \"+pick($period,\"SÁNG\",\"TRƯA\",\"CHIỀU\",\"TỐI\")", "fs": 0.108, "color": "#FFFFFF"}, "x": 0.5, "y": 0.93, "w": 0.9, "h": 0.12, "z": "front"}], "flow": {"gen": {"type": "set", "p": {"n": 3, "startItems": 99, "targetWhere": "item.tags.act==1 && item.tags.period==$period", "otherWhere": "item.tags.act==1 && item.tags.period!=$period", "distinctBy": "period", "noRepeat": 1}}, "views": [{"type": "cards", "p": {"y": 0.17, "sizeU": 0.3, "tall": 1.05, "fig": 0.8, "label": 1, "bg": "#FFFFFF"}}], "judge": {"type": "equals", "p": {}}, "text": {"prompt": "Na làm gì nào?", "say": "{label}!", "wrong": "Chưa đúng! Na làm gì lúc này nhỉ?"}, "on": {"right": [{"do": "std", "ev": "right"}, {"do": "inc", "var": "period", "mod": 4}]}}, "version": 3, "desc": "Trời đổi theo buổi; chọn việc hợp với buổi (biến period)."}}, "NhanBietMau": {"name": "Nhận biết màu sắc", "desc": "Nghe tên màu → chạm đúng màu.", "data": {"title": "Nhận biết màu sắc", "sync": false, "theme": {"bg": "#FFF8E1", "floor": "#FFECB3"}, "items": [{"id": "red", "label": "Đỏ", "shape": "circle", "color": "#E53935"}, {"id": "blue", "label": "Xanh dương", "shape": "circle", "color": "#1E88E5"}, {"id": "green", "label": "Xanh lá", "shape": "circle", "color": "#43A047"}, {"id": "yellow", "label": "Vàng", "shape": "circle", "color": "#FDD835"}, {"id": "orange", "label": "Cam", "shape": "circle", "color": "#FB8C00"}, {"id": "pink", "label": "Hồng", "shape": "circle", "color": "#EC6FA7"}, {"id": "purple", "label": "Tím", "shape": "circle", "color": "#8E24AA"}], "flow": {"gen": {"type": "set", "p": {"every": 3}}, "views": [{"type": "cards", "p": {}}], "judge": {"type": "equals", "p": {}}, "text": {"prompt": "Chọn màu {LABEL}!", "say": "Màu {label}!", "wrong": "Đây là màu {name} nè!"}}, "version": 3, "desc": "Nghe tên màu → chạm đúng màu."}}, "NhoChuoiHinh": {"name": "Nhớ chuỗi hình", "desc": "Hiện từng hình rồi úp lại → chạm theo đúng thứ tự trái → phải.", "data": {"title": "Nhớ chuỗi hình", "sync": false, "theme": {"bg": "#FFF3E0", "floor": "#FFE0B2"}, "items": [{"id": "sun", "label": "Mặt trời", "icon": "sun"}, {"id": "moon", "label": "Mặt trăng", "icon": "moon"}, {"id": "flower", "label": "Bông hoa", "icon": "flower"}, {"id": "star", "label": "Ngôi sao", "icon": "star"}, {"id": "heart", "label": "Trái tim", "icon": "heart"}, {"id": "cake", "label": "Cái bánh", "icon": "cake"}, {"id": "icecream", "label": "Cây kem", "icon": "icecream"}, {"id": "cup", "label": "Cốc sữa", "icon": "cup"}], "flow": {"gen": {"type": "sequence", "p": {}}, "views": [{"type": "strip", "p": {}, "reveal": {"mode": "sequential", "showSec": 0.6, "hold": 1.2, "holdPerItem": 0.35, "then": "cover"}}, {"type": "cards", "p": {"y": 0.33, "sizeU": 0.2, "tall": 1, "fig": 0.8}, "appear": "afterReveal"}], "judge": {"type": "order", "p": {}}, "text": {"prompt": "Nhìn kỹ nè! Nhớ thứ tự nhé", "ready": "Chọn theo thứ tự, từ TRÁI sang PHẢI", "say": "Giỏi quá!", "sayOk": "Đúng rồi!"}}, "version": 3, "desc": "Hiện từng hình rồi úp lại → chạm theo đúng thứ tự trái → phải."}}, "SanKyDieu": {"name": "Sàn kỳ diệu (bé nhỏ)", "desc": "Chạm đâu mọc hoa/sao/tim/bóng/cây đó (không đúng/sai).", "data": {"title": "Sàn kỳ diệu (bé nhỏ)", "sync": false, "theme": {"bg": "", "floor": ""}, "items": [{"id": "hoa_flower_redA", "label": "flower_redA", "image": "nk_flower_redA.png", "shape": "flower", "color": "#FF6FA5", "tags": {"kind": "hoa"}}, {"id": "hoa_flower_redB", "label": "flower_redB", "image": "nk_flower_redB.png", "shape": "flower", "color": "#FF6FA5", "tags": {"kind": "hoa"}}, {"id": "hoa_flower_yellowA", "label": "flower_yellowA", "image": "nk_flower_yellowA.png", "shape": "flower", "color": "#FF6FA5", "tags": {"kind": "hoa"}}, {"id": "hoa_flower_yellowC", "label": "flower_yellowC", "image": "nk_flower_yellowC.png", "shape": "flower", "color": "#FF6FA5", "tags": {"kind": "hoa"}}, {"id": "hoa_flower_purpleA", "label": "flower_purpleA", "image": "nk_flower_purpleA.png", "shape": "flower", "color": "#FF6FA5", "tags": {"kind": "hoa"}}, {"id": "hoa_flower_purpleB", "label": "flower_purpleB", "image": "nk_flower_purpleB.png", "shape": "flower", "color": "#FF6FA5", "tags": {"kind": "hoa"}}, {"id": "vuon_tree_oak", "label": "tree_oak", "image": "nk_tree_oak.png", "shape": "flower", "color": "#6BCB77", "tags": {"kind": "vuon"}}, {"id": "vuon_tree_default", "label": "tree_default", "image": "nk_tree_default.png", "shape": "flower", "color": "#6BCB77", "tags": {"kind": "vuon"}}, {"id": "vuon_mushroom_red", "label": "mushroom_red", "image": "nk_mushroom_red.png", "shape": "flower", "color": "#6BCB77", "tags": {"kind": "vuon"}}, {"id": "vuon_plant_bush", "label": "plant_bush", "image": "nk_plant_bush.png", "shape": "flower", "color": "#6BCB77", "tags": {"kind": "vuon"}}, {"id": "vuon_flower_redC", "label": "flower_redC", "image": "nk_flower_redC.png", "shape": "flower", "color": "#6BCB77", "tags": {"kind": "vuon"}}, {"id": "vuon_tree_oak_dark", "label": "tree_oak_dark", "image": "nk_tree_oak_dark.png", "shape": "flower", "color": "#6BCB77", "tags": {"kind": "vuon"}}], "vars": {"theme": 0}, "scene": [{"fill": true, "look": {"color": "#CFF5C0"}, "smooth": 0.6, "bind": {"color": "pick($theme,\"#CFF5C0\",\"#1C2B63\",\"#FFD9E8\",\"#BFE9FF\",\"#DFF3B8\")"}}], "flow": {"gen": {"type": "none", "p": {}}, "views": [{"type": "floor", "p": {}}], "judge": {"type": "taps", "p": {"count": 6, "finishSec": 1}}, "text": {"prompt": "{{pick($theme,\"Dậm chân cho hoa nở!\",\"Dậm chân cho sao sáng!\",\"Dậm chân cho tim bay!\",\"Dậm chân cho bóng nổi!\",\"Dậm chân cho vườn mọc lên!\")}}"}, "on": {"step": [{"do": "sfx", "k": "=pick($theme,\"up\",\"star\",\"plop\",\"pop\",\"wood\")"}, {"do": "if", "cond": "$theme==0", "then": [{"do": "spawn", "look": {"item": "=randItem(\"kind\",\"hoa\")"}, "at": "@tap", "size": "=0.18+0.05*rand()"}]}, {"do": "if", "cond": "$theme==1", "then": [{"do": "spawn", "look": {"shape": "star", "color": "=pick(randi(0,2),\"#FFD93D\",\"#FF6B6B\")"}, "at": "@tap", "size": "=0.10+0.07*rand()"}]}, {"do": "if", "cond": "$theme==2", "then": [{"do": "spawn", "look": {"shape": "heart", "color": "=pick(randi(0,4),\"#FF6FA5\",\"#FF9AB8\",\"#E8457C\",\"#FFB3C9\")"}, "at": "@tap", "size": "=0.10+0.07*rand()"}]}, {"do": "if", "cond": "$theme==3", "then": [{"do": "spawn", "look": {"shape": "circle", "color": "=pick(randi(0,6),\"#FFD93D\",\"#FF6B6B\",\"#6BCB77\",\"#4D96FF\",\"#FF9F45\",\"#C77DFF\")"}, "at": "@tap", "size": "=0.09+0.09*rand()"}]}, {"do": "if", "cond": "$theme==4", "then": [{"do": "spawn", "look": {"item": "=randItem(\"kind\",\"vuon\")"}, "at": "@tap", "size": 0.26}]}], "end": [{"do": "inc", "var": "theme", "mod": 5}]}}, "version": 3, "desc": "Chạm đâu mọc hoa/sao/tim/bóng/cây đó (không đúng/sai)."}}, "TrungMauSac": {"name": "Trứng màu sắc", "desc": "Chạm trứng đúng màu → nở hoa + trái cây cùng màu.", "data": {"title": "Trứng màu sắc", "sync": false, "theme": {"bg": "#FFF1CF", "floor": ""}, "items": [{"id": "red", "label": "Đỏ", "shape": "circle", "color": "#E53935", "tags": {"kind": "color", "fruit": "fruit_apple"}}, {"id": "blue", "label": "Xanh dương", "shape": "circle", "color": "#1E88E5", "tags": {"kind": "color", "fruit": "fruit_blueberry"}}, {"id": "green", "label": "Xanh lá", "shape": "circle", "color": "#43A047", "tags": {"kind": "color", "fruit": "fruit_pear"}}, {"id": "yellow", "label": "Vàng", "shape": "circle", "color": "#FDD835", "tags": {"kind": "color", "fruit": "fruit_banana"}}, {"id": "orange", "label": "Cam", "shape": "circle", "color": "#FB8C00", "tags": {"kind": "color", "fruit": "fruit_orange"}}, {"id": "pink", "label": "Hồng", "shape": "circle", "color": "#EC6FA7", "tags": {"kind": "color", "fruit": "fruit_peach"}}, {"id": "purple", "label": "Tím", "shape": "circle", "color": "#8E24AA", "tags": {"kind": "color", "fruit": "fruit_grape"}}, {"id": "fruit_apple", "label": "Táo", "image": "food_apple.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}, {"id": "fruit_blueberry", "label": "Việt quất", "image": "food_blueberry.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}, {"id": "fruit_pear", "label": "Lê", "image": "food_pear.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}, {"id": "fruit_banana", "label": "Chuối", "image": "food_banana.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}, {"id": "fruit_orange", "label": "Cam", "image": "food_orange.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}, {"id": "fruit_peach", "label": "Đào", "image": "food_peach.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}, {"id": "fruit_grape", "label": "Nho", "image": "food_grape.png", "shape": "circle", "color": "#CCCCCC", "tags": {"kind": "fruit"}}], "scene": [{"look": {"shape": "circle", "color": "#9ED67A"}, "x": 0.5, "y": -0.18, "w": 1.536, "h": 0.7}, {"look": {"shape": "circle", "color": "#FFD23F"}, "x": 0.88, "y": 0.8, "w": 0.12}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "x": 0.09, "y": 0.91, "w": 0.13, "bind": {"color": "q.targetItem.color"}}], "flow": {"gen": {"type": "set", "p": {"startItems": 99, "targetWhere": "item.tags.kind==\"color\"", "otherWhere": "item.tags.kind==\"color\""}}, "views": [{"type": "props", "p": {"layout": "row", "x0": 0.2, "x1": 0.8, "y0": 0.4, "y1": 0.4, "size": "0.25", "tall": 1.32, "preset": "none", "tpl": [{"look": {"shape": "circle", "color": "#B98A56"}, "w": "=size*1.35", "h": "=size*.45", "dy": "=-size*.55"}, {"look": {"shape": "circle", "color": "=opt.color"}, "w": "=size", "h": "=size*1.32"}, {"look": {"shape": "square", "color": "#FFFFFF"}, "alpha": 0.55, "w": "=size*.8", "h": "=size*.106", "dy": "=-size*.066"}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "alpha": 0.55, "w": "=size*.13", "dx": "=-size*.18", "dy": "=size*.264"}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "alpha": 0.55, "w": "=size*.1", "dx": "=size*.16", "dy": "=-size*.29"}]}}], "judge": {"type": "equals", "p": {"finishSec": 2.4}}, "text": {"prompt": "Trứng màu {LABEL} đâu?", "wrong": "Trứng này màu {name} nè!"}, "on": {"right": [{"do": "sfx", "k": "right"}, {"do": "shake", "on": "@tapped", "sec": 0.4, "amp": 12}, {"do": "wait", "sec": 0.4}, {"do": "confetti", "at": "@tapped", "n": 8, "sound": 0}, {"do": "hide", "on": "@tapped"}, {"do": "spawn", "look": {"shape": "square", "color": "#4CAF50"}, "at": {"ref": "@tapped", "dy": -0.16}, "w": 0.025, "h": 0.16, "pop": 0}, {"do": "spawn", "look": {"shape": "flower", "color": "=tapped.item.color"}, "at": {"ref": "@tapped", "dy": 0.02}, "size": 0.3}, {"do": "spawn", "look": {"item": "=tapped.item.tags.fruit"}, "at": {"ref": "@tapped", "dx": 0.11, "dy": 0.17}, "size": 0.17}, {"do": "spawn", "look": {"text": "=tapped.name", "fs": 0.068, "color": "#FFFFFF"}, "at": {"ref": "@tapped", "dy": -0.3}, "w": 0.5, "h": 0.1}]}}, "version": 3, "desc": "Chạm trứng đúng màu → nở hoa + trái cây cùng màu."}}, "VoBongBay": {"name": "Vỡ bóng bay (bé nhỏ)", "desc": "Vỡ bóng đúng màu → con vật chui ra.", "data": {"title": "Vỡ bóng bay (bé nhỏ)", "sync": false, "theme": {"bg": "#BFE9FF", "floor": ""}, "items": [{"id": "balloon_red", "label": "Đỏ", "image": "balloon_red.png", "shape": "circle", "color": "#E53935", "tags": {"kind": "balloon"}}, {"id": "balloon_blue", "label": "Xanh dương", "image": "balloon_blue.png", "shape": "circle", "color": "#1E88E5", "tags": {"kind": "balloon"}}, {"id": "balloon_green", "label": "Xanh lá", "image": "balloon_green.png", "shape": "circle", "color": "#43A047", "tags": {"kind": "balloon"}}, {"id": "balloon_yellow", "label": "Vàng", "image": "balloon_yellow.png", "shape": "circle", "color": "#FDD835", "tags": {"kind": "balloon"}}, {"id": "balloon_orange", "label": "Cam", "image": "balloon_orange.png", "shape": "circle", "color": "#FB8C00", "tags": {"kind": "balloon"}}, {"id": "balloon_pink", "label": "Hồng", "image": "balloon_pink.png", "shape": "circle", "color": "#EC6FA7", "tags": {"kind": "balloon"}}, {"id": "balloon_purple", "label": "Tím", "image": "balloon_purple.png", "shape": "circle", "color": "#8E24AA", "tags": {"kind": "balloon"}}, {"id": "rabbit", "label": "Thỏ", "image": "animal_rabbit.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "bear", "label": "Gấu", "image": "animal_bear.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "dog", "label": "Chó", "image": "animal_dog.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "chick", "label": "Gà con", "image": "animal_chick.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "pig", "label": "Lợn", "image": "animal_pig.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "duck", "label": "Vịt", "image": "animal_duck.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "panda", "label": "Gấu trúc", "image": "animal_panda.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "buffalo", "label": "Trâu", "image": "animal_buffalo.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "chicken", "label": "Gà", "image": "animal_chicken.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "cow", "label": "Bò", "image": "animal_cow.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "crocodile", "label": "Cá sấu", "image": "animal_crocodile.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "elephant", "label": "Voi", "image": "animal_elephant.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "frog", "label": "Ếch", "image": "animal_frog.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "giraffe", "label": "Hươu cao cổ", "image": "animal_giraffe.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "goat", "label": "Dê", "image": "animal_goat.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "gorilla", "label": "Khỉ đột", "image": "animal_gorilla.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "hippo", "label": "Hà mã", "image": "animal_hippo.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "horse", "label": "Ngựa", "image": "animal_horse.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "monkey", "label": "Khỉ", "image": "animal_monkey.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "owl", "label": "Cú mèo", "image": "animal_owl.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "parrot", "label": "Vẹt", "image": "animal_parrot.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "penguin", "label": "Chim cánh cụt", "image": "animal_penguin.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "rhino", "label": "Tê giác", "image": "animal_rhino.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "sloth", "label": "Con lười", "image": "animal_sloth.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "snake", "label": "Rắn", "image": "animal_snake.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "zebra", "label": "Ngựa vằn", "image": "animal_zebra.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "whale", "label": "Cá voi", "image": "animal_whale.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}, {"id": "moose", "label": "Nai sừng tấm", "image": "animal_moose.png", "shape": "circle", "color": "#F6B26B", "tags": {"kind": "animal"}}], "scene": [{"look": {"shape": "circle", "color": "#FFFFFF"}, "alpha": 0.75, "x": 0.18, "y": 0.8, "w": 0.26, "h": 0.13}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "alpha": 0.75, "x": 0.62, "y": 0.7, "w": 0.26, "h": 0.13}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "alpha": 0.75, "x": 0.86, "y": 0.84, "w": 0.26, "h": 0.13}, {"look": {"shape": "square", "color": "#7ACB5B"}, "x": 0.5, "y": 0.06, "w": 1.024, "h": 0.14}, {"look": {"shape": "circle", "color": "#FFFFFF"}, "x": 0.1, "y": 0.915, "w": 0.12, "bind": {"color": "q.targetItem.color"}}], "flow": {"gen": {"type": "set", "p": {"startItems": 99, "targetWhere": "item.tags.kind==\"balloon\"", "otherWhere": "item.tags.kind==\"balloon\""}}, "views": [{"type": "props", "p": {"layout": "row", "x0": 0.2, "x1": 0.8, "y0": 0.52, "y1": 0.52, "size": "0.30", "tall": 1.33, "preset": "none", "anim": "float", "tpl": [{"look": {"item": "=opt.id"}, "w": "=size*.75", "h": "=size"}]}}], "judge": {"type": "equals", "p": {"finishSec": 2.4}}, "text": {"prompt": "Vỡ bóng màu {LABEL}!", "wrong": "Bóng này màu {name} nè!"}, "on": {"right": [{"do": "sfx", "k": "right"}, {"do": "sfx", "k": "pop"}, {"do": "confetti", "at": "@tapped", "n": 8, "sound": 0}, {"do": "hide", "on": "@tapped"}, {"do": "pickItem", "var": "animal", "tag": "kind", "value": "animal"}, {"do": "spawn", "look": {"item": "=$animal"}, "at": "@tapped", "size": 0.3}, {"do": "spawn", "look": {"text": "=label($animal)", "fs": 0.068, "color": "#FFFFFF"}, "at": {"ref": "@tapped", "dy": -0.19}, "w": 0.5, "h": 0.1, "pop": 0}]}}, "version": 3, "desc": "Vỡ bóng đúng màu → con vật chui ra."}}};
+</script>
+<!--FS-JS-END-->
 <script>
 (function(){
 "use strict";
@@ -2077,7 +3567,8 @@ async function doExport(){
   };
   zip.file('game.json', JSON.stringify(payload, null, 2));
   const assetsFolder = zip.folder('assets');
-  Object.keys(assetFiles).forEach(name=> assetsFolder.file(name, assetFiles[name].file));
+  const fsd = fsdData(), fsdUsed = fsd ? new Set((fsd.items||[]).map(i=> i.image).filter(Boolean)) : null; // game cơ chế: chỉ xuất ảnh còn được dùng
+  Object.keys(assetFiles).forEach(name=>{ if (!fsdUsed || fsdUsed.has(name)) assetsFolder.file(name, assetFiles[name].file); });
   const blob = await zip.generateAsync({type:'blob'});
 
   const btn = document.getElementById('btnExport');
@@ -2308,10 +3799,258 @@ function renderFsPanel(){
   });
 }
 function updateFsMode(){
-  const p = fsPack();
+  const p = fsPack(), d = fsdData();
   document.body.classList.toggle('fs-mode', !!p);
+  document.body.classList.toggle('fsd-mode', !!d);
   if (p) renderFsPanel();
+  if (d) renderFsd(); else fsdStop();
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Game cơ chế FloorStory (meta.kind = "fsdata"): meta.fsData = { mechanic, title, sync, theme, items[], p{} } — schema + luật chơi:
+// docs/floor-story-mechanics.md. Engine chơi thử: window.FSW (WebTools/GenericGameBuilder/fs/*.js, nhúng bằng Tools/floorstory_pack/inline_web.py).
+// Luồng: Unity code → thêm cơ chế vào fs/*.js + C# → tạo zip → mở ở đây sửa ảnh/vật/tham số → Xuất → Unity import.
+// ─────────────────────────────────────────────────────────────────
+function fsdData(){ return game.meta && game.meta.kind === 'fsdata' && game.meta.fsData ? game.meta.fsData : null; }
+let fsdGame = null, fsdTimer = null;
+const fsdModes = new WeakMap(); // item → 'image'|'icon'|'shape' (chế độ đang chọn khi chưa có giá trị)
+const fsdIdSet = new WeakSet(); // item đã tự đặt id (không tự sinh từ tên nữa)
+const $ = id=> document.getElementById(id);
+function fsdStop(){ if (fsdGame){ try{ fsdGame.stop(); }catch(e){} fsdGame = null; } const h = $('fsdHost'); if (h) h.innerHTML = ''; }
+function fsdImgUrl(name){ return assetFiles[name] ? assetFiles[name].url : null; }
+function fsdPlay(){
+  const d = fsdData(); if (!d) return;
+  if (!window.FSW){ alert('Thiếu engine chơi thử (fs/*.js chưa được nhúng — chạy Tools/floorstory_pack/inline_web.py).'); return; }
+  const err = FSW.validate(d); if (err){ alert(err); return; }
+  fsdStop();
+  try{ fsdGame = FSW.play($('fsdHost'), d, { imgUrl: fsdImgUrl, mute: $('fsdMute').checked }); }
+  catch(e){ console.error(e); alert('Lỗi chạy thử: ' + e.message); }
+}
+function fsdAuto(){ clearTimeout(fsdTimer); if (fsdGame) fsdTimer = setTimeout(fsdPlay, 500); }
+function fsdSlug(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi,'d').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase(); }
+function fsdItemMode(it){ return fsdModes.get(it) || (it.image ? 'image' : it.icon ? 'icon' : 'shape'); }
+function fsdThumb(it, box){
+  box.innerHTML = '';
+  try{ const n = new FSW.Node(box, 'rect', 0, 0, 44, 44); FSW.World.prototype.drawItem.call({ img: fsdImgUrl }, n, it, 0, 0, 34); }catch(e){}
+}
+// ── form sinh từ khai báo mô-đun (FSW.MOD) ──
+function fsdEl(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+/** Ô JSON: sửa tự do; chỉ ghi vào dữ liệu khi JSON hợp lệ (viền đỏ nếu sai). `empty` = giá trị coi như "không có" (xoá khoá). */
+function fsdJsonArea(label, val, rows, onValid){
+  const wrap = fsdEl('div', 'fsd-row'); wrap.style.alignItems = 'flex-start'; if (label){ const lb = fsdEl('label', null, label); lb.style.flex = '0 0 118px'; wrap.appendChild(lb); }
+  const ta = document.createElement('textarea'); ta.rows = rows || 4; ta.style.cssText = 'flex:1; min-width:0; font-family:ui-monospace,monospace; font-size:11.5px;';
+  ta.value = (val === undefined || val === null || val === '') ? '' : (typeof val === 'string' ? val : JSON.stringify(val, null, 1));
+  ta.addEventListener('input', ()=>{
+    const t = ta.value.trim();
+    if (!t){ ta.style.outline = ''; onValid(undefined); return; }
+    try{ const v = JSON.parse(t); ta.style.outline = ''; onValid(v); } catch(e){ ta.style.outline = '2px solid var(--bad)'; }
+  });
+  wrap.appendChild(ta); return wrap;
+}
+function fsdParamRow(def, key, holder, onSet){
+  if (def.type === 'json') return fsdJsonArea(def.label, holder[key] === undefined ? '' : holder[key], 3, v=>{ if (v === undefined) delete holder[key]; else holder[key] = v; onSet(); });
+  const row = fsdEl('div', 'fsd-row'), lb = fsdEl('label', null, def.label); if (def.help) lb.title = def.help; lb.style.flex = '0 0 150px';
+  let inp;
+  if (def.type === 'select'){
+    inp = document.createElement('select'); inp.style.flex = '1';
+    def.opts.forEach(o=>{ const op = document.createElement('option'); op.value = o; op.textContent = o; inp.appendChild(op); });
+    inp.value = holder[key] != null ? holder[key] : def.def;
+    inp.addEventListener('change', ()=>{ holder[key] = inp.value; onSet(); });
+  } else {
+    inp = document.createElement('input'); inp.type = def.type === 'text' ? 'text' : 'number';
+    if (def.type !== 'text'){ inp.min = def.min; inp.max = def.max; inp.step = def.type === 'float' ? '0.05' : '1'; }
+    const cur = holder[key]; inp.value = (cur === undefined || cur === null || cur === '') ? def.def : cur;
+    inp.addEventListener('input', ()=>{
+      if (def.type === 'text') holder[key] = inp.value;
+      else { const v = parseFloat(inp.value); if (!isNaN(v)) holder[key] = def.type === 'int' ? Math.round(v) : v; }
+      onSet();
+    });
+  }
+  row.appendChild(lb); row.appendChild(inp); return row;
+}
+function fsdParams(wrap, kind, spec, onSet){
+  spec.p = spec.p || {}; const defs = FSW.MOD[kind][spec.type].p;
+  Object.keys(defs).forEach(k=> wrap.appendChild(fsdParamRow(defs[k], k, spec.p, onSet)));
+}
+function fsdTypeSelect(kind, spec, onType){
+  const sel = document.createElement('select'); sel.style.width = '100%';
+  Object.keys(FSW.MOD[kind]).forEach(k=>{ const op = document.createElement('option'); op.value = k; op.textContent = FSW.MOD[kind][k].name; if (k === spec.type) op.selected = true; sel.appendChild(op); });
+  sel.addEventListener('change', ()=>{ spec.type = sel.value; spec.p = {}; onType(); });
+  return sel;
+}
+let fsdFlowIdx = 0;
+const FSD_EVENTS = [['start','Bắt đầu lượt (trước khi sinh câu)'],['setup','Sau khi dựng cảnh'],['step','Mỗi bước/lần chạm'],['right','Khi đúng / xong'],['wrong','Khi sai'],['end','Trước khi sang lượt sau']];
+function fsdNormalize(d){
+  d.theme = d.theme || {}; d.items = d.items || [];
+  if (!d.flows || !d.flows.length){ d.flows = d.flow ? [d.flow] : []; }
+  delete d.flow;
+  d.flows.forEach(f=>{ f.text = f.text || {}; f.views = f.views || []; });
+  fsdFlowIdx = Math.min(fsdFlowIdx, Math.max(0, d.flows.length - 1));
+}
+function renderFsd(){
+  const d = fsdData(); if (!d || !window.FSW) return;
+  fsdNormalize(d); const flows = d.flows, f = flows[fsdFlowIdx];
+  $('fsdMechName').textContent = '🧩 ' + (d.title || game.meta.gameId);
+  $('fsdMechDesc').textContent = 'Game = vars + cảnh + các flow. Mỗi flow = Nguồn (bốc vật) → Hiển thị (view, có thể "hiện n giây rồi úp") → Cách chấm → Phản hồi (hành động theo sự kiện). Sửa bên dưới, chơi thử bên phải.';
+  $('fsdId').value = game.meta.gameId || ''; $('fsdTitle').value = d.title || game.meta.displayName || '';
+  $('fsdSync').checked = !!d.sync;
+  $('fsdBg').value = d.theme.bg || '#ffffff'; $('fsdFloor').value = d.theme.floor || '#cccccc';
+  const wrap = $('fsdParams'); wrap.innerHTML = '';
+  const again = ()=> renderFsd(), touch = ()=> fsdAuto();
+  // nền / sàn có thể tắt
+  const th = fsdEl('div', 'fsd-row');
+  [['bg','Không vẽ nền'],['floor','Không vẽ sàn']].forEach(([k, lab])=>{
+    const lb = fsdEl('label', 'chk', ''); lb.style.margin = '0'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = d.theme[k] === '';
+    c.addEventListener('change', ()=>{ if (c.checked) d.theme[k] = ''; else d.theme[k] = $(k === 'bg' ? 'fsdBg' : 'fsdFloor').value; touch(); });
+    lb.appendChild(c); lb.appendChild(document.createTextNode(' ' + lab)); th.appendChild(lb);
+  });
+  wrap.appendChild(th);
+  // Trạng thái thế giới
+  wrap.appendChild(fsdEl('div', 'fsd-sec', 'Biến trạng thái (vars) — giữ qua các lượt'));
+  wrap.appendChild(fsdJsonArea('', d.vars || {}, 3, v=>{ if (v === undefined || (typeof v === 'object' && !Object.keys(v).length)) delete d.vars; else d.vars = v; touch(); }));
+  wrap.appendChild(fsdEl('div', 'fsd-sec', 'Cảnh (scene) — đối tượng nền/nhân vật, ràng buộc bằng biểu thức'));
+  wrap.appendChild(fsdJsonArea('', d.scene || [], 6, v=>{ if (v === undefined || (Array.isArray(v) && !v.length)) delete d.scene; else d.scene = v; touch(); }));
+  // Flows
+  wrap.appendChild(fsdEl('div', 'fsd-sec', 'Các flow (luân phiên theo lượt)'));
+  const bar = fsdEl('div', 'fsd-bar');
+  flows.forEach((_, i)=>{ const b = fsdEl('button', 'btn sm' + (i === fsdFlowIdx ? ' primary' : ''), 'Flow ' + (i+1)); b.addEventListener('click', ()=>{ fsdFlowIdx = i; again(); }); bar.appendChild(b); });
+  const addF = fsdEl('button', 'btn sm', '＋ Flow'); addF.addEventListener('click', ()=>{ flows.push(JSON.parse(JSON.stringify(f))); fsdFlowIdx = flows.length - 1; again(); fsdAuto(); }); bar.appendChild(addF);
+  if (flows.length > 1){ const delF = fsdEl('button', 'btn sm danger', '✕ Xoá flow này'); delF.addEventListener('click', ()=>{ flows.splice(fsdFlowIdx, 1); fsdFlowIdx = 0; again(); fsdAuto(); }); bar.appendChild(delF); }
+  wrap.appendChild(bar);
+  if (flows.length > 1) wrap.appendChild(fsdParamRow({ label:'Chọn flow mỗi lượt', type:'select', def:'alternate', opts:['alternate','random'] }, 'flowPick', d, touch));
+  wrap.appendChild(fsdJsonArea('Đối tượng theo lượt (objects)', f.objects || [], 4, v=>{ if (v === undefined || (Array.isArray(v) && !v.length)) delete f.objects; else f.objects = v; touch(); }));
+  // 1 Nguồn
+  wrap.appendChild(fsdEl('div', 'fsd-sec', '1. Nguồn câu hỏi'));
+  wrap.appendChild(fsdTypeSelect('gen', f.gen, ()=>{ again(); fsdAuto(); }));
+  wrap.appendChild(fsdEl('p', 'fsd-desc', FSW.MOD.gen[f.gen.type].desc));
+  fsdParams(wrap, 'gen', f.gen, touch);
+  // 2 Hiển thị
+  wrap.appendChild(fsdEl('div', 'fsd-sec', '2. Hiển thị (các view, vẽ từ dưới lên: view sau nằm trên)'));
+  f.views.forEach((v, i)=>{
+    const box = fsdEl('div', 'fsd-item'); box.style.display = 'block';
+    const top = fsdEl('div', 'fsd-row'); top.appendChild(fsdTypeSelect('view', v, ()=>{ again(); fsdAuto(); }));
+    const mv = (dx)=>{ const j = i + dx; if (j < 0 || j >= f.views.length) return; [f.views[i], f.views[j]] = [f.views[j], f.views[i]]; again(); fsdAuto(); };
+    [['↑',()=>mv(-1)],['↓',()=>mv(1)],['✕',()=>{ f.views.splice(i,1); again(); fsdAuto(); }]].forEach(b=>{ const bt = fsdEl('button','btn',b[0]); bt.addEventListener('click', b[1]); top.appendChild(bt); });
+    box.appendChild(top); box.appendChild(fsdEl('p', 'fsd-desc', FSW.MOD.view[v.type].desc));
+    fsdParams(box, 'view', v, touch);
+    v.reveal = v.reveal || {};
+    box.appendChild(fsdEl('div', 'fsd-sec', 'Dòng thời gian của view này'));
+    const rdefs = FSW.MOD.reveal.p;
+    box.appendChild(fsdParamRow(rdefs.mode, 'mode', v.reveal, ()=>{ again(); fsdAuto(); }));
+    if (v.reveal.mode && v.reveal.mode !== 'none') Object.keys(rdefs).filter(k=> k !== 'mode').forEach(k=> box.appendChild(fsdParamRow(rdefs[k], k, v.reveal, touch)));
+    box.appendChild(fsdParamRow({ label:'Xuất hiện', type:'select', def:'now', opts:['now','afterReveal'], help:'afterReveal = chỉ hiện sau khi các view khác hiện-rồi-úp xong' }, 'appear', v, touch));
+    wrap.appendChild(box);
+  });
+  const addV = fsdEl('button', 'btn sm', '＋ Thêm view'); addV.addEventListener('click', ()=>{ f.views.push({ type:'cards', p:{} }); again(); fsdAuto(); }); wrap.appendChild(addV);
+  // 3 Chấm
+  wrap.appendChild(fsdEl('div', 'fsd-sec', '3. Cách chấm'));
+  wrap.appendChild(fsdTypeSelect('judge', f.judge, ()=>{ again(); fsdAuto(); }));
+  wrap.appendChild(fsdEl('p', 'fsd-desc', FSW.MOD.judge[f.judge.type].desc));
+  fsdParams(wrap, 'judge', f.judge, touch);
+  // 4 Lời
+  wrap.appendChild(fsdEl('div', 'fsd-sec', '4. Lời hiển thị'));
+  wrap.appendChild(fsdEl('p', 'fsd-desc', 'Biến: ' + (FSW.MOD.gen[f.gen.type].vars || '') + '. {{biểu thức}} dùng được ($biến, q.*, tapped.*). HOA biến (vd {LABEL}) = in hoa.'));
+  Object.keys(FSW.MOD.text).forEach(k=> wrap.appendChild(fsdParamRow({ label:FSW.MOD.text[k], type:'text', def:'' }, k, f.text, touch)));
+  // 5 Phản hồi
+  wrap.appendChild(fsdEl('div', 'fsd-sec', '5. Phản hồi — danh sách hành động theo sự kiện (trống = mặc định)'));
+  wrap.appendChild(fsdEl('p', 'fsd-desc', 'Hành động: sfx say confetti bounce shake pulse move scale fade tint rotate show hide pop destroy spawn set inc bag pickItem if wait fly par text std. Đích: "@tapped" "@target" "@actor" "#id". Chi tiết: docs/floor-story-mechanics.md.'));
+  f.on = f.on || {};
+  FSD_EVENTS.forEach(([ev, lab])=> wrap.appendChild(fsdJsonArea(lab, f.on[ev] || '', 4, v=>{ if (v === undefined || (Array.isArray(v) && !v.length)) delete f.on[ev]; else f.on[ev] = v; touch(); })));
+  const warn = FSW.validate(d); const w = fsdEl('p', 'fsd-desc', warn ? '⚠ ' + warn : '✔ Cấu hình hợp lệ'); if (warn) w.style.color = 'var(--bad)'; wrap.appendChild(w);
+  renderFsdItems();
+}
+function renderFsdItems(){
+  const d = fsdData(); if (!d) return;
+  const wrap = $('fsdItems'); wrap.innerHTML = '';
+  $('fsdItemCount').textContent = d.items.length;
+  $('fsdItemsHelp').textContent = 'Mỗi vật: id (dùng trong biểu thức), tên, diện mạo (ảnh / icon dựng sẵn / hình + màu), giá trị (số), và "{ }" = các trường nâng cao (tags, ...). Vật xếp trước được mở trước.';
+  d.items.forEach((it, idx)=>{
+    const row = fsdEl('div', 'fsd-item'), th = fsdEl('div', 'fsd-thumb'); fsdThumb(it, th); row.appendChild(th);
+    const text = (ph, key, w)=>{ const i = document.createElement('input'); i.type = 'text'; i.placeholder = ph; i.value = it[key] || ''; if (w) i.style.width = w;
+      i.addEventListener('input', ()=>{ it[key] = i.value; if (key === 'label' && !fsdIdSet.has(it)) it.id = fsdSlug(i.value) || ('v' + idx); fsdAuto(); }); return i; };
+    row.appendChild(text('id', 'id', '74px')); const idI = row.lastChild; idI.addEventListener('input', ()=>{ fsdIdSet.add(it); });
+    row.appendChild(text('Tên', 'label'));
+    const mode = fsdItemMode(it), sel = document.createElement('select');
+    [['image','Ảnh'],['icon','Icon'],['shape','Hình + màu']].forEach(o=>{ const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; if (o[0] === mode) op.selected = true; sel.appendChild(op); });
+    sel.addEventListener('change', ()=>{
+      const m = sel.value; fsdModes.set(it, m);
+      if (m === 'image'){ it.icon = ''; } else if (m === 'icon'){ it.image = ''; if (!it.icon) it.icon = 'sun'; } else { it.image = ''; it.icon = ''; if (!it.shape) it.shape = 'circle'; if (!it.color) it.color = '#90A4AE'; }
+      renderFsdItems(); fsdAuto();
+    });
+    row.appendChild(sel);
+    if (mode === 'image'){
+      const b = fsdEl('button', 'btn', it.image ? 'Đổi ảnh' : 'Chọn ảnh'); b.addEventListener('click', ()=>{ fsdPending = it; $('fsdFileInput').click(); }); row.appendChild(b);
+    } else if (mode === 'icon'){
+      const s2 = document.createElement('select');
+      FSW.ICON_KEYS.forEach(k=>{ const op = document.createElement('option'); op.value = k; op.textContent = FSW.ICON_NAMES[k]; if (k === it.icon) op.selected = true; s2.appendChild(op); });
+      s2.addEventListener('change', ()=>{ it.icon = s2.value; renderFsdItems(); fsdAuto(); }); row.appendChild(s2);
+    } else {
+      const s2 = document.createElement('select');
+      ['circle','square','rect','rrect','triangle','diamond','star','heart','moon','flower'].forEach(k=>{ const op = document.createElement('option'); op.value = k; op.textContent = k; if (k === it.shape) op.selected = true; s2.appendChild(op); });
+      s2.addEventListener('change', ()=>{ it.shape = s2.value; renderFsdItems(); fsdAuto(); }); row.appendChild(s2);
+      const c = document.createElement('input'); c.type = 'color'; c.value = (it.color && /^#[0-9a-f]{6}$/i.test(it.color)) ? it.color : '#90a4ae';
+      c.addEventListener('input', ()=>{ it.color = c.value; fsdThumb(it, th); fsdAuto(); }); row.appendChild(c);
+    }
+    const v = document.createElement('input'); v.type = 'number'; v.className = 'num'; v.title = 'Giá trị (số; dùng cho "so sánh", cỡ cửa...)'; v.value = it.value == null ? '' : it.value; v.placeholder = 'giá trị';
+    v.addEventListener('input', ()=>{ if (v.value === '') delete it.value; else it.value = parseFloat(v.value) || 0; fsdAuto(); }); row.appendChild(v);
+    const adv = fsdEl('button', 'btn', '{ }'); adv.title = 'Trường nâng cao (tags, ...)';
+    const del = fsdEl('button', 'btn danger', '✕'); del.title = 'Xoá vật'; del.addEventListener('click', ()=>{ d.items.splice(idx, 1); renderFsdItems(); fsdAuto(); });
+    const advBox = fsdEl('div'); advBox.style.cssText = 'width:100%; display:none;';
+    adv.addEventListener('click', ()=>{
+      if (advBox.style.display === 'none'){
+        advBox.style.display = 'block'; advBox.innerHTML = '';
+        const extra = {}; Object.keys(it).forEach(k=>{ if (['id','label','image','icon','shape','color','value'].indexOf(k) < 0) extra[k] = it[k]; });
+        advBox.appendChild(fsdJsonArea('', extra, 3, val=>{
+          Object.keys(it).forEach(k=>{ if (['id','label','image','icon','shape','color','value'].indexOf(k) < 0) delete it[k]; });
+          if (val && typeof val === 'object' && !Array.isArray(val)) Object.assign(it, val); fsdAuto();
+        }));
+      } else advBox.style.display = 'none';
+    });
+    row.appendChild(adv); row.appendChild(del); row.appendChild(advBox);
+    wrap.appendChild(row);
+  });
+}
+let fsdPending = null;
+$('fsdFileInput') || (()=>{ const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.id = 'fsdFileInput'; i.style.display = 'none'; document.body.appendChild(i); })();
+$('fsdFileInput').addEventListener('change', e=>{
+  const f = e.target.files[0]; e.target.value = ''; const it = fsdPending; fsdPending = null;
+  if (!f || !it) return;
+  it.image = fileToAsset(f, 'it'); it.icon = ''; fsdModes.set(it, 'image');
+  renderFsdItems(); fsdAuto();
+});
+$('fsdId').addEventListener('input', e=>{ game.meta.gameId = e.target.value.trim(); });
+$('fsdTitle').addEventListener('input', e=>{ const d = fsdData(); if (!d) return; d.title = e.target.value; game.meta.displayName = e.target.value; });
+$('fsdSync').addEventListener('change', e=>{ const d = fsdData(); if (d){ d.sync = e.target.checked; fsdAuto(); } });
+$('fsdBg').addEventListener('input', e=>{ const d = fsdData(); if (d){ d.theme.bg = e.target.value; fsdAuto(); } });
+$('fsdFloor').addEventListener('input', e=>{ const d = fsdData(); if (d){ d.theme.floor = e.target.value; fsdAuto(); } });
+$('fsdPlay').addEventListener('click', fsdPlay);
+$('fsdStop').addEventListener('click', fsdStop);
+$('fsdMute').addEventListener('change', fsdAuto);
+$('fsdFull').addEventListener('click', ()=>{ const h = $('fsdHost'); if (h.requestFullscreen) h.requestFullscreen(); });
+$('fsdAddItem').addEventListener('click', ()=>{ const d = fsdData(); if (!d) return; d.items.push({ id:'v' + (d.items.length+1), label:'', shape:'circle', color:'#90A4AE', value:1 }); renderFsdItems(); });
+$('fsdAddIcons').addEventListener('click', ()=>{
+  const d = fsdData(); if (!d) return;
+  FSW.ICON_KEYS.forEach(k=>{ if (!d.items.some(i=> i.icon === k)) d.items.push({ id:k, label:FSW.ICON_NAMES[k], icon:k }); });
+  renderFsdItems(); fsdAuto();
+});
+// Game mới từ mẫu
+$('btnNewFs').addEventListener('click', ()=>{
+  if (!window.FSW){ alert('Thiếu engine FloorStory (fs/*.js chưa được nhúng).'); return; }
+  const sel = $('fsNewTpl'); sel.innerHTML = '';
+  Object.keys(FSW.TEMPLATES).forEach(k=>{ const o = document.createElement('option'); o.value = k; o.textContent = FSW.TEMPLATES[k].name; sel.appendChild(o); });
+  const upd = ()=>{ const t = FSW.TEMPLATES[sel.value]; $('fsNewDesc').textContent = t.desc; if (!$('fsNewId').value) $('fsNewId').placeholder = 'VD: ' + fsdSlug(t.data.title); };
+  sel.onchange = upd; upd(); $('fsNewDlg').showModal();
+});
+$('fsNewCancel').addEventListener('click', ()=> $('fsNewDlg').close());
+$('fsNewOk').addEventListener('click', ()=>{
+  const id = $('fsNewId').value.trim();
+  if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(id)){ alert('Game ID: chữ cái đầu, chỉ chữ/số/_ (không dấu, không cách).'); return; }
+  const t = FSW.TEMPLATES[$('fsNewTpl').value]; $('fsNewDlg').close();
+  Object.values(assetFiles).forEach(a=>{ try{ URL.revokeObjectURL(a.url); }catch(e){} }); Object.keys(assetFiles).forEach(k=> delete assetFiles[k]);
+  const data = JSON.parse(JSON.stringify(t.data)); data.version = 3;
+  game.meta = { gameId:id, displayName:data.title, category:'FloorStory', kind:'fsdata', fsData: data };
+  updateFsMode();
+});
 document.getElementById('fsFileInput').addEventListener('change', e=>{
   const f = e.target.files[0]; e.target.value = '';
   if (f && fsPending) fsReplace(fsPending, f);
@@ -2381,6 +4120,7 @@ async function importGamePackage(file){
 syncUiFromGame(false);
   undoReset();
   updateFsMode();
+  if (fsdData()){ alert(`Đã mở game cơ chế "${game.meta.gameId}" — ${fsdData().items.length} vật. Sửa rồi bấm "Xuất gói game".`); return; }
   if (fsPack()){ alert(`Đã mở gói FloorStory "${game.meta.gameId}" — ${fsPack().images.length} ảnh. Thay ảnh rồi bấm "Xuất gói game".`); return; }
 
   alert(`Đã mở game "${game.meta.gameId || '(chưa đặt tên)'}" — ${game.rounds.length} round, ${Object.keys(assetFiles).length} file ảnh/âm thanh.`

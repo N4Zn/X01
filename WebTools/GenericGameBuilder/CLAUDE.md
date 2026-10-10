@@ -36,6 +36,13 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - Chưa port: hold 1.8s ở spawn flow / SumToTarget; chưa test trong Editor (game mẫu `GhepAnhConThieu`).
 - File reveal gốc là fork của bản cũ — KHÔNG ghi đè builder bằng nó (mất `waitBothTeams`, chữ số viền, `effFx` gộp từng phần).
 
+## Game cơ chế FloorStory — "flow" v3 (2026-10-10)
+- Nút "＋ Game cơ chế" tạo game `meta.kind="fsdata"` từ 1 trong 16 mẫu (= 16 game FloorStory); panel `#fsdPanel`: nền/sàn, vars, scene, nhiều flow (objects, nguồn, views+reveal, chấm, lời, hành động theo sự kiện) + danh sách vật (id/tên/diện mạo/giá trị/tags) + **chơi thử ngay** (`window.FSW`). Zip xuất mở lại được; Unity import qua `FloorStoryPackImporter.ImportFlow`. Schema, biểu thức, hành động, công cụ, việc còn lại: **`docs/floor-story-mechanics.md`**.
+- Engine = `fs/fs_core.js, fs_expr.js, fs_game.js, fs_act.js, fs_flow.js`; dữ liệu 16 game = `fs/games/*.json` (sinh từ `Tools/floorstory_pack/gen_games.py`). **Sửa xong phải chạy `python Tools/floorstory_pack/inline_web.py`** (nhúng vào HTML giữa `<!--FS-JS-BEGIN/END-->`, đừng sửa tay vùng này) + `gen_mod_cs.py` nếu đổi `MOD` + `make_flow_zips.py` nếu đổi game. Luật JS và C# (`FloorStoryGame/Flow/*.cs`) PHẢI khớp.
+- Glue UI nằm trong script chính (khối "Game cơ chế FloorStory"); bản nguồn `Tools/floorstory_pack/glue_v3.js` (+ `splice_glue.py` nếu cần ghép lại).
+- Test nhanh: `python -m http.server 8765` ở gốc repo, mở `/WebTools/GenericGameBuilder/game_builder_v2.html`; `FSW.play(host, FSW.TEMPLATES.<Game>.data, {mute:true})`, `game.worlds[i]._Q / .elems / .vars` để bấm thử bằng `node.el.dispatchEvent(new PointerEvent('pointerdown'))`.
+- Bẫy đã gặp: `bind` là biểu thức THUẦN (không dấu `=`), tham số còn lại mới cần `=`; tên biến/`id` động dùng `"=\"part_\"+item.id"`; trong `.fs-n` đặt `left/top:50%` nên node `fill` phải ghi đè width/height inline.
+
 ## Chế độ gói FloorStory (2026-10-10)
 - Zip có `meta.kind="floorstory"` + `meta.floorStory.images[]` (`{key,label,group,file,default}`) → body có class `fs-mode`: ẩn `main`/Chơi thử/Lưu thành, hiện `#fsPanel` (thẻ ảnh: Thay ảnh, kéo-thả, ↺ Gốc, Đặt lại tất cả). Code: khối "Gói FloorStory" trước `importGamePackage` (`fsPack/fsReplace/renderFsPanel/updateFsMode`). Thay ảnh = `fileToAsset(file,'fs')` rồi gán `img.file`; `file===default` = chưa thay.
 - Xuất dùng `doExport` bình thường (meta giữ nguyên). Round/layout rỗng mặc định — Unity bỏ qua. Tạo gói: `Tools/floorstory_pack/make_packs.py`; import: Unity `FloorStoryPackImporter`. Chi tiết `docs/floor-story-game.md`.

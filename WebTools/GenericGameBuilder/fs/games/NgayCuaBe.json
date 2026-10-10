@@ -1,0 +1,457 @@
+{
+ "title": "Một ngày của Bé",
+ "sync": false,
+ "theme": {
+  "bg": "",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "thuc_day",
+   "label": "Thức dậy",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 0
+   },
+   "image": "day_thuc_day.png",
+   "src": "Story/Day/thuc_day",
+   "srcFallback": "Family/happy"
+  },
+  {
+   "id": "danh_rang",
+   "label": "Đánh răng",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 0
+   },
+   "image": "day_danh_rang.png",
+   "src": "Story/Day/danh_rang"
+  },
+  {
+   "id": "an_sang",
+   "label": "Ăn sáng",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 0
+   },
+   "image": "day_an_sang.png",
+   "src": "Story/Day/an_sang",
+   "srcFallback": "Family/hungry"
+  },
+  {
+   "id": "di_hoc",
+   "label": "Đi học",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 0
+   },
+   "image": "day_di_hoc.png",
+   "src": "Story/Day/di_hoc"
+  },
+  {
+   "id": "rua_tay",
+   "label": "Rửa tay",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 1
+   },
+   "image": "day_rua_tay.png",
+   "src": "Story/Day/rua_tay"
+  },
+  {
+   "id": "an_trua",
+   "label": "Ăn cơm trưa",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 1
+   },
+   "image": "day_an_trua.png",
+   "src": "Story/Day/an_trua",
+   "srcFallback": "Family/hungry"
+  },
+  {
+   "id": "ngu_trua",
+   "label": "Ngủ trưa",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 1
+   },
+   "image": "day_ngu_trua.png",
+   "src": "Story/Day/ngu_trua",
+   "srcFallback": "Family/sleepy"
+  },
+  {
+   "id": "ve_nha",
+   "label": "Đi học về",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 2
+   },
+   "image": "day_ve_nha.png",
+   "src": "Story/Day/ve_nha"
+  },
+  {
+   "id": "choi_san",
+   "label": "Chơi ngoài sân",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 2
+   },
+   "image": "day_choi_san.png",
+   "src": "Story/Day/choi_san",
+   "srcFallback": "Family/happy"
+  },
+  {
+   "id": "tam",
+   "label": "Tắm",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 2
+   },
+   "image": "day_tam.png",
+   "src": "Story/Day/tam"
+  },
+  {
+   "id": "an_toi",
+   "label": "Ăn tối",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 3
+   },
+   "image": "day_an_toi.png",
+   "src": "Story/Day/an_toi",
+   "srcFallback": "Family/hungry"
+  },
+  {
+   "id": "doc_truyen",
+   "label": "Nghe kể chuyện",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 3
+   },
+   "image": "day_doc_truyen.png",
+   "src": "Story/Day/doc_truyen"
+  },
+  {
+   "id": "di_ngu",
+   "label": "Đi ngủ",
+   "shape": "circle",
+   "color": "#FFD27A",
+   "tags": {
+    "act": 1,
+    "period": 3
+   },
+   "image": "day_di_ngu.png",
+   "src": "Story/Day/di_ngu",
+   "srcFallback": "Family/sleepy"
+  },
+  {
+   "id": "na",
+   "label": "Na",
+   "image": "day_na.png",
+   "src": "Story/Day/na",
+   "shape": "circle",
+   "color": "#FFD6AA"
+  },
+  {
+   "id": "decor_tree_oak",
+   "label": "tree_oak",
+   "image": "decor_tree_oak.png",
+   "src": "NatureKit/Isometric/tree_oak_NE",
+   "shape": "circle",
+   "color": "#6CC24A"
+  },
+  {
+   "id": "decor_tree_default",
+   "label": "tree_default",
+   "image": "decor_tree_default.png",
+   "src": "NatureKit/Isometric/tree_default_NE",
+   "shape": "circle",
+   "color": "#6CC24A"
+  },
+  {
+   "id": "decor_flower_redA",
+   "label": "flower_redA",
+   "image": "decor_flower_redA.png",
+   "src": "NatureKit/Isometric/flower_redA_NE",
+   "shape": "circle",
+   "color": "#6CC24A"
+  },
+  {
+   "id": "decor_flower_yellowB",
+   "label": "flower_yellowB",
+   "image": "decor_flower_yellowB.png",
+   "src": "NatureKit/Isometric/flower_yellowB_NE",
+   "shape": "circle",
+   "color": "#6CC24A"
+  }
+ ],
+ "vars": {
+  "period": 0
+ },
+ "scene": [
+  {
+   "fill": true,
+   "look": {
+    "color": "#8FD3FF"
+   },
+   "smooth": 0.7,
+   "bind": {
+    "color": "pick($period,\"#8FD3FF\",\"#4FB0FF\",\"#FFB070\",\"#1C2B63\")"
+   }
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#FFFFCC"
+   },
+   "x": 0.15,
+   "y": 0.88,
+   "w": 0.05,
+   "alpha": 0,
+   "smooth": 0.7,
+   "bind": {
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#FFFFCC"
+   },
+   "x": 0.32,
+   "y": 0.78,
+   "w": 0.05,
+   "alpha": 0,
+   "smooth": 0.7,
+   "bind": {
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#FFFFCC"
+   },
+   "x": 0.55,
+   "y": 0.9,
+   "w": 0.05,
+   "alpha": 0,
+   "smooth": 0.7,
+   "bind": {
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#FFFFCC"
+   },
+   "x": 0.68,
+   "y": 0.7,
+   "w": 0.05,
+   "alpha": 0,
+   "smooth": 0.7,
+   "bind": {
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#FFFFCC"
+   },
+   "x": 0.42,
+   "y": 0.66,
+   "w": 0.05,
+   "alpha": 0,
+   "smooth": 0.7,
+   "bind": {
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#FFFFCC"
+   },
+   "x": 0.9,
+   "y": 0.9,
+   "w": 0.05,
+   "alpha": 0,
+   "smooth": 0.7,
+   "bind": {
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFE27A"
+   },
+   "x": 0.2,
+   "y": 0.64,
+   "w": 0.17,
+   "smooth": 0.8,
+   "bind": {
+    "x": "pick($period,.2,.5,.82,.92)",
+    "y": "pick($period,.64,.85,.6,-.1)",
+    "color": "pick($period,\"#FFE27A\",\"#FFF04D\",\"#FF7A3D\",\"#FF7A3D\")"
+   }
+  },
+  {
+   "look": {
+    "shape": "moon",
+    "color": "#FFFFD9"
+   },
+   "x": 0.08,
+   "y": -0.1,
+   "w": 0.15,
+   "alpha": 0,
+   "smooth": 0.8,
+   "bind": {
+    "x": "$period==3?.78:.08",
+    "y": "$period==3?.8:-.1",
+    "alpha": "$period==3?1:0"
+   }
+  },
+  {
+   "look": {
+    "shape": "square",
+    "color": "#6CC24A"
+   },
+   "x": 0.5,
+   "y": 0.07,
+   "w": 1.024,
+   "h": 0.22
+  },
+  {
+   "look": {
+    "item": "decor_tree_oak"
+   },
+   "x": 0.08,
+   "y": 0.3,
+   "w": 0.3
+  },
+  {
+   "look": {
+    "item": "decor_tree_default"
+   },
+   "x": 0.93,
+   "y": 0.3,
+   "w": 0.26
+  },
+  {
+   "look": {
+    "item": "decor_flower_redA"
+   },
+   "x": 0.3,
+   "y": 0.2,
+   "w": 0.1
+  },
+  {
+   "look": {
+    "item": "decor_flower_yellowB"
+   },
+   "x": 0.72,
+   "y": 0.21,
+   "w": 0.1
+  },
+  {
+   "id": "na",
+   "role": "actor",
+   "look": {
+    "item": "na"
+   },
+   "x": 0.5,
+   "y": 0.5,
+   "w": 0.36
+  },
+  {
+   "look": {
+    "text": "=\"BUỔI \"+pick($period,\"SÁNG\",\"TRƯA\",\"CHIỀU\",\"TỐI\")",
+    "fs": 0.108,
+    "color": "#FFFFFF"
+   },
+   "x": 0.5,
+   "y": 0.93,
+   "w": 0.9,
+   "h": 0.12,
+   "z": "front"
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "set",
+   "p": {
+    "n": 3,
+    "startItems": 99,
+    "targetWhere": "item.tags.act==1 && item.tags.period==$period",
+    "otherWhere": "item.tags.act==1 && item.tags.period!=$period",
+    "distinctBy": "period",
+    "noRepeat": 1
+   }
+  },
+  "views": [
+   {
+    "type": "cards",
+    "p": {
+     "y": 0.17,
+     "sizeU": 0.3,
+     "tall": 1.05,
+     "fig": 0.8,
+     "label": 1,
+     "bg": "#FFFFFF"
+    }
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {}
+  },
+  "text": {
+   "prompt": "Na làm gì nào?",
+   "say": "{label}!",
+   "wrong": "Chưa đúng! Na làm gì lúc này nhỉ?"
+  },
+  "on": {
+   "right": [
+    {
+     "do": "std",
+     "ev": "right"
+    },
+    {
+     "do": "inc",
+     "var": "period",
+     "mod": 4
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Trời đổi theo buổi; chọn việc hợp với buổi (biến period)."
+}

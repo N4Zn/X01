@@ -1,0 +1,76 @@
+{
+ "title": "Lật thẻ giống nhau",
+ "sync": false,
+ "theme": {
+  "bg": "#E8F5E9",
+  "floor": "#C8E6C9"
+ },
+ "items": [
+  {
+   "id": "sun",
+   "label": "Mặt trời",
+   "icon": "sun"
+  },
+  {
+   "id": "moon",
+   "label": "Mặt trăng",
+   "icon": "moon"
+  },
+  {
+   "id": "flower",
+   "label": "Bông hoa",
+   "icon": "flower"
+  },
+  {
+   "id": "star",
+   "label": "Ngôi sao",
+   "icon": "star"
+  },
+  {
+   "id": "heart",
+   "label": "Trái tim",
+   "icon": "heart"
+  },
+  {
+   "id": "cake",
+   "label": "Cái bánh",
+   "icon": "cake"
+  },
+  {
+   "id": "icecream",
+   "label": "Cây kem",
+   "icon": "icecream"
+  },
+  {
+   "id": "cup",
+   "label": "Cốc sữa",
+   "icon": "cup"
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "pairs",
+   "p": {}
+  },
+  "views": [
+   {
+    "type": "grid",
+    "p": {
+     "covered": 1
+    }
+   }
+  ],
+  "judge": {
+   "type": "pairs",
+   "p": {}
+  },
+  "text": {
+   "first": "Chạm 2 thẻ giống nhau nhé!",
+   "prompt": "Tìm các cặp giống nhau!",
+   "say": "Giỏi quá! Không nhầm lần nào!",
+   "sayOk": "Tìm đủ rồi!"
+  }
+ },
+ "version": 3,
+ "desc": "Lật 2 thẻ; giống nhau thì ăn +1 điểm, khác nhau thì úp lại."
+}

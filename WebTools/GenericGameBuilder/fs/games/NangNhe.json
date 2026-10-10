@@ -1,0 +1,197 @@
+{
+ "title": "Nặng hay nhẹ",
+ "sync": false,
+ "theme": {
+  "bg": "#E1F5FE",
+  "floor": "#A5D6A7"
+ },
+ "items": [
+  {
+   "id": "rabbit",
+   "label": "Thỏ",
+   "image": "animal_rabbit.png",
+   "src": "GameImages/Animal/rabbit",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1
+  },
+  {
+   "id": "duck",
+   "label": "Vịt",
+   "image": "animal_duck.png",
+   "src": "GameImages/Animal/duck",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1
+  },
+  {
+   "id": "owl",
+   "label": "Cú mèo",
+   "image": "animal_owl.png",
+   "src": "GameImages/Animal/owl",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1
+  },
+  {
+   "id": "frog",
+   "label": "Ếch",
+   "image": "animal_frog.png",
+   "src": "GameImages/Animal/frog",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1
+  },
+  {
+   "id": "chick",
+   "label": "Gà con",
+   "image": "animal_chick.png",
+   "src": "GameImages/Animal/chick",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1
+  },
+  {
+   "id": "parrot",
+   "label": "Vẹt",
+   "image": "animal_parrot.png",
+   "src": "GameImages/Animal/parrot",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1
+  },
+  {
+   "id": "bear",
+   "label": "Gấu",
+   "image": "animal_bear.png",
+   "src": "GameImages/Animal/bear",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2
+  },
+  {
+   "id": "pig",
+   "label": "Lợn",
+   "image": "animal_pig.png",
+   "src": "GameImages/Animal/pig",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2
+  },
+  {
+   "id": "goat",
+   "label": "Dê",
+   "image": "animal_goat.png",
+   "src": "GameImages/Animal/goat",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2
+  },
+  {
+   "id": "dog",
+   "label": "Chó",
+   "image": "animal_dog.png",
+   "src": "GameImages/Animal/dog",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2
+  },
+  {
+   "id": "monkey",
+   "label": "Khỉ",
+   "image": "animal_monkey.png",
+   "src": "GameImages/Animal/monkey",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2
+  },
+  {
+   "id": "penguin",
+   "label": "Chim cánh cụt",
+   "image": "animal_penguin.png",
+   "src": "GameImages/Animal/penguin",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2
+  },
+  {
+   "id": "elephant",
+   "label": "Voi",
+   "image": "animal_elephant.png",
+   "src": "GameImages/Animal/elephant",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 3
+  },
+  {
+   "id": "hippo",
+   "label": "Hà mã",
+   "image": "animal_hippo.png",
+   "src": "GameImages/Animal/hippo",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 3
+  },
+  {
+   "id": "rhino",
+   "label": "Tê giác",
+   "image": "animal_rhino.png",
+   "src": "GameImages/Animal/rhino",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 3
+  },
+  {
+   "id": "buffalo",
+   "label": "Trâu",
+   "image": "animal_buffalo.png",
+   "src": "GameImages/Animal/buffalo",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 3
+  },
+  {
+   "id": "cow",
+   "label": "Bò",
+   "image": "animal_cow.png",
+   "src": "GameImages/Animal/cow",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 3
+  },
+  {
+   "id": "horse",
+   "label": "Ngựa",
+   "image": "animal_horse.png",
+   "src": "GameImages/Animal/horse",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 3
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "values",
+   "p": {}
+  },
+  "views": [
+   {
+    "type": "seesaw",
+    "p": {}
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {
+    "finishSec": 2.4
+   }
+  },
+  "text": {
+   "prompt": "Con nào {WORD} {suffix}?",
+   "say": "{label} {word} {suffix}!",
+   "wrong": "Nhìn bên nào chúi xuống nhé!"
+  }
+ },
+ "version": 3,
+ "desc": "Bập bênh nghiêng → chạm con nặng/nhẹ nhất."
+}

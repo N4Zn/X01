@@ -1,0 +1,472 @@
+{
+ "title": "Dài – ngắn, to – bé",
+ "sync": false,
+ "theme": {
+  "bg": "#D9F1FF",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "rabbit",
+   "label": "Thỏ",
+   "image": "animal_rabbit.png",
+   "src": "GameImages/Animal/rabbit",
+   "shape": "circle",
+   "color": "#F3F3F3"
+  },
+  {
+   "id": "carrot",
+   "label": "Cà rốt",
+   "image": "carrot.png",
+   "src": "Fruit/carrot",
+   "shape": "triangle",
+   "color": "#FF8A3D"
+  },
+  {
+   "id": "longlog",
+   "label": "Dài",
+   "shape": "rrect",
+   "color": "#A0652D"
+  },
+  {
+   "id": "shortlog",
+   "label": "Ngắn",
+   "shape": "rrect",
+   "color": "#A0652D"
+  },
+  {
+   "id": "chick",
+   "label": "Gà con",
+   "image": "animal_chick.png",
+   "src": "GameImages/Animal/chick",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 0,
+   "tags": {
+    "kind": "pet3",
+    "door": "door0"
+   }
+  },
+  {
+   "id": "dog",
+   "label": "Chó",
+   "image": "animal_dog.png",
+   "src": "GameImages/Animal/dog",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 1,
+   "tags": {
+    "kind": "pet3",
+    "door": "door1"
+   }
+  },
+  {
+   "id": "elephant",
+   "label": "Voi",
+   "image": "animal_elephant.png",
+   "src": "GameImages/Animal/elephant",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "value": 2,
+   "tags": {
+    "kind": "pet3",
+    "door": "door2"
+   }
+  },
+  {
+   "id": "door0",
+   "label": "cửa bé",
+   "shape": "rrect",
+   "color": "#6FB7E9",
+   "value": 0,
+   "tags": {
+    "kind": "door"
+   }
+  },
+  {
+   "id": "door1",
+   "label": "cửa vừa",
+   "shape": "rrect",
+   "color": "#F2B24C",
+   "value": 1,
+   "tags": {
+    "kind": "door"
+   }
+  },
+  {
+   "id": "door2",
+   "label": "cửa to",
+   "shape": "rrect",
+   "color": "#E0627F",
+   "value": 2,
+   "tags": {
+    "kind": "door"
+   }
+  }
+ ],
+ "flowPick": "alternate",
+ "flows": [
+  {
+   "objects": [
+    {
+     "look": {
+      "shape": "square",
+      "color": "#6CC24A"
+     },
+     "x": "=0.5-q.gap/2-0.25",
+     "y": 0.52,
+     "w": "=0.5*wr",
+     "h": 0.16
+    },
+    {
+     "look": {
+      "shape": "square",
+      "color": "#6CC24A"
+     },
+     "x": "=0.5+q.gap/2+0.25",
+     "y": 0.52,
+     "w": "=0.5*wr",
+     "h": 0.16
+    },
+    {
+     "look": {
+      "shape": "square",
+      "color": "#4DA6FF"
+     },
+     "x": 0.5,
+     "y": 0.5,
+     "w": "=q.gap*wr",
+     "h": 0.2
+    },
+    {
+     "id": "rabbit",
+     "role": "actor",
+     "look": {
+      "item": "rabbit"
+     },
+     "x": "=0.5-q.gap/2-0.08",
+     "y": 0.67,
+     "w": 0.17
+    },
+    {
+     "id": "carrot",
+     "look": {
+      "item": "carrot"
+     },
+     "x": "=0.5+q.gap/2+0.08",
+     "y": 0.65,
+     "w": 0.13,
+     "anim": {
+      "type": "bob",
+      "amp": 0.012,
+      "speed": 3
+     }
+    }
+   ],
+   "gen": {
+    "type": "calc",
+    "p": {
+     "defs": {
+      "gap": "pick(randi(0,3),0.3,0.4,0.5)",
+      "rs": "shuf(0.5,0.65,0.8)"
+     },
+     "options": [
+      {
+       "item": "longlog",
+       "v": "gap*(1.18+0.12*rand())"
+      },
+      {
+       "item": "shortlog",
+       "v": "gap*at(rs,0)"
+      },
+      {
+       "item": "shortlog",
+       "v": "gap*at(rs,1)"
+      }
+     ],
+     "answer": "max",
+     "shuffle": 1
+    }
+   },
+   "views": [
+    {
+     "type": "props",
+     "p": {
+      "layout": "col",
+      "x0": 0.5,
+      "y0": 0.36,
+      "y1": 0.13,
+      "size": "=opt.v*wr",
+      "hU": 0.07,
+      "preset": "none",
+      "tpl": [
+       {
+        "look": {
+         "kind": "rrect",
+         "color": "#A0652D"
+        },
+        "w": "=size",
+        "h": 0.07
+       },
+       {
+        "look": {
+         "shape": "circle",
+         "color": "#D9A066"
+        },
+        "dx": "=-size/2+0.0245",
+        "w": 0.0434
+       },
+       {
+        "look": {
+         "shape": "circle",
+         "color": "#D9A066"
+        },
+        "dx": "=size/2-0.0245",
+        "w": 0.0434
+       }
+      ]
+     }
+    }
+   ],
+   "judge": {
+    "type": "equals",
+    "p": {
+     "finishSec": 0.9
+    }
+   },
+   "text": {
+    "prompt": "Chọn khúc gỗ DÀI hơn sông!"
+   },
+   "on": {
+    "wrong": [
+     {
+      "do": "sfx",
+      "k": "wrong"
+     },
+     {
+      "do": "move",
+      "on": "@tapped",
+      "to": {
+       "fx": 0.5,
+       "fy": 0.615
+      },
+      "sec": 0.5
+     },
+     {
+      "do": "say",
+      "text": "Khúc gỗ NGẮN quá! Rơi xuống nước rồi",
+      "fy": 0.8,
+      "color": "#FFE27A",
+      "sec": 1.5
+     },
+     {
+      "do": "sfx",
+      "k": "plop"
+     },
+     {
+      "do": "move",
+      "on": "@tapped",
+      "to": {
+       "fx": 0.5,
+       "fy": 0.38
+      },
+      "sec": 0.5
+     },
+     {
+      "do": "hide",
+      "on": "@tapped"
+     }
+    ],
+    "right": [
+     {
+      "do": "sfx",
+      "k": "right"
+     },
+     {
+      "do": "move",
+      "on": "@tapped",
+      "to": {
+       "fx": 0.5,
+       "fy": 0.615
+      },
+      "sec": 0.5
+     },
+     {
+      "do": "say",
+      "text": "Khúc gỗ DÀI nên bắc qua được!",
+      "fy": 0.8,
+      "sec": 2
+     },
+     {
+      "do": "sfx",
+      "k": "wood"
+     },
+     {
+      "do": "bounce",
+      "on": "@actor",
+      "amount": 0.12,
+      "sec": 0.9
+     },
+     {
+      "do": "move",
+      "on": "@actor",
+      "to": {
+       "fx": "=0.5+q.gap/2+0.03",
+       "fy": 0.67
+      },
+      "sec": 1.0
+     },
+     {
+      "do": "sfx",
+      "k": "plop"
+     },
+     {
+      "do": "scale",
+      "on": "#carrot",
+      "to": 0,
+      "sec": 0.3,
+      "wait": 0
+     },
+     {
+      "do": "confetti",
+      "at": "@actor",
+      "n": 10
+     }
+    ]
+   }
+  },
+  {
+   "objects": [
+    {
+     "role": "actor",
+     "look": {
+      "item": "=q.subject.id"
+     },
+     "x": 0.5,
+     "y": "=0.17+pick(q.subject.value,0.15,0.22,0.36)/2/hr-0.04/hr",
+     "w": "=pick(q.subject.value,0.15,0.22,0.36)",
+     "anim": {
+      "type": "bob",
+      "amp": 0.012,
+      "speed": 3
+     }
+    }
+   ],
+   "gen": {
+    "type": "match",
+    "p": {
+     "subjectWhere": "item.tags.kind==\"pet3\"",
+     "optionsWhere": "item.tags.kind==\"door\"",
+     "n": 3,
+     "answerTag": "door",
+     "shuffle": 1
+    }
+   },
+   "views": [
+    {
+     "type": "props",
+     "p": {
+      "layout": "row",
+      "x0": 0.2,
+      "x1": 0.8,
+      "y0": 0.5,
+      "y1": 0.5,
+      "size": "=pick(opt.value,0.14,0.21,0.30)",
+      "tall": 1.5,
+      "yExpr": "=0.43+pick(opt.value,0.22,0.32,0.44)/2/hr",
+      "preset": "none",
+      "tpl": [
+       {
+        "look": {
+         "kind": "rrect",
+         "color": "=opt.color"
+        },
+        "w": "=size",
+        "h": "=size*1.5"
+       },
+       {
+        "look": {
+         "shape": "circle",
+         "color": "#FFF4D6"
+        },
+        "dx": "=size*.28",
+        "w": 0.025
+       },
+       {
+        "look": {
+         "text": "=pick(opt.value,\"BÉ\",\"VỪA\",\"TO\")",
+         "fs": 0.052,
+         "color": "#FFFFFF"
+        },
+        "dy": "=size*.45",
+        "w": "=size",
+        "h": 0.1
+       }
+      ]
+     }
+    }
+   ],
+   "judge": {
+    "type": "equals",
+    "p": {
+     "finishSec": 1.0
+    }
+   },
+   "text": {
+    "prompt": "{subject} {{pick(q.subject.value,\"BÉ\",\"VỪA\",\"TO\")}} — đi cửa nào?",
+    "wrong": "Cửa không vừa! Tìm cửa vừa hơn nhé!"
+   },
+   "on": {
+    "right": [
+     {
+      "do": "sfx",
+      "k": "right"
+     },
+     {
+      "do": "say",
+      "text": "{subject} đi cửa vừa khít!",
+      "fy": 0.8,
+      "sec": 2
+     },
+     {
+      "do": "scale",
+      "on": "@actor",
+      "to": 0.5,
+      "sec": 0.7,
+      "wait": 0
+     },
+     {
+      "do": "move",
+      "on": "@actor",
+      "to": "@tapped",
+      "sec": 0.7
+     },
+     {
+      "do": "sfx",
+      "k": "wood"
+     },
+     {
+      "do": "fade",
+      "on": "@actor",
+      "to": 0,
+      "sec": 0.25,
+      "wait": 0
+     },
+     {
+      "do": "bounce",
+      "on": "@tapped",
+      "amount": 0.1,
+      "sec": 0.4
+     },
+     {
+      "do": "confetti",
+      "at": "@tapped",
+      "n": 10
+     }
+    ]
+   }
+  }
+ ],
+ "version": 3,
+ "desc": "Luân phiên: chọn khúc gỗ dài hơn sông / chọn cửa vừa cỡ con vật."
+}

@@ -1,0 +1,43 @@
+{
+ "title": "Đếm khối hộp",
+ "sync": false,
+ "theme": {
+  "bg": "#F3E5F5",
+  "floor": "#E1BEE7"
+ },
+ "items": [],
+ "flow": {
+  "gen": {
+   "type": "number",
+   "p": {}
+  },
+  "views": [
+   {
+    "type": "stack",
+    "p": {}
+   },
+   {
+    "type": "cards",
+    "p": {
+     "source": "options",
+     "y": 0.33,
+     "sizeU": 0.22,
+     "tall": 1
+    }
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {
+    "finishSec": 2.2
+   }
+  },
+  "text": {
+   "prompt": "Có bao nhiêu khối hộp?",
+   "say": "{count} khối hộp!",
+   "wrong": ""
+  }
+ },
+ "version": 3,
+ "desc": "Đống khối 3D → chạm số đúng; sai 2 lần thì đếm 1,2,3."
+}

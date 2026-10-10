@@ -1,0 +1,592 @@
+{
+ "title": "Đồng hồ khổng lồ",
+ "sync": false,
+ "theme": {
+  "bg": "#FFF1D6",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "h1",
+   "label": "1",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 1,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h2",
+   "label": "2",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 2,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h3",
+   "label": "3",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 3,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h4",
+   "label": "4",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 4,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h5",
+   "label": "5",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 5,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h6",
+   "label": "6",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 6,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h7",
+   "label": "7",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 7,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h8",
+   "label": "8",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 8,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h9",
+   "label": "9",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 9,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h10",
+   "label": "10",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 10,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h11",
+   "label": "11",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 11,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "h12",
+   "label": "12",
+   "shape": "circle",
+   "color": "#CFE8FF",
+   "value": 12,
+   "tags": {
+    "opt": 1
+   }
+  },
+  {
+   "id": "s6",
+   "label": "Na thức dậy lúc 6 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 6,
+    "optid": "h6"
+   }
+  },
+  {
+   "id": "s7",
+   "label": "Na đi học lúc 7 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 7,
+    "optid": "h7"
+   }
+  },
+  {
+   "id": "s8",
+   "label": "Lớp học bắt đầu lúc 8 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 8,
+    "optid": "h8"
+   }
+  },
+  {
+   "id": "s9",
+   "label": "Na vẽ tranh lúc 9 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 9,
+    "optid": "h9"
+   }
+  },
+  {
+   "id": "s10",
+   "label": "Na ăn trái cây lúc 10 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 10,
+    "optid": "h10"
+   }
+  },
+  {
+   "id": "s11",
+   "label": "Na rửa tay lúc 11 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 11,
+    "optid": "h11"
+   }
+  },
+  {
+   "id": "s12",
+   "label": "Cả nhà ăn cơm trưa lúc 12 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 12,
+    "optid": "h12"
+   }
+  },
+  {
+   "id": "s1",
+   "label": "Na ngủ trưa lúc 1 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 1,
+    "optid": "h1"
+   }
+  },
+  {
+   "id": "s2",
+   "label": "Na dậy chơi lúc 2 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 2,
+    "optid": "h2"
+   }
+  },
+  {
+   "id": "s3",
+   "label": "Na ăn bánh lúc 3 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 3,
+    "optid": "h3"
+   }
+  },
+  {
+   "id": "s4",
+   "label": "Na chơi ngoài sân lúc 4 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 4,
+    "optid": "h4"
+   }
+  },
+  {
+   "id": "s5",
+   "label": "Na tắm lúc 5 giờ",
+   "shape": "circle",
+   "color": "#FFFFFF",
+   "tags": {
+    "story": 1,
+    "hour": 5,
+    "optid": "h5"
+   }
+  }
+ ],
+ "scene": [
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#3A3F6B"
+   },
+   "x": 0.5,
+   "y": 0.46,
+   "w": 0.86
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFFFFF"
+   },
+   "x": 0.5,
+   "y": 0.46,
+   "w": 0.8
+  },
+  {
+   "id": "minute",
+   "look": {
+    "kind": "hand",
+    "len": 0.28,
+    "thick": 0.022,
+    "color": "#2A2F55"
+   },
+   "x": 0.5,
+   "y": 0.46
+  },
+  {
+   "id": "hand",
+   "look": {
+    "kind": "hand",
+    "len": 0.2,
+    "thick": 0.034,
+    "color": "#E0453F"
+   },
+   "x": 0.5,
+   "y": 0.46
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#2A2F55"
+   },
+   "x": 0.5,
+   "y": 0.46,
+   "w": 0.05
+  },
+  {
+   "id": "digital",
+   "look": {
+    "text": "",
+    "fs": 0.088,
+    "color": "#2A2F55",
+    "outline": 0
+   },
+   "x": 0.5,
+   "y": 0.06,
+   "w": 0.5,
+   "h": 0.1,
+   "z": "front"
+  }
+ ],
+ "flows": [
+  {
+   "gen": {
+    "type": "match",
+    "p": {
+     "subjectWhere": "item.tags.story==1 && ($_task>=4 || item.tags.hour%3==0)",
+     "optionsWhere": "item.tags.opt==1",
+     "n": 12,
+     "answerTag": "optid",
+     "shuffle": 0,
+     "noRepeat": 1
+    }
+   },
+   "views": [
+    {
+     "type": "props",
+     "p": {
+      "layout": "circle",
+      "cx": 0.5,
+      "cy": 0.46,
+      "r": 0.325,
+      "startDeg": 30,
+      "size": "0.15",
+      "preset": "none",
+      "tpl": [
+       {
+        "look": {
+         "shape": "circle",
+         "color": "=(opt.id==\"h3\"||opt.id==\"h6\"||opt.id==\"h9\"||opt.id==\"h12\")?\"#FFD27A\":\"#CFE8FF\""
+        },
+        "w": "=size"
+       },
+       {
+        "look": {
+         "text": "=opt.label",
+         "fs": 0.088,
+         "color": "#2A2F55",
+         "outline": 0
+        },
+        "w": 0.14,
+        "h": 0.14
+       }
+      ]
+     }
+    }
+   ],
+   "judge": {
+    "type": "equals",
+    "p": {
+     "finishSec": 1.5
+    }
+   },
+   "text": {
+    "prompt": "{subject}\nĐặt đồng hồ {{q.subject.tags.hour}} giờ!",
+    "wrong": ""
+   },
+   "on": {
+    "setup": [
+     {
+      "do": "rotate",
+      "on": "#hand",
+      "to": 0,
+      "sec": 0
+     },
+     {
+      "do": "text",
+      "on": "#digital",
+      "text": ""
+     }
+    ],
+    "wrong": [
+     {
+      "do": "sfx",
+      "k": "wrong"
+     },
+     {
+      "do": "rotate",
+      "on": "#hand",
+      "to": "=-((tapped.key+1)%12)*30",
+      "sec": 0.6
+     },
+     {
+      "do": "say",
+      "text": "Kim đang chỉ {{tapped.key+1}}, chưa phải {{q.subject.tags.hour}} giờ!",
+      "fy": 0.12,
+      "color": "#FFE27A",
+      "sec": 1.4
+     },
+     {
+      "do": "wait",
+      "sec": 1
+     },
+     {
+      "do": "rotate",
+      "on": "#hand",
+      "to": 0,
+      "sec": 0.5
+     }
+    ],
+    "right": [
+     {
+      "do": "sfx",
+      "k": "right"
+     },
+     {
+      "do": "rotate",
+      "on": "#hand",
+      "to": "=-(q.subject.tags.hour%12)*30",
+      "sec": 0.7
+     },
+     {
+      "do": "text",
+      "on": "#digital",
+      "text": "{{q.subject.tags.hour}}:00"
+     },
+     {
+      "do": "bounce",
+      "on": "@tapped",
+      "amount": 0.2,
+      "sec": 0.5
+     },
+     {
+      "do": "say",
+      "text": "{{q.subject.tags.hour}} giờ! Giỏi quá!",
+      "fy": 0.12,
+      "sec": 1.8
+     },
+     {
+      "do": "confetti",
+      "at": {
+       "fx": 0.5,
+       "fy": 0.46
+      },
+      "n": 12
+     }
+    ]
+   }
+  },
+  {
+   "gen": {
+    "type": "match",
+    "p": {
+     "subjectWhere": "item.tags.story==1 && ($_task>=4 || item.tags.hour%3==0)",
+     "optionsWhere": "item.tags.opt==1",
+     "n": 12,
+     "answerTag": "optid",
+     "shuffle": 0,
+     "noRepeat": 1
+    }
+   },
+   "views": [
+    {
+     "type": "props",
+     "p": {
+      "layout": "circle",
+      "cx": 0.5,
+      "cy": 0.46,
+      "r": 0.325,
+      "startDeg": 30,
+      "size": "0.15",
+      "preset": "none",
+      "tpl": [
+       {
+        "look": {
+         "shape": "circle",
+         "color": "=(opt.id==\"h3\"||opt.id==\"h6\"||opt.id==\"h9\"||opt.id==\"h12\")?\"#FFD27A\":\"#CFE8FF\""
+        },
+        "w": "=size"
+       },
+       {
+        "look": {
+         "text": "=opt.label",
+         "fs": 0.088,
+         "color": "#2A2F55",
+         "outline": 0
+        },
+        "w": 0.14,
+        "h": 0.14
+       }
+      ]
+     }
+    }
+   ],
+   "judge": {
+    "type": "equals",
+    "p": {
+     "finishSec": 1.5
+    }
+   },
+   "text": {
+    "prompt": "Mấy giờ rồi?",
+    "wrong": ""
+   },
+   "on": {
+    "setup": [
+     {
+      "do": "rotate",
+      "on": "#hand",
+      "to": "=-(q.subject.tags.hour%12)*30",
+      "sec": 0
+     },
+     {
+      "do": "text",
+      "on": "#digital",
+      "text": ""
+     }
+    ],
+    "wrong": [
+     {
+      "do": "sfx",
+      "k": "wrong"
+     },
+     {
+      "do": "say",
+      "text": "Chưa đúng! Nhìn kim ngắn nhé",
+      "fy": 0.12,
+      "color": "#FFE27A",
+      "sec": 1.4
+     },
+     {
+      "do": "shake",
+      "on": "@tapped"
+     },
+     {
+      "do": "wait",
+      "sec": 0.9
+     }
+    ],
+    "right": [
+     {
+      "do": "sfx",
+      "k": "right"
+     },
+     {
+      "do": "text",
+      "on": "#digital",
+      "text": "{{q.subject.tags.hour}}:00"
+     },
+     {
+      "do": "bounce",
+      "on": "@tapped",
+      "amount": 0.2,
+      "sec": 0.5
+     },
+     {
+      "do": "say",
+      "text": "{{q.subject.tags.hour}} giờ! Giỏi quá!",
+      "fy": 0.12,
+      "sec": 1.8
+     },
+     {
+      "do": "confetti",
+      "at": {
+       "fx": 0.5,
+       "fy": 0.46
+      },
+      "n": 12
+     }
+    ]
+   }
+  }
+ ],
+ "flowPick": "alternate",
+ "version": 3,
+ "desc": "Luân phiên: đặt giờ / đọc giờ trên đồng hồ khổng lồ."
+}

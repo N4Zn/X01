@@ -1,0 +1,470 @@
+{
+ "title": "Xây nhà hình học",
+ "sync": false,
+ "theme": {
+  "bg": "#CFEFFF",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "chimney",
+   "label": "ống khói",
+   "shape": "square",
+   "color": "#8D7B6A",
+   "tags": {
+    "part": 1,
+    "kind": "chunhat",
+    "requires": "roof",
+    "shape": "square",
+    "color": "#8D7B6A",
+    "x": 0.66,
+    "y": 0.76,
+    "w": 0.07,
+    "h": 0.13
+   }
+  },
+  {
+   "id": "wall",
+   "label": "thân nhà",
+   "shape": "square",
+   "color": "#F2C57C",
+   "tags": {
+    "part": 1,
+    "kind": "chunhat",
+    "requires": "",
+    "shape": "square",
+    "color": "#F2C57C",
+    "x": 0.5,
+    "y": 0.5,
+    "w": 0.52,
+    "h": 0.28
+   }
+  },
+  {
+   "id": "roof",
+   "label": "mái nhà",
+   "shape": "triangle",
+   "color": "#E0453F",
+   "tags": {
+    "part": 1,
+    "kind": "tamgiac",
+    "requires": "wall",
+    "shape": "triangle",
+    "color": "#E0453F",
+    "x": 0.5,
+    "y": 0.73,
+    "w": 0.62,
+    "h": 0.22
+   }
+  },
+  {
+   "id": "roundwin",
+   "label": "cửa sổ tròn",
+   "shape": "circle",
+   "color": "#BDE6FF",
+   "tags": {
+    "part": 1,
+    "kind": "tron",
+    "requires": "roof",
+    "shape": "circle",
+    "color": "#BDE6FF",
+    "x": 0.5,
+    "y": 0.72,
+    "w": 0.1,
+    "h": 0.1
+   }
+  },
+  {
+   "id": "door",
+   "label": "cửa ra vào",
+   "shape": "square",
+   "color": "#7A4A2A",
+   "tags": {
+    "part": 1,
+    "kind": "chunhat",
+    "requires": "wall",
+    "shape": "square",
+    "color": "#7A4A2A",
+    "x": 0.5,
+    "y": 0.425,
+    "w": 0.11,
+    "h": 0.19
+   }
+  },
+  {
+   "id": "winl",
+   "label": "cửa sổ trái",
+   "shape": "square",
+   "color": "#8ED0FF",
+   "tags": {
+    "part": 1,
+    "kind": "vuong",
+    "requires": "wall",
+    "shape": "square",
+    "color": "#8ED0FF",
+    "x": 0.33,
+    "y": 0.52,
+    "w": 0.11,
+    "h": 0.11
+   }
+  },
+  {
+   "id": "winr",
+   "label": "cửa sổ phải",
+   "shape": "square",
+   "color": "#8ED0FF",
+   "tags": {
+    "part": 1,
+    "kind": "vuong",
+    "requires": "wall",
+    "shape": "square",
+    "color": "#8ED0FF",
+    "x": 0.67,
+    "y": 0.52,
+    "w": 0.11,
+    "h": 0.11
+   }
+  },
+  {
+   "id": "sun",
+   "label": "mặt trời",
+   "shape": "circle",
+   "color": "#FFD93D",
+   "tags": {
+    "part": 1,
+    "kind": "tron",
+    "requires": "wall",
+    "shape": "circle",
+    "color": "#FFD93D",
+    "x": 0.14,
+    "y": 0.84,
+    "w": 0.14,
+    "h": 0.14
+   }
+  },
+  {
+   "id": "ball",
+   "label": "quả bóng",
+   "shape": "circle",
+   "color": "#FF6B6B",
+   "tags": {
+    "part": 1,
+    "kind": "tron",
+    "requires": "wall",
+    "shape": "circle",
+    "color": "#FF6B6B",
+    "x": 0.18,
+    "y": 0.33,
+    "w": 0.09,
+    "h": 0.09
+   }
+  },
+  {
+   "id": "tron",
+   "label": "Hình tròn",
+   "shape": "circle",
+   "color": "#FF8A3D",
+   "tags": {
+    "isKind": 1
+   }
+  },
+  {
+   "id": "vuong",
+   "label": "Hình vuông",
+   "shape": "square",
+   "color": "#4D96FF",
+   "tags": {
+    "isKind": 1
+   }
+  },
+  {
+   "id": "tamgiac",
+   "label": "Hình tam giác",
+   "shape": "triangle",
+   "color": "#E0453F",
+   "tags": {
+    "isKind": 1
+   }
+  },
+  {
+   "id": "chunhat",
+   "label": "Hình chữ nhật",
+   "shape": "rect",
+   "color": "#2FB26B",
+   "tags": {
+    "isKind": 1
+   }
+  },
+  {
+   "id": "tree",
+   "label": "Cây",
+   "image": "decor_tree_oak.png",
+   "src": "NatureKit/Isometric/tree_oak_NE",
+   "shape": "circle",
+   "color": "#CCCCCC"
+  }
+ ],
+ "vars": {
+  "built": 0,
+  "roofc": "#E0453F",
+  "wallc": "#F2C57C",
+  "built_chimney": 0,
+  "built_wall": 0,
+  "built_roof": 0,
+  "built_roundwin": 0,
+  "built_door": 0,
+  "built_winl": 0,
+  "built_winr": 0,
+  "built_sun": 0,
+  "built_ball": 0
+ },
+ "scene": [
+  {
+   "look": {
+    "shape": "square",
+    "color": "#7ACB5B"
+   },
+   "x": 0.5,
+   "y": 0.12,
+   "w": 1.024,
+   "h": 0.27
+  },
+  {
+   "look": {
+    "item": "tree"
+   },
+   "x": 0.9,
+   "y": 0.43,
+   "w": 0.32
+  },
+  {
+   "forEachItem": {
+    "where": "item.tags.part==1"
+   },
+   "look": {
+    "shape": "=item.tags.shape",
+    "color": "#2F3B55"
+   },
+   "alpha": 0.35,
+   "x": "=item.tags.x",
+   "y": "=item.tags.y",
+   "w": "=item.tags.w",
+   "h": "=item.tags.h",
+   "bind": {
+    "show": "var(\"built_\"+item.id)==0"
+   }
+  },
+  {
+   "forEachItem": {
+    "where": "item.tags.part==1"
+   },
+   "look": {
+    "shape": "=item.tags.shape",
+    "color": "#FFF2A0"
+   },
+   "x": "=item.tags.x",
+   "y": "=item.tags.y",
+   "w": "=item.tags.w",
+   "h": "=item.tags.h",
+   "anim": {
+    "type": "pulse",
+    "amp": 0.06,
+    "speed": 7
+   },
+   "bind": {
+    "show": "q.subject.id==item.id && var(\"built_\"+item.id)==0",
+    "alpha": "0.55"
+   }
+  },
+  {
+   "forEachItem": {
+    "where": "item.tags.part==1"
+   },
+   "id": "=\"part_\"+item.id",
+   "look": {
+    "shape": "=item.tags.shape",
+    "color": "=item.tags.color"
+   },
+   "x": "=item.tags.x",
+   "y": "=item.tags.y",
+   "w": "=item.tags.w",
+   "h": "=item.tags.h",
+   "show": "0",
+   "smooth": 0.3,
+   "bind": {
+    "show": "var(\"built_\"+item.id)==1",
+    "color": "item.id==\"roof\"?$roofc:(item.id==\"wall\"?$wallc:((item.tags.shape==\"square\" && item.tags.w<.12 && item.tags.h<.12 && item.id!=\"ball\") && $built>=9 ? \"#FFF06B\" : item.tags.color))"
+   }
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "match",
+   "p": {
+    "subjectWhere": "item.tags.part==1 && var(\"built_\"+item.id)==0 && (item.tags.requires==\"\" || var(\"built_\"+item.tags.requires)==1)",
+    "optionsWhere": "item.tags.isKind==1",
+    "n": 3,
+    "answerTag": "kind",
+    "shuffle": 1
+   }
+  },
+  "views": [
+   {
+    "type": "cards",
+    "p": {
+     "y": 0.15,
+     "sizeU": 0.28,
+     "tall": 1.05,
+     "fig": 0.58,
+     "label": 1,
+     "bg": "#FFF4D6"
+    }
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {
+    "finishSec": 0.3
+   }
+  },
+  "text": {
+   "prompt": "Xây {{q.subject.label}}: hình nào vừa khít?",
+   "wrong": "Chưa vừa! Thử hình khác nhé"
+  },
+  "on": {
+   "right": [
+    {
+     "do": "sfx",
+     "k": "right"
+    },
+    {
+     "do": "hide",
+     "on": "@tapped"
+    },
+    {
+     "do": "fly",
+     "to": "=\"part_\"+q.subject.id",
+     "sec": 0.5,
+     "look": {
+      "item": "=tapped.itemId"
+     }
+    },
+    {
+     "do": "set",
+     "var": "=\"built_\"+q.subject.id",
+     "expr": "1"
+    },
+    {
+     "do": "inc",
+     "var": "built"
+    },
+    {
+     "do": "sfx",
+     "k": "wood"
+    },
+    {
+     "do": "say",
+     "text": "Đây là {{lower(tapped.name)}}!",
+     "fy": 0.84
+    },
+    {
+     "do": "if",
+     "cond": "$built>=9",
+     "then": [
+      {
+       "do": "wait",
+       "sec": 0.4
+      },
+      {
+       "do": "confetti",
+       "at": {
+        "fx": 0.5,
+        "fy": 0.55
+       },
+       "n": 20
+      },
+      {
+       "do": "say",
+       "text": "Nhà xong rồi! Giỏi quá!",
+       "fy": 0.84,
+       "sec": 2,
+       "color": "#FFE27A"
+      },
+      {
+       "do": "wait",
+       "sec": 1.8
+      },
+      {
+       "do": "set",
+       "var": "built_chimney",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_wall",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_roof",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_roundwin",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_door",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_winl",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_winr",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_sun",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built_ball",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "built",
+       "expr": "0"
+      },
+      {
+       "do": "set",
+       "var": "roofc",
+       "expr": "pick(randi(0,4),\"#E0453F\",\"#8E5BD8\",\"#2F9E8F\",\"#E8872E\")"
+      },
+      {
+       "do": "set",
+       "var": "wallc",
+       "expr": "pick(randi(0,4),\"#F2C57C\",\"#F4A6C0\",\"#9AD5A0\",\"#9FC9F2\")"
+      }
+     ],
+     "else": [
+      {
+       "do": "wait",
+       "sec": 0.3
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Xây nhà từ bóng đen: chọn hình vừa khít, hình bay vào chỗ, nhà xong thì xây nhà mới."
+}

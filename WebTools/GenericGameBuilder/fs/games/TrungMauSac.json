@@ -1,0 +1,356 @@
+{
+ "title": "Trứng màu sắc",
+ "sync": false,
+ "theme": {
+  "bg": "#FFF1CF",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "red",
+   "label": "Đỏ",
+   "shape": "circle",
+   "color": "#E53935",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_apple"
+   }
+  },
+  {
+   "id": "blue",
+   "label": "Xanh dương",
+   "shape": "circle",
+   "color": "#1E88E5",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_blueberry"
+   }
+  },
+  {
+   "id": "green",
+   "label": "Xanh lá",
+   "shape": "circle",
+   "color": "#43A047",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_pear"
+   }
+  },
+  {
+   "id": "yellow",
+   "label": "Vàng",
+   "shape": "circle",
+   "color": "#FDD835",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_banana"
+   }
+  },
+  {
+   "id": "orange",
+   "label": "Cam",
+   "shape": "circle",
+   "color": "#FB8C00",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_orange"
+   }
+  },
+  {
+   "id": "pink",
+   "label": "Hồng",
+   "shape": "circle",
+   "color": "#EC6FA7",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_peach"
+   }
+  },
+  {
+   "id": "purple",
+   "label": "Tím",
+   "shape": "circle",
+   "color": "#8E24AA",
+   "tags": {
+    "kind": "color",
+    "fruit": "fruit_grape"
+   }
+  },
+  {
+   "id": "fruit_apple",
+   "label": "Táo",
+   "image": "food_apple.png",
+   "src": "Story/Food/apple",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  },
+  {
+   "id": "fruit_blueberry",
+   "label": "Việt quất",
+   "image": "food_blueberry.png",
+   "src": "Story/Food/blueberry",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  },
+  {
+   "id": "fruit_pear",
+   "label": "Lê",
+   "image": "food_pear.png",
+   "src": "Story/Food/pear",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  },
+  {
+   "id": "fruit_banana",
+   "label": "Chuối",
+   "image": "food_banana.png",
+   "src": "Story/Food/banana",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  },
+  {
+   "id": "fruit_orange",
+   "label": "Cam",
+   "image": "food_orange.png",
+   "src": "Story/Food/orange",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  },
+  {
+   "id": "fruit_peach",
+   "label": "Đào",
+   "image": "food_peach.png",
+   "src": "Story/Food/peach",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  },
+  {
+   "id": "fruit_grape",
+   "label": "Nho",
+   "image": "food_grape.png",
+   "src": "Story/Food/grape",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "kind": "fruit"
+   }
+  }
+ ],
+ "scene": [
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#9ED67A"
+   },
+   "x": 0.5,
+   "y": -0.18,
+   "w": 1.536,
+   "h": 0.7
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFD23F"
+   },
+   "x": 0.88,
+   "y": 0.8,
+   "w": 0.12
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFFFFF"
+   },
+   "x": 0.09,
+   "y": 0.91,
+   "w": 0.13,
+   "bind": {
+    "color": "q.targetItem.color"
+   }
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "set",
+   "p": {
+    "startItems": 99,
+    "targetWhere": "item.tags.kind==\"color\"",
+    "otherWhere": "item.tags.kind==\"color\""
+   }
+  },
+  "views": [
+   {
+    "type": "props",
+    "p": {
+     "layout": "row",
+     "x0": 0.2,
+     "x1": 0.8,
+     "y0": 0.4,
+     "y1": 0.4,
+     "size": "0.25",
+     "tall": 1.32,
+     "preset": "none",
+     "tpl": [
+      {
+       "look": {
+        "shape": "circle",
+        "color": "#B98A56"
+       },
+       "w": "=size*1.35",
+       "h": "=size*.45",
+       "dy": "=-size*.55"
+      },
+      {
+       "look": {
+        "shape": "circle",
+        "color": "=opt.color"
+       },
+       "w": "=size",
+       "h": "=size*1.32"
+      },
+      {
+       "look": {
+        "shape": "square",
+        "color": "#FFFFFF"
+       },
+       "alpha": 0.55,
+       "w": "=size*.8",
+       "h": "=size*.106",
+       "dy": "=-size*.066"
+      },
+      {
+       "look": {
+        "shape": "circle",
+        "color": "#FFFFFF"
+       },
+       "alpha": 0.55,
+       "w": "=size*.13",
+       "dx": "=-size*.18",
+       "dy": "=size*.264"
+      },
+      {
+       "look": {
+        "shape": "circle",
+        "color": "#FFFFFF"
+       },
+       "alpha": 0.55,
+       "w": "=size*.1",
+       "dx": "=size*.16",
+       "dy": "=-size*.29"
+      }
+     ]
+    }
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {
+    "finishSec": 2.4
+   }
+  },
+  "text": {
+   "prompt": "Trứng màu {LABEL} đâu?",
+   "wrong": "Trứng này màu {name} nè!"
+  },
+  "on": {
+   "right": [
+    {
+     "do": "sfx",
+     "k": "right"
+    },
+    {
+     "do": "shake",
+     "on": "@tapped",
+     "sec": 0.4,
+     "amp": 12
+    },
+    {
+     "do": "wait",
+     "sec": 0.4
+    },
+    {
+     "do": "confetti",
+     "at": "@tapped",
+     "n": 8,
+     "sound": 0
+    },
+    {
+     "do": "hide",
+     "on": "@tapped"
+    },
+    {
+     "do": "spawn",
+     "look": {
+      "shape": "square",
+      "color": "#4CAF50"
+     },
+     "at": {
+      "ref": "@tapped",
+      "dy": -0.16
+     },
+     "w": 0.025,
+     "h": 0.16,
+     "pop": 0
+    },
+    {
+     "do": "spawn",
+     "look": {
+      "shape": "flower",
+      "color": "=tapped.item.color"
+     },
+     "at": {
+      "ref": "@tapped",
+      "dy": 0.02
+     },
+     "size": 0.3
+    },
+    {
+     "do": "spawn",
+     "look": {
+      "item": "=tapped.item.tags.fruit"
+     },
+     "at": {
+      "ref": "@tapped",
+      "dx": 0.11,
+      "dy": 0.17
+     },
+     "size": 0.17
+    },
+    {
+     "do": "spawn",
+     "look": {
+      "text": "=tapped.name",
+      "fs": 0.068,
+      "color": "#FFFFFF"
+     },
+     "at": {
+      "ref": "@tapped",
+      "dy": -0.3
+     },
+     "w": 0.5,
+     "h": 0.1
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Chạm trứng đúng màu → nở hoa + trái cây cùng màu."
+}

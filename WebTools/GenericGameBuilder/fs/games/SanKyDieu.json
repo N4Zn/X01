@@ -1,0 +1,269 @@
+{
+ "title": "Sàn kỳ diệu (bé nhỏ)",
+ "sync": false,
+ "theme": {
+  "bg": "",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "hoa_flower_redA",
+   "label": "flower_redA",
+   "image": "nk_flower_redA.png",
+   "src": "NatureKit/Isometric/flower_redA_NE",
+   "shape": "flower",
+   "color": "#FF6FA5",
+   "tags": {
+    "kind": "hoa"
+   }
+  },
+  {
+   "id": "hoa_flower_redB",
+   "label": "flower_redB",
+   "image": "nk_flower_redB.png",
+   "src": "NatureKit/Isometric/flower_redB_NE",
+   "shape": "flower",
+   "color": "#FF6FA5",
+   "tags": {
+    "kind": "hoa"
+   }
+  },
+  {
+   "id": "hoa_flower_yellowA",
+   "label": "flower_yellowA",
+   "image": "nk_flower_yellowA.png",
+   "src": "NatureKit/Isometric/flower_yellowA_NE",
+   "shape": "flower",
+   "color": "#FF6FA5",
+   "tags": {
+    "kind": "hoa"
+   }
+  },
+  {
+   "id": "hoa_flower_yellowC",
+   "label": "flower_yellowC",
+   "image": "nk_flower_yellowC.png",
+   "src": "NatureKit/Isometric/flower_yellowC_NE",
+   "shape": "flower",
+   "color": "#FF6FA5",
+   "tags": {
+    "kind": "hoa"
+   }
+  },
+  {
+   "id": "hoa_flower_purpleA",
+   "label": "flower_purpleA",
+   "image": "nk_flower_purpleA.png",
+   "src": "NatureKit/Isometric/flower_purpleA_NE",
+   "shape": "flower",
+   "color": "#FF6FA5",
+   "tags": {
+    "kind": "hoa"
+   }
+  },
+  {
+   "id": "hoa_flower_purpleB",
+   "label": "flower_purpleB",
+   "image": "nk_flower_purpleB.png",
+   "src": "NatureKit/Isometric/flower_purpleB_NE",
+   "shape": "flower",
+   "color": "#FF6FA5",
+   "tags": {
+    "kind": "hoa"
+   }
+  },
+  {
+   "id": "vuon_tree_oak",
+   "label": "tree_oak",
+   "image": "nk_tree_oak.png",
+   "src": "NatureKit/Isometric/tree_oak_NE",
+   "shape": "flower",
+   "color": "#6BCB77",
+   "tags": {
+    "kind": "vuon"
+   }
+  },
+  {
+   "id": "vuon_tree_default",
+   "label": "tree_default",
+   "image": "nk_tree_default.png",
+   "src": "NatureKit/Isometric/tree_default_NE",
+   "shape": "flower",
+   "color": "#6BCB77",
+   "tags": {
+    "kind": "vuon"
+   }
+  },
+  {
+   "id": "vuon_mushroom_red",
+   "label": "mushroom_red",
+   "image": "nk_mushroom_red.png",
+   "src": "NatureKit/Isometric/mushroom_red_NE",
+   "shape": "flower",
+   "color": "#6BCB77",
+   "tags": {
+    "kind": "vuon"
+   }
+  },
+  {
+   "id": "vuon_plant_bush",
+   "label": "plant_bush",
+   "image": "nk_plant_bush.png",
+   "src": "NatureKit/Isometric/plant_bush_NE",
+   "shape": "flower",
+   "color": "#6BCB77",
+   "tags": {
+    "kind": "vuon"
+   }
+  },
+  {
+   "id": "vuon_flower_redC",
+   "label": "flower_redC",
+   "image": "nk_flower_redC.png",
+   "src": "NatureKit/Isometric/flower_redC_NE",
+   "shape": "flower",
+   "color": "#6BCB77",
+   "tags": {
+    "kind": "vuon"
+   }
+  },
+  {
+   "id": "vuon_tree_oak_dark",
+   "label": "tree_oak_dark",
+   "image": "nk_tree_oak_dark.png",
+   "src": "NatureKit/Isometric/tree_oak_dark_NE",
+   "shape": "flower",
+   "color": "#6BCB77",
+   "tags": {
+    "kind": "vuon"
+   }
+  }
+ ],
+ "vars": {
+  "theme": 0
+ },
+ "scene": [
+  {
+   "fill": true,
+   "look": {
+    "color": "#CFF5C0"
+   },
+   "smooth": 0.6,
+   "bind": {
+    "color": "pick($theme,\"#CFF5C0\",\"#1C2B63\",\"#FFD9E8\",\"#BFE9FF\",\"#DFF3B8\")"
+   }
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "none",
+   "p": {}
+  },
+  "views": [
+   {
+    "type": "floor",
+    "p": {}
+   }
+  ],
+  "judge": {
+   "type": "taps",
+   "p": {
+    "count": 6,
+    "finishSec": 1
+   }
+  },
+  "text": {
+   "prompt": "{{pick($theme,\"Dậm chân cho hoa nở!\",\"Dậm chân cho sao sáng!\",\"Dậm chân cho tim bay!\",\"Dậm chân cho bóng nổi!\",\"Dậm chân cho vườn mọc lên!\")}}"
+  },
+  "on": {
+   "step": [
+    {
+     "do": "sfx",
+     "k": "=pick($theme,\"up\",\"star\",\"plop\",\"pop\",\"wood\")"
+    },
+    {
+     "do": "if",
+     "cond": "$theme==0",
+     "then": [
+      {
+       "do": "spawn",
+       "look": {
+        "item": "=randItem(\"kind\",\"hoa\")"
+       },
+       "at": "@tap",
+       "size": "=0.18+0.05*rand()"
+      }
+     ]
+    },
+    {
+     "do": "if",
+     "cond": "$theme==1",
+     "then": [
+      {
+       "do": "spawn",
+       "look": {
+        "shape": "star",
+        "color": "=pick(randi(0,2),\"#FFD93D\",\"#FF6B6B\")"
+       },
+       "at": "@tap",
+       "size": "=0.10+0.07*rand()"
+      }
+     ]
+    },
+    {
+     "do": "if",
+     "cond": "$theme==2",
+     "then": [
+      {
+       "do": "spawn",
+       "look": {
+        "shape": "heart",
+        "color": "=pick(randi(0,4),\"#FF6FA5\",\"#FF9AB8\",\"#E8457C\",\"#FFB3C9\")"
+       },
+       "at": "@tap",
+       "size": "=0.10+0.07*rand()"
+      }
+     ]
+    },
+    {
+     "do": "if",
+     "cond": "$theme==3",
+     "then": [
+      {
+       "do": "spawn",
+       "look": {
+        "shape": "circle",
+        "color": "=pick(randi(0,6),\"#FFD93D\",\"#FF6B6B\",\"#6BCB77\",\"#4D96FF\",\"#FF9F45\",\"#C77DFF\")"
+       },
+       "at": "@tap",
+       "size": "=0.09+0.09*rand()"
+      }
+     ]
+    },
+    {
+     "do": "if",
+     "cond": "$theme==4",
+     "then": [
+      {
+       "do": "spawn",
+       "look": {
+        "item": "=randItem(\"kind\",\"vuon\")"
+       },
+       "at": "@tap",
+       "size": 0.26
+      }
+     ]
+    }
+   ],
+   "end": [
+    {
+     "do": "inc",
+     "var": "theme",
+     "mod": 5
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Chạm đâu mọc hoa/sao/tim/bóng/cây đó (không đúng/sai)."
+}

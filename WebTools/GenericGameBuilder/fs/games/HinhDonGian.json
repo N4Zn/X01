@@ -1,0 +1,75 @@
+{
+ "title": "Nhận biết hình đơn giản",
+ "sync": true,
+ "theme": {
+  "bg": "#E3F2FD",
+  "floor": "#BBDEFB"
+ },
+ "items": [
+  {
+   "id": "tron",
+   "label": "Hình tròn",
+   "shape": "circle",
+   "color": "#1E88E5"
+  },
+  {
+   "id": "vuong",
+   "label": "Hình vuông",
+   "shape": "square",
+   "color": "#43A047"
+  },
+  {
+   "id": "tamgiac",
+   "label": "Hình tam giác",
+   "shape": "triangle",
+   "color": "#FDD835"
+  },
+  {
+   "id": "chunhat",
+   "label": "Hình chữ nhật",
+   "shape": "rect",
+   "color": "#FB8C00"
+  },
+  {
+   "id": "sao",
+   "label": "Ngôi sao",
+   "shape": "star",
+   "color": "#8E24AA"
+  },
+  {
+   "id": "tim",
+   "label": "Hình trái tim",
+   "shape": "heart",
+   "color": "#E53935"
+  },
+  {
+   "id": "thoi",
+   "label": "Hình thoi",
+   "shape": "diamond",
+   "color": "#EC6FA7"
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "set",
+   "p": {}
+  },
+  "views": [
+   {
+    "type": "cards",
+    "p": {}
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {}
+  },
+  "text": {
+   "prompt": "Chọn {LABEL}!",
+   "say": "{label}!",
+   "wrong": "Đây là {name} nè!"
+  }
+ },
+ "version": 3,
+ "desc": "Nghe tên hình → chạm đúng hình (mỗi hình 1 màu cố định). 2 đội cùng câu, chờ nhau."
+}

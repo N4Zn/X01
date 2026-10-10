@@ -1,0 +1,550 @@
+{
+ "title": "Vỡ bóng bay (bé nhỏ)",
+ "sync": false,
+ "theme": {
+  "bg": "#BFE9FF",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "balloon_red",
+   "label": "Đỏ",
+   "image": "balloon_red.png",
+   "src": "Balloon/balloon_red",
+   "shape": "circle",
+   "color": "#E53935",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "balloon_blue",
+   "label": "Xanh dương",
+   "image": "balloon_blue.png",
+   "src": "Balloon/balloon_blue",
+   "shape": "circle",
+   "color": "#1E88E5",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "balloon_green",
+   "label": "Xanh lá",
+   "image": "balloon_green.png",
+   "src": "Balloon/balloon_green",
+   "shape": "circle",
+   "color": "#43A047",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "balloon_yellow",
+   "label": "Vàng",
+   "image": "balloon_yellow.png",
+   "src": "Balloon/balloon_yellow",
+   "shape": "circle",
+   "color": "#FDD835",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "balloon_orange",
+   "label": "Cam",
+   "image": "balloon_orange.png",
+   "src": "Balloon/balloon_orange",
+   "shape": "circle",
+   "color": "#FB8C00",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "balloon_pink",
+   "label": "Hồng",
+   "image": "balloon_pink.png",
+   "src": "Balloon/balloon_pink",
+   "shape": "circle",
+   "color": "#EC6FA7",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "balloon_purple",
+   "label": "Tím",
+   "image": "balloon_purple.png",
+   "src": "Balloon/balloon_purple",
+   "shape": "circle",
+   "color": "#8E24AA",
+   "tags": {
+    "kind": "balloon"
+   }
+  },
+  {
+   "id": "rabbit",
+   "label": "Thỏ",
+   "image": "animal_rabbit.png",
+   "src": "GameImages/Animal/rabbit",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "bear",
+   "label": "Gấu",
+   "image": "animal_bear.png",
+   "src": "GameImages/Animal/bear",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "dog",
+   "label": "Chó",
+   "image": "animal_dog.png",
+   "src": "GameImages/Animal/dog",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "chick",
+   "label": "Gà con",
+   "image": "animal_chick.png",
+   "src": "GameImages/Animal/chick",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "pig",
+   "label": "Lợn",
+   "image": "animal_pig.png",
+   "src": "GameImages/Animal/pig",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "duck",
+   "label": "Vịt",
+   "image": "animal_duck.png",
+   "src": "GameImages/Animal/duck",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "panda",
+   "label": "Gấu trúc",
+   "image": "animal_panda.png",
+   "src": "GameImages/Animal/panda",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "buffalo",
+   "label": "Trâu",
+   "image": "animal_buffalo.png",
+   "src": "GameImages/Animal/buffalo",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "chicken",
+   "label": "Gà",
+   "image": "animal_chicken.png",
+   "src": "GameImages/Animal/chicken",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "cow",
+   "label": "Bò",
+   "image": "animal_cow.png",
+   "src": "GameImages/Animal/cow",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "crocodile",
+   "label": "Cá sấu",
+   "image": "animal_crocodile.png",
+   "src": "GameImages/Animal/crocodile",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "elephant",
+   "label": "Voi",
+   "image": "animal_elephant.png",
+   "src": "GameImages/Animal/elephant",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "frog",
+   "label": "Ếch",
+   "image": "animal_frog.png",
+   "src": "GameImages/Animal/frog",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "giraffe",
+   "label": "Hươu cao cổ",
+   "image": "animal_giraffe.png",
+   "src": "GameImages/Animal/giraffe",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "goat",
+   "label": "Dê",
+   "image": "animal_goat.png",
+   "src": "GameImages/Animal/goat",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "gorilla",
+   "label": "Khỉ đột",
+   "image": "animal_gorilla.png",
+   "src": "GameImages/Animal/gorilla",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "hippo",
+   "label": "Hà mã",
+   "image": "animal_hippo.png",
+   "src": "GameImages/Animal/hippo",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "horse",
+   "label": "Ngựa",
+   "image": "animal_horse.png",
+   "src": "GameImages/Animal/horse",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "monkey",
+   "label": "Khỉ",
+   "image": "animal_monkey.png",
+   "src": "GameImages/Animal/monkey",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "owl",
+   "label": "Cú mèo",
+   "image": "animal_owl.png",
+   "src": "GameImages/Animal/owl",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "parrot",
+   "label": "Vẹt",
+   "image": "animal_parrot.png",
+   "src": "GameImages/Animal/parrot",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "penguin",
+   "label": "Chim cánh cụt",
+   "image": "animal_penguin.png",
+   "src": "GameImages/Animal/penguin",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "rhino",
+   "label": "Tê giác",
+   "image": "animal_rhino.png",
+   "src": "GameImages/Animal/rhino",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "sloth",
+   "label": "Con lười",
+   "image": "animal_sloth.png",
+   "src": "GameImages/Animal/sloth",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "snake",
+   "label": "Rắn",
+   "image": "animal_snake.png",
+   "src": "GameImages/Animal/snake",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "zebra",
+   "label": "Ngựa vằn",
+   "image": "animal_zebra.png",
+   "src": "GameImages/Animal/zebra",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "whale",
+   "label": "Cá voi",
+   "image": "animal_whale.png",
+   "src": "GameImages/Animal/whale",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  },
+  {
+   "id": "moose",
+   "label": "Nai sừng tấm",
+   "image": "animal_moose.png",
+   "src": "GameImages/Animal/moose",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "tags": {
+    "kind": "animal"
+   }
+  }
+ ],
+ "scene": [
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFFFFF"
+   },
+   "alpha": 0.75,
+   "x": 0.18,
+   "y": 0.8,
+   "w": 0.26,
+   "h": 0.13
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFFFFF"
+   },
+   "alpha": 0.75,
+   "x": 0.62,
+   "y": 0.7,
+   "w": 0.26,
+   "h": 0.13
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFFFFF"
+   },
+   "alpha": 0.75,
+   "x": 0.86,
+   "y": 0.84,
+   "w": 0.26,
+   "h": 0.13
+  },
+  {
+   "look": {
+    "shape": "square",
+    "color": "#7ACB5B"
+   },
+   "x": 0.5,
+   "y": 0.06,
+   "w": 1.024,
+   "h": 0.14
+  },
+  {
+   "look": {
+    "shape": "circle",
+    "color": "#FFFFFF"
+   },
+   "x": 0.1,
+   "y": 0.915,
+   "w": 0.12,
+   "bind": {
+    "color": "q.targetItem.color"
+   }
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "set",
+   "p": {
+    "startItems": 99,
+    "targetWhere": "item.tags.kind==\"balloon\"",
+    "otherWhere": "item.tags.kind==\"balloon\""
+   }
+  },
+  "views": [
+   {
+    "type": "props",
+    "p": {
+     "layout": "row",
+     "x0": 0.2,
+     "x1": 0.8,
+     "y0": 0.52,
+     "y1": 0.52,
+     "size": "0.30",
+     "tall": 1.33,
+     "preset": "none",
+     "anim": "float",
+     "tpl": [
+      {
+       "look": {
+        "item": "=opt.id"
+       },
+       "w": "=size*.75",
+       "h": "=size"
+      }
+     ]
+    }
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {
+    "finishSec": 2.4
+   }
+  },
+  "text": {
+   "prompt": "Vỡ bóng màu {LABEL}!",
+   "wrong": "Bóng này màu {name} nè!"
+  },
+  "on": {
+   "right": [
+    {
+     "do": "sfx",
+     "k": "right"
+    },
+    {
+     "do": "sfx",
+     "k": "pop"
+    },
+    {
+     "do": "confetti",
+     "at": "@tapped",
+     "n": 8,
+     "sound": 0
+    },
+    {
+     "do": "hide",
+     "on": "@tapped"
+    },
+    {
+     "do": "pickItem",
+     "var": "animal",
+     "tag": "kind",
+     "value": "animal"
+    },
+    {
+     "do": "spawn",
+     "look": {
+      "item": "=$animal"
+     },
+     "at": "@tapped",
+     "size": 0.3
+    },
+    {
+     "do": "spawn",
+     "look": {
+      "text": "=label($animal)",
+      "fs": 0.068,
+      "color": "#FFFFFF"
+     },
+     "at": {
+      "ref": "@tapped",
+      "dy": -0.19
+     },
+     "w": 0.5,
+     "h": 0.1,
+     "pop": 0
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Vỡ bóng đúng màu → con vật chui ra."
+}

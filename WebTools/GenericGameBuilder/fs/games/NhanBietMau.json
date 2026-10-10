@@ -1,0 +1,77 @@
+{
+ "title": "Nhận biết màu sắc",
+ "sync": false,
+ "theme": {
+  "bg": "#FFF8E1",
+  "floor": "#FFECB3"
+ },
+ "items": [
+  {
+   "id": "red",
+   "label": "Đỏ",
+   "shape": "circle",
+   "color": "#E53935"
+  },
+  {
+   "id": "blue",
+   "label": "Xanh dương",
+   "shape": "circle",
+   "color": "#1E88E5"
+  },
+  {
+   "id": "green",
+   "label": "Xanh lá",
+   "shape": "circle",
+   "color": "#43A047"
+  },
+  {
+   "id": "yellow",
+   "label": "Vàng",
+   "shape": "circle",
+   "color": "#FDD835"
+  },
+  {
+   "id": "orange",
+   "label": "Cam",
+   "shape": "circle",
+   "color": "#FB8C00"
+  },
+  {
+   "id": "pink",
+   "label": "Hồng",
+   "shape": "circle",
+   "color": "#EC6FA7"
+  },
+  {
+   "id": "purple",
+   "label": "Tím",
+   "shape": "circle",
+   "color": "#8E24AA"
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "set",
+   "p": {
+    "every": 3
+   }
+  },
+  "views": [
+   {
+    "type": "cards",
+    "p": {}
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {}
+  },
+  "text": {
+   "prompt": "Chọn màu {LABEL}!",
+   "say": "Màu {label}!",
+   "wrong": "Đây là màu {name} nè!"
+  }
+ },
+ "version": 3,
+ "desc": "Nghe tên màu → chạm đúng màu."
+}

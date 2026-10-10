@@ -1,0 +1,702 @@
+{
+ "title": "Chăm bạn Bi (khỏe mạnh)",
+ "sync": false,
+ "theme": {
+  "bg": "#FFF1D6",
+  "floor": ""
+ },
+ "items": [
+  {
+   "id": "bi_an",
+   "label": "Bi đói bụng! Cho Bi ăn gì?",
+   "image": "bi_hungry.png",
+   "src": "Story/Bi/hungry",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/hungry",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "bi_uong",
+   "label": "Bi khát nước! Bi cần uống gì?",
+   "image": "bi_thirsty.png",
+   "src": "Story/Bi/thirsty",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/thirsty",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "bi_ngu",
+   "label": "Bi buồn ngủ! Bi cần gì?",
+   "image": "bi_sleepy.png",
+   "src": "Story/Bi/sleepy",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/sleepy",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "bi_van_dong",
+   "label": "Bi chán quá! Bi cần làm gì?",
+   "image": "bi_bored.png",
+   "src": "Story/Bi/bored",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/sad",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "bi_ve_sinh",
+   "label": "Tay Bi bẩn rồi! Bi cần gì?",
+   "image": "bi_dirty.png",
+   "src": "Story/Bi/dirty",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/sad",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "bi_lanh",
+   "label": "Bi lạnh quá! Bi cần gì?",
+   "image": "bi_cold.png",
+   "src": "Story/Bi/cold",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/cold",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "bi_happy",
+   "label": "Bi vui",
+   "image": "bi_happy.png",
+   "src": "Story/Bi/happy",
+   "shape": "circle",
+   "color": "#F6B26B",
+   "srcFallback": "Family/happy",
+   "tags": {
+    "bi": 1
+   }
+  },
+  {
+   "id": "garden",
+   "label": "Nền vườn",
+   "image": "garden_bg.png",
+   "src": "Background/Carrot_BG",
+   "shape": "circle",
+   "color": "#CCCCCC"
+  },
+  {
+   "id": "f_apple",
+   "label": "Táo",
+   "image": "food_apple.png",
+   "src": "Story/Food/apple",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_banana",
+   "label": "Chuối",
+   "image": "food_banana.png",
+   "src": "Story/Food/banana",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_orange",
+   "label": "Cam",
+   "image": "food_orange.png",
+   "src": "Story/Food/orange",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_strawberry",
+   "label": "Dâu tây",
+   "image": "food_strawberry.png",
+   "src": "Story/Food/strawberry",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_watermelon",
+   "label": "Dưa hấu",
+   "image": "food_watermelon.png",
+   "src": "Story/Food/watermelon",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_grape",
+   "label": "Nho",
+   "image": "food_grape.png",
+   "src": "Story/Food/grape",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_mango",
+   "label": "Xoài",
+   "image": "food_mango.png",
+   "src": "Story/Food/mango",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_pineapple",
+   "label": "Dứa",
+   "image": "food_pineapple.png",
+   "src": "Story/Food/pineapple",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_pear",
+   "label": "Lê",
+   "image": "food_pear.png",
+   "src": "Story/Food/pear",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_peach",
+   "label": "Đào",
+   "image": "food_peach.png",
+   "src": "Story/Food/peach",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_kiwi",
+   "label": "Kiwi",
+   "image": "food_kiwi.png",
+   "src": "Story/Food/kiwi",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_papaya",
+   "label": "Đu đủ",
+   "image": "food_papaya.png",
+   "src": "Story/Food/papaya",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_dragon_fruit",
+   "label": "Thanh long",
+   "image": "food_dragon_fruit.png",
+   "src": "Story/Food/dragon_fruit",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "f_avocado",
+   "label": "Bơ",
+   "image": "food_avocado.png",
+   "src": "Story/Food/avocado",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "carrot",
+   "label": "Cà rốt",
+   "image": "carrot.png",
+   "src": "Fruit/carrot",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "thuc_an",
+   "label": "Bữa cơm",
+   "image": "thuc_an.png",
+   "src": "SaveEnvironment/thuc_an",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "an"
+   }
+  },
+  {
+   "id": "keo",
+   "label": "Kẹo",
+   "image": "vo_keo.png",
+   "src": "SaveEnvironment/vo_keo",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "an,uong",
+    "why": "Ăn nhiều kẹo sẽ sâu răng!"
+   }
+  },
+  {
+   "id": "soda",
+   "label": "Nước ngọt",
+   "image": "vo_lon_coca.png",
+   "src": "SaveEnvironment/vo_lon_coca",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "an,uong",
+    "why": "Nước ngọt không tốt cho Bi!"
+   }
+  },
+  {
+   "id": "banh",
+   "label": "Bánh ngọt",
+   "image": "mieng_pizza.png",
+   "src": "SaveEnvironment/mieng_pizza",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "van_dong",
+    "why": "Ăn vặt nhiều thì hết đói bữa chính!"
+   }
+  },
+  {
+   "id": "nuoc",
+   "label": "Nước lọc",
+   "image": "giot_nuoc.png",
+   "src": "SaveEnvironment/giot_nuoc",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "uong"
+   }
+  },
+  {
+   "id": "giuong",
+   "label": "Đi ngủ",
+   "image": "bed.png",
+   "src": "NatureKit/Isometric/bed_NE",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "ngu"
+   }
+  },
+  {
+   "id": "tivi",
+   "label": "Xem tivi",
+   "image": "health_xem_tivi.png",
+   "src": "Story/Health/xem_tivi",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "ngu,van_dong",
+    "why": "Xem tivi khuya hại mắt!"
+   }
+  },
+  {
+   "id": "dienthoai",
+   "label": "Chơi điện thoại",
+   "image": "health_dien_thoai.png",
+   "src": "Story/Health/dien_thoai",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "ngu",
+    "why": "Chơi điện thoại nhiều hại mắt!"
+   }
+  },
+  {
+   "id": "chaynhay",
+   "label": "Chạy nhảy",
+   "image": "health_chay_nhay.png",
+   "src": "Story/Health/chay_nhay",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "van_dong"
+   }
+  },
+  {
+   "id": "ruatay",
+   "label": "Rửa tay",
+   "image": "health_rua_tay.png",
+   "src": "Story/Health/rua_tay",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "ve_sinh"
+   }
+  },
+  {
+   "id": "lauao",
+   "label": "Lau vào áo",
+   "image": "health_lau_ao.png",
+   "src": "Story/Health/lau_ao",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "ve_sinh",
+    "why": "Tay vẫn còn vi khuẩn đấy!"
+   }
+  },
+  {
+   "id": "anluon",
+   "label": "Ăn luôn",
+   "image": "health_an_luon.png",
+   "src": "Story/Health/an_luon",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "ve_sinh",
+    "why": "Tay bẩn có vi khuẩn, phải rửa trước!"
+   }
+  },
+  {
+   "id": "aoam",
+   "label": "Mặc áo ấm",
+   "image": "health_ao_am.png",
+   "src": "Story/Health/ao_am",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "good": "lanh"
+   }
+  },
+  {
+   "id": "coiao",
+   "label": "Cởi áo",
+   "image": "health_coi_ao.png",
+   "src": "Story/Health/coi_ao",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "lanh",
+    "why": "Cởi áo ra sẽ càng lạnh, dễ ốm!"
+   }
+  },
+  {
+   "id": "ankem",
+   "label": "Ăn kem",
+   "image": "health_an_kem.png",
+   "src": "Story/Health/an_kem",
+   "shape": "circle",
+   "color": "#CCCCCC",
+   "tags": {
+    "bad": "lanh",
+    "why": "Ăn kem lúc lạnh sẽ ho đấy!"
+   }
+  }
+ ],
+ "vars": {
+  "need": "an",
+  "stars": 0,
+  "stage": 0
+ },
+ "scene": [
+  {
+   "fill": true,
+   "look": {
+    "item": "garden"
+   }
+  },
+  {
+   "fill": true,
+   "look": {
+    "color": "#FFFFFF"
+   },
+   "alpha": 0.12
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#CFC6B2"
+   },
+   "x": 0.3,
+   "y": 0.945,
+   "w": 0.075,
+   "bind": {
+    "color": "$stars>0?\"#FFC83D\":\"#CFC6B2\""
+   },
+   "smooth": 0.2
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#CFC6B2"
+   },
+   "x": 0.4,
+   "y": 0.945,
+   "w": 0.075,
+   "bind": {
+    "color": "$stars>1?\"#FFC83D\":\"#CFC6B2\""
+   },
+   "smooth": 0.2
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#CFC6B2"
+   },
+   "x": 0.5,
+   "y": 0.945,
+   "w": 0.075,
+   "bind": {
+    "color": "$stars>2?\"#FFC83D\":\"#CFC6B2\""
+   },
+   "smooth": 0.2
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#CFC6B2"
+   },
+   "x": 0.6,
+   "y": 0.945,
+   "w": 0.075,
+   "bind": {
+    "color": "$stars>3?\"#FFC83D\":\"#CFC6B2\""
+   },
+   "smooth": 0.2
+  },
+  {
+   "look": {
+    "shape": "star",
+    "color": "#CFC6B2"
+   },
+   "x": 0.7,
+   "y": 0.945,
+   "w": 0.075,
+   "bind": {
+    "color": "$stars>4?\"#FFC83D\":\"#CFC6B2\""
+   },
+   "smooth": 0.2
+  },
+  {
+   "id": "bi",
+   "role": "actor",
+   "look": {
+    "item": "bi_an"
+   },
+   "x": 0.5,
+   "y": 0.585,
+   "w": 0.36,
+   "h": 0.47,
+   "bind": {
+    "item": "\"bi_\"+$need",
+    "scale": "0.82+0.12*min($stage,3)"
+   }
+  }
+ ],
+ "flow": {
+  "gen": {
+   "type": "set",
+   "p": {
+    "n": 3,
+    "startItems": 99,
+    "targetWhere": "item.tags.good==$need",
+    "otherWhere": "has(item.tags.bad,$need)"
+   }
+  },
+  "views": [
+   {
+    "type": "cards",
+    "p": {
+     "y": 0.145,
+     "sizeU": 0.28,
+     "tall": 1.05,
+     "fig": 0.8,
+     "label": 1,
+     "bg": "#FFFFFF"
+    }
+   }
+  ],
+  "judge": {
+   "type": "equals",
+   "p": {
+    "finishSec": 0.3
+   }
+  },
+  "text": {
+   "prompt": "{{label(\"bi_\"+$need)}}",
+   "wrong": "{{tag(tapped.itemId,\"why\")}}"
+  },
+  "on": {
+   "start": [
+    {
+     "do": "bag",
+     "var": "need",
+     "values": "an,uong,ngu,van_dong,ve_sinh,lanh"
+    }
+   ],
+   "wrong": [
+    {
+     "do": "sfx",
+     "k": "tap"
+    },
+    {
+     "do": "shake",
+     "on": "@tapped"
+    },
+    {
+     "do": "shake",
+     "on": "#bi",
+     "sec": 0.45,
+     "amp": 16
+    },
+    {
+     "do": "say",
+     "text": "{{tag(tapped.itemId,\"why\")||\"Bi không cần cái này!\"}}",
+     "fy": 0.4,
+     "color": "#FFE27A",
+     "sec": 1.8
+    }
+   ],
+   "right": [
+    {
+     "do": "sfx",
+     "k": "right"
+    },
+    {
+     "do": "move",
+     "on": "@tapped",
+     "to": {
+      "fx": 0.5,
+      "fy": 0.53
+     },
+     "sec": 0.45,
+     "wait": 0
+    },
+    {
+     "do": "scale",
+     "on": "@tapped",
+     "to": 0.4,
+     "sec": 0.45
+    },
+    {
+     "do": "hide",
+     "on": "@tapped"
+    },
+    {
+     "do": "set",
+     "var": "need",
+     "expr": "\"happy\""
+    },
+    {
+     "do": "bounce",
+     "on": "#bi",
+     "amount": 0.15,
+     "sec": 0.5
+    },
+    {
+     "do": "sfx",
+     "k": "plop"
+    },
+    {
+     "do": "inc",
+     "var": "stars"
+    },
+    {
+     "do": "if",
+     "cond": "$stars>=5",
+     "then": [
+      {
+       "do": "set",
+       "var": "stars",
+       "expr": "5"
+      },
+      {
+       "do": "inc",
+       "var": "stage"
+      },
+      {
+       "do": "say",
+       "text": "Bi lớn lên rồi! Khỏe quá!",
+       "fy": 0.4,
+       "color": "#FFE27A",
+       "sec": 2
+      },
+      {
+       "do": "confetti",
+       "at": "#bi",
+       "n": 22
+      },
+      {
+       "do": "wait",
+       "sec": 1.6
+      },
+      {
+       "do": "set",
+       "var": "stars",
+       "expr": "0"
+      }
+     ],
+     "else": [
+      {
+       "do": "say",
+       "text": "Bi khỏe hơn rồi!",
+       "fy": 0.4,
+       "sec": 1.2
+      },
+      {
+       "do": "wait",
+       "sec": 0.8
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "version": 3,
+ "desc": "Bi cần gì thì cho cái đó; đủ 5 sao thì Bi lớn lên."
+}
