@@ -18,7 +18,7 @@ public static class FloorStorySceneBuilder
     public static readonly string[] Games =
     {
         "NgayCuaBe", "HinhHoc", "CongHinh", "BeKhoeManh", "VoBongBay", "SanKyDieu", "CauBacQua", "DatDoVaoCho", "DongHoKhongLo",
-        "TrungMauSac", "HinhDonGian", "NhoChuoiHinh", "LatTheNhoGiong", "NangNhe", "DemKhoiHop",
+        "TrungMauSac", "HinhDonGian", "NhoChuoiHinh", "LatTheNhoGiong", "NangNhe", "DemKhoiHop", "NhanBietMau", "BeKhoeManhRound",
     };
 
     [MenuItem("Tools/FloorStoryGame/Build ALL Scenes")]
@@ -43,6 +43,8 @@ public static class FloorStorySceneBuilder
     [MenuItem("Tools/FloorStoryGame/Build One/LatTheNhoGiong")] static void B12() => BuildScene("LatTheNhoGiong");
     [MenuItem("Tools/FloorStoryGame/Build One/NangNhe")]        static void B13() => BuildScene("NangNhe");
     [MenuItem("Tools/FloorStoryGame/Build One/DemKhoiHop")]     static void B14() => BuildScene("DemKhoiHop");
+    [MenuItem("Tools/FloorStoryGame/Build One/NhanBietMau")]    static void B15() => BuildScene("NhanBietMau");
+    [MenuItem("Tools/FloorStoryGame/Build One/BeKhoeManhRound")] static void B16() => BuildScene("BeKhoeManhRound");
 
     public static void BuildScene(string game)
     {
@@ -75,6 +77,12 @@ public static class FloorStorySceneBuilder
         var leftCountdown = CreateCountdown("LeftCountdownText", canvasGo.transform, new Vector2(0.02f, 0.35f), new Vector2(0.48f, 0.65f));
         var rightCountdown = CreateCountdown("RightCountdownText", canvasGo.transform, new Vector2(0.52f, 0.35f), new Vector2(0.98f, 0.65f));
 
+        // Icon ✔/✖ mặc định của Kit (giống mọi game khác) — mỗi nửa màn hình 1 cặp, ẩn sẵn; FlowWorld gọi ShowFeedbackIcon khi đúng.
+        var lcI = FeedbackIconBuilder.Create("LeftCorrectIcon", canvasGo.transform, true, new Vector2(0.15f, 0.30f), new Vector2(0.35f, 0.60f));
+        var lwI = FeedbackIconBuilder.Create("LeftWrongIcon", canvasGo.transform, false, new Vector2(0.15f, 0.30f), new Vector2(0.35f, 0.60f));
+        var rcI = FeedbackIconBuilder.Create("RightCorrectIcon", canvasGo.transform, true, new Vector2(0.65f, 0.30f), new Vector2(0.85f, 0.60f));
+        var rwI = FeedbackIconBuilder.Create("RightWrongIcon", canvasGo.transform, false, new Vector2(0.65f, 0.30f), new Vector2(0.85f, 0.60f));
+
         var backButton = MiniGameSceneBuilderHelpers.CreateSimpleButton(
             "BackButton", canvasGo.transform, "Back", new Vector2(0.01f, 0.9f), new Vector2(0.1f, 0.99f));
         backButton.SetActive(false);
@@ -90,6 +98,10 @@ public static class FloorStorySceneBuilder
         ctrlSo.FindProperty("voiceSource").objectReferenceValue = audioSource;
         ctrlSo.FindProperty("backButton").objectReferenceValue = backButton.GetComponent<Button>();
         ctrlSo.FindProperty("gameName").stringValue = game;
+        ctrlSo.FindProperty("leftCorrectIcon").objectReferenceValue = lcI;
+        ctrlSo.FindProperty("leftWrongIcon").objectReferenceValue = lwI;
+        ctrlSo.FindProperty("rightCorrectIcon").objectReferenceValue = rcI;
+        ctrlSo.FindProperty("rightWrongIcon").objectReferenceValue = rwI;
         ctrlSo.ApplyModifiedPropertiesWithoutUndo();
 
         MiniGameSceneBuilderHelpers.AddSceneToBuildSettings(scenePath);

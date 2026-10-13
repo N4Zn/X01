@@ -397,6 +397,9 @@ public sealed class StoryContext
     public int sharedSeed;
     /// <summary>Cộng 1 điểm cho đội (ScoreManager.AddPoint).</summary>
     public Action<Team> addPoint;
+    /// <summary>Hiện / ẩn icon ✔ mặc định của Kit (MiniGameControllerBase.ShowFeedbackIcon) — fallback khi game không tự có icon đúng.</summary>
+    public Action<Team, bool> showIcon;
+    public Action<Team> hideIcon;
 
     public Coroutine Run(IEnumerator e) => runner != null ? runner.StartCoroutine(e) : null;
 

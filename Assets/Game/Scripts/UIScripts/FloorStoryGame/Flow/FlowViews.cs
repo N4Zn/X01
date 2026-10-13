@@ -12,6 +12,13 @@ public static class FlowViews
 {
     static double P(object spec, string key) => FsMod.Num("view", spec, key);
     static string S(object spec, string key) => FsMod.Str("view", spec, key);
+    /// <summary>Vị trí ghi đè từng phần tử của view (trình soạn kéo thả web): spec.p.ov = { "<chỉ số>": [fx, fy] }, toạ độ 0..1 của world. Khớp ovPos trong fs_flow.js.</summary>
+    static Vector2? OvPos(FlowWorld w, object spec, int i)
+    {
+        var ov = J.Obj(J.Obj(spec, "p"), "ov"); if (ov == null) return null;
+        var v = J.Arr(J.Get(ov, i.ToString())); if (v.Count < 2) return null;
+        return w.PP((float)FsExpr.ToNum(v[0]), (float)FsExpr.ToNum(v[1]));
+    }
     static readonly string[] Palette = { "#FF7043", "#42A5F5", "#66BB6A", "#FFCA28", "#AB47BC", "#26C6DA" };
 
     public static FsView Make(FlowWorld w, Dictionary<string, object> spec, Dictionary<string, object> q)
@@ -41,7 +48,7 @@ public static class FlowViews
             float cs = Mathf.Min(U * (float)P(spec, "sizeU"), w.WorldW * spacing * 0.93f), tall = (float)P(spec, "tall");
             for (int i = 0; i < n; i++)
             {
-                var pos = w.PP(0.5f + (i - (n - 1) * 0.5f) * spacing, (float)P(spec, "y"));
+                var pos = OvPos(w, spec, i) ?? w.PP((float)P(spec, "x") + (i - (n - 1) * 0.5f) * spacing, (float)P(spec, "y"));
                 StoryCard card; FsNode fig = null; var it = isNum ? null : list[i];
                 if (isNum) card = StoryUI.Card(w.Root, "Num", null, FsExpr.Str(list[i]), StoryUI.Hex("#7E57C2"), pos, new Vector2(cs, cs * tall), null, 72);
                 else
@@ -131,8 +138,9 @@ public static class FlowViews
                 var it = list[i]; float s = SizeOf(i, it);
                 var ex = new Dictionary<string, object> { { "opt", OptOf(i, it) }, { "i", (double)i }, { "n", (double)n }, { "item", it }, { "size", (double)s } };
                 float hh = hU > 0 ? (float)hU * U : s * U * tall;
-                float py = yExpr != "" ? w.PP(0, (float)FsExpr.ToNum(w.Ev(yExpr, ex))).y : pts[i].y;
-                var cont = StoryUI.Pic(w.Root, "Prop", null, new Color(1, 1, 1, 0), new Vector2(pts[i].x, py), new Vector2(s * U, hh), raycast: true);
+                var ovp = OvPos(w, spec, i);
+                float py = ovp.HasValue ? ovp.Value.y : yExpr != "" ? w.PP(0, (float)FsExpr.ToNum(w.Ev(yExpr, ex))).y : pts[i].y;
+                var cont = StoryUI.Pic(w.Root, "Prop", null, new Color(1, 1, 1, 0), new Vector2(ovp.HasValue ? ovp.Value.x : pts[i].x, py), new Vector2(s * U, hh), raycast: true);
                 cont.preserveAspect = false; var contN = FsNode.Of(cont); w.Track(contN);
                 var tplRel = new List<object>();
                 foreach (var t in tpl) { var d = new Dictionary<string, object>((Dictionary<string, object>)t); d["rel"] = 1.0; tplRel.Add(d); }
@@ -174,7 +182,8 @@ public static class FlowViews
             float slot = Mathf.Min(w.Unit * (float)P(spec, "slotU"), w.WorldW * 0.92f / len * 0.9f), gap = slot * 0.1f, rowW = len * slot + (len - 1) * gap, y = w.PP(0.5f, (float)P(spec, "y")).y;
             for (int i = 0; i < len; i++)
             {
-                var b = StoryUI.Pic(w.Root, "Slot", ShapeSprites.RoundedRect, _plain ? new Color(1, 1, 1, 0) : new Color(1, 1, 1, 0.9f), new Vector2(-rowW * 0.5f + slot * 0.5f + i * (slot + gap), y), Vector2.one * slot);
+                var sp0 = OvPos(w, spec, i);
+                var b = StoryUI.Pic(w.Root, "Slot", ShapeSprites.RoundedRect, _plain ? new Color(1, 1, 1, 0) : new Color(1, 1, 1, 0.9f), sp0 ?? new Vector2(-rowW * 0.5f + slot * 0.5f + i * (slot + gap), y), Vector2.one * slot);
                 b.type = Image.Type.Sliced; b.preserveAspect = false; w.Track(FsNode.Of(b)); _bg.Add(b);
                 var qq = StoryUI.Label(b.transform, "?", Mathf.RoundToInt(slot * 0.6f), StoryUI.Hex("#90A4AE"), Vector2.zero, Vector2.one * slot, TextAnchor.MiddleCenter, false); qq.gameObject.SetActive(false); _q.Add(qq);
                 _face.Add(w.DrawItem(FsNode.Of(b), items[(int)FsExpr.ToNum(seq[i])], 0, 0, slot * 0.82f));
@@ -212,7 +221,7 @@ public static class FlowViews
             for (int i = 0; i < total; i++)
             {
                 int fi = (int)FsExpr.ToNum(faces[i]), r = i / cols, c = i % cols;
-                var holder = StoryUI.Pic(w.Root, "Card", null, new Color(1, 1, 1, 0), origin + new Vector2((c - (cols - 1) * 0.5f) * stepX, ((rows - 1) * 0.5f - r) * stepY), Vector2.one * cs, raycast: true);
+                var holder = StoryUI.Pic(w.Root, "Card", null, new Color(1, 1, 1, 0), OvPos(w, spec, i) ?? (origin + new Vector2((c - (cols - 1) * 0.5f) * stepX, ((rows - 1) * 0.5f - r) * stepY)), Vector2.one * cs, raycast: true);
                 holder.preserveAspect = false; var hn = FsNode.Of(holder); w.Track(hn);
                 var back = StoryUI.Pic(holder.transform, "Back", ShapeSprites.RoundedRect, StoryUI.Hex("#26A69A"), Vector2.zero, Vector2.one * cs); back.type = Image.Type.Sliced; back.preserveAspect = false;
                 StoryUI.Label(back.transform, "?", Mathf.RoundToInt(cs * 0.6f), Color.white, Vector2.zero, Vector2.one * cs);

@@ -69,7 +69,7 @@ public static class GameRegistry
     // nữa sau này — chỉ cần tăng số này + thêm dòng CategoryNames + Set() tương ứng, không cần
     // sửa gì khác.
     public const int CATEGORY_COUNT   = 9;
-    public const int MAX_PER_CATEGORY = 36;
+    public const int MAX_PER_CATEGORY = 48;
 
     // ── Tên hiển thị cho từng tab category (= môn học) ────────────────────────
     public static readonly string[] CategoryNames =
@@ -203,6 +203,8 @@ public static class GameRegistry
         Set(0, 33, "LatTheNhoGiong", "Lật thẻ giống nhau", "LatTheNhoGiong", Engine.MiniGameKit, group: "Thử nghiệm");
         Set(0, 34, "NangNhe", "Nặng hay nhẹ", "NangNhe", Engine.MiniGameKit, group: "Thử nghiệm");
         Set(0, 35, "DemKhoiHop", "Đếm khối hộp", "DemKhoiHop", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 37, "BeKhoeManhRound", "Chăm bạn Bi (từng câu)", "BeKhoeManhRound", Engine.MiniGameKit, group: "Thử nghiệm");   // flow viết tay (round); cần Import Pack Zip BeKhoeManhRound
+        Set(0, 36, "NhanBietMau", "Nhận biết màu sắc", "NhanBietMau", Engine.MiniGameKit, group: "Thử nghiệm");   // game flow (không có world code tay): cần Import Pack Zip NhanBietMau.zip
 
         // <GENERIC-GAMES>
     }

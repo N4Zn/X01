@@ -14,7 +14,7 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     readonly string _gid;
     readonly Dictionary<string, object> _data;
     readonly List<object> _items;
-    readonly FsRng _rng;
+    FsRng _rng;
     public Dictionary<string, object> Vars;
     readonly Dictionary<string, List<string>> _bags = new Dictionary<string, List<string>>();
     public readonly List<FsObj> Objs = new List<FsObj>(), TaskObjs = new List<FsObj>();
@@ -56,7 +56,19 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     public float Unit => U;
     public Vector2 PP(float fx, float fy) => P(fx, fy);
     public Coroutine Go(IEnumerator e) => Run(e);
-    public void Sfx(string k) { if (!string.IsNullOrEmpty(k)) ctx.Sfx(k); }
+    /// <summary>"right"/"wrong" = tiếng đúng/sai: file riêng của game (flow.sounds → sounds) nếu có, không thì tiếng mặc định của app
+    /// (MusicManager.PlayCorrectSfx/PlayWrongSfx — giống mọi game khác). Khoá khác = hiệu ứng Resources/StorySfx.</summary>
+    public void Sfx(string k)
+    {
+        if (string.IsNullOrEmpty(k)) return;
+        if (k == "right" || k == "wrong")
+        {
+            if (SoundOf(k) != "") PlayFile(SoundOf(k), false);
+            else if (k == "right") ctx.SfxRight(); else ctx.SfxWrong();
+            return;
+        }
+        ctx.Sfx(k);
+    }
     public void SfxRight() => ctx.SfxRight();
     public void Point() => AddPoint();
     public void Burst(Vector2 c, int n, bool sound = true) => Confetti(c, n, sound);
@@ -143,13 +155,18 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     /// <summary>Tiếng của vật là đáp án (nếu câu hỏi có đáp án và vật đó có file tiếng).</summary>
     void PlayTargetItem()
     {
+        if (J.Str(Q, "rsound") != "") { PlayFile(J.Str(Q, "rsound"), true); return; }   // tiếng riêng của câu (round.sound)
+        var fsnd = Flow != null ? J.Obj(Flow, "sounds") : null; string ps = fsnd != null ? J.Str(fsnd, "prompt") : "";
+        if (ps != "") { PlayFile(ps, true); return; }   // tiếng câu hỏi riêng của dạng câu hỏi
         int t = (int)J.Num(Q, "target", -1); var its = J.Arr(J.Get(Q, "items"));
         if (t >= 0 && t < its.Count) PlayItem(its[t]);
     }
-    string SoundOf(string key) { var s = J.Obj(_data, "sounds"); return s == null ? "" : J.Str(s, key); }
+    string GameSound(string key) { var s = J.Obj(_data, "sounds"); return s == null ? "" : J.Str(s, key); }
+    /// <summary>Tiếng của DẠNG CÂU HỎI hiện tại (flow.sounds[key]) nếu có, không thì tiếng chung cả game (sounds[key]).</summary>
+    string SoundOf(string key) { var s = Flow != null ? J.Obj(Flow, "sounds") : null; if (s != null && J.Str(s, key) != "") return J.Str(s, key); return GameSound(key); }
     void StartMusic()
     {
-        var clip = LoadClip(SoundOf("music")); if (clip == null) return;
+        var clip = LoadClip(GameSound("music")); if (clip == null) return;
         var m = Src(ref _musicSrc); m.clip = clip; m.loop = true; m.volume = 0.5f; m.Play();
     }
 
@@ -182,6 +199,19 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         return one != null ? new List<object> { one } : new List<object>();
     }
 
+    readonly Dictionary<int, int> _roundCount = new Dictionary<int, int>(); readonly Dictionary<int, List<int>> _roundBag = new Dictionary<int, List<int>>();
+    /// <summary>Chỉ số round viết tay của lượt này (flow.roundOrder: seq lặp vòng | shuffle xáo mỗi vòng). Khớp _nextRound (fs_flow.js).</summary>
+    int NextRound(Dictionary<string, object> f, int fi, int n)
+    {
+        _roundCount.TryGetValue(fi, out int c); c++; _roundCount[fi] = c;
+        if (J.Str(f, "roundOrder") == "shuffle")
+        {
+            if (!_roundBag.TryGetValue(fi, out var bag) || bag.Count == 0) { bag = new List<int>(); for (int i = 0; i < n; i++) bag.Add(i); ShuffleList(bag); _roundBag[fi] = bag; }
+            int v = bag[0]; bag.RemoveAt(0); return v;
+        }
+        return (c - 1) % n;
+    }
+
     void ClearTask()
     {
         GenId++; Active = false;
@@ -194,6 +224,8 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     public override void BeginTask(QuestionData info, Action<bool, int[]> done)
     {
         ClearTask(); Active = true; TaskNo++; Ready = false;
+        // Chơi chung: mọi random của lượt dùng cùng seed ở cả 2 đội (khớp JS) → cùng câu hỏi
+        if (Sync) _rng = new FsRng(ctx.sharedSeed * 104729L + TaskNo * 7919L + 13);
         var flows = FlowsOf(_data);
         int fi = J.Str(_data, "flowPick") == "random" ? _rng.Int(flows.Count) : (TaskNo - 1) % flows.Count;
         Flow = (Dictionary<string, object>)flows[fi];
@@ -202,12 +234,26 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         Vars["_task"] = (double)TaskNo; Vars["_ok"] = (double)Ok;
         var on = J.Obj(Flow, "on");
         if (on != null && J.List(on, "start") != null) ExecNow(J.List(on, "start"));
-        Q = FlowGens.Make(this, J.Obj(Flow, "gen"));
+        Q = null; string rprompt = "";
+        if (J.Num(Flow, "manual") != 0)   // câu hỏi viết tay (flow.rounds[]); round không hợp lệ → nguồn tự động
+        {
+            var rounds = J.List(Flow, "rounds");
+            if (rounds != null && rounds.Count > 0)
+            {
+                int ri = NextRound(Flow, flows.IndexOf(Flow), rounds.Count);
+                var rd = rounds[ri] as Dictionary<string, object>;
+                Q = FlowGens.FromRound(this, J.Obj(Flow, "gen"), rd);
+                var rv = Q != null ? J.Obj(rd, "vars") : null;   // biến đặt riêng cho câu này (khớp JS rd.vars)
+                if (rv != null) foreach (var kv in rv) Vars[kv.Key] = kv.Value;
+                if (Q != null) { rprompt = J.Str(rd, "prompt"); if (J.Str(rd, "sound") != "") Q["rsound"] = J.Str(rd, "sound"); }   // lời hỏi riêng của round (khớp JS)
+            }
+        }
+        if (Q == null) Q = FlowGens.Make(this, J.Obj(Flow, "gen"));
         var answers = new List<string>(); foreach (var a in J.Arr(J.Get(Q, "answers"))) answers.Add(FsExpr.Str(a));
         Describe(info, J.Str(Q, "id"), J.Str(J.Obj(Flow, "gen"), "type"), J.Str(Q, "desc"), answers.ToArray(), Math.Max(0, J.Int(Q, "target", 0)));
         var objs = J.List(Flow, "objects") ?? new List<object>();
         MakeObjs(objs.FindAll(o => J.Str(o, "z") != "front"), FsNode.Of(root), TaskObjs, null);
-        string first = TaskNo == 1 && J.Str(T, "first") != "" ? J.Str(T, "first") : J.Str(T, "prompt");
+        string first = rprompt != "" ? rprompt : (TaskNo == 1 && J.Str(T, "first") != "" ? J.Str(T, "first") : J.Str(T, "prompt"));
         _prompt.text = FsExpr.Template(first, J.Obj(Q, "vars"), Scope()); PlayTargetItem();
         var specs = J.List(Flow, "views") ?? new List<object>();
         var views = new List<FsView>();
@@ -273,7 +319,12 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     {
         var on = J.Obj(Flow, "on");
         var list = on != null ? J.List(on, ev) : null;
-        if (list != null && list.Count > 0) yield return RunActs(list, cx);
+        if (ev == "right") ctx.showIcon?.Invoke(team, true);   // icon ✔ mặc định của Kit (fallback chung)
+        if (list != null && list.Count > 0)
+        {
+            if (ev == "right" && !list.Exists(a => J.Str(a, "do") == "sfx" || J.Str(a, "do") == "std")) Sfx("right");   // hành động riêng không có tiếng → vẫn có tiếng đúng mặc định
+            yield return RunActs(list, cx);
+        }
         else if (std != null) yield return std(cx);
     }
 

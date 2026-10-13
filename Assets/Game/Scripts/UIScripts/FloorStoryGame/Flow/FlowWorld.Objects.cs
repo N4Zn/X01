@@ -112,7 +112,12 @@ public sealed partial class FlowWorld
             string imgName = lk != null && lk.ContainsKey("image") ? FsExpr.Str(Ev(lk["image"], extra)) : (itm != null ? J.Str(itm, "image") : "");
             Sprite spr = imgName != "" ? StoryUI.Load(ImagePath(imgName)) : null;
             Image fill = spr != null ? StoryUI.Fill(parent.rt, "Fill", Color.white, spr) : StoryUI.Fill(parent.rt, "Fill", Hex(lk != null ? FsExpr.Str(Ev(J.Get(lk, "color"), extra)) : "#FFFFFF"));
-            if (spr != null) fill.preserveAspect = false;
+            if (spr != null)
+            {
+                fill.preserveAspect = false;
+                bool mirror = !_data.ContainsKey("mirror") || J.Num(_data, "mirror") != 0;
+                if (team == Team.Right && mirror) fill.rectTransform.localScale = new Vector3(-1f, 1f, 1f);   // ảnh nền nửa phải lật gương (đối xứng nửa trái)
+            }
             o.node = FsNode.Of(fill);
         }
         else

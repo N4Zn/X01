@@ -199,6 +199,12 @@ EditorBuildSettings:
     guid: c17ec719088237a4ea17d9cdcc4078a4
   - enabled: 1
     path: Assets/Game/Scenes/FloorStory/DemKhoiHop.unity
-    guid: 00000000000000000000000000000000
+    guid: 19d11822ca8ed064c98b2173cdb81ff1
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/NhanBietMau.unity
+    guid: e710481d88e4d184d91f06de765dda1b
+  - enabled: 0
+    path: Assets/Game/Scenes/FloorStory/BeKhoeManhRound.unity
+    guid: 2ec5d8ebcab702b4595ef4ac3121543b
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

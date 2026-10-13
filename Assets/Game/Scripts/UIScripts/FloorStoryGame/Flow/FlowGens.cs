@@ -60,6 +60,87 @@ public static class FlowGens
         return cells;
     }
 
+
+    // ── Round viết tay: flow.manual + flow.rounds[] (khớp ROUND trong fs_flow.js; không hợp lệ → trả null → dùng nguồn tự động) ──
+    public static Dictionary<string, object> FromRound(IFlowCore w, object spec, Dictionary<string, object> r)
+    {
+        if (r == null) return null;
+        object ById(object id) { string s = FsExpr.Str(id); return w.Items.Find(i => J.Str(i, "id") == s); }
+        List<object> ItemsOf(string key) { var l = new List<object>(); foreach (var id in J.Arr(J.Get(r, key))) { var it = ById(id); if (it == null) return null; l.Add(it); } return l; }
+        string type = J.Str(spec, "type");
+        switch (type)
+        {
+            case "set":
+            {
+                var its = ItemsOf("items"); if (its == null || its.Count < 2) return null;
+                int t = its.FindIndex(x => J.Str(x, "id") == J.Str(r, "target")); if (t < 0) t = 0;
+                string name = w.NameOf(its[t]);
+                return Base(its, t, new Dictionary<string, object> { { "label", name } }, "SET_" + (J.Str(its[t], "id") != "" ? J.Str(its[t], "id") : name), "Chọn " + name, Names(w, its));
+            }
+            case "match":
+            {
+                var subject = ById(J.Get(r, "subject")); var opts = ItemsOf("options"); if (subject == null || opts == null || opts.Count < 2) return null;
+                int ai = opts.FindIndex(x => J.Str(x, "id") == J.Str(r, "answer")); if (ai < 0) ai = 0;
+                var q = Base(opts, ai, new Dictionary<string, object> { { "subject", w.NameOf(subject) }, { "label", w.NameOf(opts[ai]) } },
+                             "MATCH_" + J.Str(subject, "id") + "_" + J.Str(opts[ai], "id"), "Ghép " + w.NameOf(subject), Names(w, opts));
+                q["subject"] = subject; return q;
+            }
+            case "values":
+            {
+                var its = ItemsOf("items"); if (its == null || its.Count < 2) return null;
+                bool less = J.Num(r, "less") != 0; int n = its.Count, target = 0;
+                for (int i = 1; i < n; i++) if (less ? J.Num(its[i], "value") < J.Num(its[target], "value") : J.Num(its[i], "value") > J.Num(its[target], "value")) target = i;
+                string word = less ? S(spec, "wordLess") : S(spec, "wordMore"), suffix = n == 2 ? S(spec, "suffix2") : S(spec, "suffix3");
+                string idt = J.Str(its[target], "id") != "" ? J.Str(its[target], "id") : target.ToString();
+                return Base(its, target, new Dictionary<string, object> { { "word", word }, { "suffix", suffix }, { "label", w.NameOf(its[target]) } },
+                            "VAL_" + idt + (less ? "_min" : "_max") + n, "Con nào " + word + " " + suffix, Names(w, its));
+            }
+            case "sequence":
+            {
+                var its = ItemsOf("items"); if (its == null || its.Count < 2) return null;
+                var seq = new List<int>();
+                foreach (var v in J.Arr(J.Get(r, "seq"))) { double d = FsExpr.ToNum(v); int i = (int)d; if (d == i && i >= 0 && i < its.Count) seq.Add(i); }
+                if (seq.Count == 0) return null;
+                var names = new List<string>(); foreach (var i in seq) names.Add(w.NameOf(its[i]).ToLowerInvariant());
+                var seqL = new List<object>(); foreach (var i in seq) seqL.Add((double)i);
+                var q = Base(its, seq[0], new Dictionary<string, object> { { "len", (double)seq.Count }, { "names", string.Join(", rồi ", names) } },
+                             "SEQ_" + seq.Count + "_" + string.Join("-", seq), "Chuỗi " + seq.Count + " hình", Names(w, its));
+                q["seq"] = seqL; return q;
+            }
+            case "pairs":
+            {
+                var its = ItemsOf("items"); if (its == null || its.Count < 2) return null;
+                int pairs = its.Count; var faces = new List<int>(); for (int i = 0; i < pairs; i++) { faces.Add(i); faces.Add(i); }
+                w.ShuffleList(faces);
+                var facesL = new List<object>(); foreach (var f in faces) facesL.Add((double)f);
+                var q = Base(its, 0, new Dictionary<string, object> { { "pairs", (double)pairs } }, "PAIRS_" + pairs, "Lật thẻ giống nhau: " + pairs + " cặp", new List<object> { string.Join(",", faces) });
+                q["faces"] = facesL; q["pairs"] = (double)pairs; return q;
+            }
+            case "number":
+            {
+                int count = Math.Max(1, Math.Min(12, (int)Math.Round(J.Num(r, "count", 1))));
+                var opts = new List<int>(); var given = J.Arr(J.Get(r, "options"));
+                if (given.Count > 0)
+                {
+                    foreach (var v in given) { int o = (int)Math.Round(FsExpr.ToNum(v)); if (o >= 1 && o <= 12 && !opts.Contains(o)) opts.Add(o); }
+                    if (!opts.Contains(count)) opts.Add(count);
+                }
+                else
+                {
+                    opts.Add(count); int g = 0;
+                    while (opts.Count < P(spec, "options") && g++ < 80) { int v = count + w.Rng.Range(-2, 3); if (v >= 1 && v <= 12 && !opts.Contains(v)) opts.Add(v); }
+                    w.ShuffleList(opts);
+                }
+                string oid = S(spec, "objectId"); object obj = oid == "" ? null : w.Items.Find(i => J.Str(i, "id") == oid);
+                var items = new List<object>(); if (obj != null) items.Add(obj);
+                var optL = new List<object>(); var ans = new List<object>(); foreach (var o in opts) { optL.Add((double)o); ans.Add(o.ToString()); }
+                var q = Base(items, opts.IndexOf(count), new Dictionary<string, object> { { "count", (double)count } }, "NUM_" + count, "Đếm " + count, ans);
+                q["options"] = optL; q["number"] = (double)count; return q;
+            }
+        }
+        return null;
+    }
+
     static double P(object spec, string key) => FsMod.Num("gen", spec, key);
     static string S(object spec, string key) => FsMod.Str("gen", spec, key);
 

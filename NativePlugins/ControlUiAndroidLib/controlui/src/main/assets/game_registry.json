@@ -73,6 +73,8 @@
     {"name": "NhoChuoiHinh", "displayName": "Nhớ chuỗi hình", "group": "Thử nghiệm", "sceneName": "NhoChuoiHinh", "category": 0},
     {"name": "LatTheNhoGiong", "displayName": "Lật thẻ giống nhau", "group": "Thử nghiệm", "sceneName": "LatTheNhoGiong", "category": 0},
     {"name": "NangNhe", "displayName": "Nặng hay nhẹ", "group": "Thử nghiệm", "sceneName": "NangNhe", "category": 0},
-    {"name": "DemKhoiHop", "displayName": "Đếm khối hộp", "group": "Thử nghiệm", "sceneName": "DemKhoiHop", "category": 0}
+    {"name": "DemKhoiHop", "displayName": "Đếm khối hộp", "group": "Thử nghiệm", "sceneName": "DemKhoiHop", "category": 0},
+    {"name": "NhanBietMau", "displayName": "Nhận biết màu sắc", "group": "Thử nghiệm", "sceneName": "NhanBietMau", "category": 0},
+    {"name": "BeKhoeManhRound", "displayName": "Chăm bạn Bi (từng câu)", "group": "Thử nghiệm", "sceneName": "BeKhoeManhRound", "category": 0}
   ]
 }

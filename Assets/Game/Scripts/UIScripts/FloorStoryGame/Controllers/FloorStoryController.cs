@@ -39,6 +39,8 @@ public class FloorStoryController : MiniGameControllerBase
             runner = this, voice = voiceSource,
             sharedSeed = Environment.TickCount & 0xFFFFF,
             addPoint = t => ScoreManager?.AddPoint(t),
+            showIcon = (t, ok) => ShowFeedbackIcon(t, ok),
+            hideIcon = t => HideFeedbackIcon(t),
         };
         _left = CreateWorld(game);
         _right = CreateWorld(game);
@@ -82,6 +84,10 @@ public class FloorStoryController : MiniGameControllerBase
         }
     }
 
+    // Âm đúng + icon ✔ do FlowWorld tự phát lúc chạm đúng (fallback = MusicManager.PlayCorrectSfx + icon mặc định của Kit,
+    // trừ khi game có sounds.right riêng) → tắt bản mặc định của base để không phát 2 lần / trễ theo finishSec.
+    protected override bool UseDefaultFeedbackFx => false;
+
     protected override IAnswerDisplay GetDisplayForQuestion(QuestionData q) => null;   // Independent: không dùng display của Kit
 
     // Mỗi đội tự sinh nội dung trong SetupIndependentDisplay (PullNextQuestion không biết đội nào) → trả khung rỗng.
@@ -100,6 +106,7 @@ public class FloorStoryController : MiniGameControllerBase
             rightWorldRoot.gameObject.SetActive(true);
         }
         var world = team == Team.Left ? _left : _right;
+        HideFeedbackIcon(team);
         int mine = team == Team.Left ? 0 : 1, other = 1 - mine;
         int taskIdx = _begun[mine]++;      // lượt thứ taskIdx (0-based) của đội này
         bool finished = false;
