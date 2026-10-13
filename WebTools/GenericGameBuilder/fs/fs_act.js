@@ -36,7 +36,7 @@ P.drawLook = function(parent, look, x, y, w, h, extra){
     const b = UI.pic(root, 'square', hex(ev(look.color)||'#2A2F55'), 0, len/2, th, len); b.preserveAspect = false; return root;
   }
   if (look.text !== undefined){
-    const n = UI.label(parent, String(ev(look.text)), Math.round((+ev(look.fs)||.06)*this.U), hex(ev(look.color)||'#FFFFFF'), x, y, w||this.U, h||this.U*.2, look.outline !== 0);
+    const n = UI.label(parent, String(ev(look.text)), Math.round((+ev(look.fs)||.06)*this.U), hex(ev(look.color)||'#FFFFFF'), x, y, w||this.U, h||this.U*.2, look.outline !== 0, 'text', look.style);
     return n;
   }
   const itemId = look.item !== undefined ? String(ev(look.item)) : null;
@@ -207,7 +207,7 @@ P._stdRight = function*(cx){
   if (T2.say) this.say(X.template(T2.say, Q.vars, this.scope(cx)), this.P(.5, .14), hex('#1B5E20'), 1.6);
 };
 P._stdWrong = function*(cx){
-  const T2 = (this.flow && this.flow.text) || {}, el = cx.tapped; this.sfx('tap'); if (el) this.run(tw.shake(el.node, .35, 10));
+  const T2 = (this.flow && this.flow.text) || {}, el = cx.tapped; this.sfx('wrong'); if (el) this.run(tw.shake(el.node, .35, 10));
   if (T2.wrong) this.say(X.template(T2.wrong, Object.assign({}, (this._Q||{}).vars, { name: el ? el.name : '', NAME: el ? el.name : '' }), this.scope(cx)), this.P(.5, .14), hex('#BF360C'), 1.3);
 };
 })();

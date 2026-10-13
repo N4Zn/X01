@@ -58,6 +58,7 @@ public class FloorStoryController : MiniGameControllerBase
             try { return new FlowWorld(game, (System.Collections.Generic.Dictionary<string, object>)FsJson.Parse(flow.text)); }
             catch (Exception e) { Debug.LogError($"[FloorStory] Dữ liệu flow '{game}' lỗi, dùng world mặc định: {e.Message}"); }
         }
+        StoryUI.TextStyles = null;   // world code tay không dùng định dạng chữ của game flow trước đó
         switch (game)
         {
             case "NgayCuaBe":  return new NgayCuaBeWorld();

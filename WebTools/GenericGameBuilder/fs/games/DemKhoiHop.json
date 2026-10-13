@@ -9,7 +9,9 @@
  "flow": {
   "gen": {
    "type": "number",
-   "p": {}
+   "p": {
+    "maxCount": 10
+   }
   },
   "views": [
    {
@@ -39,5 +41,5 @@
   }
  },
  "version": 3,
- "desc": "Đống khối 3D → chạm số đúng; sai 2 lần thì đếm 1,2,3."
+ "desc": "Cụm khối 3D sát nhau (tối đa 10 khối) → chạm số đúng; sai 2 lần thì đếm 1,2,3 (số nằm ngoài hình)."
 }

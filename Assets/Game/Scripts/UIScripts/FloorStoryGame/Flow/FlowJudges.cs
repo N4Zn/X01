@@ -48,6 +48,7 @@ public static class FlowJudges
         {
             if (!w.Active || answered || busy || !w.Ready) yield break;
             var cx = Cx(el, 0, mistakes);
+            { var its = J.Arr(J.Get(q, "items")); if (el.key >= 0 && el.key < its.Count) w.PlayItem(its[el.key]); }
             if (el.key == target)
             {
                 answered = true; hint = false; busy = true;

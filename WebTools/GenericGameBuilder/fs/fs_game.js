@@ -28,7 +28,8 @@ class World {
   addPoint(){ this.g.addPoint(this.team); }
   sfx(k){ this.g.sfx(k); }
   right(){ this.g.sfx('right'); }
-  voice(text){ this.g.speak(text); }
+  /** Phát tiếng của vật (file âm thanh gắn vào vật: tiếng đọc tên). Không dùng giọng đọc của trình duyệt. */
+  playItem(item){ if (item && item.sound) this.g.playSound(item.sound, 'voice'); }
   img(name){ return this.g.imgUrl(name); }
   theme(key, d){ const t = this.data.theme || {}; return t[key] || d; }
 
@@ -63,7 +64,7 @@ class World {
   }
   *_fadeDestroy(n, delay, dur){ yield delay; if (!n.dead) yield* tw.fade(n, 0, dur); n.destroy(); }
   say(text, pos, color, seconds){
-    const t = UI.label(this.root, text, 34, color || WHITE, pos.x, pos.y, this.W*.92, 90); t.setAsLast();
+    const t = UI.label(this.root, text, 34, color || WHITE, pos.x, pos.y, this.W*.92, 90, undefined, 'say'); t.setAsLast();
     this.run(this._sayRoutine(t, seconds == null ? 1.6 : seconds));
   }
   *_sayRoutine(t, s){ yield* tw.popIn(t, .25); yield s; if (!t.dead) yield* tw.fade(t, 0, .3); t.destroy(); }
@@ -98,7 +99,7 @@ class Game {
     this._fit = ()=>{ const r = wrap.getBoundingClientRect(); const k = Math.min(r.width/1024, r.height/540) || 1; stage.style.transform = `scale(${k})`; stage.style.left = Math.max(0,(r.width-1024*k)/2) + 'px'; stage.style.top = Math.max(0,(r.height-540*k)/2) + 'px'; };
     this._fit(); window.addEventListener('resize', this._fit);
     if (window.ResizeObserver){ this._ro = new ResizeObserver(this._fit); this._ro.observe(wrap); }
-    this._last = performance.now();
+    this._last = performance.now(); this._startMusic();
     this._timer = setInterval(()=> this._tick(), 16);
     this.worlds.forEach((w,i)=> this.run(this._teamLoop(i)));
   }
@@ -133,16 +134,33 @@ class Game {
     }
   }
   addPoint(team){ this.scores[team]++; (team === 0 ? this.hudL : this.hudR).textContent = (team === 0 ? 'Đội trái: ' : 'Đội phải: ') + this.scores[team]; }
-  sfx(k){ if (this.opts.mute) return; (SFX[k] || SFX.tap)(); }
-  speak(text){
-    if (this.opts.mute || !text || !window.speechSynthesis) return;
-    try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(text).replace(/[!?.]/g,'')); u.lang = 'vi-VN'; u.rate = .9; speechSynthesis.speak(u); }catch(e){}
+  /** Hiệu ứng ngắn: dùng file người dùng gắn (data.sounds.right / wrong) nếu có, không thì tiếng tổng hợp sẵn. */
+  sfx(k){
+    if (this.opts.mute) return;
+    const S = this.data.sounds || {};
+    if ((k === 'right' || k === 'wrong') && S[k]){ this.playSound(S[k], 'fx'); return; }
+    (SFX[k] || SFX.tap)();
+  }
+  /** Phát file âm thanh theo tên (assets/…) qua opts.audioUrl. kênh 'voice' chỉ phát 1 tiếng một lúc. */
+  playSound(name, ch){
+    if (this.opts.mute || !name || !this.opts.audioUrl) return;
+    const url = this.opts.audioUrl(name); if (!url) return;
+    try{
+      if (ch === 'voice' && this._voice){ try{ this._voice.pause(); }catch(e){} }
+      const a = new Audio(url); if (ch === 'voice') this._voice = a;
+      const pr = a.play(); if (pr && pr.catch) pr.catch(()=>{});
+    }catch(e){}
+  }
+  _startMusic(){
+    const m = (this.data.sounds || {}).music; if (!m || this.opts.mute || !this.opts.audioUrl) return;
+    const url = this.opts.audioUrl(m); if (!url) return;
+    try{ const a = new Audio(url); a.loop = true; a.volume = .5; this._music = a; const pr = a.play(); if (pr && pr.catch) pr.catch(()=>{}); }catch(e){}
   }
   imgUrl(name){ return this.opts.imgUrl ? this.opts.imgUrl(name) : null; }
   stop(){
     this.stopped = true; clearInterval(this._timer); window.removeEventListener('resize', this._fit);
     if (this._ro) this._ro.disconnect();
-    try{ if (window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+    try{ if (this._voice) this._voice.pause(); if (this._music) this._music.pause(); }catch(e){}
     this.tasks.length = 0;
     if (this.wrap.parentNode) this.wrap.parentNode.removeChild(this.wrap);
   }

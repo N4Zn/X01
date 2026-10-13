@@ -58,7 +58,7 @@ const MOD = {
       p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1) } },
     grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1) } },
     seesaw: { name:'Bập bênh', desc:'Các vật đứng trên bập bênh; bên giá trị LỚN hơn chúi xuống. Chạm vào chính vật. 3 vật = 2 bập bênh nối nhau.', p: {} },
-    stack: { name:'Đống khối 3D', desc:'Đống khối (hoặc vật) đẳng cự với đúng số lượng của câu hỏi.', p: { color:SEL('Màu khối','random',['random','#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA']) } },
+    stack: { name:'Đống khối 3D', desc:'Khối (hoặc vật) đẳng cự đúng số lượng của câu hỏi, không che nhau: cụm sát nhau ngẫu nhiên trong lưới 3×3, thi thoảng 1–3 khối ra ngoài; không chồng tầng. Số đếm hiện NGOÀI hình, có gạch chỉ vào khối.', p: { color:SEL('Màu khối','random',['random','#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA']) } },
     props: { name:'Vật đặt tự do (props)', desc:'Mỗi lựa chọn là 1 vật tại 1 vị trí (hàng, cột, vòng tròn, lưới, ngẫu nhiên, cố định). Hình dạng mỗi vật vẽ theo mẫu `tpl` (danh sách đối tượng, biểu thức dùng opt/i/n/size). Dùng cho: trứng, bóng bay, cổng, cửa, khúc gỗ, vùng đặt đồ, số trên đồng hồ...',
       p: { layout:SEL('Bố cục','row',['row','col','circle','grid','random','fixed']), x0:FL('Từ x',.15,0,1), x1:FL('Đến x',.85,0,1), y0:FL('Từ y',.46,0,1), y1:FL('Đến y',.46,0,1),
            cx:FL('Tâm x (vòng tròn)',.5,0,1), cy:FL('Tâm y (vòng tròn)',.46,0,1), r:FL('Bán kính (đơn vị U)',.3,.05,.6), startDeg:FL('Góc bắt đầu (độ, theo kim đồng hồ từ số 12)',0,-360,360),
@@ -211,7 +211,7 @@ const VIEW = {
       else {
         card = UI.card(w.root, null, '', hex(P('bg')), pos.x, pos.y, cs, cs*tall, null).rt; card.alpha = .96;
         fig = w.drawItem(card, it, 0, P('label') ? cs*tall*.1 : 0, cs*P('fig'));
-        if (P('label')) UI.label(card, w.nameOf(it), 22, hex('#3A2A12'), 0, -cs*tall*.38, cs*.96, cs*tall*.26, false);
+        if (P('label')) UI.label(card, w.nameOf(it), 22, hex('#3A2A12'), 0, -cs*tall*.38, cs*.96, cs*tall*.26, false, 'card');
       }
       w.track(card);
       elems.push({ node: card, key: i, kind:'card', name: isNum ? String(it) : w.nameOf(it), fig, item: isNum ? null : it, itemId: isNum ? '' : it.id });
@@ -240,7 +240,7 @@ const VIEW = {
       const hh = P('hU') > 0 ? P('hU')*U : s*U*tall, py = P('yExpr') ? w.P(0, +w.ev(P('yExpr'), ex)).y : pts[i].y;
       const cont = UI.pic(w.root, null, col(255,255,255,0), pts[i].x, py, s*U, hh, true); cont.preserveAspect = false; w.track(cont);
       w.makeObjs(tpl.map(t=> Object.assign({ rel:true }, t)), cont, w.taskObjs, ex);
-      if (P('labelBelow')) UI.label(cont, w.nameOf(it), 26, WHITE, 0, -hh*.5 - U*.045, U*.5, U*.08);
+      if (P('labelBelow')) UI.label(cont, w.nameOf(it), 26, WHITE, 0, -hh*.5 - U*.045, U*.5, U*.08, undefined, 'card');
       if (P('anim') !== 'none') w.taskObjs.push({ node: cont, spec:{ anim:{ type: P('anim') === 'pulse' ? 'pulse' : 'bob', amp: P('anim') === 'float' ? .02 : .012, speed: P('anim') === 'float' ? 1.6 : 3 } }, extra:{}, cur:{}, animOn:true, x0: cont.x, y0: cont.y, t0: w.rng.next()*6.28 });
       elems.push({ node: cont, key: i, kind:'prop', name: w.nameOf(it), fig: null, item: it, itemId: it.id });
     });
@@ -301,7 +301,7 @@ const VIEW = {
       for (let side=0; side<2; side++){
         const ii = pr[swap ? 1 - side : side], it = Q.items[ii];
         const a = w.drawItem(w.root, it, pv.x, pv.y, size); w.track(a);
-        if (n === 2) UI.label(a, w.nameOf(it), 30, WHITE, 0, size*.62, size*1.6, size*.3);
+        if (n === 2) UI.label(a, w.nameOf(it), 30, WHITE, 0, size*.62, size*1.6, size*.3, undefined, 'card');
         sw.animal[side] = a; sw.items[side] = it; sw.local[side] = { x:(side === 0 ? -1 : 1)*plankLen*.32, y: thick*.5 + size*.5 };
         elems.push({ node: a, key: ii, kind:'item', name: w.nameOf(it), fig: null, item: it, itemId: it.id });
       }
@@ -324,58 +324,71 @@ const VIEW = {
       } };
     return V;
   },
+  /** Đống khối 3D — cụm khối đẳng cự SÁT NHAU, KHÔNG xếp tầng (mọi khối thấy mặt trên, không che nhau). Khối nằm ngẫu nhiên trong lưới 3×3, thi thoảng có 1–3 khối
+   *  "ra ngoài" cạnh cụm cho sinh động (xem cubeCells). Số đếm vẽ NGOÀI hình (hàng phía trên) có gạch chỉ xuống đúng khối. */
   stack(w, spec, Q){
     const P = k=> par('view', spec, k), count = Q.number, U = w.U, W = w.W, H = w.H;
-    const heights = makeStack(w, count), cp = P('color');
+    const cells = cubeCells(w, count), cp = P('color');
     const color = hex(cp === 'random' ? PALETTE[w.rand(0, PALETTE.length)] : cp), obj = Q.items[0] || null;
-    const s = Math.min(W*.9/6.2, H*.52/6.2, U*.11), cells = [];
-    for (let x=0;x<3;x++) for (let y=0;y<3;y++) for (let z=0;z<heights[x][y];z++) cells.push([x,y,z]);
-    cells.sort((a,b)=> (a[0]+a[1]+a[2]) - (b[0]+b[1]+b[2]));
-    const iso = c=> ({ x:(c[0]-c[1])*s, y:-(c[0]+c[1])*s*.5 + c[2]*s });
-    let minX=1e9, maxX=-1e9, minY=1e9, maxY=-1e9;
-    cells.forEach(c=>{ const p = iso(c); minX=Math.min(minX,p.x-s); maxX=Math.max(maxX,p.x+s); minY=Math.min(minY,p.y-s); maxY=Math.max(maxY,p.y+s); });
-    const pc = w.P(.5,.60), center = { x: pc.x - (minX+maxX)/2, y: pc.y - (minY+maxY)/2 };
+    cells.sort((a,b)=> (a[0]+a[1]) - (b[0]+b[1]));                      // sắp ổn định: xa người nhìn vẽ trước
+    const ux = c=> c[0]-c[1], uy = c=> -(c[0]+c[1])*.5;                  // đơn vị 's' (khối rộng 2s, ô liền kề sát nhau)
+    let uMinX=1e9, uMaxX=-1e9, uMinY=1e9, uMaxY=-1e9;
+    cells.forEach(c=>{ uMinX=Math.min(uMinX,ux(c)-1); uMaxX=Math.max(uMaxX,ux(c)+1); uMinY=Math.min(uMinY,uy(c)-1); uMaxY=Math.max(uMaxY,uy(c)+1); });
+    const uRow = uMaxY + 1.35, uTop = uRow + .45, n0 = cells.length;
+    const s = Math.min(W*.9/Math.max(uMaxX-uMinX, n0*1.1), H*.40/(uTop-uMinY), U*.11);
+    const minX = uMinX*s, maxX = uMaxX*s, rowY = uRow*s;
+    const pc = w.P(.5,.62), center = { x: pc.x - (minX+maxX)/2, y: pc.y - (uMinY + uTop)*s/2 };
     const cubes = cells.map(c=>{
-      const p = iso(c), n = obj ? w.drawItem(w.root, obj, center.x+p.x, center.y+p.y, 2*s*.9) : UI.pic(w.root, cubeSprite(color), WHITE, center.x+p.x, center.y+p.y, 2*s, 2*s);
+      const px = center.x + ux(c)*s, py = center.y + uy(c)*s, n = obj ? w.drawItem(w.root, obj, px, py, 2*s*.9) : UI.pic(w.root, cubeSprite(color), WHITE, px, py, 2*s, 2*s);
       n.scale = 0; w.track(n); return n;
     });
-    const V = { elems: [], ready: true, center, solvedAt: { x:center.x, y:center.y + s },
+    const V = { elems: [], ready: true, center, solvedAt: { x:center.x + (minX+maxX)/2, y:center.y + s },
       parts: cubes.map(c=> ({ show(){ w.run(tw.popIn(c, .25)); }, cover(){ c.scale = 0; }, hide(){ c.scale = 0; } })),
       hideAll(){ cubes.forEach(c=> c.scale = 0); }, setActive(){},
       *intro(){ for (const c of cubes){ if (c.dead) return; w.run(tw.popIn(c, .25)); yield .07; } },
       *countAloud(onDone){
-        const badges = [];
-        for (let i=0;i<cubes.length;i++){
-          if (cubes[i].dead) return;
-          const b = UI.pic(w.root, 'circle', col(38,26,77,.85), cubes[i].x, cubes[i].y + s*.5, s*.85, s*.85); UI.label(b, String(i+1), Math.round(s*.7), WHITE, 0, 0, s*.85, s*.85);
-          badges.push(b); w.track(b); w.run(tw.popIn(b, .2)); w.sfx('tap'); yield .4;
+        // đếm từ trái sang phải; số nằm ngoài hình (hàng trên), gạch nối chỉ xuống mặt trên của đúng khối đó
+        const order = cubes.map((c,i)=> i).sort((a,b)=> (cubes[a].x - cubes[b].x) || (cubes[b].y - cubes[a].y) || (a - b));
+        const n = order.length, bw = Math.max(maxX - minX, n*1.1*s), x0 = center.x + (minX+maxX)/2 - bw/2, by = center.y + rowY, shapes = [];
+        for (let k=0;k<n;k++){
+          const cb = cubes[order[k]]; if (cb.dead) return;
+          const bx = x0 + (k+.5)*bw/n, tx = cb.x, ty = cb.y + s*.5, dx = tx - bx, dy = ty - by, len = Math.hypot(dx, dy) - s*.4;
+          const ln = UI.pic(w.root, 'rect', col(38,26,77,.7), (bx+tx)/2, (by+ty)/2 - s*.1, Math.max(2, s*.06), Math.max(1, len));
+          ln.rot = Math.atan2(-dx, dy) * 180 / Math.PI; ln.scale = 0; w.track(ln); shapes.push(ln); w.run(tw.popIn(ln, .15));
+          const b = UI.pic(w.root, 'circle', col(38,26,77,.9), bx, by, s*.85, s*.85); UI.label(b, String(k+1), Math.round(s*.7), WHITE, 0, 0, s*.85, s*.85);
+          shapes.push(b); w.track(b); w.run(tw.popIn(b, .2)); w.sfx('tap'); yield .4;
         }
-        if (onDone) onDone(); yield 1.6; badges.forEach(b=> b.destroy());
+        if (onDone) onDone(); yield 1.6; shapes.forEach(b=> b.destroy());
       },
       solved(cb){ w.run(V.countAloud(cb)); },
       hintExtra(){ if (!V._counted){ V._counted = true; w.run(V.countAloud(null)); } } };
     return V;
   },
 };
-function makeStack(w, count){
-  const R = n=> w.rand(0, n);
-  for (let at=0; at<80; at++){
-    const h = [[0,0,0],[0,0,0],[0,0,0]]; h[R(3)][R(3)] = 1; let placed = 1, g = 0;
-    while (placed < count && g++ < 200){
-      const x = R(3), y = R(3); if (h[x][y] >= 3) continue;
-      let sup = h[x][y] > 0;
-      if (!sup) for (let dx=-1; dx<=1 && !sup; dx++) for (let dy=-1; dy<=1 && !sup; dy++){ const nx=x+dx, ny=y+dy; if (nx>=0&&nx<3&&ny>=0&&ny<3&&h[nx][ny]>0) sup = true; }
-      if (!sup) continue; h[x][y]++; placed++;
-    }
-    if (placed === count && noHidden(h)) return h;
+/** Chọn ô đặt khối: danh sách [x,y] (toạ độ lưới, 3×3 là x,y ∈ 0..2; "ra ngoài" là x hoặc y = -1 hoặc 3). Mỗi ô 1 khối, không tầng.
+ *  n ≥ 10: đủ 9 ô trong 3×3 + (n−9) khối ra ngoài. n 4..9: thi thoảng (40%) có 1–3 khối ra ngoài (r<6→0, r<8→1, r=8→2, r=9→3; luôn còn ≥ 3 khối trong cụm). Khối trong cụm: cụm LIỀN NHAU
+ *  ngẫu nhiên (mỗi ô mới kề ô đã có, kể cả chéo). Khối ra ngoài: ô vòng ngoài kề một khối đã có. Thứ tự gọi RNG PHẢI khớp FlowGens.CubeCells (C#). */
+function cubeCells(w, count){
+  const n = Math.max(1, count|0), R = k=> w.rand(0, k), g = []; for (let i=0;i<5;i++) g.push([0,0,0,0,0]);   // g[x+1][y+1]
+  let out = 0;
+  if (n >= 10) out = n - 9;
+  else if (n >= 4){ const r = R(10); out = r < 6 ? 0 : r < 8 ? 1 : r === 8 ? 2 : 3; out = Math.min(out, n - 3); }
+  const inside = n - out, adj = (x, y)=>{ for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++){ const nx=x+dx, ny=y+dy; if (nx>=-1&&nx<=3&&ny>=-1&&ny<=3&&g[nx+1][ny+1]) return true; } return false; };
+  const cluster = Math.min(inside, 9);
+  g[R(3)+1][R(3)+1] = 1; let placed = 1, guard = 0;
+  while (placed < cluster && guard++ < 400){
+    const x = R(3), y = R(3); if (g[x+1][y+1]) continue;
+    if (!adj(x, y)) continue; g[x+1][y+1] = 1; placed++;
   }
-  const f = [[0,0,0],[0,0,0],[0,0,0]]; for (let i=0;i<count;i++) f[i%3][Math.floor(i/3)%3]++; return f;
-}
-function noHidden(h){
-  for (let x=0;x<3;x++) for (let y=0;y<3;y++) for (let z=0;z<h[x][y];z++){
-    if (h[x][y] > z+1 && x+1<3 && h[x+1][y] > z && y+1<3 && h[x][y+1] > z) return false;
+  for (let i=0; placed < cluster && i < 9; i++){ const x = Math.floor(i/3), y = i%3; if (!g[x+1][y+1]){ g[x+1][y+1] = 1; placed++; } }
+  for (let k=0;k<out;k++){
+    const cand = [];
+    for (let x=-1;x<=3;x++) for (let y=-1;y<=3;y++){ if (x>=0&&x<=2&&y>=0&&y<=2) continue; if (!g[x+1][y+1] && adj(x, y)) cand.push([x,y]); }
+    if (!cand.length) break;
+    const c = cand[R(cand.length)]; g[c[0]+1][c[1]+1] = 1;
   }
-  return true;
+  const cells = []; for (let x=-1;x<=3;x++) for (let y=-1;y<=3;y++) if (g[x+1][y+1]) cells.push([x,y]);
+  return cells;
 }
 
 // ═════════════════════════ JUDGE ═══════════════════════════════════════════════
@@ -388,6 +401,7 @@ const JUDGE = {
     const onTap = function*(el){
       if (!w.active || answered || busy || !w.isReady()) return;
       const cx = { tapped: el, tap: { x: el.node.x, y: el.node.y }, mistakes };
+      w.playItem(Q.items && Q.items[el.key]);
       if (el.key === Q.target){
         answered = true; hint = false; busy = true;
         yield* w.fire('right', cx, w._stdRight.bind(w));
@@ -431,7 +445,7 @@ const JUDGE = {
           yield* w.fire('end', cx); finish(perfect, taps.slice());
         } else if (strip){ const nx = cur; strip.pulseSlot(nx, ()=> w.active && !finished && cur === nx); }
       } else {
-        total++; stepMist++; busy = true; yield* w.fire('wrong', cx, function*(){ w.sfx('tap'); w.run(tw.shake(el.node, .35, 10)); const t = T.wrong ? X.template(T.wrong, Object.assign({}, Q.vars, { name: el.name }), w.scope(cx)) : ''; if (t) w.say(t, w.P(.5,.14), hex('#BF360C'), 1.3); }); busy = false;
+        total++; stepMist++; busy = true; yield* w.fire('wrong', cx, function*(){ w.sfx('wrong'); w.run(tw.shake(el.node, .35, 10)); const t = T.wrong ? X.template(T.wrong, Object.assign({}, Q.vars, { name: el.name }), w.scope(cx)) : ''; if (t) w.say(t, w.P(.5,.14), hex('#BF360C'), 1.3); }); busy = false;
         if (w.stale(Q)) return;
         if (stepMist >= P('hintAfter') && !hint){
           hint = true; const at = cur, want = elems.find(e=> e.key === Q.seq[cur]);
@@ -495,6 +509,7 @@ const JUDGE = {
 const flowsOf = d=> (d.flows && d.flows.length) ? d.flows : (d.flow ? [d.flow] : []);
 class FlowWorld extends World {
   build(){
+    UI.textStyles = this.data.fonts || null;   // định dạng chữ theo vai trò: prompt | say | card | text (xem UI.label)
     this._items = []; this.ok = 0; this.taskNo = 0; this.gen = 0; this.active = false; this._ready = false; this._readyCbs = [];
     this.vars = JSON.parse(JSON.stringify(this.data.vars || {})); this._bags = {}; this.objs = []; this.taskObjs = []; this.elems = []; this._Q = null; this.flow = flowsOf(this.data)[0];
     const TH = this.data.theme || {}, bgc = TH.bg === undefined ? '#E3F2FD' : TH.bg, flc = TH.floor === undefined ? '#BBDEFB' : TH.floor;   // '' = không vẽ
@@ -502,7 +517,7 @@ class FlowWorld extends World {
     if (flc){ const f = UI.pic(this.root, 'square', hex(flc), 0, this.P(.5,.06).y, this.W, this.H*.14); f.preserveAspect = false; }
     this.makeObjs((this.data.scene || []).filter(o=> o.z !== 'front'), this.root, this.objs, {});
     this.makeObjs((this.data.scene || []).filter(o=> o.z === 'front'), this.root, this.objs, {});
-    this.prompt = UI.label(this.root, '', 40, WHITE, 0, this.P(.5,.92).y, this.W*.94, this.H*.13);
+    this.prompt = UI.label(this.root, '', 40, WHITE, 0, this.P(.5,.92).y, this.W*.94, this.H*.13, undefined, 'prompt');
   }
   update(dt, time){ this.updateObjs(this.objs.concat(this.taskObjs), dt, time); }
   track(n){ this._items.push(n); return n; }
@@ -530,7 +545,7 @@ class FlowWorld extends World {
     Object.assign(info, { id:Q.id, topic:f.gen.type, description:Q.desc, answers:Q.answers, correct:Q.target });
     this.makeObjs((f.objects || []).filter(o=> o.z !== 'front'), this.root, this.taskObjs, {});
     const first = this.taskNo === 1 && T.first ? T.first : T.prompt;
-    this.prompt.text = X.template(first, Q.vars, this.scope()); this.voice(this.prompt.text);
+    this.prompt.text = X.template(first, Q.vars, this.scope()); this.playItem(Q.items && Q.target >= 0 ? Q.items[Q.target] : null);
     const V = (f.views || []).map(s=> VIEW[s.type](this, s, Q));
     this.makeObjs((f.objects || []).filter(o=> o.z === 'front'), this.root, this.taskObjs, {});
     this.objs.filter(o=> (o.spec||{}).z === 'front').forEach(o=> o.node.setAsLast()); this.prompt.setAsLast();
@@ -561,7 +576,7 @@ class FlowWorld extends World {
         this.sfx('plop');
       }
       defer.forEach(v=>{ v.elems.forEach(e=>{ e.node.active = true; this.run(tw.popIn(e.node, .25)); }); });
-      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.voice(this.prompt.text); }
+      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.playItem(Q.items && Q.target >= 0 ? Q.items[Q.target] : null); }
     }
     while (V.some(v=> v.ready === false)) { if (gen !== this.gen) return; yield null; }
     this._ready = true; const cbs = this._readyCbs; this._readyCbs = []; cbs.forEach(cb=> cb());
@@ -570,6 +585,7 @@ class FlowWorld extends World {
 Game.WorldClass = FlowWorld;
 
 F.MOD = MOD; F.par = par; F.flowsOf = flowsOf; F.GEN = GEN; F.FlowWorld = FlowWorld;
+F.cubeCells = cubeCells;
 /** Kiểm tra cấu hình trước khi chạy/xuất; trả về chuỗi lỗi hoặc null. */
 F.validate = function(d){
   const flows = flowsOf(d); if (!flows.length) return 'Thiếu cấu hình flow.';

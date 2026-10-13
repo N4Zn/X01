@@ -129,7 +129,7 @@ public abstract class StoryWorld
     /// <summary>Hộp thoại ngắn nổi lên rồi tự tan — phản hồi vui khi chọn sai / khen khi đúng.</summary>
     protected void Say(string text, Vector2 pos, Color color, float seconds = 1.6f)
     {
-        var t = StoryUI.Label(root, text, 34, color, pos, new Vector2(W * 0.92f, 90f));
+        var t = StoryUI.Label(root, text, 34, color, pos, new Vector2(W * 0.92f, 90f), TextAnchor.MiddleCenter, true, "say");
         t.transform.SetAsLastSibling();
         Run(SayRoutine(t, seconds));
     }

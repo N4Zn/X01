@@ -122,15 +122,37 @@ public static class StoryUI
         return img;
     }
 
-    public static Text Label(Transform parent, string text, int fontSize, Color color, Vector2 pos, Vector2 size,
-                             TextAnchor anchor = TextAnchor.MiddleCenter, bool outline = true)
+    /// <summary>Định dạng chữ do người soạn đặt (web builder: fsData.fonts / look.style). Trường nào không đặt thì giữ mặc định.</summary>
+    public class TextStyle
     {
+        public float scale = 1f;
+        public bool hasColor; public Color color = Color.white;
+        public bool hasBold; public bool bold = true;
+        public bool italic;
+        public string outline = "";   // "" = mặc định, "none" = không viền, "#RRGGBB" = viền màu
+        public float outlineW = 2f;
+        public bool shadow;
+    }
+    /// <summary>Vai trò chữ → định dạng: prompt (câu hỏi) | say (lời khen/nhắc) | card (chữ trên thẻ/vật) | text (chữ trong cảnh). null = mặc định.</summary>
+    public static Dictionary<string, TextStyle> TextStyles;
+
+    public static Text Label(Transform parent, string text, int fontSize, Color color, Vector2 pos, Vector2 size,
+                             TextAnchor anchor = TextAnchor.MiddleCenter, bool outline = true, string role = null, TextStyle style = null)
+    {
+        TextStyle st = style;
+        if (st == null && role != null && TextStyles != null) TextStyles.TryGetValue(role, out st);
+        if (st != null)
+        {
+            if (st.scale > 0f && Mathf.Abs(st.scale - 1f) > 0.001f) fontSize = Mathf.Max(8, Mathf.RoundToInt(fontSize * st.scale));
+            if (st.hasColor) color = st.color;
+        }
         var rt = Rect(parent, "Label", pos, size);
         var t = rt.gameObject.AddComponent<Text>();
         t.font = Font;
         t.text = text;
         t.fontSize = fontSize;
-        t.fontStyle = FontStyle.Bold;
+        bool bold = st != null && st.hasBold ? st.bold : true, italic = st != null && st.italic;
+        t.fontStyle = bold ? (italic ? FontStyle.BoldAndItalic : FontStyle.Bold) : (italic ? FontStyle.Italic : FontStyle.Normal);
         t.alignment = anchor;
         t.color = color;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -139,11 +161,25 @@ public static class StoryUI
         t.resizeTextMinSize = Mathf.Max(10, fontSize / 2);
         t.resizeTextMaxSize = fontSize;
         t.raycastTarget = false;
-        if (outline)
+        string oc = st != null ? st.outline : "";
+        if (oc == "none") { }
+        else if (!string.IsNullOrEmpty(oc))
+        {
+            var o = rt.gameObject.AddComponent<Outline>();
+            o.effectColor = Hex(oc);
+            o.effectDistance = new Vector2(st.outlineW, -st.outlineW);
+        }
+        else if (outline)
         {
             var o = rt.gameObject.AddComponent<Outline>();
             o.effectColor = new Color(0f, 0f, 0f, 0.85f);
             o.effectDistance = new Vector2(2f, -2f);
+        }
+        if (st != null && st.shadow)
+        {
+            var sh = rt.gameObject.AddComponent<Shadow>();
+            sh.effectColor = new Color(0f, 0f, 0f, 0.55f);
+            sh.effectDistance = new Vector2(3f, -4f);
         }
         return t;
     }
@@ -190,9 +226,9 @@ public static class StoryUI
         if (!string.IsNullOrEmpty(label))
         {
             if (c.hasIcon)
-                c.label = Label(bg.transform, label, Mathf.Max(18, fontSize - 8), Color.white, new Vector2(0f, -size.y * 0.38f), new Vector2(size.x * 0.96f, size.y * 0.26f));
+                c.label = Label(bg.transform, label, Mathf.Max(18, fontSize - 8), Color.white, new Vector2(0f, -size.y * 0.38f), new Vector2(size.x * 0.96f, size.y * 0.26f), TextAnchor.MiddleCenter, true, "card");
             else
-                c.label = Label(bg.transform, label, fontSize, Color.white, Vector2.zero, new Vector2(size.x * 0.92f, size.y * 0.86f));
+                c.label = Label(bg.transform, label, fontSize, Color.white, Vector2.zero, new Vector2(size.x * 0.92f, size.y * 0.86f), TextAnchor.MiddleCenter, true, "card");
         }
         if (onTap != null) OnTap(bg.gameObject, onTap);
         return c;

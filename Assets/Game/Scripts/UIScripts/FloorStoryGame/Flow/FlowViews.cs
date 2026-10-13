@@ -50,7 +50,7 @@ public static class FlowViews
                     var c = card.bg.color; c.a = 0.96f; card.bg.color = c;
                     bool lbl = P(spec, "label") != 0;
                     fig = w.DrawItem(FsNode.Of(card.rt), it, 0, lbl ? cs * tall * 0.1f : 0f, cs * (float)P(spec, "fig"));
-                    if (lbl) StoryUI.Label(card.rt, w.NameOf(it), 22, StoryUI.Hex("#3A2A12"), new Vector2(0, -cs * tall * 0.38f), new Vector2(cs * 0.96f, cs * tall * 0.26f), TextAnchor.MiddleCenter, false);
+                    if (lbl) StoryUI.Label(card.rt, w.NameOf(it), 22, StoryUI.Hex("#3A2A12"), new Vector2(0, -cs * tall * 0.38f), new Vector2(cs * 0.96f, cs * tall * 0.26f), TextAnchor.MiddleCenter, false, "card");
                 }
                 var node = FsNode.Of(card.rt); w.Track(node);
                 Elems.Add(new FsElem { node = node, key = i, kind = "card", name = isNum ? FsExpr.Str(list[i]) : w.NameOf(it), fig = fig, item = it as Dictionary<string, object>, itemId = isNum ? "" : J.Str(it, "id") });
@@ -137,7 +137,7 @@ public static class FlowViews
                 var tplRel = new List<object>();
                 foreach (var t in tpl) { var d = new Dictionary<string, object>((Dictionary<string, object>)t); d["rel"] = 1.0; tplRel.Add(d); }
                 w.MakeObjs(tplRel, contN, w.TaskObjs, ex);
-                if (P(spec, "labelBelow") != 0) StoryUI.Label(cont.rectTransform, w.NameOf(it), 26, Color.white, new Vector2(0, -hh * 0.5f - U * 0.045f), new Vector2(U * 0.5f, U * 0.08f));
+                if (P(spec, "labelBelow") != 0) StoryUI.Label(cont.rectTransform, w.NameOf(it), 26, Color.white, new Vector2(0, -hh * 0.5f - U * 0.045f), new Vector2(U * 0.5f, U * 0.08f), TextAnchor.MiddleCenter, true, "card");
                 string an = S(spec, "anim");
                 if (an != "none")
                 {
@@ -267,7 +267,7 @@ public static class FlowViews
                 {
                     int ii = pairs[s][swap ? 1 - side : side]; var it = items[ii];
                     var a = w.DrawItem(FsNode.Of(w.Root), it, pv.x, pv.y, size); w.Track(a);
-                    if (n == 2) StoryUI.Label(a.rt, w.NameOf(it), 30, Color.white, new Vector2(0, size * 0.62f), new Vector2(size * 1.6f, size * 0.3f));
+                    if (n == 2) StoryUI.Label(a.rt, w.NameOf(it), 30, Color.white, new Vector2(0, size * 0.62f), new Vector2(size * 1.6f, size * 0.3f), TextAnchor.MiddleCenter, true, "card");
                     sw.animal[side] = a; sw.items[side] = it; sw.local[side] = new Vector2((side == 0 ? -1 : 1) * plankLen * 0.32f, thick * 0.5f + size * 0.5f);
                     if (a.G != null) a.G.raycastTarget = true;
                     Elems.Add(new FsElem { node = a, key = ii, kind = "item", name = w.NameOf(it), item = it as Dictionary<string, object>, itemId = J.Str(it, "id") });
@@ -300,83 +300,72 @@ public static class FlowViews
         }
     }
 
-    // ── stack ──
+    // ── stack ── (khớp view stack của fs_flow.js: cụm khối sát nhau, không xếp tầng; ô chọn bởi FlowGens.CubeCells; số đếm vẽ ngoài hình có gạch chỉ)
     public sealed class StackView : FsView
     {
-        readonly FlowWorld _w; readonly List<RectTransform> _cubes = new List<RectTransform>(); readonly float _s; bool _counted;
+        readonly FlowWorld _w; readonly List<RectTransform> _cubes = new List<RectTransform>(); readonly float _s, _minX, _maxX, _rowY; readonly Vector2 _center; bool _counted;
         public Vector2 SolvedAt;
         public StackView(FlowWorld w, object spec, Dictionary<string, object> q)
         {
             _w = w; int count = (int)J.Num(q, "number"); float U = w.Unit, W = w.WorldW, H = w.WorldH;
-            var heights = MakeStack(w, count); string cp = S(spec, "color");
+            var cellList = FlowGens.CubeCells(w, count); string cp = S(spec, "color");
             var color = StoryUI.Hex(cp == "random" ? Palette[w.Rng.Range(0, Palette.Length)] : cp);
             var its = J.Arr(J.Get(q, "items")); object obj = its.Count > 0 ? its[0] : null;
-            float s = Mathf.Min(W * 0.9f / 6.2f, H * 0.52f / 6.2f, U * 0.11f); _s = s;
-            var cells = new List<Vector3Int>();
-            for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++) for (int z = 0; z < heights[x, y]; z++) cells.Add(new Vector3Int(x, y, z));
-            var sorted = new List<Vector3Int>(cells);
-            // sắp xếp ổn định theo (x+y+z) tăng dần — khớp Array.sort của JS (ổn định)
+            var sorted = new List<Vector3Int>();
+            foreach (var cc in cellList) sorted.Add(new Vector3Int(cc[0], cc[1], 0));
+            // sắp xếp ổn định theo (x+y+z) tăng dần — khớp Array.sort (ổn định) của JS
             for (int i = 1; i < sorted.Count; i++) { var c = sorted[i]; int j = i - 1; while (j >= 0 && (sorted[j].x + sorted[j].y + sorted[j].z) > (c.x + c.y + c.z)) { sorted[j + 1] = sorted[j]; j--; } sorted[j + 1] = c; }
-            Vector2 Iso(Vector3Int c) => new Vector2((c.x - c.y) * s, -(c.x + c.y) * s * 0.5f + c.z * s);
-            float minX = 1e9f, maxX = -1e9f, minY = 1e9f, maxY = -1e9f;
-            foreach (var c in sorted) { var p = Iso(c); minX = Mathf.Min(minX, p.x - s); maxX = Mathf.Max(maxX, p.x + s); minY = Mathf.Min(minY, p.y - s); maxY = Mathf.Max(maxY, p.y + s); }
-            var pc = w.PP(0.5f, 0.60f); var center = pc - new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
+            float Ux(Vector3Int c) => c.x - c.y; float Uy(Vector3Int c) => -(c.x + c.y) * 0.5f + c.z;
+            float uMinX = 1e9f, uMaxX = -1e9f, uMinY = 1e9f, uMaxY = -1e9f;
+            foreach (var c in sorted) { uMinX = Mathf.Min(uMinX, Ux(c) - 1f); uMaxX = Mathf.Max(uMaxX, Ux(c) + 1f); uMinY = Mathf.Min(uMinY, Uy(c) - 1f); uMaxY = Mathf.Max(uMaxY, Uy(c) + 1f); }
+            float uRow = uMaxY + 1.35f, uTop = uRow + 0.45f; int n0 = sorted.Count;
+            float s = Mathf.Min(W * 0.9f / Mathf.Max(uMaxX - uMinX, n0 * 1.1f), H * 0.40f / (uTop - uMinY), U * 0.11f); _s = s;
+            _minX = uMinX * s; _maxX = uMaxX * s; _rowY = uRow * s;
+            var pc = w.PP(0.5f, 0.62f); var center = new Vector2(pc.x - (_minX + _maxX) * 0.5f, pc.y - (uMinY + uTop) * s * 0.5f); _center = center;
             foreach (var c in sorted)
             {
-                var p = Iso(c); RectTransform rt;
-                if (obj != null) rt = w.DrawItem(FsNode.Of(w.Root), obj, center.x + p.x, center.y + p.y, 2f * s * 0.9f).rt;
+                float px = center.x + Ux(c) * s, py = center.y + Uy(c) * s; RectTransform rt;
+                if (obj != null) rt = w.DrawItem(FsNode.Of(w.Root), obj, px, py, 2f * s * 0.9f).rt;
                 else
                 {
-                    rt = StoryUI.Rect(w.Root, "Cube", center + p, Vector2.one * 2f * s);
+                    rt = StoryUI.Rect(w.Root, "Cube", new Vector2(px, py), Vector2.one * 2f * s);
                     var g = rt.gameObject.AddComponent<StoryCube>(); g.color = color; g.raycastTarget = false;
                 }
                 rt.localScale = Vector3.zero; w.Track(FsNode.Of(rt)); _cubes.Add(rt);
             }
-            SolvedAt = new Vector2(center.x, center.y + s);
+            SolvedAt = new Vector2(center.x + (_minX + _maxX) * 0.5f, center.y + s);
             foreach (var cb in _cubes) { var r = cb; Parts.Add(new FsPart { Show = () => _w.Go(StoryUI.PopIn(r, 0.25f)), Cover = () => r.localScale = Vector3.zero, Hide = () => r.localScale = Vector3.zero }); }
         }
         public override void HideAll() { foreach (var c in _cubes) c.localScale = Vector3.zero; }
         public override IEnumerator Intro() { foreach (var c in _cubes) { if (c == null) yield break; _w.Go(StoryUI.PopIn(c, 0.25f)); yield return new WaitForSeconds(0.07f); } }
         public IEnumerator CountAloud(Action onDone)
         {
-            var badges = new List<GameObject>();
-            for (int i = 0; i < _cubes.Count; i++)
+            // đếm từ trái sang phải; số nằm ngoài hình (hàng trên), gạch nối chỉ xuống mặt trên của đúng khối đó
+            var order = new List<int>(); for (int i = 0; i < _cubes.Count; i++) order.Add(i);
+            order.Sort((a, b) =>
             {
-                if (_cubes[i] == null) yield break;
-                var pos = _cubes[i].anchoredPosition + new Vector2(0, _s * 0.5f);
-                var b = StoryUI.Pic(_w.Root, "Badge", ShapeSprites.Circle, new Color(0.15f, 0.1f, 0.3f, 0.85f), pos, Vector2.one * _s * 0.85f);
-                StoryUI.Label(b.transform, (i + 1).ToString(), Mathf.RoundToInt(_s * 0.7f), Color.white, Vector2.zero, Vector2.one * _s * 0.85f);
-                badges.Add(b.gameObject); _w.Track(FsNode.Of(b)); _w.Go(StoryUI.PopIn(b.rectTransform, 0.2f)); _w.Sfx("tap");
+                var pa = _cubes[a].anchoredPosition; var pb = _cubes[b].anchoredPosition;
+                int c = pa.x.CompareTo(pb.x); if (c != 0) return c;
+                c = pb.y.CompareTo(pa.y); return c != 0 ? c : a.CompareTo(b);
+            });
+            int n = order.Count; float s = _s, bw = Mathf.Max(_maxX - _minX, n * 1.1f * s), x0 = _center.x + (_minX + _maxX) * 0.5f - bw * 0.5f, by = _center.y + _rowY;
+            var shapes = new List<GameObject>();
+            for (int k = 0; k < n; k++)
+            {
+                var cb = _cubes[order[k]]; if (cb == null) yield break;
+                float bx = x0 + (k + 0.5f) * bw / n, tx = cb.anchoredPosition.x, ty = cb.anchoredPosition.y + s * 0.5f, dx = tx - bx, dy = ty - by, len = Mathf.Sqrt(dx * dx + dy * dy) - s * 0.4f;
+                var ln = StoryUI.Pic(_w.Root, "Line", ShapeSprites.Square, new Color(0.15f, 0.1f, 0.3f, 0.7f), new Vector2((bx + tx) * 0.5f, (by + ty) * 0.5f - s * 0.1f), new Vector2(Mathf.Max(2f, s * 0.06f), Mathf.Max(1f, len)));
+                ln.rectTransform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(-dx, dy) * Mathf.Rad2Deg);
+                ln.rectTransform.localScale = Vector3.zero; _w.Track(FsNode.Of(ln)); shapes.Add(ln.gameObject); _w.Go(StoryUI.PopIn(ln.rectTransform, 0.15f));
+                var b = StoryUI.Pic(_w.Root, "Badge", ShapeSprites.Circle, new Color(0.15f, 0.1f, 0.3f, 0.9f), new Vector2(bx, by), Vector2.one * s * 0.85f);
+                StoryUI.Label(b.transform, (k + 1).ToString(), Mathf.RoundToInt(s * 0.7f), Color.white, Vector2.zero, Vector2.one * s * 0.85f);
+                shapes.Add(b.gameObject); _w.Track(FsNode.Of(b)); _w.Go(StoryUI.PopIn(b.rectTransform, 0.2f)); _w.Sfx("tap");
                 yield return new WaitForSeconds(0.4f);
             }
             onDone?.Invoke();
             yield return new WaitForSeconds(1.6f);
-            foreach (var b in badges) if (b != null) UnityEngine.Object.Destroy(b);
+            foreach (var b in shapes) if (b != null) UnityEngine.Object.Destroy(b);
         }
         public override void HintExtra() { if (!_counted) { _counted = true; _w.Go(CountAloud(null)); } }
-
-        static int[,] MakeStack(FlowWorld w, int count)
-        {
-            int R(int n) => w.Rng.Range(0, n);
-            for (int attempt = 0; attempt < 80; attempt++)
-            {
-                var h = new int[3, 3]; int a0 = R(3), b0 = R(3); h[a0, b0] = 1; int placed = 1, g = 0;
-                while (placed < count && g++ < 200)
-                {
-                    int x = R(3), y = R(3); if (h[x, y] >= 3) continue;
-                    bool sup = h[x, y] > 0;
-                    if (!sup) for (int dx = -1; dx <= 1 && !sup; dx++) for (int dy = -1; dy <= 1 && !sup; dy++) { int nx = x + dx, ny = y + dy; if (nx >= 0 && nx < 3 && ny >= 0 && ny < 3 && h[nx, ny] > 0) sup = true; }
-                    if (!sup) continue; h[x, y]++; placed++;
-                }
-                if (placed == count && NoHidden(h)) return h;
-            }
-            var f = new int[3, 3]; for (int i = 0; i < count; i++) f[i % 3, (i / 3) % 3]++; return f;
-        }
-        static bool NoHidden(int[,] h)
-        {
-            for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++) for (int z = 0; z < h[x, y]; z++)
-                if (h[x, y] > z + 1 && x + 1 < 3 && h[x + 1, y] > z && y + 1 < 3 && h[x, y + 1] > z) return false;
-            return true;
-        }
     }
 }

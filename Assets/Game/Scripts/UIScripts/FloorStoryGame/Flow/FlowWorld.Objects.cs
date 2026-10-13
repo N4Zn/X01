@@ -63,7 +63,7 @@ public sealed partial class FlowWorld
             int fs = Mathf.RoundToInt((float)(fsv != 0 ? fsv : 0.06) * U);
             string col = FsExpr.Str(Ev(J.Get(lk, "color"), extra)); if (col == "") col = "#FFFFFF";
             bool outline = !(lk.ContainsKey("outline") && J.Num(lk, "outline", 1) == 0);
-            var t = StoryUI.Label(parent.rt, FsExpr.Str(Ev(J.Get(lk, "text"), extra)), fs, Hex(col), pos, new Vector2(w != 0 ? w : U, h != 0 ? h : U * 0.2f), TextAnchor.MiddleCenter, outline);
+            var t = StoryUI.Label(parent.rt, FsExpr.Str(Ev(J.Get(lk, "text"), extra)), fs, Hex(col), pos, new Vector2(w != 0 ? w : U, h != 0 ? h : U * 0.2f), TextAnchor.MiddleCenter, outline, "text", StyleFrom(J.Obj(lk, "style")));
             return FsNode.Of(t);
         }
         string itemId = lk.ContainsKey("item") ? FsExpr.Str(Ev(J.Get(lk, "item"), extra)) : "";
@@ -415,7 +415,7 @@ public sealed partial class FlowWorld
     public IEnumerator StdRight(ActCtx cx)
     {
         var T = J.Obj(Flow, "text") ?? new Dictionary<string, object>();
-        SfxRight();
+        if (SoundOf("right") != "") PlayFile(SoundOf("right"), false); else SfxRight();
         int t = (int)J.Num(Q, "target", -1);
         foreach (var e in Elems)
         {
@@ -431,7 +431,7 @@ public sealed partial class FlowWorld
     public IEnumerator StdWrong(ActCtx cx)
     {
         var T = J.Obj(Flow, "text") ?? new Dictionary<string, object>();
-        Sfx("tap");
+        if (SoundOf("wrong") != "") PlayFile(SoundOf("wrong"), false); else Sfx("tap");
         if (cx.tapped != null) Run(StoryUI.Shake(cx.tapped.node.rt, 0.35f, 10f));
         string wrong = J.Str(T, "wrong");
         if (wrong != "")

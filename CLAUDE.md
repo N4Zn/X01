@@ -94,6 +94,7 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Báo cáo đánh giá năng lực học sinh (công thức điểm, mã HS, tool dựng báo cáo) | `docs/danh-gia-nang-luc/README.md` |
 | Game FloorStory (Ngày của bé, Hình học, Bé khỏe mạnh, Vỡ bóng bay, Sàn kỳ diệu, Dài-ngắn, Trên-dưới, Đồng hồ khổng lồ) | `docs/floor-story-game.md`, `docs/floor-story-mechanics.md` (web builder "flow") |
 | Import zip GenericGame, scene riêng | `docs/generic-game-import.md`, `WebTools/GenericGameBuilder/CLAUDE.md` |
+| Thiết kế lại web game builder (8 lớp, thời gian thực, giao diện kiểu PowerPoint) — bản nháp | `docs/game-builder-design.md` |
 | Build `.aar` (Android modules) | `/build-aar` hoặc `sh Tools/build-aar.sh changed`, `handoff/build-aar.md` |
 | Giao thức Java↔Unity (message, JSON settings) | `docs/contracts/java-unity-bridge.md` |
 | Vì sao kiến trúc như vậy | `docs/adr/` |

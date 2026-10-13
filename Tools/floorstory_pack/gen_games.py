@@ -68,7 +68,7 @@ GAMES['NangNhe'] = dict(title='Nặng hay nhẹ', sync=False, theme={'bg': '#E1F
               text=TXT(prompt='Con nào {WORD} {suffix}?', say='{label} {word} {suffix}!', wrong='Nhìn bên nào chúi xuống nhé!')))
 
 GAMES['DemKhoiHop'] = dict(title='Đếm khối hộp', sync=False, theme={'bg': '#F3E5F5', 'floor': '#E1BEE7'}, items=[],
-    flow=dict(gen={'type': 'number', 'p': {}}, views=[{'type': 'stack', 'p': {}}, CARDS(source='options', y=.33, sizeU=.22, tall=1)], judge=EQ(finishSec=2.2),
+    flow=dict(gen={'type': 'number', 'p': {'maxCount': 10}}, views=[{'type': 'stack', 'p': {}}, CARDS(source='options', y=.33, sizeU=.22, tall=1)], judge=EQ(finishSec=2.2),
               text=TXT(prompt='Có bao nhiêu khối hộp?', say='{count} khối hộp!', wrong='')))
 
 # ═══ 7: Trứng màu sắc ══════════════════════════════════════════════════════════
@@ -332,7 +332,7 @@ GAMES['DongHoKhongLo'] = dict(title='Đồng hồ khổng lồ', sync=False, the
 DESC = {
     'HinhDonGian': 'Nghe tên hình → chạm đúng hình (mỗi hình 1 màu cố định). 2 đội cùng câu, chờ nhau.', 'NhanBietMau': 'Nghe tên màu → chạm đúng màu.',
     'NhoChuoiHinh': 'Hiện từng hình rồi úp lại → chạm theo đúng thứ tự trái → phải.', 'LatTheNhoGiong': 'Lật 2 thẻ; giống nhau thì ăn +1 điểm, khác nhau thì úp lại.',
-    'NangNhe': 'Bập bênh nghiêng → chạm con nặng/nhẹ nhất.', 'DemKhoiHop': 'Đống khối 3D → chạm số đúng; sai 2 lần thì đếm 1,2,3.',
+    'NangNhe': 'Bập bênh nghiêng → chạm con nặng/nhẹ nhất.', 'DemKhoiHop': 'Cụm khối 3D sát nhau (tối đa 10 khối) → chạm số đúng; sai 2 lần thì đếm 1,2,3 (số nằm ngoài hình).',
     'TrungMauSac': 'Chạm trứng đúng màu → nở hoa + trái cây cùng màu.', 'NgayCuaBe': 'Trời đổi theo buổi; chọn việc hợp với buổi (biến period).',
     'HinhHoc': 'Xây nhà từ bóng đen: chọn hình vừa khít, hình bay vào chỗ, nhà xong thì xây nhà mới.', 'BeKhoeManh': 'Bi cần gì thì cho cái đó; đủ 5 sao thì Bi lớn lên.',
     'VoBongBay': 'Vỡ bóng đúng màu → con vật chui ra.', 'SanKyDieu': 'Chạm đâu mọc hoa/sao/tim/bóng/cây đó (không đúng/sai).', 'CauBacQua': 'Luân phiên: chọn khúc gỗ dài hơn sông / chọn cửa vừa cỡ con vật.',

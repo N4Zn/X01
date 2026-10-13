@@ -168,13 +168,29 @@ const UI = {
     const n = new Node(parent, 'img', 0,0,0,0); n._fill = true; n.el.classList.add('fs-fill'); n.el.style.width = '100%'; n.el.style.height = '100%'; n.el.style.transform = 'none';
     n._sprite = sprite || null; n._color = color || WHITE; n._paint(); return n;
   },
-  label(parent, text, fontSize, color, x,y,w,h, outline){
+  /** Chữ. `role` ('prompt' câu hỏi | 'say' lời nói | 'card' chữ trên thẻ/vật | 'text' chữ trong cảnh) + `style` riêng lẻ → định dạng
+   *  lấy từ UI.textStyles[role] (data.fonts) rồi đè bằng `style`: {scale, color, bold, italic, outline, outlineW, shadow}. */
+  label(parent, text, fontSize, color, x,y,w,h, outline, role, style){
+    const st = Object.assign({}, (role && UI.textStyles && UI.textStyles[role]) || {}, style || {});
+    if (+st.scale > 0) fontSize = fontSize * (+st.scale);
+    if (st.color) color = hex(st.color);
     const n = new Node(parent, 'text', x,y,w,h); n._fs = fontSize; n._color = color || WHITE;
     n.el.style.color = rgba(n._color);
-    if (outline !== false) n.el.style.textShadow = '2px 2px 0 rgba(0,0,0,.85), -2px 2px 0 rgba(0,0,0,.85), 2px -2px 0 rgba(0,0,0,.85), -2px -2px 0 rgba(0,0,0,.85)';
+    if (st.bold !== undefined) n.el.style.fontWeight = st.bold ? '800' : '400';
+    if (st.italic) n.el.style.fontStyle = 'italic';
+    const sh = [];
+    if (st.outline === undefined || st.outline === null || st.outline === ''){ if (outline !== false) sh.push(UI.outlineCss('#000000', 2, .85)); }
+    else if (st.outline !== 'none'){ sh.push(UI.outlineCss(st.outline, +st.outlineW > 0 ? +st.outlineW : 2, 1)); }
+    if (st.shadow) sh.push('3px 4px 6px rgba(0,0,0,.55)');
+    if (sh.length) n.el.style.textShadow = sh.join(',');
     n.text = text;
     return n;
   },
+  outlineCss(color, w, a){
+    const c = hex(color), cs = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + (a == null ? 1 : a) + ')';
+    return [[w,w],[-w,w],[w,-w],[-w,-w],[0,w],[0,-w],[w,0],[-w,0]].map(p=> p[0] + 'px ' + p[1] + 'px 0 ' + cs).join(',');
+  },
+  textStyles: null,
   onTap(node, cb){
     node._tap = cb;
     if (!node._tapBound){
@@ -204,8 +220,8 @@ const UI = {
       c.icon = UI.pic(b, sprite, WHITE, 0, lh*.5, w*.86, h*.9 - lh);
     }
     if (label){
-      c.label = sprite ? UI.label(b, label, Math.max(18, fontSize-8), WHITE, 0, -h*.38, w*.96, h*.26)
-                       : UI.label(b, label, fontSize, WHITE, 0, 0, w*.92, h*.86);
+      c.label = sprite ? UI.label(b, label, Math.max(18, fontSize-8), WHITE, 0, -h*.38, w*.96, h*.26, undefined, 'card')
+                       : UI.label(b, label, fontSize, WHITE, 0, 0, w*.92, h*.86, undefined, 'card');
     }
     if (onTap) UI.onTap(b, onTap);
     return c;

@@ -23,6 +23,43 @@ public interface IFlowCore : IFsEnv
 /// </summary>
 public static class FlowGens
 {
+    /// <summary>
+    /// Ô đặt khối cho view stack (đếm khối): danh sách [x,y] (3×3 là x,y ∈ 0..2; "ra ngoài" là x hoặc y = -1 hoặc 3). Mỗi ô 1 khối, không tầng.
+    /// n ≥ 10: đủ 9 ô trong 3×3 + (n−9) khối ra ngoài. n 4..9: thi thoảng 1–3 khối ra ngoài (r&lt;6→0, r&lt;8→1, r=8→2, r=9→3; luôn còn ≥ 3 khối trong cụm).
+    /// Cụm trong 3×3 LIỀN NHAU (mỗi ô mới kề ô đã có, kể cả chéo); khối ra ngoài kề một khối đã có. Thứ tự gọi RNG KHỚP cubeCells (fs_flow.js).
+    /// </summary>
+    public static List<int[]> CubeCells(IFlowCore w, int count)
+    {
+        int n = Math.Max(1, count); int R(int k) => w.Rng.Range(0, k);
+        var g = new bool[5, 5];   // g[x+1, y+1]
+        int outCount = 0;
+        if (n >= 10) outCount = n - 9;
+        else if (n >= 4) { int r = R(10); outCount = r < 6 ? 0 : r < 8 ? 1 : r == 8 ? 2 : 3; outCount = Math.Min(outCount, n - 3); }
+        int inside = n - outCount, cluster = Math.Min(inside, 9);
+        bool Adj(int x, int y)
+        {
+            for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) { int nx = x + dx, ny = y + dy; if (nx >= -1 && nx <= 3 && ny >= -1 && ny <= 3 && g[nx + 1, ny + 1]) return true; }
+            return false;
+        }
+        int a0 = R(3), b0 = R(3); g[a0 + 1, b0 + 1] = true; int placed = 1, guard = 0;
+        while (placed < cluster && guard++ < 400)
+        {
+            int x = R(3), y = R(3); if (g[x + 1, y + 1]) continue;
+            if (!Adj(x, y)) continue; g[x + 1, y + 1] = true; placed++;
+        }
+        for (int i = 0; placed < cluster && i < 9; i++) { int x = i / 3, y = i % 3; if (!g[x + 1, y + 1]) { g[x + 1, y + 1] = true; placed++; } }
+        for (int k = 0; k < outCount; k++)
+        {
+            var cand = new List<int[]>();
+            for (int x = -1; x <= 3; x++) for (int y = -1; y <= 3; y++) { if (x >= 0 && x <= 2 && y >= 0 && y <= 2) continue; if (!g[x + 1, y + 1] && Adj(x, y)) cand.Add(new[] { x, y }); }
+            if (cand.Count == 0) break;
+            var c = cand[R(cand.Count)]; g[c[0] + 1, c[1] + 1] = true;
+        }
+        var cells = new List<int[]>();
+        for (int x = -1; x <= 3; x++) for (int y = -1; y <= 3; y++) if (g[x + 1, y + 1]) cells.Add(new[] { x, y });
+        return cells;
+    }
+
     static double P(object spec, string key) => FsMod.Num("gen", spec, key);
     static string S(object spec, string key) => FsMod.Str("gen", spec, key);
 

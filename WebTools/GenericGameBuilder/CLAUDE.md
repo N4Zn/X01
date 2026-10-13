@@ -1,9 +1,9 @@
-# GenericGame Builder — ghi chú dự án (schema v2.1)
+# GenericGame Builder v4.0 — ghi chú dự án (schema v2.1)
 
 Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lời user bằng tiếng Việt.
 
 ## File
-- **Bản mới nhất: `game_builder_v2.html`** (1 file, 1 IIFE → `game` không truy cập được từ ngoài). Các file `game_builder*.html` khác là bản cũ/backup (v1, 1002...).
+- **Bản mới nhất: `game_builder_v4.0.html`** (1 file, 1 IIFE → `game` không truy cập được từ ngoài). Các file `game_builder*.html` khác là bản cũ/backup (v1, 1002...).
 - Publish làm Claude Artifact: https://claude.ai/artifact/J8VjLjobGYkDWJq456ddQ8
 - Unity runtime: `Assets/Game/Scripts/Core/MiniGameKit/GenericGame/` — `GenericGameTypes.cs`, `GenericGameMigration.cs`, `GenericGameController.cs`, `SCHEMA.md`, `capabilities.json`; thêm `UIScripts/_TestTongHop/Items/ButtonItem.cs`.
 
@@ -37,10 +37,14 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 - File reveal gốc là fork của bản cũ — KHÔNG ghi đè builder bằng nó (mất `waitBothTeams`, chữ số viền, `effFx` gộp từng phần).
 
 ## Game cơ chế FloorStory — "flow" v3 (2026-10-10)
-- Nút "＋ Game cơ chế" tạo game `meta.kind="fsdata"` từ 1 trong 16 mẫu (= 16 game FloorStory); panel `#fsdPanel`: nền/sàn, vars, scene, nhiều flow (objects, nguồn, views+reveal, chấm, lời, hành động theo sự kiện) + danh sách vật (id/tên/diện mạo/giá trị/tags) + **chơi thử ngay** (`window.FSW`). Zip xuất mở lại được; Unity import qua `FloorStoryPackImporter.ImportFlow`. Schema, biểu thức, hành động, công cụ, việc còn lại: **`docs/floor-story-mechanics.md`**.
+- **Khung v4.0 (editor kéo-thả)**: hàng tab `#ribTabs` = **File | Cài đặt chung | Trang chủ | Chèn | Hiệu ứng | Xem** (dựng bằng `initShell()`; File cũng là tab, nút gốc `btnNewFs/btnOpenGame/btnSaveAs/btnExport` nằm trong `#fileMenu` ẩn, ribbon dùng nút proxy) + `#ribbon`; `#colRail` (danh sách round, `renderRail()`) | `#colLayout` (sân khấu) | `#colRounds` (thuộc tính round đang chọn + `#decoHost` item đang chọn + `#fxPane` ngăn hiệu ứng). Tab **Cài đặt chung** chứa THẲNG các ô của cột cũ `#colSettings` (đã ẩn): `initShell` DỜI phần tử (JS cũ buộc theo id nên vẫn chạy). **Hiệu ứng gắn theo đối tượng đang chọn** (`renderFxPane`, `shellSync` bọc `renderStage/renderRounds/renderDecoList`): chọn ô → hiệu ứng riêng của ô, chọn item → `.deco-fx` của item, không chọn → hiệu ứng chung. **Thư viện ảnh đáp án sai** chỉ hiện khi `meta.genre='autogen'` hoặc game đã có `imagePools`. Phím: **Ctrl+D** nhân bản round, **Delete** xoá đối tượng đang chọn (không chọn gì = xoá round; Ctrl+Z hoàn tác). Game cơ chế / gói ảnh chỉ hiện tab File (`shellModeSync`). File đã đổi tên `game_builder_v4.0.html`.
+- **Builder v4.0 (2026-10-10)**: thanh trên 1 hàng = menu **File** (Game mới… / Mở / Lưu thành / Xuất zip) + tên game + nhãn `v4.0` + `▶ Chơi thử` ngoài cùng bên phải (luôn hiện). Game cơ chế chơi thử trong cùng khung toàn màn hình `#playtest` (không còn khung chơi thử nhỏ). **File → Game mới** mở thư viện mẫu `#galDlg` (Trang trống kéo-thả + 16 game FloorStory) → đặt mã game → sửa tiếp. Thiết kế tổng thể + lộ trình: **`docs/game-builder-design.md`** (bản nháp).
+- Game cơ chế (`meta.kind="fsdata"`) panel `#fsdPanel` chia **Cơ bản** (mã game, nền/sàn, Chữ, Âm thanh, luật chơi dạng form, ảnh & vật) và **⚙ Nâng cao** (vars, scene, flow/view/chấm, hành động JSON) để giáo viên không bị rối. Zip xuất mở lại được; Unity import qua `FloorStoryPackImporter.ImportFlow`. Schema, biểu thức, hành động, công cụ, việc còn lại: **`docs/floor-story-mechanics.md`**.
 - Engine = `fs/fs_core.js, fs_expr.js, fs_game.js, fs_act.js, fs_flow.js`; dữ liệu 16 game = `fs/games/*.json` (sinh từ `Tools/floorstory_pack/gen_games.py`). **Sửa xong phải chạy `python Tools/floorstory_pack/inline_web.py`** (nhúng vào HTML giữa `<!--FS-JS-BEGIN/END-->`, đừng sửa tay vùng này) + `gen_mod_cs.py` nếu đổi `MOD` + `make_flow_zips.py` nếu đổi game. Luật JS và C# (`FloorStoryGame/Flow/*.cs`) PHẢI khớp.
-- Glue UI nằm trong script chính (khối "Game cơ chế FloorStory"); bản nguồn `Tools/floorstory_pack/glue_v3.js` (+ `splice_glue.py` nếu cần ghép lại).
-- Test nhanh: `python -m http.server 8765` ở gốc repo, mở `/WebTools/GenericGameBuilder/game_builder_v2.html`; `FSW.play(host, FSW.TEMPLATES.<Game>.data, {mute:true})`, `game.worlds[i]._Q / .elems / .vars` để bấm thử bằng `node.el.dispatchEvent(new PointerEvent('pointerdown'))`.
+- Glue UI nằm trong script chính của `game_builder_v4.0.html` (khối "Game cơ chế FloorStory": `renderFsd`, `fsdFontControls`, `fsdSoundControls`, `openGallery`, `fsdPlay`...) — **HTML là nguồn duy nhất** (đã bỏ `glue_v3.js`/`splice_glue.py`); sửa bằng Edit/replace có kiểm tra số lần khớp, không cắt theo `index()`.
+- **Định dạng chữ**: `fsData.fonts{prompt,say,card,text}` = `{scale,color,bold,italic,outline("none"|"#hex"),outlineW,shadow}`; `look.style` (cùng dạng) ghi đè cho chữ trong cảnh. Web: `UI.label(..., role, style)` (`fs_core.js`); Unity: `StoryUI.TextStyle` + `FlowWorld.StyleFrom`. Chưa có định dạng chữ cho game kéo-thả v2 (xem design doc).
+- **Âm thanh**: chỉ thêm file, KHÔNG dùng giọng đọc của trình duyệt (đã bỏ `speechSynthesis`). `item.sound` (tiếng vật: phát khi câu hỏi nhắc tới vật + khi chạm), `fsData.sounds{right,wrong,music}`. Xuất zip giữ file đang dùng; Unity phát qua `FlowWorld.PlayFile` (Resources/StoryData/<id>/). Chưa chạy trong Unity Editor.
+- Test nhanh: `python -m http.server 8765` ở gốc repo, mở `/WebTools/GenericGameBuilder/game_builder_v4.0.html`; `FSW.play(host, FSW.TEMPLATES.<Game>.data, {mute:true})`, `game.worlds[i]._Q / .elems / .vars` để bấm thử bằng `node.el.dispatchEvent(new PointerEvent('pointerdown'))`.
 - Bẫy đã gặp: `bind` là biểu thức THUẦN (không dấu `=`), tham số còn lại mới cần `=`; tên biến/`id` động dùng `"=\"part_\"+item.id"`; trong `.fs-n` đặt `left/top:50%` nên node `fill` phải ghi đè width/height inline.
 
 ## Chế độ gói FloorStory (2026-10-10)

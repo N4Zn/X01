@@ -36,6 +36,7 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     public FlowWorld(string gameId, Dictionary<string, object> data)
     {
         _gid = gameId; _data = data;
+        StoryUI.TextStyles = LoadTextStyles(J.Obj(data, "fonts"));
         _items = J.List(data, "items") ?? new List<object>();
         _rng = new FsRng(Environment.TickCount * 31L + gameId.GetHashCode());
         Vars = new Dictionary<string, object>();
@@ -102,6 +103,56 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     }
     public bool Cond(string expr, Dictionary<string, object> extra = null) => FsExpr.Truthy(FsExpr.Eval(expr, Scope(extra)));
 
+    // ── định dạng chữ (fsData.fonts / look.style) ──
+    public static StoryUI.TextStyle StyleFrom(Dictionary<string, object> d)
+    {
+        if (d == null) return null;
+        var st = new StoryUI.TextStyle();
+        double sc = J.Num(d, "scale", 1); if (sc > 0) st.scale = (float)sc;
+        string c = J.Str(d, "color"); if (c != "") { st.hasColor = true; st.color = StoryUI.Hex(c); }
+        if (d.ContainsKey("bold")) { st.hasBold = true; st.bold = J.Num(d, "bold", 1) != 0; }
+        st.italic = J.Num(d, "italic", 0) != 0;
+        st.outline = J.Str(d, "outline");
+        double ow = J.Num(d, "outlineW", 2); if (ow > 0) st.outlineW = (float)ow;
+        st.shadow = J.Num(d, "shadow", 0) != 0;
+        return st;
+    }
+    static Dictionary<string, StoryUI.TextStyle> LoadTextStyles(Dictionary<string, object> fonts)
+    {
+        if (fonts == null) return null;
+        var r = new Dictionary<string, StoryUI.TextStyle>();
+        foreach (var kv in fonts) { var st = StyleFrom(kv.Value as Dictionary<string, object>); if (st != null) r[kv.Key] = st; }
+        return r;
+    }
+
+    // ── âm thanh: file người soạn thêm (item.sound, sounds.right / wrong / music) trong Resources/StoryData/<id>/ ──
+    AudioSource _voiceSrc, _fxSrc, _musicSrc;
+    AudioClip LoadClip(string file)
+    {
+        if (string.IsNullOrEmpty(file)) return null;
+        return Resources.Load<AudioClip>($"StoryData/{_gid}/{System.IO.Path.GetFileNameWithoutExtension(file)}");
+    }
+    AudioSource Src(ref AudioSource s) { if (s == null) s = root.gameObject.AddComponent<AudioSource>(); return s; }
+    public void PlayFile(string file, bool voice)
+    {
+        var clip = LoadClip(file); if (clip == null) return;
+        if (voice) { var v = Src(ref _voiceSrc); v.Stop(); v.clip = clip; v.Play(); }
+        else Src(ref _fxSrc).PlayOneShot(clip);
+    }
+    public void PlayItem(object item) { var d = item as Dictionary<string, object>; if (d != null) PlayFile(J.Str(d, "sound"), true); }
+    /// <summary>Tiếng của vật là đáp án (nếu câu hỏi có đáp án và vật đó có file tiếng).</summary>
+    void PlayTargetItem()
+    {
+        int t = (int)J.Num(Q, "target", -1); var its = J.Arr(J.Get(Q, "items"));
+        if (t >= 0 && t < its.Count) PlayItem(its[t]);
+    }
+    string SoundOf(string key) { var s = J.Obj(_data, "sounds"); return s == null ? "" : J.Str(s, key); }
+    void StartMusic()
+    {
+        var clip = LoadClip(SoundOf("music")); if (clip == null) return;
+        var m = Src(ref _musicSrc); m.clip = clip; m.loop = true; m.volume = 0.5f; m.Play();
+    }
+
     // ── dựng thế giới ──
     protected override void Build()
     {
@@ -113,7 +164,8 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         var scene = J.List(_data, "scene") ?? new List<object>();
         MakeObjs(scene.FindAll(o => J.Str(o, "z") != "front"), FsNode.Of(root), Objs, null);
         MakeObjs(scene.FindAll(o => J.Str(o, "z") == "front"), FsNode.Of(root), Objs, null);
-        _prompt = StoryUI.Label(root, "", 40, Color.white, P(0.5f, 0.92f), new Vector2(W * 0.94f, H * 0.13f));
+        _prompt = StoryUI.Label(root, "", 40, Color.white, P(0.5f, 0.92f), new Vector2(W * 0.94f, H * 0.13f), TextAnchor.MiddleCenter, true, "prompt");
+        if (team == Team.Left) StartMusic();
         ctx.Run(TickLoop());
     }
 
@@ -156,7 +208,7 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         var objs = J.List(Flow, "objects") ?? new List<object>();
         MakeObjs(objs.FindAll(o => J.Str(o, "z") != "front"), FsNode.Of(root), TaskObjs, null);
         string first = TaskNo == 1 && J.Str(T, "first") != "" ? J.Str(T, "first") : J.Str(T, "prompt");
-        _prompt.text = FsExpr.Template(first, J.Obj(Q, "vars"), Scope());
+        _prompt.text = FsExpr.Template(first, J.Obj(Q, "vars"), Scope()); PlayTargetItem();
         var specs = J.List(Flow, "views") ?? new List<object>();
         var views = new List<FsView>();
         foreach (var s in specs) views.Add(FlowViews.Make(this, (Dictionary<string, object>)s, Q));
@@ -208,7 +260,7 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
                 Sfx("plop");
             }
             foreach (var v in defer) foreach (var e in v.Elems) { e.node.Active = true; Run(StoryUI.PopIn(e.node.rt, 0.25f)); }
-            if (J.Str(T, "ready") != "") _prompt.text = FsExpr.Template(J.Str(T, "ready"), J.Obj(q, "vars"), Scope());
+            if (J.Str(T, "ready") != "") { _prompt.text = FsExpr.Template(J.Str(T, "ready"), J.Obj(q, "vars"), Scope()); PlayTargetItem(); }
         }
         while (V.Exists(v => !v.Ready)) { if (gen != GenId) yield break; yield return null; }
         Ready = true;

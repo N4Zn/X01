@@ -107,6 +107,14 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] TongHopToan: mỗi bên câu riêng (đếm/cộng/trừ/dấu), chỉ ẩn kết quả C, đếm 6-10 ở đoạn 3; thử trên K02 — `ButtonDisplay.SetupPerTeam` + hook `QuestionForTeam` ở MiniGameControllerBase — (2026-10-09)
 - [ ] Thứ trong tuần + chữ cái: chờ user chọn phương án (đã bỏ Tàu 7 toa và Đi nét chữ) — (2026-10-09)
 
+## Game Builder v4.0 — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
+- [ ] Đợt 1 đã xong (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh file). **User dùng thử rồi chỉnh tiếp** — (2026-10-10)
+- [ ] Phần "Nâng cao" hành động vẫn là JSON → làm khối lệnh kiểu Scratch cho giáo viên (khi đúng/sai/bắt đầu → chọn hiệu ứng từ danh sách) — (2026-10-10)
+- [ ] Định dạng chữ cho game kéo-thả v2 (câu hỏi/đáp án/item/slot): đổi schema + `GenericGameController`/`ButtonItem` + web preview — (2026-10-10)
+- [ ] Ribbon nhiều tab, danh sách round, sân khấu kéo thả, panel phải theo vật đang chọn, lớp Sim thời gian thực, mô-đun mới (design doc mục 6, 10) — (2026-10-10)
+- [ ] Unity: kiểm tra trong Editor định dạng chữ (`StoryUI.TextStyle`), phát âm thanh (`FlowWorld.PlayFile`: tiếng vật, đúng/sai, nhạc nền), K02 — (2026-10-10)
+- [ ] Tối ưu âm thanh (user sẽ làm): hiện web chỉ phát file đã thêm bằng `Audio`; chưa có giọng đọc tự động — (2026-10-10)
+
 ## FloorStory flow — zip game (2026-10-10) — Unity chưa chạy, mới compile-check Roslyn + test parity logic
 - [ ] Mở Unity compile `FloorStoryGame/Flow/*.cs`; **Tools → FloorStoryGame → Import Pack Zips** thư mục `WebTools/FloorStoryFlows/`; mở `Assets/Game/Scenes/FloorStory/<id>.unity` Play từng game, so với web (hiển thị/hoạt hình C# chưa ai nhìn) — (2026-10-10)
 - [ ] `NhanBietMau` là game mới: import tự đăng ký registry → build lại aar (`sh Tools/build-aar.sh controlui`), test K02 — (2026-10-10)
