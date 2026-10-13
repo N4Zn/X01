@@ -82,10 +82,10 @@ GAMES['TrungMauSac'] = dict(title='Trứng màu sắc', sync=False, theme={'bg':
     flow=dict(gen={'type': 'set', 'p': {'startItems': 99, 'targetWhere': 'item.tags.kind=="color"', 'otherWhere': 'item.tags.kind=="color"'}},
               views=[{'type': 'props', 'p': {'layout': 'row', 'x0': .2, 'x1': .8, 'y0': .40, 'y1': .40, 'size': '0.25', 'tall': 1.32, 'preset': 'none', 'tpl': [
                   {'look': {'shape': 'circle', 'color': '#B98A56'}, 'w': '=size*1.35', 'h': '=size*.45', 'dy': '=-size*.55'},
-                  {'look': {'shape': 'circle', 'color': '=opt.color'}, 'w': '=size', 'h': '=size*1.32'},
-                  {'look': {'shape': 'square', 'color': '#FFFFFF'}, 'alpha': .55, 'w': '=size*.8', 'h': '=size*.106', 'dy': '=-size*.066'},
-                  {'look': {'shape': 'circle', 'color': '#FFFFFF'}, 'alpha': .55, 'w': '=size*.13', 'dx': '=-size*.18', 'dy': '=size*.264'},
-                  {'look': {'shape': 'circle', 'color': '#FFFFFF'}, 'alpha': .55, 'w': '=size*.1', 'dx': '=size*.16', 'dy': '=-size*.29'}]}}],
+                  {'look': {'item': '=opt.id'}, 'w': '=size', 'h': '=size*1.32'},   # vẽ theo vật: gắn ảnh cho vật màu trong Kho vật = đổi hình quả trứng
+                  {'look': {'shape': 'square', 'color': '#FFFFFF'}, 'alpha': '=opt.image?0:.55', 'w': '=size*.8', 'h': '=size*.106', 'dy': '=-size*.066'},
+                  {'look': {'shape': 'circle', 'color': '#FFFFFF'}, 'alpha': '=opt.image?0:.55', 'w': '=size*.13', 'dx': '=-size*.18', 'dy': '=size*.264'},
+                  {'look': {'shape': 'circle', 'color': '#FFFFFF'}, 'alpha': '=opt.image?0:.55', 'w': '=size*.1', 'dx': '=size*.16', 'dy': '=-size*.29'}]}}],
               judge=EQ(finishSec=2.4),
               text=TXT(prompt='Trứng màu {LABEL} đâu?', wrong='Trứng này màu {name} nè!'),
               on={'right': [
@@ -340,10 +340,32 @@ DESC = {
 }
 
 
+def _strip(x):
+    """Bỏ chữ lời hỏi/gợi ý/khen-chê: audio do giáo viên chèn. Giữ nhãn đáp án, nhãn cảnh cố định, đồng hồ số."""
+    if isinstance(x, list):
+        out = []
+        for a in x:
+            if isinstance(a, dict) and a.get('do') == 'say': continue
+            if isinstance(a, dict) and a.get('do') == 'spawn' and isinstance(a.get('look'), dict) and 'text' in a['look']: continue
+            out.append(_strip(a))
+        return out
+    if isinstance(x, dict):
+        return {k: _strip(v) for k, v in x.items()}
+    return x
+
+
+def strip_texts(g):
+    g = _strip(g)
+    flows = g['flows'] if 'flows' in g else [g['flow']]
+    for f in flows:
+        f['text'] = {k: '' for k in ('prompt', 'first', 'ready', 'say', 'sayOk', 'wrong')}
+    return g
+
+
 def write_all():
     os.makedirs(OUT, exist_ok=True)
     for gid, g in GAMES.items():
-        d = dict(g); d['version'] = 3; d['desc'] = DESC.get(gid, '')
+        d = strip_texts(dict(g)); d['version'] = 3; d['desc'] = DESC.get(gid, '')
         json.dump(d, open(os.path.join(OUT, gid + '.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print(len(GAMES), 'game ->', OUT)
 

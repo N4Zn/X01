@@ -65,9 +65,12 @@
    "p": {}
   },
   "text": {
-   "prompt": "Chọn {LABEL}!",
-   "say": "{label}!",
-   "wrong": "Đây là {name} nè!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   }
  },
  "version": 3,

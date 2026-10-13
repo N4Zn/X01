@@ -80,10 +80,12 @@
    "p": {}
   },
   "text": {
-   "prompt": "Nhìn kỹ nè! Nhớ thứ tự nhé",
-   "ready": "Chọn theo thứ tự, từ TRÁI sang PHẢI",
-   "say": "Giỏi quá!",
-   "sayOk": "Đúng rồi!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   }
  },
  "version": 3,

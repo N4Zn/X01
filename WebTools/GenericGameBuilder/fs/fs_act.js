@@ -57,11 +57,12 @@ P.makeObj = function(spec, parent, store, extra){
   const fx = +ev(spec.x == null ? .5 : spec.x), fy = +ev(spec.y == null ? .5 : spec.y);
   const w = (+ev(spec.w == null ? .2 : spec.w))*U, h = (spec.h == null ? +ev(spec.w == null ? .2 : spec.w) : +ev(spec.h))*U;
   const pos = spec.rel ? { x:0, y:0 } : this.P(fx, fy);
-  const o = { spec, extra: extra || {}, id: spec.id ? String(ev(spec.id)) : null, role: spec.role || null, cur: {}, animOn: true, dead: false, t0: this.rng.next()*6.28 };
+  const o = { spec, extra: extra || {}, id: spec.id ? String(ev(spec.id)) : null, role: spec.role || null, cur: {}, animOn: true, dead: false, t0: this.rng.next()*6.28,
+    origin: spec._origin || spec, multi: !!(spec._origin || spec.forEachItem || (extra && extra.item !== undefined && spec.forEachItem)) };   // origin/multi: chỉ để trình soạn web biết đối tượng nào sinh từ spec nào
   if (spec.fill){
     const lk = spec.look || {}, itId = lk.item !== undefined ? String(ev(lk.item)) : '', itm = itId ? this.items.find(i=> i.id === itId) : null, url = lk.image ? this.img(String(ev(lk.image))) : (itm && itm.image ? this.img(itm.image) : null);
     o.node = url ? UI.fill(parent, WHITE, { url }) : UI.fill(parent, hex(ev(lk.color)||'#FFFFFF'));
-    if (url) o.node.preserveAspect = false;
+    if (url){ o.node.preserveAspect = false; if (this.team === 1 && this.data.mirror !== false) o.node.el.style.transform = 'scaleX(-1)'; }   // ảnh nền nửa phải lật gương (đối xứng nửa trái)
   }
   else o.node = this.drawLook(parent, spec.look, pos.x + (+ev(spec.dx||0))*U, pos.y + (+ev(spec.dy||0))*U, w, h, extra);
   o.x0 = o.node.x; o.y0 = o.node.y;
@@ -81,7 +82,7 @@ P.makeObjs = function(specs, parent, store, extra){
     } else if (spec.repeat){
       const n = Math.round(+this.ev(spec.repeat.n, extra));
       for (let i=0;i<n;i++){
-        const s = Object.assign({}, spec); s.x = (+this.ev(spec.x == null ? .5 : spec.x, extra)) + i*(+spec.repeat.dx||0); s.y = (+this.ev(spec.y == null ? .5 : spec.y, extra)) + i*(+spec.repeat.dy||0); delete s.repeat;
+        const s = Object.assign({}, spec); s.x = (+this.ev(spec.x == null ? .5 : spec.x, extra)) + i*(+spec.repeat.dx||0); s.y = (+this.ev(spec.y == null ? .5 : spec.y, extra)) + i*(+spec.repeat.dy||0); delete s.repeat; s._origin = spec;
         this.makeObj(s, parent, store, Object.assign({}, extra||{}, { i, n }));
       }
     } else this.makeObj(spec, parent, store, extra);

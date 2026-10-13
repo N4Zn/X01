@@ -246,8 +246,12 @@
    }
   },
   "text": {
-   "prompt": "Đặt {subject} {label} cái bàn",
-   "wrong": "Không phải chỗ này!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "wrong": [
@@ -256,13 +260,6 @@
      "on": "@actor",
      "to": "@tapped",
      "sec": 0.45
-    },
-    {
-     "do": "say",
-     "text": "Không phải chỗ này!",
-     "fy": 0.74,
-     "color": "#FFE27A",
-     "sec": 1.2
     },
     {
      "do": "shake",
@@ -304,12 +301,6 @@
      "on": "@actor",
      "amount": 0.2,
      "sec": 0.5
-    },
-    {
-     "do": "say",
-     "text": "Đúng rồi! {{cap(q.subject.label)}} ở {label} cái bàn",
-     "fy": 0.74,
-     "sec": 2
     },
     {
      "do": "confetti",

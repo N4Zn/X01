@@ -328,8 +328,12 @@
    }
   },
   "text": {
-   "prompt": "Xây {{q.subject.label}}: hình nào vừa khít?",
-   "wrong": "Chưa vừa! Thử hình khác nhé"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "right": [
@@ -363,11 +367,6 @@
      "k": "wood"
     },
     {
-     "do": "say",
-     "text": "Đây là {{lower(tapped.name)}}!",
-     "fy": 0.84
-    },
-    {
      "do": "if",
      "cond": "$built>=9",
      "then": [
@@ -382,13 +381,6 @@
         "fy": 0.55
        },
        "n": 20
-      },
-      {
-       "do": "say",
-       "text": "Nhà xong rồi! Giỏi quá!",
-       "fy": 0.84,
-       "sec": 2,
-       "color": "#FFE27A"
       },
       {
        "do": "wait",

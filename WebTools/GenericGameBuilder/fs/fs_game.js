@@ -26,10 +26,13 @@ class World {
   run(gen){ return this.g.run(gen); }
   nextTaskRng(){ this._taskNo++; return new Rng(this.g.sharedSeed*7919 + this._taskNo*104729); }
   addPoint(){ this.g.addPoint(this.team); }
-  sfx(k){ this.g.sfx(k); }
-  right(){ this.g.sfx('right'); }
+  /** Tiếng riêng của DẠNG CÂU HỎI (round) hiện tại — flow.sounds.right / wrong — nếu có; không thì tiếng chung cả game. */
+  sfx(k){ const fs = (this.flow && this.flow.sounds) || {}; if ((k === 'right' || k === 'wrong') && fs[k]){ this.g.playSound(fs[k], 'fx'); return; } this.g.sfx(k); }
+  right(){ this.sfx('right'); }
   /** Phát tiếng của vật (file âm thanh gắn vào vật: tiếng đọc tên). Không dùng giọng đọc của trình duyệt. */
   playItem(item){ if (item && item.sound) this.g.playSound(item.sound, 'voice'); }
+  /** Tiếng câu hỏi lúc đặt câu: file riêng của dạng câu hỏi (flow.sounds.prompt) nếu có, không thì tiếng của vật là đáp án. */
+  playPrompt(Q){ if (Q && Q.rsound){ this.g.playSound(Q.rsound, 'voice'); return; } const S = (this.flow && this.flow.sounds) || {}; if (S.prompt){ this.g.playSound(S.prompt, 'voice'); return; } this.playItem(Q && Q.items && Q.target >= 0 ? Q.items[Q.target] : null); }
   img(name){ return this.g.imgUrl(name); }
   theme(key, d){ const t = this.data.theme || {}; return t[key] || d; }
 
@@ -64,6 +67,7 @@ class World {
   }
   *_fadeDestroy(n, delay, dur){ yield delay; if (!n.dead) yield* tw.fade(n, 0, dur); n.destroy(); }
   say(text, pos, color, seconds){
+    if (!text) return;
     const t = UI.label(this.root, text, 34, color || WHITE, pos.x, pos.y, this.W*.92, 90, undefined, 'say'); t.setAsLast();
     this.run(this._sayRoutine(t, seconds == null ? 1.6 : seconds));
   }

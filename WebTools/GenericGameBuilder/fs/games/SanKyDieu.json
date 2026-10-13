@@ -173,7 +173,12 @@
    }
   },
   "text": {
-   "prompt": "{{pick($theme,\"Dậm chân cho hoa nở!\",\"Dậm chân cho sao sáng!\",\"Dậm chân cho tim bay!\",\"Dậm chân cho bóng nổi!\",\"Dậm chân cho vườn mọc lên!\")}}"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "step": [

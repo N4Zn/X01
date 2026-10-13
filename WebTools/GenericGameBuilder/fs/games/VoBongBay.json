@@ -490,8 +490,12 @@
    }
   },
   "text": {
-   "prompt": "Vỡ bóng màu {LABEL}!",
-   "wrong": "Bóng này màu {name} nè!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "right": [
@@ -526,21 +530,6 @@
      },
      "at": "@tapped",
      "size": 0.3
-    },
-    {
-     "do": "spawn",
-     "look": {
-      "text": "=label($animal)",
-      "fs": 0.068,
-      "color": "#FFFFFF"
-     },
-     "at": {
-      "ref": "@tapped",
-      "dy": -0.19
-     },
-     "w": 0.5,
-     "h": 0.1,
-     "pop": 0
     }
    ]
   }

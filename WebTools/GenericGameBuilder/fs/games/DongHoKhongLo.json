@@ -377,7 +377,11 @@
     }
    },
    "text": {
-    "prompt": "{subject}\nĐặt đồng hồ {{q.subject.tags.hour}} giờ!",
+    "prompt": "",
+    "first": "",
+    "ready": "",
+    "say": "",
+    "sayOk": "",
     "wrong": ""
    },
    "on": {
@@ -404,13 +408,6 @@
       "on": "#hand",
       "to": "=-((tapped.key+1)%12)*30",
       "sec": 0.6
-     },
-     {
-      "do": "say",
-      "text": "Kim đang chỉ {{tapped.key+1}}, chưa phải {{q.subject.tags.hour}} giờ!",
-      "fy": 0.12,
-      "color": "#FFE27A",
-      "sec": 1.4
      },
      {
       "do": "wait",
@@ -444,12 +441,6 @@
       "on": "@tapped",
       "amount": 0.2,
       "sec": 0.5
-     },
-     {
-      "do": "say",
-      "text": "{{q.subject.tags.hour}} giờ! Giỏi quá!",
-      "fy": 0.12,
-      "sec": 1.8
      },
      {
       "do": "confetti",
@@ -514,7 +505,11 @@
     }
    },
    "text": {
-    "prompt": "Mấy giờ rồi?",
+    "prompt": "",
+    "first": "",
+    "ready": "",
+    "say": "",
+    "sayOk": "",
     "wrong": ""
    },
    "on": {
@@ -535,13 +530,6 @@
      {
       "do": "sfx",
       "k": "wrong"
-     },
-     {
-      "do": "say",
-      "text": "Chưa đúng! Nhìn kim ngắn nhé",
-      "fy": 0.12,
-      "color": "#FFE27A",
-      "sec": 1.4
      },
      {
       "do": "shake",
@@ -567,12 +555,6 @@
       "on": "@tapped",
       "amount": 0.2,
       "sec": 0.5
-     },
-     {
-      "do": "say",
-      "text": "{{q.subject.tags.hour}} giờ! Giỏi quá!",
-      "fy": 0.12,
-      "sec": 1.8
      },
      {
       "do": "confetti",

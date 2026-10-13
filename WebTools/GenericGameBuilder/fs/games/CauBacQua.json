@@ -235,7 +235,12 @@
     }
    },
    "text": {
-    "prompt": "Chọn khúc gỗ DÀI hơn sông!"
+    "prompt": "",
+    "first": "",
+    "ready": "",
+    "say": "",
+    "sayOk": "",
+    "wrong": ""
    },
    "on": {
     "wrong": [
@@ -251,13 +256,6 @@
        "fy": 0.615
       },
       "sec": 0.5
-     },
-     {
-      "do": "say",
-      "text": "Khúc gỗ NGẮN quá! Rơi xuống nước rồi",
-      "fy": 0.8,
-      "color": "#FFE27A",
-      "sec": 1.5
      },
      {
       "do": "sfx",
@@ -290,12 +288,6 @@
        "fy": 0.615
       },
       "sec": 0.5
-     },
-     {
-      "do": "say",
-      "text": "Khúc gỗ DÀI nên bắc qua được!",
-      "fy": 0.8,
-      "sec": 2
      },
      {
       "do": "sfx",
@@ -413,20 +405,18 @@
     }
    },
    "text": {
-    "prompt": "{subject} {{pick(q.subject.value,\"BÉ\",\"VỪA\",\"TO\")}} — đi cửa nào?",
-    "wrong": "Cửa không vừa! Tìm cửa vừa hơn nhé!"
+    "prompt": "",
+    "first": "",
+    "ready": "",
+    "say": "",
+    "sayOk": "",
+    "wrong": ""
    },
    "on": {
     "right": [
      {
       "do": "sfx",
       "k": "right"
-     },
-     {
-      "do": "say",
-      "text": "{subject} đi cửa vừa khít!",
-      "fy": 0.8,
-      "sec": 2
      },
      {
       "do": "scale",

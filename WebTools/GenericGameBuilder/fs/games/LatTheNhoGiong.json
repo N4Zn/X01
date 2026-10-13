@@ -65,10 +65,12 @@
    "p": {}
   },
   "text": {
-   "first": "Chạm 2 thẻ giống nhau nhé!",
-   "prompt": "Tìm các cặp giống nhau!",
-   "say": "Giỏi quá! Không nhầm lần nào!",
-   "sayOk": "Tìm đủ rồi!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   }
  },
  "version": 3,

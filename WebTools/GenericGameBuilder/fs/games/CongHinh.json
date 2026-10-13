@@ -217,9 +217,12 @@
    }
   },
   "text": {
-   "prompt": "{{len(q.seq)==1?\"Tìm cổng \":\"Đi qua cổng: \"}}{names}",
-   "wrong": "Đây là {name}. Tìm đúng cổng nhé!",
-   "say": ""
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "step": [
@@ -238,12 +241,6 @@
      "on": "@tapped",
      "amount": 0.12,
      "sec": 0.4
-    },
-    {
-     "do": "say",
-     "text": "{{tapped.name}}!",
-     "fy": 0.74,
-     "sec": 1
     },
     {
      "do": "if",

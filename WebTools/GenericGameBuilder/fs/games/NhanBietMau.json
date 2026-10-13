@@ -67,9 +67,12 @@
    "p": {}
   },
   "text": {
-   "prompt": "Chọn màu {LABEL}!",
-   "say": "Màu {label}!",
-   "wrong": "Đây là màu {name} nè!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   }
  },
  "version": 3,

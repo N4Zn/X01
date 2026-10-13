@@ -319,12 +319,11 @@ main{flex:1; display:grid; grid-template-columns:300px 1fr 360px; min-height:0;}
 /* ── Chế độ gói FloorStory (meta.kind = "floorstory"): chỉ thay ảnh, không soạn round ── */
 #fsPanel{display:none; flex:1; min-height:0; overflow-y:auto; padding:18px 22px 40px;}
 body.fs-mode #fsPanel{display:block;}
-body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-mode #gameDisplayName,
-body.fsd-mode main{display:none;}
+body.fs-mode main, body.fs-mode #btnPlaytest, body.fs-mode #btnSaveAs, body.fs-mode #gameDisplayName{display:none;}
 
 /* ── Game cơ chế FloorStory (meta.kind = "fsdata"): soạn dữ liệu cơ chế + chơi thử trên web + xuất zip cho Unity ── */
 #fsdPanel{display:none; flex:1; min-height:0;}
-body.fsd-mode #fsdPanel{display:grid; grid-template-columns:minmax(360px,470px) minmax(320px,1fr); overflow-y:auto;}
+body.fsd-mode #fsdPanel{display:none;}   /* form cũ: các khối được dời vào ribbon / tab bên phải (initFsdShell) */
 #fsdPanel .col{padding:14px;}
 #fsdPanel h2{margin:0 0 6px; font-size:15px; text-transform:none; letter-spacing:0; color:var(--text);}
 .fsd-desc{font-size:12px; color:var(--text-dim); margin:0 0 10px; line-height:1.5;}
@@ -343,6 +342,35 @@ body.fsd-mode #fsdPanel{display:grid; grid-template-columns:minmax(360px,470px) 
 #fsdHost{width:100%; aspect-ratio:1024/540; background:#0b0c14; border-radius:10px; overflow:hidden;}
 #fsdHost:fullscreen{aspect-ratio:auto; border-radius:0;}
 @media (max-width:1100px){ body.fsd-mode #fsdPanel{grid-template-columns:1fr; overflow-y:auto;} }
+/* Game cơ chế dùng chung khung với game kéo-thả */
+#colStageF{grid-column:2; display:none; flex-direction:column; min-width:0; min-height:0; padding:10px 12px;}
+#colSideF{grid-column:3; width:360px; display:none; flex-direction:column; min-height:0; background:var(--panel); border-left:1px solid var(--border);}
+body.fsd-mode #colStageF, body.fsd-mode #colSideF{display:flex;}
+body.fsd-mode #colLayout, body.fsd-mode #colRounds, body.fsd-mode #railBtns{display:none !important;}
+body:not(.fsd-mode) #fsdRailBtns{display:none;}
+body.hide-props #colSideF{display:none !important;}
+#fseBar{display:flex; align-items:center; gap:10px; padding:0 2px 8px; font-size:12.5px; flex-wrap:wrap;}
+#fseBar .sp{flex:1; min-width:0;} #fseStatus{color:var(--text-dim); min-width:0;}
+#fseHost{flex:1; min-height:0; border-radius:10px; overflow:hidden; border:1px solid var(--border); background:#0b0c14;}
+#fsTabs{display:flex; border-bottom:1px solid var(--border);}
+#fsTabs button{flex:1; border:none; background:transparent; padding:10px 4px; font-size:12px; font-weight:700; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent;}
+#fsTabs button[aria-selected=true]{color:var(--accent); border-bottom-color:var(--accent);}
+.fsp{display:none; flex:1; min-height:0; overflow-y:auto; padding:4px 12px 14px;} .fsp.on{display:block;}
+.fse-lay{display:flex; flex-direction:column; gap:3px; max-height:150px; overflow-y:auto; margin-bottom:6px;}
+.fse-li{text-align:left; border:1px solid var(--border); background:var(--panel-2,transparent); color:var(--text); border-radius:7px; padding:4px 8px; font-size:12px; cursor:pointer;}
+.fse-li.on{background:var(--accent-soft); border-color:var(--accent); font-weight:700;}
+.fse-seg{display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:2px 0 8px;}
+.fse-seg button{flex:1; border:none; background:transparent; padding:6px; font-size:12px; font-weight:700; cursor:pointer; color:var(--text);} .fse-seg button.on{background:var(--accent); color:#fff;}
+.rl .rth2{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;} .rth2 .rq{font-size:12px; font-weight:700; line-height:1.2; color:var(--text);}
+.rtr{display:flex; gap:3px; flex-wrap:wrap;} .rtr .fsd-thumb{width:28px; height:28px; flex:0 0 28px; border-radius:6px;}
+.fse-pick{display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:6px; margin:6px 0;}
+.fse-pk{display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 3px; border:2px solid var(--border); border-radius:9px; background:var(--panel-2,transparent); cursor:pointer; font-size:11px; color:var(--text);}
+.fse-pk.on{border-color:var(--accent); background:var(--accent-soft);}
+#fsdRailBtns{display:flex; flex-wrap:wrap; gap:6px;}
+#ribbon .rg .fsd-row{margin:2px 0;} #ribbon .rg .fsd-row > label{flex:0 0 auto;}
+#fmechBox{display:flex; flex-direction:column; gap:5px; min-width:250px;}
+#fmechBox .fm-row{display:flex; align-items:center; gap:6px; font-size:12px;} #fmechBox .fm-row > span{flex:0 0 96px; color:var(--text-dim);} #fmechBox select{flex:1; min-width:0; padding:4px 6px;}
+@media (max-width:1100px){ #colSideF{width:auto;} #fseHost{height:70vw; min-height:320px; flex:none;} }
 #fsPanel h1{font-size:20px; margin:0 0 4px;}
 #fsPanel .fs-intro{color:var(--text-dim); font-size:13px; margin:0 0 6px; max-width:860px;}
 #fsPanel .fs-how{background:var(--accent-soft); border-radius:10px; padding:10px 14px; font-size:12.5px; margin:10px 0 14px; max-width:860px; line-height:1.55;}
@@ -409,7 +437,8 @@ body.hide-rail #colRail{display:none;} body.hide-props #colRounds{display:none;}
 #railBtns .btn{justify-content:center;}
 .round-card:not(.open){display:none;}
 .round-card .round-head{cursor:default;}
-body.fs-mode #ribTabs button:not([data-t="file"]), body.fsd-mode #ribTabs button:not([data-t="file"]), body.fs-mode #ribbon .pane:not([data-p="file"]), body.fsd-mode #ribbon .pane:not([data-p="file"]){display:none !important;}
+body.fs-mode #ribTabs button:not([data-t="file"]), body.fsd-mode #ribTabs button:not([data-t="file"]):not(.fsd-only), body.fs-mode #ribbon .pane:not([data-p="file"]), body.fsd-mode #ribbon .pane:not([data-p="file"]):not(.fsd-only){display:none !important;}
+body:not(.fsd-mode) .fsd-only{display:none !important;}
 #colSettings{display:none !important;}
 #fileMenu{display:none !important;}
 .pop{position:fixed; z-index:35; background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); padding:12px; width:min(420px,92vw); max-height:62vh; overflow:auto;}
@@ -685,6 +714,18 @@ body.rt-fx #decoHost:not(:has(.deco-card.sel)) .sec{display:none;}
     <div class="col" id="colRounds">
       <h2>Thuộc tính round <span style="font-weight:500">(game có <span id="roundCount">0</span> round)</span></h2>
       <div id="roundsList"></div>
+    </div>
+    <!-- Game cơ chế (fsdata): cùng khung với game kéo-thả — sân khấu giữa, thuộc tính bên phải -->
+    <div class="col" id="colStageF">
+        <div id="fseBar"><span id="fseStatus"></span><span class="sp"></span><label class="chk" style="margin:0" title="Kéo một thẻ / vật thì cả nhóm di chuyển theo (hoặc giữ Shift)"><input type="checkbox" id="fseGroup"> Kéo cả nhóm</label><button class="btn sm" id="fseReroll" title="Xem một câu hỏi mẫu khác">↻ Câu khác</button></div>
+      <div id="fseHost"></div>
+    </div>
+    <div class="col" id="colSideF">
+      <div id="fsTabs" role="tablist"><button data-k="obj">Đối tượng</button><button data-k="round">Câu hỏi</button><button data-k="rule">Luật chơi</button><button data-k="items">Kho vật</button></div>
+      <div class="fsp" data-k="obj" id="fseSide"></div>
+      <div class="fsp" data-k="round" id="fseRound"></div>
+      <div class="fsp" data-k="rule" id="fseRule"></div>
+      <div class="fsp" data-k="items" id="fseItems"></div>
     </div>
   </main>
 
@@ -1244,10 +1285,13 @@ class World {
   run(gen){ return this.g.run(gen); }
   nextTaskRng(){ this._taskNo++; return new Rng(this.g.sharedSeed*7919 + this._taskNo*104729); }
   addPoint(){ this.g.addPoint(this.team); }
-  sfx(k){ this.g.sfx(k); }
-  right(){ this.g.sfx('right'); }
+  /** Tiếng riêng của DẠNG CÂU HỎI (round) hiện tại — flow.sounds.right / wrong — nếu có; không thì tiếng chung cả game. */
+  sfx(k){ const fs = (this.flow && this.flow.sounds) || {}; if ((k === 'right' || k === 'wrong') && fs[k]){ this.g.playSound(fs[k], 'fx'); return; } this.g.sfx(k); }
+  right(){ this.sfx('right'); }
   /** Phát tiếng của vật (file âm thanh gắn vào vật: tiếng đọc tên). Không dùng giọng đọc của trình duyệt. */
   playItem(item){ if (item && item.sound) this.g.playSound(item.sound, 'voice'); }
+  /** Tiếng câu hỏi lúc đặt câu: file riêng của dạng câu hỏi (flow.sounds.prompt) nếu có, không thì tiếng của vật là đáp án. */
+  playPrompt(Q){ const S = (this.flow && this.flow.sounds) || {}; if (S.prompt){ this.g.playSound(S.prompt, 'voice'); return; } this.playItem(Q && Q.items && Q.target >= 0 ? Q.items[Q.target] : null); }
   img(name){ return this.g.imgUrl(name); }
   theme(key, d){ const t = this.data.theme || {}; return t[key] || d; }
 
@@ -1449,7 +1493,8 @@ P.makeObj = function(spec, parent, store, extra){
   const fx = +ev(spec.x == null ? .5 : spec.x), fy = +ev(spec.y == null ? .5 : spec.y);
   const w = (+ev(spec.w == null ? .2 : spec.w))*U, h = (spec.h == null ? +ev(spec.w == null ? .2 : spec.w) : +ev(spec.h))*U;
   const pos = spec.rel ? { x:0, y:0 } : this.P(fx, fy);
-  const o = { spec, extra: extra || {}, id: spec.id ? String(ev(spec.id)) : null, role: spec.role || null, cur: {}, animOn: true, dead: false, t0: this.rng.next()*6.28 };
+  const o = { spec, extra: extra || {}, id: spec.id ? String(ev(spec.id)) : null, role: spec.role || null, cur: {}, animOn: true, dead: false, t0: this.rng.next()*6.28,
+    origin: spec._origin || spec, multi: !!(spec._origin || spec.forEachItem || (extra && extra.item !== undefined && spec.forEachItem)) };   // origin/multi: chỉ để trình soạn web biết đối tượng nào sinh từ spec nào
   if (spec.fill){
     const lk = spec.look || {}, itId = lk.item !== undefined ? String(ev(lk.item)) : '', itm = itId ? this.items.find(i=> i.id === itId) : null, url = lk.image ? this.img(String(ev(lk.image))) : (itm && itm.image ? this.img(itm.image) : null);
     o.node = url ? UI.fill(parent, WHITE, { url }) : UI.fill(parent, hex(ev(lk.color)||'#FFFFFF'));
@@ -1473,7 +1518,7 @@ P.makeObjs = function(specs, parent, store, extra){
     } else if (spec.repeat){
       const n = Math.round(+this.ev(spec.repeat.n, extra));
       for (let i=0;i<n;i++){
-        const s = Object.assign({}, spec); s.x = (+this.ev(spec.x == null ? .5 : spec.x, extra)) + i*(+spec.repeat.dx||0); s.y = (+this.ev(spec.y == null ? .5 : spec.y, extra)) + i*(+spec.repeat.dy||0); delete s.repeat;
+        const s = Object.assign({}, spec); s.x = (+this.ev(spec.x == null ? .5 : spec.x, extra)) + i*(+spec.repeat.dx||0); s.y = (+this.ev(spec.y == null ? .5 : spec.y, extra)) + i*(+spec.repeat.dy||0); delete s.repeat; s._origin = spec;
         this.makeObj(s, parent, store, Object.assign({}, extra||{}, { i, n }));
       }
     } else this.makeObj(spec, parent, store, extra);
@@ -1661,7 +1706,7 @@ const MOD = {
   },
   view: {
     cards: { name:'Hàng thẻ', desc:'Hàng thẻ chạm được: hiện các vật của câu hỏi, hoặc các số đáp án.',
-      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF') } },
+      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), x:FL('Vị trí ngang (0 trái – 1 phải)',.5,.1,.9), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF') } },
     strip: { name:'Dải hình (theo chuỗi)', desc:'Hàng ô hiện các hình của chuỗi theo thứ tự. Thường dùng với "Hiện n giây rồi úp".',
       p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1) } },
     grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1) } },
@@ -1701,6 +1746,8 @@ const jpar = (kind, spec, key, d)=>{ const v = par(kind, spec, key); if (v && ty
 const PALETTE = ['#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA'];
 const tagOf = (it, k)=> ((it && it.tags) || {})[k];
 const sceneFor = (w, extra)=> w.scope(extra);
+/** Vị trí ghi đè từng phần tử của view (do trình soạn kéo thả): spec.p.ov = { "<chỉ số>": [fx, fy] } (toạ độ 0..1 của world, như P()). Trả về {x,y} px hoặc null. */
+const ovPos = (w, spec, i)=>{ const ov = (spec.p || {}).ov, v = ov && ov[i]; return (Array.isArray(v) && v.length > 1 && isFinite(+v[0]) && isFinite(+v[1])) ? w.P(+v[0], +v[1]) : null; };
 
 // ═════════════════════════ GEN ═════════════════════════════════════════════════
 const GEN = {
@@ -1799,6 +1846,67 @@ const GEN = {
   },
 };
 
+// ═════════════════════════ ROUNDS (câu hỏi VIẾT TAY) ═══════════════════════════
+// flow.manual = true + flow.rounds[] → mỗi lượt lấy 1 round thay vì sinh ngẫu nhiên (flow.roundOrder: 'seq' mặc định | 'shuffle'). Round KHÔNG hợp lệ
+// (thiếu vật…) → rơi về nguồn tự động. Schema 1 round theo loại nguồn (vật tham chiếu bằng id):
+//   set {items:[id..], target:id} · match {subject:id, options:[id..], answer:id} · values {items:[id..], less?:1} · sequence {items:[id..], seq:[chỉ số vào items..]}
+//   pairs {items:[id..]} · number {count:n, options?:[n..]}.   (calc / none chỉ chạy tự động.)  Bản C#: FlowGens.FromRound — PHẢI khớp.
+const itemById = (w, id)=> w.items.find(i=> i.id === String(id));
+const itemsOfRound = (w, r, key)=> { const out = []; for (const id of (r[key] || [])){ const it = itemById(w, id); if (!it) return null; out.push(it); } return out; };
+const ROUND = {
+  set(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    let t = its.findIndex(x=> x.id === String(r.target)); if (t < 0) t = 0;
+    const name = w.nameOf(its[t]);
+    return { items: its, target: t, vars:{ label:name }, id:'SET_' + (its[t].id || name), desc:'Chọn ' + name, answers: its.map(p=> w.nameOf(p)) };
+  },
+  match(w, spec, r){
+    const subject = itemById(w, r.subject), opts = itemsOfRound(w, r, 'options'); if (!subject || !opts || opts.length < 2) return null;
+    let ai = opts.findIndex(x=> x.id === String(r.answer)); if (ai < 0) ai = 0;
+    return { items: opts, target: ai, subject, vars:{ subject: w.nameOf(subject), label: w.nameOf(opts[ai]) }, id:'MATCH_' + (subject.id || '') + '_' + opts[ai].id, desc:'Ghép ' + w.nameOf(subject), answers: opts.map(p=> w.nameOf(p)) };
+  },
+  values(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    const P = k=> par('gen', spec, k), less = !!(+r.less), n = its.length;
+    let target = 0; for (let i=1;i<n;i++) if (less ? (+its[i].value < +its[target].value) : (+its[i].value > +its[target].value)) target = i;
+    const word = less ? P('wordLess') : P('wordMore'), suffix = n === 2 ? P('suffix2') : P('suffix3');
+    return { items: its, target, vars:{ word, suffix, label:w.nameOf(its[target]) }, id:'VAL_' + (its[target].id || target) + (less?'_min':'_max') + n, desc:'Con nào ' + word + ' ' + suffix, answers: its.map(p=> w.nameOf(p)) };
+  },
+  sequence(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    const seq = (r.seq || []).map(Number).filter(i=> Number.isInteger(i) && i >= 0 && i < its.length); if (!seq.length) return null;
+    return { items: its, seq, target: seq[0], vars:{ len: seq.length, names: seq.map(i=> w.nameOf(its[i]).toLowerCase()).join(', rồi ') }, id:'SEQ_' + seq.length + '_' + seq.join('-'), desc:'Chuỗi ' + seq.length + ' hình', answers: its.map(p=> w.nameOf(p)) };
+  },
+  pairs(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    const pairs = its.length, faces = []; for (let i=0;i<pairs;i++) faces.push(i, i); w.shuffle(faces);
+    return { items: its, faces, pairs, vars:{ pairs }, id:'PAIRS_' + pairs, desc:'Lật thẻ giống nhau: ' + pairs + ' cặp', answers:[faces.join(',')] };
+  },
+  number(w, spec, r){
+    const P = k=> par('gen', spec, k), count = Math.max(1, Math.min(12, Math.round(+r.count) || 1));
+    let opts;
+    if (Array.isArray(r.options) && r.options.length){ opts = []; r.options.map(Number).forEach(v=>{ if (v >= 1 && v <= 12 && opts.indexOf(v) < 0) opts.push(v); }); if (opts.indexOf(count) < 0) opts.push(count); }
+    else { opts = [count]; let g = 0; while (opts.length < P('options') && g++ < 80){ const v = count + w.rand(-2, 3); if (v >= 1 && v <= 12 && opts.indexOf(v) < 0) opts.push(v); } w.shuffle(opts); }
+    const obj = w.items.find(i=> i.id === P('objectId')) || null;
+    return { items: obj ? [obj] : [], options: opts, number: count, target: opts.indexOf(count), vars:{ count }, id:'NUM_' + count, desc:'Đếm ' + count, answers: opts.map(String) };
+  },
+};
+/** Q hiện tại → 1 round viết tay (dùng cho nút "Thêm round" của trình soạn). Trả null nếu loại nguồn không hỗ trợ. */
+function qToRound(type, Q){
+  const ids = a=> (a || []).map(i=> i.id);
+  switch (type){
+    case 'set': return { items: ids(Q.items), target: (Q.items[Q.target] || {}).id };
+    case 'match': return { subject: (Q.subject || {}).id, options: ids(Q.items), answer: (Q.items[Q.target] || {}).id };
+    case 'values': { const o = { items: ids(Q.items) }; if (/_min/.test(Q.id || '')) o.less = 1; return o; }
+    case 'sequence': return { items: ids(Q.items), seq: (Q.seq || []).slice() };
+    case 'pairs': return { items: ids(Q.items) };
+    case 'number': return { count: Q.number, options: (Q.options || []).slice() };
+  }
+  return null;
+}
+const ROUND_TYPES = Object.keys(ROUND);
+
+
 // ═════════════════════════ VIEW ════════════════════════════════════════════════
 // V = { elems:[{node,key,kind,name,fig,item}], parts:[{show(),cover(),hide()}], hideAll(), setActive(b), intro(): generator, ready }
 const PRESET_TPL = {
@@ -1813,7 +1921,7 @@ const VIEW = {
     const spacing = n <= 3 ? .31 : n === 4 ? .24 : .72/(n-1), cs = Math.min(w.U*P('sizeU'), w.W*spacing*.93), tall = P('tall');
     const elems = [];
     list.forEach((it, i)=>{
-      const pos = w.P(.5 + (i - (n-1)/2)*spacing, P('y'));
+      const pos = ovPos(w, spec, i) || w.P(P('x') + (i - (n-1)/2)*spacing, P('y'));
       let card, fig = null;
       if (isNum) card = UI.card(w.root, null, String(it), hex('#7E57C2'), pos.x, pos.y, cs, cs*tall, null, 72).rt;
       else {
@@ -1845,8 +1953,8 @@ const VIEW = {
     }
     list.forEach((it, i)=>{
       const s = sizeOf(i, it), ex = { opt: Object.assign({}, it, { v: (Q.optv||[])[i] }), i, n, item: it, size: s };
-      const hh = P('hU') > 0 ? P('hU')*U : s*U*tall, py = P('yExpr') ? w.P(0, +w.ev(P('yExpr'), ex)).y : pts[i].y;
-      const cont = UI.pic(w.root, null, col(255,255,255,0), pts[i].x, py, s*U, hh, true); cont.preserveAspect = false; w.track(cont);
+      const hh = P('hU') > 0 ? P('hU')*U : s*U*tall, ovp = ovPos(w, spec, i), py = ovp ? ovp.y : P('yExpr') ? w.P(0, +w.ev(P('yExpr'), ex)).y : pts[i].y;
+      const cont = UI.pic(w.root, null, col(255,255,255,0), ovp ? ovp.x : pts[i].x, py, s*U, hh, true); cont.preserveAspect = false; w.track(cont);
       w.makeObjs(tpl.map(t=> Object.assign({ rel:true }, t)), cont, w.taskObjs, ex);
       if (P('labelBelow')) UI.label(cont, w.nameOf(it), 26, WHITE, 0, -hh*.5 - U*.045, U*.5, U*.08, undefined, 'card');
       if (P('anim') !== 'none') w.taskObjs.push({ node: cont, spec:{ anim:{ type: P('anim') === 'pulse' ? 'pulse' : 'bob', amp: P('anim') === 'float' ? .02 : .012, speed: P('anim') === 'float' ? 1.6 : 3 } }, extra:{}, cur:{}, animOn:true, x0: cont.x, y0: cont.y, t0: w.rng.next()*6.28 });
@@ -1864,7 +1972,7 @@ const VIEW = {
     const P = k=> par('view', spec, k), len = Q.seq.length, slot = Math.min(w.U*P('slotU'), w.W*.92/len*.9), gap = slot*.1, rowW = len*slot + (len-1)*gap;
     const bg = [], face = [], qq = [], y = w.P(.5, P('y')).y, plain = !!P('plain');
     for (let i=0;i<len;i++){
-      const b = UI.pic(w.root, 'rrect', plain ? col(255,255,255,0) : col(255,255,255,.9), -rowW/2 + slot/2 + i*(slot+gap), y, slot, slot); b.sliced = true; b.preserveAspect = false; w.track(b); bg.push(b);
+      const op = ovPos(w, spec, i), b = UI.pic(w.root, 'rrect', plain ? col(255,255,255,0) : col(255,255,255,.9), op ? op.x : -rowW/2 + slot/2 + i*(slot+gap), op ? op.y : y, slot, slot); b.sliced = true; b.preserveAspect = false; w.track(b); bg.push(b);
       const q = UI.label(b, '?', Math.round(slot*.6), hex('#90A4AE'), 0, 0, slot, slot, false); q.active = false; qq.push(q);
       face.push(w.drawItem(b, Q.items[Q.seq[i]], 0, 0, slot*.82));
     }
@@ -1880,7 +1988,7 @@ const VIEW = {
     const covered = !!P('covered'), elems = [];
     Q.faces.forEach((fi, i)=>{
       const r = Math.floor(i/cols), c = i % cols;
-      const holder = UI.pic(w.root, null, col(255,255,255,0), origin.x + (c-(cols-1)/2)*stepX, origin.y + ((rows-1)/2 - r)*stepY, cs, cs, true); holder.preserveAspect = false; w.track(holder);
+      const op = ovPos(w, spec, i), holder = UI.pic(w.root, null, col(255,255,255,0), op ? op.x : origin.x + (c-(cols-1)/2)*stepX, op ? op.y : origin.y + ((rows-1)/2 - r)*stepY, cs, cs, true); holder.preserveAspect = false; w.track(holder);
       const back = UI.pic(holder, 'rrect', hex('#26A69A'), 0, 0, cs, cs); back.sliced = true; back.preserveAspect = false; UI.label(back, '?', Math.round(cs*.6), WHITE, 0, 0, cs, cs);
       const front = UI.pic(holder, 'rrect', WHITE, 0, 0, cs, cs); front.sliced = true; front.preserveAspect = false; w.drawItem(front, Q.items[fi], 0, 0, cs*.82);
       back.active = covered; front.active = !covered;
@@ -2141,20 +2249,32 @@ class FlowWorld extends World {
     const list = ((this.flow.on || {})[ev]) || [];
     if (list.length) yield* this.runActs(list, cx); else if (std) yield* std(cx);
   }
+  /** Chỉ số round viết tay của lượt này (flow.roundOrder: 'seq' lặp vòng | 'shuffle' xáo mỗi vòng). */
+  _nextRound(f, fi){
+    const n = f.rounds.length; this._rc = this._rc || {}; this._rb = this._rb || {};
+    const c = this._rc[fi] = (this._rc[fi] || 0) + 1;
+    if (f.roundOrder === 'shuffle'){ if (!this._rb[fi] || !this._rb[fi].length){ const a = []; for (let i=0;i<n;i++) a.push(i); this._rb[fi] = this.shuffle(a); } return this._rb[fi].shift(); }
+    return (c - 1) % n;
+  }
   /** Chạy hành động tức thì (không chờ) — dùng cho on.start trước khi sinh câu hỏi. */
   exec(list){ const g = this.runActs(list, {}); for (let i=0;i<1000;i++){ const r = g.next(); if (r.done) break; } }
   beginTask(info, done){
     this.clearItems(); this.active = true; this.taskNo++; this._ready = false;
-    const flows = flowsOf(this.data); this.flow = flows[this.data.flowPick === 'random' ? this.rng.int(flows.length) : (this.taskNo-1) % flows.length];
+    const flows = flowsOf(this.data); this.flow = this.editMode ? flows[Math.min(this.editFlow || 0, flows.length - 1)] : flows[this.data.flowPick === 'random' ? this.rng.int(flows.length) : (this.taskNo-1) % flows.length];
     const f = this.flow, gen = this.gen, T = f.text || {};
     this.vars._task = this.taskNo; this.vars._ok = this.ok;
     if ((f.on || {}).start) this.exec(f.on.start);
-    const Q = this._Q = GEN[f.gen.type](this, f.gen);
+    let Q0 = null;
+    if (f.manual && f.rounds && f.rounds.length && ROUND[f.gen.type]){   // câu hỏi viết tay
+      const ri = this.editMode ? (this.editRound === undefined ? -1 : this.editRound) : this._nextRound(f, flows.indexOf(f));
+      if (ri >= 0 && ri < f.rounds.length){ Q0 = ROUND[f.gen.type](this, f.gen, f.rounds[ri]); if (Q0) Q0.round = ri; }
+    }
+    const Q = this._Q = Q0 || GEN[f.gen.type](this, f.gen);
     Object.assign(info, { id:Q.id, topic:f.gen.type, description:Q.desc, answers:Q.answers, correct:Q.target });
     this.makeObjs((f.objects || []).filter(o=> o.z !== 'front'), this.root, this.taskObjs, {});
     const first = this.taskNo === 1 && T.first ? T.first : T.prompt;
-    this.prompt.text = X.template(first, Q.vars, this.scope()); this.playItem(Q.items && Q.target >= 0 ? Q.items[Q.target] : null);
-    const V = (f.views || []).map(s=> VIEW[s.type](this, s, Q));
+    this.prompt.text = X.template(first, Q.vars, this.scope()); this.playPrompt(Q);
+    const V = this.V = (f.views || []).map(s=> VIEW[s.type](this, s, Q));
     this.makeObjs((f.objects || []).filter(o=> o.z === 'front'), this.root, this.taskObjs, {});
     this.objs.filter(o=> (o.spec||{}).z === 'front').forEach(o=> o.node.setAsLast()); this.prompt.setAsLast();
     this.elems = allElems(V);
@@ -2165,6 +2285,10 @@ class FlowWorld extends World {
   }
   *_present(f, V, Q, gen, T){
     const specs = f.views || [];
+    if (this.editMode){   // trình soạn web: hiện ngay trạng thái cuối của mọi view, không chờ dòng thời gian
+      V.forEach((v,i)=>{ if (((specs[i].reveal || {}).mode || 'none') !== 'none') v.parts.forEach(p=> p.show()); else this.run(v.intro()); });
+      this._ready = true; return;
+    }
     const revs = V.map((v,i)=> ({ v, r: specs[i].reveal || {} })).filter(o=> (o.r.mode || 'none') !== 'none');
     const defer = V.filter((v,i)=> specs[i].appear === 'afterReveal' && revs.length);
     defer.forEach(v=> v.elems.forEach(e=> e.node.active = false));
@@ -2184,7 +2308,7 @@ class FlowWorld extends World {
         this.sfx('plop');
       }
       defer.forEach(v=>{ v.elems.forEach(e=>{ e.node.active = true; this.run(tw.popIn(e.node, .25)); }); });
-      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.playItem(Q.items && Q.target >= 0 ? Q.items[Q.target] : null); }
+      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.playPrompt(Q); }
     }
     while (V.some(v=> v.ready === false)) { if (gen !== this.gen) return; yield null; }
     this._ready = true; const cbs = this._readyCbs; this._readyCbs = []; cbs.forEach(cb=> cb());
@@ -2193,7 +2317,7 @@ class FlowWorld extends World {
 Game.WorldClass = FlowWorld;
 
 F.MOD = MOD; F.par = par; F.flowsOf = flowsOf; F.GEN = GEN; F.FlowWorld = FlowWorld;
-F.cubeCells = cubeCells;
+F.cubeCells = cubeCells; F.qToRound = qToRound; F.ROUND_TYPES = ROUND_TYPES; F.ROUND = ROUND;
 /** Kiểm tra cấu hình trước khi chạy/xuất; trả về chuỗi lỗi hoặc null. */
 F.validate = function(d){
   const flows = flowsOf(d); if (!flows.length) return 'Thiếu cấu hình flow.';
@@ -2223,6 +2347,330 @@ F.validate = function(d){
 };
 /** Chơi thử: host = DOM; data = fsData; opts = { imgUrl(name)→url, mute }. Trả về Game (có .stop()). */
 F.play = function(host, data, opts){ return new Game(host, JSON.parse(JSON.stringify(data)), opts); };
+})();
+
+</script>
+<script>
+/* FloorStory — TRÌNH SOẠN SÂN KHẤU (chỉ web; Unity không cần, không có bản C#).
+   Dựng 1 thế giới (1 đội, 512×500) bằng CHÍNH engine với 1 câu hỏi mẫu cố định (rng theo seed), hiện sẵn trạng thái cuối của mọi view,
+   rồi phủ lớp tương tác: chọn / kéo / đổi cỡ đối tượng như PowerPoint.
+   Ghi dữ liệu:  • đối tượng cảnh (data.scene[i] / flow.objects[i])  → spec.x, spec.y (0..1 của world), spec.w, spec.h (đơn vị U)
+                 • phần tử do view tự bố trí (thẻ, vật, ô…)           → flow.views[v].p.ov[chỉ số] = [fx, fy]   (engine áp sau khi tính bố cục)
+                 • Shift+kéo / chế độ "cả nhóm"                       → đổi tham số của view (x,y / x0..y1 / cx,cy / pos / slotU …)
+   API:  const ed = FSW.edit(host, data, { imgUrl, beforeChange(), onChange(info), onSelect(handle|null), onRefresh(handles) });
+         ed.refresh() · ed.reroll() · ed.select(id) · ed.setFlow(i) · ed.group = bool · ed.handles · ed.selected · ed.destroy() */
+(function(){
+'use strict';
+const F = window.FSW, { UI, Node, Rng } = F;
+const W = 512, H = 500, U = 500, R3 = v=> Math.round(v*1000)/1000;
+let cssOk = false;
+function css(){
+  if (cssOk) return; cssOk = true;
+  const s = document.createElement('style');
+  s.textContent = `
+.fse-wrap{position:relative; width:100%; height:100%; overflow:hidden; background:#0b0c14;}
+.fse-stage{position:absolute; left:0; top:0; width:${W}px; height:${H}px; transform-origin:0 0; background:#111; overflow:hidden; font-family:'Baloo 2','Quicksand','Inter',system-ui,sans-serif; user-select:none; -webkit-user-select:none;}
+.fse-ov{position:absolute; left:0; top:0; width:${W}px; height:${H}px; z-index:60; cursor:default; touch-action:none;}
+.fse-box{position:absolute; box-sizing:border-box; pointer-events:none; border:1.5px dashed rgba(77,150,255,.0);}
+.fse-box.hov{border-color:rgba(77,150,255,.75);}
+.fse-box.lock{border-color:rgba(255,160,60,.0);}
+.fse-box.lock.hov{border-color:rgba(255,160,60,.85);}
+.fse-box.sel{border:2px solid #4D96FF; box-shadow:0 0 0 1px rgba(255,255,255,.55);}
+.fse-box.sel.lock{border-color:#FFA03C;}
+.fse-grip{position:absolute; right:-7px; bottom:-7px; width:13px; height:13px; background:#fff; border:2px solid #4D96FF; border-radius:3px; pointer-events:auto; cursor:nwse-resize;}
+.fse-tag{position:absolute; left:0; top:-19px; font:700 11px/1 system-ui,sans-serif; color:#fff; background:#4D96FF; padding:3px 6px; border-radius:4px; white-space:nowrap; pointer-events:none;}
+.fse-box.lock .fse-tag{background:#E8890C;}
+.fse-gd{position:absolute; background:rgba(255,80,160,.85); pointer-events:none; display:none;}
+.fse-hint{position:absolute; left:8px; bottom:6px; font:600 11px system-ui,sans-serif; color:rgba(255,255,255,.75); background:rgba(0,0,0,.45); padding:3px 7px; border-radius:6px; pointer-events:none; z-index:61;}
+`;
+  document.head.appendChild(s);
+}
+
+const lookKind = spec=>{ const l = (spec && spec.look) || {}; return l.text !== undefined ? 'text' : l.image ? 'image' : l.item !== undefined ? 'item' : l.icon ? 'icon' : l.kind === 'hand' ? 'hand' : 'shape'; };
+const KIND_NAME = { text:'Chữ', image:'Ảnh', item:'Vật', icon:'Icon', hand:'Kim', shape:'Hình' };
+const isNum = v=> v === undefined || v === null || (typeof v === 'number' && isFinite(v));
+F.editLookKind = lookKind; F.editKindName = KIND_NAME;
+
+F.edit = function(host, data, opts){
+  css(); F.injectCss(); opts = opts || {};
+  const ed = { data, handles: [], selected: null, group: false, flowIdx: 0, round: -1, seed: 20261013, world: null };
+  let wrap, stage, ov, guideX, guideY, k = 1, timer = null, selId = null, drag = null, hoverId = null;
+  const boxes = new Map();
+
+  const g = {
+    data, opts: { mute: true }, sharedSeed: ed.seed, tasks: [],
+    run(gen){ const t = { gen, wait: 0, dead: false }; this.tasks.push(t); return t; },
+    sfx(){}, playSound(){}, addPoint(){}, imgUrl: n=> opts.imgUrl ? opts.imgUrl(n) : null,
+  };
+  function tick(){
+    const now = performance.now(); let dt = (now - (g._last || now)) / 1000; g._last = now; dt = Math.min(dt, .1); F.T.dt = dt;
+    for (let i = g.tasks.length - 1; i >= 0; i--){
+      const t = g.tasks[i];
+      if (t.dead){ g.tasks.splice(i, 1); continue; }
+      if (t.wait > 0){ t.wait -= dt; continue; }
+      let r; try{ r = t.gen.next(); }catch(e){ console.error('[FS edit]', e); g.tasks.splice(i, 1); continue; }
+      if (r.done){ g.tasks.splice(i, 1); continue; }
+      if (typeof r.value === 'number') t.wait = r.value;
+    }
+    if (ed.world && !(drag && drag.live)){ try{ ed.world.update(dt, now / 1000); }catch(e){} }
+  }
+
+  // ── dựng khung ──
+  function mount(){
+    host.innerHTML = '';
+    wrap = document.createElement('div'); wrap.className = 'fse-wrap';
+    stage = document.createElement('div'); stage.className = 'fse-stage';
+    ov = document.createElement('div'); ov.className = 'fse-ov';
+    guideX = document.createElement('div'); guideX.className = 'fse-gd'; guideX.style.cssText += ';width:1px;top:0;height:' + H + 'px;left:' + (W/2) + 'px';
+    guideY = document.createElement('div'); guideY.className = 'fse-gd'; guideY.style.cssText += ';height:1px;left:0;width:' + W + 'px;top:' + (H/2) + 'px';
+    stage.appendChild(ov); ov.appendChild(guideX); ov.appendChild(guideY);
+    wrap.appendChild(stage); host.appendChild(wrap);
+    ov.addEventListener('pointerdown', onDown); ov.addEventListener('pointermove', onMove); ov.addEventListener('pointerup', onUp); ov.addEventListener('pointercancel', onUp);
+    ed.fit = ()=>{ const r = wrap.getBoundingClientRect(); k = Math.min(r.width / W, r.height / H) || 1; stage.style.transform = `scale(${k})`; stage.style.left = Math.max(0, (r.width - W*k)/2) + 'px'; stage.style.top = Math.max(0, (r.height - H*k)/2) + 'px'; };
+    ed.fit(); if (window.ResizeObserver){ ed._ro = new ResizeObserver(ed.fit); ed._ro.observe(wrap); }
+    timer = setInterval(tick, 16);
+  }
+
+  // ── dựng thế giới + danh sách handle ──
+  function build(){
+    if (ed.world){ g.tasks.length = 0; }
+    Array.from(stage.children).forEach(c=>{ if (c !== ov) stage.removeChild(c); });
+    const root = new Node(stage, 'rect', 0, 0, W, H); root.el.style.cssText += ';left:0;top:0;transform:none;overflow:hidden;';
+    stage.insertBefore(root.el, ov);
+    g.sharedSeed = ed.seed;
+    const w = ed.world = new F.FlowWorld(g, 0, root, data);
+    w.rng = new Rng(ed.seed); w.editMode = true; w.editFlow = ed.flowIdx; w.editRound = ed.round;
+    ed.error = F.validate(data);   // cấu hình chưa đủ (vd thiếu vật) → chỉ hiện cảnh, chưa ra câu hỏi
+    if (!ed.error){ try{ w.beginTask({}, ()=>{}); }catch(e){ console.error('[FS edit] beginTask', e); } }
+    collect();
+  }
+  function collect(){
+    const w = ed.world, H_ = [], flow = w.flow || {};
+    const addObj = (o, src, specs, cnt)=>{
+      const nd = o.node; if (!nd || nd.dead || nd.parent !== w.root) return;
+      const idx = specs.indexOf(o.origin); if (idx < 0) return;
+      const sp = o.origin, n = (cnt[idx] = (cnt[idx] || 0) + 1), multi = !!o.multi || n > 1;
+      let why = '';
+      if (multi) why = 'Đối tượng này sinh tự động (lặp / theo từng vật) — chỉnh trong "Nâng cao".';
+      else if (sp.fill) why = 'Nền phủ kín — chỉ đổi được màu / ảnh.';
+      else if (!isNum(sp.x) || !isNum(sp.y)) why = 'Vị trí là biểu thức — chỉnh trong "Nâng cao".';
+      else if (sp.bind && (sp.bind.x !== undefined || sp.bind.y !== undefined)) why = 'Vị trí do ràng buộc (bind) điều khiển lúc chơi.';
+      H_.push({ id: 'o:' + src + ':' + idx + (n > 1 ? '#' + n : ''), dup: n > 1, type: 'obj', src, idx, spec: sp, node: nd, kind: lookKind(sp), locked: !!why, why, canSize: !sp.fill && !multi && isNum(sp.w) && isNum(sp.h), label: (KIND_NAME[lookKind(sp)] || 'Đối tượng') + (multi ? ' ⟳ (lặp)' : '') + (sp.look && sp.look.text !== undefined ? ': ' + String(sp.look.text).slice(0, 14) : sp.look && sp.look.item ? ': ' + sp.look.item : '') });
+    };
+    const c1 = {}, c2 = {};
+    w.objs.forEach(o=> addObj(o, 'scene', data.scene || [], c1));
+    w.taskObjs.forEach(o=> { if (o.origin) addObj(o, 'objects', flow.objects || [], c2); });
+    (w.V || []).forEach((v, vi)=>{
+      const spec = (flow.views || [])[vi]; if (!spec) return;
+      const t = spec.type, nm = (F.MOD.view[t] || {}).name || t;
+      let nodes = [];
+      if (t === 'cards' || t === 'props' || t === 'grid') nodes = (v.elems || []).map(e=> e.node);
+      else if (t === 'strip') nodes = (v.bg || []);
+      else if (t === 'seesaw') nodes = (v.elems || []).map(e=> e.node);
+      const movable = ['cards','props','grid','strip'].indexOf(t) >= 0, sizable = ['cards','props','strip'].indexOf(t) >= 0;
+      nodes.forEach((nd, i)=> {
+        if (!nd || nd.dead) return;
+        H_.push({ id: 'v:' + vi + ':' + i, type: 'view', vi, slot: i, spec, vtype: t, node: nd, kind: 'view', locked: !movable, why: movable ? '' : 'View "' + nm + '" tự bố trí — chỉnh bằng thông số bên phải.', canSize: sizable, label: nm + ' #' + (i + 1) });
+      });
+    });
+    ed.handles = H_;
+    drawBoxes();
+    if (selId && !H_.some(h=> h.id === selId)) selId = null;
+    ed.selected = H_.find(h=> h.id === selId) || null;
+    paint();
+    if (opts.onRefresh) opts.onRefresh(H_);
+  }
+
+  // ── hình học ──
+  const ctr = nd=> ({ x: W/2 + nd.x, y: H/2 - nd.y });
+  const dims = nd=> { const full = nd._fill; return { w: full ? W : (nd.w || 30) * Math.abs(nd.sx), h: full ? H : (nd.h || 30) * Math.abs(nd.sy) }; };
+  function frameOf(h){
+    const c = ctr(h.node), d = dims(h.node);
+    return { x: c.x, y: c.y, w: d.w, h: d.h, rot: h.node._fill ? 0 : (h.node.rot || 0) };
+  }
+  function toStage(e){ const r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k }; }
+  function domIndex(nd){ return nd.el.parentNode ? Array.prototype.indexOf.call(nd.el.parentNode.children, nd.el) : -1; }
+  function hit(p){
+    const list = ed.handles.filter(h=> h.node && !h.node.dead && h.node.active).sort((a, b)=> domIndex(b.node) - domIndex(a.node));
+    const test = (h, big)=>{
+      const f = frameOf(h), area = f.w * f.h, isBig = area > .5 * W * H;
+      if (isBig !== big) return false;
+      const a = -f.rot * Math.PI / 180, dx = p.x - f.x, dy = p.y - f.y, c = Math.cos(a), s = Math.sin(a);
+      const lx = dx * c + dy * s, ly = -dx * s + dy * c;
+      return Math.abs(lx) <= f.w/2 + 3 && Math.abs(ly) <= f.h/2 + 3;
+    };
+    return list.find(h=> test(h, false)) || list.find(h=> test(h, true)) || null;
+  }
+
+  // ── khung chọn ──
+  function drawBoxes(){
+    boxes.forEach(b=> b.remove()); boxes.clear();
+    ed.handles.forEach(h=>{
+      const b = document.createElement('div'); b.className = 'fse-box' + (h.locked ? ' lock' : ''); ov.appendChild(b); boxes.set(h.id, b);
+    });
+  }
+  function paint(){
+    ed.handles.forEach(h=>{
+      const b = boxes.get(h.id); if (!b) return;
+      const on = h.id === selId, hv = h.id === hoverId;
+      b.classList.toggle('sel', on); b.classList.toggle('hov', hv && !on);
+      const show = on || hv;
+      b.style.display = show && h.node.active && !h.node.dead ? '' : 'none';
+      if (!show) return;
+      const f = frameOf(h);
+      b.style.left = (f.x - f.w/2) + 'px'; b.style.top = (f.y - f.h/2) + 'px'; b.style.width = f.w + 'px'; b.style.height = f.h + 'px';
+      b.style.transform = f.rot ? `rotate(${-f.rot}deg)` : '';
+      let tag = b.querySelector('.fse-tag'), grip = b.querySelector('.fse-grip');
+      if (on && !tag){ tag = document.createElement('div'); tag.className = 'fse-tag'; b.appendChild(tag); }
+      if (tag) tag.textContent = (h.locked ? '🔒 ' : '') + h.label;
+      if (on && h.canSize && !h.locked && !grip){ grip = document.createElement('div'); grip.className = 'fse-grip'; grip.dataset.grip = '1'; b.appendChild(grip); }
+      if ((!on || !h.canSize || h.locked) && grip) grip.remove();
+      if (!on && tag) tag.remove();
+    });
+  }
+  function setSel(id, silent){
+    selId = id; ed.selected = ed.handles.find(h=> h.id === id) || null; paint();
+    if (!silent && opts.onSelect) opts.onSelect(ed.selected);
+  }
+
+  // ── tương tác ──
+  function onDown(e){
+    if (e.button > 0) return;
+    const p = toStage(e), grip = e.target && e.target.dataset && e.target.dataset.grip;
+    let h = ed.selected;
+    if (!grip){ h = hit(p); setSel(h ? h.id : null); }
+    if (!h) return;
+    ov.setPointerCapture(e.pointerId);
+    const f = frameOf(h);
+    drag = { mode: grip ? 'size' : 'move', h, p0: p, f0: f, moved: false, live: false, shift: e.shiftKey || ed.group,
+             nodes: null, start: null };
+    if (drag.mode === 'move'){
+      const sibs = (h.type === 'view' && drag.shift) ? ed.handles.filter(o=> o.type === 'view' && o.vi === h.vi) : [h];
+      drag.nodes = sibs.map(o=> ({ o, x: o.node.x, y: o.node.y }));
+      drag.groupMove = h.type === 'view' && drag.shift;
+      if (h.locked && !drag.groupMove) drag.blocked = true;
+    } else { drag.w0 = h.node.w; drag.h0 = h.node.h; }
+    e.preventDefault();
+  }
+  function onMove(e){
+    const p = toStage(e);
+    if (!drag){ const h = hit(p); const id = h ? h.id : null; if (id !== hoverId){ hoverId = id; paint(); } ov.style.cursor = h ? (h.locked ? 'not-allowed' : 'move') : 'default'; return; }
+    const dx = p.x - drag.p0.x, dy = p.y - drag.p0.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 3) return;
+    drag.moved = true; drag.live = true;
+    if (drag.mode === 'move'){
+      if (drag.blocked){ return; }
+      let ax = dx, ay = dy;
+      if (!drag.groupMove){   // bắt dính trục giữa
+        const nx = drag.f0.x + dx, ny = drag.f0.y + dy;
+        guideX.style.display = Math.abs(nx - W/2) < 5 ? 'block' : 'none'; guideY.style.display = Math.abs(ny - H/2) < 5 ? 'block' : 'none';
+        if (Math.abs(nx - W/2) < 5) ax = W/2 - drag.f0.x; if (Math.abs(ny - H/2) < 5) ay = H/2 - drag.f0.y;
+      }
+      drag.ax = ax; drag.ay = ay;
+      drag.nodes.forEach(n=> n.o.node.setPos(n.x + ax, n.y - ay));
+    } else {
+      const h = drag.h, nd = h.node, c = { x: drag.f0.x, y: drag.f0.y };
+      let nw = Math.max(10, 2 * Math.abs(p.x - c.x)), nh = Math.max(10, 2 * Math.abs(p.y - c.y));
+      const keep = e.shiftKey || h.type === 'view' || !(h.spec && h.spec.h !== undefined) || lookKind(h.spec) === 'image' || lookKind(h.spec) === 'item' || lookKind(h.spec) === 'icon';
+      if (keep && !(h.type === 'obj' && lookKind(h.spec) === 'text')){ const r = Math.max(nw / drag.f0.w, nh / drag.f0.h); nw = drag.f0.w * r; nh = drag.f0.h * r; }
+      drag.nw = nw; drag.nh = nh;
+      nd.setSize(nw / Math.abs(nd.sx || 1), nh / Math.abs(nd.sy || 1));
+      if (nd.kind === 'text') nd.fit();
+    }
+    paint();
+  }
+  function onUp(e){
+    guideX.style.display = guideY.style.display = 'none';
+    const d = drag; drag = null; if (!d) return;
+    try{ ov.releasePointerCapture(e.pointerId); }catch(_){}
+    if (!d.moved){ return; }
+    if (d.mode === 'move' && d.blocked){ if (opts.onBlocked) opts.onBlocked(d.h); build(); setSel(d.h.id, true); return; }
+    if (opts.beforeChange) opts.beforeChange();
+    let info = null;
+    if (d.mode === 'move') info = commitMove(d);
+    else info = commitSize(d);
+    ed.refresh(); if (opts.onChange) opts.onChange(info);
+  }
+
+  // ── ghi dữ liệu ──
+  const par = (spec, key)=> F.par('view', spec, key);
+  function commitMove(d){
+    const h = d.h, ax = d.ax || 0, ay = d.ay || 0, dfx = ax / W, dfy = -ay / H;
+    if (h.type === 'obj'){
+      const sp = h.spec, nd = h.node, dxU = +sp.dx || 0, dyU = +sp.dy || 0;
+      sp.x = R3((nd.x - dxU * U) / W + .5); sp.y = R3((nd.y - dyU * U) / H + .5);
+      return { type: 'move', id: h.id };
+    }
+    const spec = h.spec; spec.p = spec.p || {};
+    if (d.groupMove){
+      const p = spec.p, t = spec.type;
+      const sh = (key, dv)=>{ p[key] = R3(+par(spec, key) + dv); };
+      if (t === 'cards'){ sh('x', dfx); sh('y', dfy); }
+      else if (t === 'strip'){ sh('y', dfy); }
+      else if (t === 'props'){
+        const lay = par(spec, 'layout');
+        if (lay === 'circle'){ sh('cx', dfx); sh('cy', dfy); }
+        else if (lay === 'fixed'){ let pos = p.pos; if (typeof pos === 'string'){ try{ pos = JSON.parse(pos); }catch(_){ pos = []; } } p.pos = (pos || []).map(q=> [R3(+q[0] + dfx), R3(+q[1] + dfy)]); }
+        else { sh('x0', dfx); sh('x1', dfx); sh('y0', dfy); sh('y1', dfy); }
+      }
+      if (p.ov) Object.keys(p.ov).forEach(i=>{ p.ov[i] = [R3(+p.ov[i][0] + dfx), R3(+p.ov[i][1] + dfy)]; });
+      return { type: 'group', id: h.id };
+    }
+    spec.p.ov = spec.p.ov || {};
+    spec.p.ov[h.slot] = [R3(h.node.x / W + .5), R3(h.node.y / H + .5)];
+    return { type: 'ov', id: h.id };
+  }
+  function commitSize(d){
+    const h = d.h, nw = d.nw || d.f0.w, nh = d.nh || d.f0.h;
+    if (h.type === 'obj'){
+      const sp = h.spec, hadH = sp.h !== undefined;
+      sp.w = R3(nw / U);
+      if (hadH || Math.abs(nh - nw) > 1.5) sp.h = R3(nh / U);
+      return { type: 'size', id: h.id };
+    }
+    const spec = h.spec; spec.p = spec.p || {};
+    if (spec.type === 'cards') spec.p.sizeU = R3(Math.min(.4, Math.max(.1, nw / U)));
+    else if (spec.type === 'props') spec.p.size = String(R3(nw / U));
+    else if (spec.type === 'strip') spec.p.slotU = R3(Math.min(.3, Math.max(.05, nw / U)));
+    return { type: 'size', id: h.id };
+  }
+
+  // ── API ──
+  /** Sinh n câu hỏi mẫu (tự động) của flow `fi`, đổi thành round viết tay — dùng khi chuyển game sang "Viết tay". */
+  ed.sampleRounds = (n, fi)=>{
+    const out = [], seen = new Set(), det = document.createElement('div'), flow = (F.flowsOf(data)[fi] || {}), type = (flow.gen || {}).type;
+    const g2 = Object.assign({}, g, { tasks: [], run(gen){ return { gen }; } });
+    for (let i = 0; i < n; i++){
+      for (let tr = 0; tr < 8; tr++){   // tránh trùng câu đã có
+        const root = new Node(det, 'rect', 0, 0, W, H), w = new F.FlowWorld(g2, 0, root, data);
+        w.rng = new Rng(((Math.random() * 1e9) | 0) + i + tr); w.editMode = true; w.editFlow = fi; w.editRound = -1;
+        w.taskNo = (type === 'set' || type === 'match') ? 60 : i * 2 + tr; w.ok = i * 2 + tr;   // set/match: dùng cả kho vật; còn lại: độ khó tăng dần
+        let r = null; try{ w.beginTask({}, ()=>{}); r = F.qToRound(type, w._Q); }catch(e){ console.error('[FS edit] sampleRounds', e); }
+        det.innerHTML = '';
+        if (!r) break;
+        const key = JSON.stringify(r); if (seen.has(key) && tr < 7) continue;
+        seen.add(key); out.push(r); break;
+      }
+    }
+    return out;
+  };
+  ed.setRound = i=>{ ed.round = i; ed.refresh(); };
+  ed.refresh = ()=>{ build(); setSel(selId, true); };
+  ed.reroll = ()=>{ ed.seed = (Math.random() * 1e9) | 0; ed.refresh(); };
+  ed.setFlow = i=>{ ed.flowIdx = i; ed.refresh(); };
+  ed.select = id=>{ setSel(id); };
+  ed.destroy = ()=>{ clearInterval(timer); if (ed._ro) ed._ro.disconnect(); g.tasks.length = 0; host.innerHTML = ''; };
+  mount(); build();
+  return ed;
+};
+
+/** Thao tác dữ liệu dùng chung cho builder (không đụng DOM). */
+F.editOps = {
+  newShape(shape){ return { look: { shape, color: '#42A5F5' }, x: .5, y: .5, w: .22, h: .22 }; },
+  newText(){ return { look: { text: 'Chữ mới', fs: .07, color: '#FFFFFF' }, x: .5, y: .5, w: .6, h: .12 }; },
+  newImage(name){ return { look: { image: name }, x: .5, y: .5, w: .3, h: .3 }; },
+  newItem(id){ return { look: { item: id }, x: .5, y: .5, w: .22, h: .22 }; },
+};
 })();
 
 </script>
@@ -3766,7 +4214,8 @@ async function doExport(){
   };
   zip.file('game.json', JSON.stringify(payload, null, 2));
   const assetsFolder = zip.folder('assets');
-  const fsd = fsdData(), fsdUsed = fsd ? new Set([].concat((fsd.items||[]).map(i=> i.image), (fsd.items||[]).map(i=> i.sound), Object.values(fsd.sounds||{})).filter(Boolean)) : null; // game cơ chế: chỉ xuất ảnh còn được dùng
+  const fsdImgs = (o, out)=>{ if (o && typeof o === 'object'){ Object.keys(o).forEach(k=>{ const v = o[k]; if (k === 'image' && typeof v === 'string' && v.charAt(0) !== '=') out.push(v); else fsdImgs(v, out); }); } return out; };
+  const fsd = fsdData(), fsdUsed = fsd ? new Set([].concat(fsdImgs(fsd, []), (fsd.items||[]).map(i=> i.sound), Object.values(fsd.sounds||{}), [].concat(...(fsd.flows||[]).map(f=> Object.values(f.sounds||{})))).filter(Boolean)) : null; // game cơ chế: chỉ xuất ảnh còn được dùng
   Object.keys(assetFiles).forEach(name=>{ if (!fsdUsed || fsdUsed.has(name)) assetsFolder.file(name, assetFiles[name].file); });
   const blob = await zip.generateAsync({type:'blob'});
 
@@ -4002,7 +4451,7 @@ function updateFsMode(){
   document.body.classList.toggle('fs-mode', !!p);
   document.body.classList.toggle('fsd-mode', !!d);
   if (p) renderFsPanel();
-  if (d) renderFsd(); else fsdStop();
+  if (d) renderFsd(); else { fsdStop(); fseDestroy(); }
   if (typeof shellModeSync === 'function') shellModeSync();
 }
 
@@ -4037,7 +4486,6 @@ function fsdPlay(){
   try{ fsdGame = FSW.play(st, d, { imgUrl: fsdImgUrl, audioUrl: fsdImgUrl, mute: false }); }
   catch(e){ console.error(e); alert('Lỗi chạy thử: ' + e.message); closePlaytest(); }
 }
-function fsdAuto(){}   // không còn khung chơi thử nhỏ: chơi thử mở toàn màn hình
 function fsdSlug(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi,'d').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase(); }
 function fsdItemMode(it){ return fsdModes.get(it) || (it.image ? 'image' : it.icon ? 'icon' : 'shape'); }
 function fsdThumb(it, box){
@@ -4149,23 +4597,27 @@ function fsdFontControls(wrap, d){
 /// Âm thanh: chỉ thêm file (không dùng giọng đọc của trình duyệt). Vật có thể có tiếng riêng; cả game có tiếng đúng / sai / nhạc nền.
 function fsdPickSound(cb){ pendingSoundTarget = { kind:'cb', set: cb, prefix:'snd', after: ()=>{} }; document.getElementById('soundInput').click(); }
 function fsdPreviewSound(name){ const u = fsdImgUrl(name); if (!u) return; try{ const a = new Audio(u); const p = a.play(); if (p && p.catch) p.catch(()=>{}); }catch(e){} }
-function fsdSoundControls(wrap, d){
-  wrap.innerHTML = '';
-  [['right','Tiếng khi làm đúng'],['wrong','Tiếng khi chạm sai'],['music','Nhạc nền (lặp)']].forEach(([k, lab])=>{
-    const row = fsdEl('div', 'fsd-row'), lb = fsdEl('label', null, lab); lb.style.flex = '0 0 130px';
-    const cur = (d.sounds || {})[k];
+/// Các dòng chọn file âm thanh cho `holder.sounds[khoá]` (holder = cả game hoặc 1 dạng câu hỏi/round). redraw() vẽ lại sau khi đổi.
+function fsdSoundRows(wrap, holder, list, redraw){
+  list.forEach(([k, lab])=>{
+    const row = fsdEl('div', 'fsd-row'), lb = fsdEl('label', null, lab); lb.style.flex = '0 0 150px';
+    const cur = (holder.sounds || {})[k];
     const nm = fsdEl('span', null, cur ? cur : '(mặc định)'); nm.style.cssText = 'flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; color:var(--text-dim)';
     const add = fsdEl('button', 'btn sm', cur ? 'Đổi file' : 'Thêm file…');
-    add.addEventListener('click', ()=> fsdPickSound(name=>{ d.sounds = d.sounds || {}; d.sounds[k] = name; fsdSoundControls(wrap, d); }));
+    add.addEventListener('click', ()=> fsdPickSound(name=>{ holder.sounds = holder.sounds || {}; holder.sounds[k] = name; redraw(); }));
     row.appendChild(lb); row.appendChild(nm); row.appendChild(add);
     if (cur){
       const pl = fsdEl('button', 'btn sm', '▶'); pl.title = 'Nghe thử'; pl.addEventListener('click', ()=> fsdPreviewSound(cur));
-      const rm = fsdEl('button', 'btn sm danger', '✕'); rm.title = 'Bỏ file'; rm.addEventListener('click', ()=>{ delete d.sounds[k]; if (!Object.keys(d.sounds).length) delete d.sounds; fsdSoundControls(wrap, d); });
+      const rm = fsdEl('button', 'btn sm danger', '✕'); rm.title = 'Bỏ file'; rm.addEventListener('click', ()=>{ delete holder.sounds[k]; if (!Object.keys(holder.sounds).length) delete holder.sounds; redraw(); });
       row.appendChild(pl); row.appendChild(rm);
     }
     wrap.appendChild(row);
   });
-  wrap.appendChild(fsdEl('p', 'fsd-desc', 'Tiếng của từng vật: bấm 🔊 ở dòng vật bên phải (phát khi câu hỏi nhắc tới vật và khi chạm vật). Hiện web chỉ phát file đã thêm; Unity nhận file qua zip.'));
+}
+function fsdSoundControls(wrap, d){
+  wrap.innerHTML = '';
+  fsdSoundRows(wrap, d, [['right','Tiếng đúng (chung)'],['wrong','Tiếng sai (chung)'],['music','Nhạc nền (lặp)']], ()=> fsdSoundControls(wrap, d));
+  wrap.appendChild(fsdEl('p', 'fsd-desc', 'Đây là tiếng CHUNG cả game. Mỗi dạng câu hỏi (round) đặt được tiếng riêng (câu hỏi, đúng, sai) ở mục "Luật chơi" bên dưới — có thì dùng tiếng riêng, không có thì dùng tiếng chung. Tiếng từng vật: bấm 🔊 ở dòng vật bên phải. Chỉ phát file đã thêm.'));
 }
 function renderFsd(){
   const d = fsdData(); if (!d || !window.FSW) return;
@@ -4201,6 +4653,10 @@ function renderFsd(){
     fsdParams(B, 'judge', fl.judge, touch, true);
     B.appendChild(fsdEl('div', 'fsd-sec', 'Lời hiển thị' + (flows.length > 1 ? ' (dạng ' + (i + 1) + ')' : '')));
     Object.keys(FSW.MOD.text).forEach(k=> B.appendChild(fsdParamRow({ label:FSW.MOD.text[k], type:'text', def:'' }, k, fl.text, touch)));
+    B.appendChild(fsdEl('div', 'fsd-sec', 'Âm thanh riêng' + (flows.length > 1 ? ' (dạng ' + (i + 1) + ')' : '') + ' — không đặt thì dùng tiếng chung'));
+    const sw = fsdEl('div'); B.appendChild(sw);
+    const drawSnd = ()=>{ sw.innerHTML = ''; fsdSoundRows(sw, fl, [['prompt','Tiếng câu hỏi'],['right','Tiếng khi đúng'],['wrong','Tiếng khi sai']], drawSnd); };
+    drawSnd();
   });
   B.appendChild(fsdEl('p', 'fsd-desc', 'Trong lời hiển thị: {tên} = tên vật; viết HOA như {TEN} để in hoa.'));
   const warn0 = FSW.validate(d); if (warn0){ const w0 = fsdEl('p', 'fsd-desc', '⚠ ' + warn0); w0.style.color = 'var(--bad)'; B.appendChild(w0); }
@@ -4255,6 +4711,7 @@ function renderFsd(){
   f.on = f.on || {};
   FSD_EVENTS.forEach(([ev, lab])=> wrap.appendChild(fsdJsonArea(lab, f.on[ev] || '', 4, v=>{ if (v === undefined || (Array.isArray(v) && !v.length)) delete f.on[ev]; else f.on[ev] = v; touch(); })));
   renderFsdItems();
+  fseFillItemSel(); fseMount(); fseRenderMech();
 }
 function renderFsdItems(){
   const d = fsdData(); if (!d) return;
@@ -4314,6 +4771,491 @@ function renderFsdItems(){
     wrap.appendChild(row);
   });
 }
+// ─────────────────────────────────────────────────────────────────
+// TRÌNH SOẠN SÂN KHẤU cho game cơ chế (fsdata): sân khấu kéo-thả kiểu PowerPoint — engine fs/fs_edit.js (FSW.edit).
+// • Đối tượng cảnh (data.scene / flow.objects): chọn, kéo, đổi cỡ, nhân đôi, xoá, thêm hình / chữ / ảnh / vật.
+// • Phần tử do cơ chế sinh (thẻ, vật, ô…): kéo từng cái → p.ov[chỉ số]; Shift+kéo / "Kéo cả nhóm" → đổi tham số view.
+// • Tab "Cơ chế": đổi Nguồn / Hiển thị / Cách chấm, hoặc lấy cả bộ cơ chế từ game mẫu (giữ ảnh & vật của mình).
+// Hoàn tác dùng chung Ctrl+Z của builder (chụp cả game.meta.fsData).
+// ─────────────────────────────────────────────────────────────────
+let fse = null, fseT = null, fseToastT = null;
+const FSE_SHAPES = [['circle','●','Tròn'],['square','■','Vuông'],['rrect','▬','Chữ nhật bo góc'],['triangle','▲','Tam giác'],['diamond','◆','Thoi'],['star','★','Sao'],['heart','♥','Tim'],['moon','☾','Trăng'],['flower','✿','Hoa']];
+function fseCur(){ return fse && fse.selected ? fse.selected : null; }
+function fseFlow(){ const d = fsdData(); return d && d.flows ? d.flows[Math.min(fsdFlowIdx, d.flows.length - 1)] : null; }
+function fseStatus(msg, warn){ const s = $('fseStatus'); if (!s) return; s.textContent = msg || ''; s.style.color = warn ? 'var(--bad)' : 'var(--text-dim)'; }
+function fseToast(msg){ fseStatus(msg, true); clearTimeout(fseToastT); fseToastT = setTimeout(fseCheck, 3500); }
+function fseCheck(){ const d = fsdData(); if (!d || !window.FSW) return; const e = FSW.validate(d); fseStatus(e ? '⚠ ' + e : 'Chọn đối tượng rồi kéo để di chuyển. Mỗi đội thấy đúng màn hình này.', !!e); }
+function fseMount(){
+  const d = fsdData(); if (!d || !window.FSW || !FSW.edit || !document.body.classList.contains('fsd-mode')) return;
+  if (fse && fse.data !== d){ fse.destroy(); fse = null; }
+  if (!fse){
+    fse = FSW.edit($('fseHost'), d, {
+      imgUrl: fsdImgUrl,
+      onSelect: h=> { if (h) fsTab('obj'); fseRenderProps(); },
+      onChange: ()=> { fseRenderProps(); fseCheck(); },
+      onRefresh: ()=> { const sd = $('fseSide'); if (!sd || !sd.contains(document.activeElement)) fseRenderProps(); },
+      onBlocked: h=> fseToast(h.why || 'Không kéo được đối tượng này.'),
+    });
+  }
+  fse.group = $('fseGroup').checked;
+  const f = fseFlow(); fseRoundIdx = fseIsManual() ? Math.min(Math.max(fseRoundIdx, 0), f.rounds.length - 1) : -1;
+  fse.flowIdx = fsdFlowIdx; fse.round = fseRoundIdx; fse.refresh(); fseCheck();
+  fseRenderRail(); fseRenderRound();
+}
+function fseDestroy(){ if (fse){ fse.destroy(); fse = null; } }
+function fseSoon(){ clearTimeout(fseT); fseT = setTimeout(()=>{ fseT = null; if (!fse || !document.body.classList.contains('fsd-mode')) return; fse.flowIdx = fsdFlowIdx; fse.round = fseIsManual() ? fseRoundIdx : -1; fse.refresh(); fseCheck(); fseRenderMech(); }, 70); }
+function fsdAuto(){ fseSoon(); }
+function fseSetGroup(b){ $('fseGroup').checked = b; if (fse) fse.group = b; const t = document.getElementById('fseGroupRib'); if (t) t.checked = b; }
+$('fseGroup').addEventListener('change', e=> fseSetGroup(e.target.checked));
+$('fseReroll').addEventListener('click', ()=>{ if (fse) fse.reroll(); });
+window.addEventListener('resize', ()=>{ if (fse && fse.fit) fse.fit(); });
+
+// ── thao tác trên danh sách spec ──
+function fseList(h){ const d = fsdData(), f = fseFlow(); if (!d) return null; if (h.src === 'scene') return (d.scene = d.scene || []); return f ? (f.objects = f.objects || []) : null; }
+function fseAfter(selId){ if (!fse) return; if (selId) fse.select(selId); fse.flowIdx = fsdFlowIdx; fse.refresh(); fseRenderProps(); fseCheck(); }
+function fseAdd(spec){
+  const d = fsdData(); if (!d || !fse) return; d.scene = d.scene || []; d.scene.push(spec);
+  fseAfter('o:scene:' + (d.scene.length - 1));
+}
+function fseDuplicate(){
+  const h = fseCur(); if (!h || h.type !== 'obj') { fseToast('Chọn một đối tượng (hình / chữ / ảnh) để nhân đôi.'); return; }
+  if (h.locked && h.why && /sinh tự động/.test(h.why)){ fseToast(h.why); return; }
+  const list = fseList(h), cp = JSON.parse(JSON.stringify(h.spec)); delete cp._origin;
+  if (typeof cp.x === 'number') cp.x = Math.min(.95, cp.x + .03); if (typeof cp.y === 'number') cp.y = Math.max(.05, cp.y - .03);
+  list.splice(h.idx + 1, 0, cp); fseAfter('o:' + h.src + ':' + (h.idx + 1));
+}
+function fseDelete(){
+  const h = fseCur(); if (!h){ fseToast('Chưa chọn đối tượng nào.'); return; }
+  if (h.type !== 'obj'){ fseToast('Phần tử này do cơ chế sinh ra nên không xoá được. Muốn bỏ hãy đổi cơ chế ở tab "Cơ chế".'); return; }
+  if (h.locked && /sinh tự động/.test(h.why || '') && !confirm('Đối tượng này sinh ra nhiều bản (lặp / theo từng vật). Xoá cả nhóm?')) return;
+  const list = fseList(h); list.splice(h.idx, 1); fse.select(null); fseAfter(null);
+}
+function fseMoveOrder(dir){
+  const h = fseCur(); if (!h || h.type !== 'obj') return; const list = fseList(h), j = h.idx + dir; if (j < 0 || j >= list.length) return;
+  [list[h.idx], list[j]] = [list[j], list[h.idx]]; fseAfter('o:' + h.src + ':' + j);
+}
+function fseAlign(axis){
+  const h = fseCur(); if (!h) return;
+  if (h.type === 'obj' && typeof h.spec[axis] !== 'string'){ h.spec[axis] = .5; fseAfter(h.id); }
+  else if (h.type === 'view'){ fseToast('Phần tử của cơ chế: kéo để căn (có vạch hồng khi trùng giữa).'); }
+}
+function fseNudge(dx, dy){
+  const h = fseCur(); if (!h || h.locked) return;
+  if (h.type === 'obj'){ const s = h.spec; if (typeof s.x === 'number') s.x = Math.round((s.x + dx) * 1000) / 1000; if (typeof s.y === 'number') s.y = Math.round((s.y + dy) * 1000) / 1000; }
+  else { const p = (h.spec.p = h.spec.p || {}); p.ov = p.ov || {}; const nd = h.node; p.ov[h.slot] = [Math.round((nd.x / 512 + .5 + dx) * 1000) / 1000, Math.round((nd.y / 500 + .5 + dy) * 1000) / 1000]; }
+  fseSoon();
+}
+function fseFileInput(){
+  let i = $('fseImgInput');
+  if (!i){ i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.id = 'fseImgInput'; i.style.display = 'none'; document.body.appendChild(i);
+    i.addEventListener('change', e=>{ const f = e.target.files[0]; e.target.value = ''; if (!f) return; const name = fileToAsset(f, 'sc'); const cb = i._cb; i._cb = null; if (cb) cb(name); }); }
+  return i;
+}
+function fseInsertImage(){ const i = fseFileInput(); i._cb = name=> fseAdd(FSW.editOps.newImage(name)); i.click(); }
+function fseChangeImage(spec){ const i = fseFileInput(); i._cb = name=>{ spec.look.image = name; fseSoon(); fseRenderProps(); }; i.click(); }
+
+// ── bảng thuộc tính bên phải ──
+function fseRow(label, node){ const r = fsdEl('div', 'fsd-row'), l = fsdEl('label', null, label); l.style.flex = '0 0 82px'; r.appendChild(l); r.appendChild(node); return r; }
+function fseNum(spec, key, def, step, min, max){
+  const cur = spec[key], i = document.createElement('input');
+  if (typeof cur === 'string'){ i.type = 'text'; i.value = cur; i.disabled = true; i.title = 'Là biểu thức — sửa trong Nâng cao'; return i; }
+  i.type = 'number'; i.step = step || '0.01'; if (min !== undefined) i.min = min; if (max !== undefined) i.max = max;
+  i.value = cur === undefined ? def : cur;
+  i.addEventListener('input', ()=>{ const v = parseFloat(i.value); if (isNaN(v)) return; spec[key] = v; fseSoon(); });
+  return i;
+}
+function fseColorInput(holder, key, def){
+  const i = document.createElement('input'); i.type = 'color'; const v = holder[key];
+  if (typeof v === 'string' && v.charAt(0) === '='){ i.disabled = true; i.title = 'Màu là biểu thức'; return i; }
+  i.value = (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) ? v : def;
+  i.addEventListener('input', ()=>{ holder[key] = i.value; fseSoon(); }); return i;
+}
+function fseCheckbox(label, get, set){
+  const l = fsdEl('label', 'chk', ''); l.style.margin = '0 10px 0 0'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = !!get();
+  c.addEventListener('change', ()=>{ set(c.checked); fseSoon(); }); l.appendChild(c); l.appendChild(document.createTextNode(' ' + label)); return l;
+}
+function fseBtn(label, fn, cls){ const b = fsdEl('button', 'btn sm' + (cls ? ' ' + cls : ''), label); b.type = 'button'; b.addEventListener('click', fn); return b; }
+function fseRenderProps(){
+  const side = $('fseSide'); if (!side) return; const d = fsdData(); if (!d || !fse) { side.innerHTML = ''; return; }
+  side.innerHTML = '';
+  // danh sách đối tượng (lớp)
+  side.appendChild(fsdEl('div', 'fsd-sec', 'Đối tượng trong màn hình'));
+  const lay = fsdEl('div', 'fse-lay'); const sel = fseCur(); let any = false;
+  const seenV = new Set();
+  fse.handles.slice().reverse().forEach(h=>{
+    if (h.dup) return;
+    if (h.type === 'view'){ if (seenV.has(h.vi)) return; seenV.add(h.vi); }
+    any = true;
+    const b = fsdEl('button', 'fse-li' + (sel && (sel.id === h.id || (h.type === 'view' && sel.type === 'view' && sel.vi === h.vi)) ? ' on' : ''), (h.type === 'view' ? '🧩 ' : h.locked ? '🔒 ' : '▫ ') + (h.type === 'view' ? h.label.replace(/ #\d+$/, '') + ' (cơ chế)' : h.label));
+    b.type = 'button'; b.addEventListener('click', ()=>{ fse.select(h.id); }); lay.appendChild(b);
+  });
+  if (!any) lay.appendChild(fsdEl('div', 'fsd-desc', 'Chưa có đối tượng nào. Dùng tab "Chèn" để thêm hình, chữ, ảnh.'));
+  side.appendChild(lay);
+  const h = sel;
+  if (!h){
+    side.appendChild(fsdEl('div', 'fsd-sec', 'Gợi ý'));
+    side.appendChild(fsdEl('p', 'fsd-desc', 'Bấm vào một đối tượng trên màn hình để chọn rồi kéo. Tab "Chèn" thêm hình / chữ / ảnh / vật. Tab "Cơ chế" đổi cách ra câu hỏi và cách chấm. Nền / màu sàn / chữ / âm thanh chỉnh ở phần bên dưới.'));
+    const f = fseFlow(), nf = d.flows.length;
+    if (nf > 1){ const bar = fsdEl('div', 'fsd-bar'); bar.appendChild(fsdEl('span', 'fsd-desc', 'Dạng câu hỏi đang xem:')); d.flows.forEach((_, i)=> bar.appendChild(fseBtn(String(i + 1), ()=>{ fsdFlowIdx = i; renderFsd(); }, i === fsdFlowIdx ? 'primary' : ''))); side.appendChild(bar); }
+    return;
+  }
+  const box = fsdEl('div'); side.appendChild(box);
+  if (h.type === 'view'){
+    const spec = h.spec, def = FSW.MOD.view[spec.type];
+    box.appendChild(fsdEl('div', 'fsd-sec', 'Phần tử của cơ chế — ' + def.name));
+    box.appendChild(fsdEl('p', 'fsd-desc', h.locked ? h.why : 'Kéo từng phần tử để đặt riêng vị trí; giữ Shift (hoặc tick "Kéo cả nhóm") để dời cả nhóm. Kéo góc phải-dưới để đổi cỡ cả nhóm.'));
+    if (!h.locked){
+      const r = fsdEl('div', 'fsd-bar'); r.appendChild(fseCheckbox('Kéo cả nhóm', ()=> fse.group, v=> fseSetGroup(v)));
+      r.appendChild(fseBtn('↺ Về vị trí tự động', ()=>{ if (spec.p) delete spec.p.ov; fseAfter(h.id); })); box.appendChild(r);
+    }
+    const pw = fsdEl('div'); box.appendChild(pw); spec.p = spec.p || {};
+    fsdParams(pw, 'view', spec, fseSoon, true);
+    return;
+  }
+  const sp = h.spec, look = sp.look = sp.look || {}, kind = h.kind;
+  box.appendChild(fsdEl('div', 'fsd-sec', h.label));
+  if (h.locked) box.appendChild(fsdEl('p', 'fsd-desc', '🔒 ' + h.why));
+  const pos = fsdEl('div'); box.appendChild(pos);
+  pos.appendChild(fseRow('Vị trí X', fseNum(sp, 'x', .5, '0.01', 0, 1)));
+  pos.appendChild(fseRow('Vị trí Y', fseNum(sp, 'y', .5, '0.01', 0, 1)));
+  if (!sp.fill){
+    pos.appendChild(fseRow('Rộng', fseNum(sp, 'w', .2, '0.01', .01, 2)));
+    const hh = fseNum(sp, 'h', sp.w === undefined ? .2 : sp.w, '0.01', .01, 2); pos.appendChild(fseRow('Cao', hh));
+    pos.appendChild(fseRow('Xoay (độ)', fseNum(sp, 'rot', 0, '5', -360, 360)));
+  }
+  pos.appendChild(fseRow('Độ mờ', fseNum(sp, 'alpha', 1, '0.05', 0, 1)));
+  if (kind === 'text'){
+    const ti = document.createElement('input'); ti.type = 'text'; ti.value = look.text === undefined ? '' : look.text; ti.addEventListener('input', ()=>{ look.text = ti.value; fseSoon(); });
+    box.appendChild(fsdEl('div', 'fsd-sec', 'Chữ')); box.appendChild(fseRow('Nội dung', ti));
+    box.appendChild(fseRow('Cỡ chữ', fseNum(look, 'fs', .06, '0.01', .02, .3)));
+    box.appendChild(fseRow('Màu chữ', fseColorInput(look, 'color', '#ffffff')));
+    const st = look.style = look.style || {}, fm = fsdEl('div', 'fsd-bar'); fm.style.margin = '4px 0';
+    fm.appendChild(fseCheckbox('Đậm', ()=> st.bold !== false, v=>{ if (v) delete st.bold; else st.bold = false; }));
+    fm.appendChild(fseCheckbox('Nghiêng', ()=> st.italic, v=>{ if (v) st.italic = true; else delete st.italic; }));
+    fm.appendChild(fseCheckbox('Đổ bóng', ()=> st.shadow, v=>{ if (v) st.shadow = true; else delete st.shadow; }));
+    box.appendChild(fm);
+    const os = document.createElement('select');
+    [['', 'Viền mặc định (đen mảnh)'], ['none', 'Không viền'], ['#000000', 'Viền đen dày'], ['#FFFFFF', 'Viền trắng dày'], ['#E53935', 'Viền đỏ'], ['#1E88E5', 'Viền xanh']].forEach(o=>{ const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; if ((st.outline || '') === o[0]) op.selected = true; os.appendChild(op); });
+    os.addEventListener('change', ()=>{ if (os.value) { st.outline = os.value; if (os.value !== 'none') st.outlineW = 3; } else { delete st.outline; delete st.outlineW; } fseSoon(); });
+    box.appendChild(fseRow('Viền chữ', os));
+  } else if (kind === 'shape'){
+    box.appendChild(fsdEl('div', 'fsd-sec', 'Hình'));
+    const ss = document.createElement('select');
+    FSE_SHAPES.forEach(o=>{ const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1] + ' ' + o[2]; if ((look.shape || (look.kind === 'rrect' ? 'rrect' : 'square')) === o[0]) op.selected = true; ss.appendChild(op); });
+    ss.addEventListener('change', ()=>{ look.shape = ss.value; delete look.kind; fseSoon(); });
+    box.appendChild(fseRow('Hình dạng', ss)); box.appendChild(fseRow('Màu', fseColorInput(look, 'color', '#42a5f5')));
+  } else if (kind === 'image'){
+    box.appendChild(fsdEl('div', 'fsd-sec', 'Ảnh')); box.appendChild(fseRow('File', fseBtn('Đổi ảnh…', ()=> fseChangeImage(sp))));
+  } else if (kind === 'item'){
+    box.appendChild(fsdEl('div', 'fsd-sec', 'Vật'));
+    if (typeof look.item === 'string' && look.item.charAt(0) === '='){ const t = document.createElement('input'); t.type = 'text'; t.value = look.item; t.disabled = true; box.appendChild(fseRow('Vật', t)); }
+    else { const is = document.createElement('select'); d.items.forEach(it=>{ const op = document.createElement('option'); op.value = it.id; op.textContent = (it.label || it.id); if (it.id === look.item) op.selected = true; is.appendChild(op); });
+      is.addEventListener('change', ()=>{ look.item = is.value; fseSoon(); }); box.appendChild(fseRow('Vật', is)); }
+  } else if (kind === 'icon'){
+    const is = document.createElement('select'); FSW.ICON_KEYS.forEach(k=>{ const op = document.createElement('option'); op.value = k; op.textContent = FSW.ICON_NAMES[k]; if (k === look.icon) op.selected = true; is.appendChild(op); });
+    is.addEventListener('change', ()=>{ look.icon = is.value; fseSoon(); }); box.appendChild(fseRow('Icon', is));
+  }
+  const zs = document.createElement('select');
+  [['', 'Sau phần tử của câu hỏi (mặc định)'], ['front', 'Trước mọi thứ (đè lên thẻ)']].forEach(o=>{ const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; if ((sp.z || '') === o[0]) op.selected = true; zs.appendChild(op); });
+  zs.addEventListener('change', ()=>{ if (zs.value) sp.z = zs.value; else delete sp.z; fseSoon(); });
+  box.appendChild(fsdEl('div', 'fsd-sec', 'Sắp xếp')); box.appendChild(fseRow('Lớp', zs));
+  const ops = fsdEl('div', 'fsd-bar'); ops.style.marginTop = '8px';
+  ops.appendChild(fseBtn('⧉ Nhân đôi', fseDuplicate)); ops.appendChild(fseBtn('↑ Lên', ()=> fseMoveOrder(1))); ops.appendChild(fseBtn('↓ Xuống', ()=> fseMoveOrder(-1))); ops.appendChild(fseBtn('🗑 Xoá', fseDelete, 'danger'));
+  box.appendChild(ops);
+}
+
+// ── Cơ chế = bộ (nguồn | hiển thị | cách chấm). Game mẫu là ví dụ điển hình của 1 cơ chế; mở mẫu ra vẫn dùng chung cơ chế, sửa hình / âm thanh / luật / câu hỏi ──
+const FSD_MECH = {
+  'set|cards|equals': 'Chọn đáp án đúng (hàng thẻ)',
+  'set|props|equals': 'Chạm đúng vật (vật đặt tự do)',
+  'match|cards|equals': 'Ghép hình phù hợp (hàng thẻ)',
+  'match|props|equals': 'Đặt vào đúng chỗ (vùng, cửa, cổng)',
+  'calc|props|equals': 'So sánh giá trị (bắc cầu)',
+  'sequence|strip+cards|order': 'Nhớ chuỗi hình (hiện rồi úp)',
+  'sequence|strip+props|order': 'Chạm theo chuỗi (cổng hình)',
+  'pairs|grid|pairs': 'Lật thẻ ghép cặp',
+  'values|seesaw|equals': 'So sánh nặng / nhẹ (bập bênh)',
+  'number|stack+cards|equals': 'Đếm số lượng (khối)',
+  'none|floor|taps': 'Chạm tự do trên sàn',
+};
+function fsdSig(f){ return f.gen.type + '|' + (f.views || []).map(v=> v.type).join('+') + '|' + f.judge.type; }
+function fsdMechName(f){ return FSD_MECH[fsdSig(f)] || ('Tuỳ chỉnh (' + FSW.MOD.gen[f.gen.type].name + ')'); }
+function fsdTplFlow(t){ const d = t.data; return (d.flows && d.flows[0]) || d.flow; }
+function fsdMechSamples(sig){ return Object.keys(FSW.TEMPLATES).filter(k=> fsdSig(fsdTplFlow(FSW.TEMPLATES[k])) === sig).map(k=> FSW.TEMPLATES[k].name); }
+
+function fseRenderMech(){
+  const lab = $('fsMechName'), box = $('fmechBox'), d = fsdData(), f = fseFlow(); if (!d || !f) return;
+  if (lab){ const smp = fsdMechSamples(fsdSig(f)); lab.textContent = fsdMechName(f); lab.title = smp.length ? 'Mẫu điển hình: ' + smp.join(', ') : 'Cơ chế tuỳ chỉnh'; }
+  if (!box) return; box.innerHTML = '';
+  const again = ()=>{ renderFsd(); };
+  const mk = (l, sel, extra)=>{ const r = fsdEl('div', 'fm-row'); r.appendChild(fsdEl('span', null, l)); r.appendChild(sel); if (extra) r.appendChild(extra); return r; };
+  box.appendChild(fsdEl('p', 'fsd-desc', 'Đổi từng mô-đun của cơ chế. Muốn lấy nguyên một cơ chế điển hình: nút "Đổi cơ chế…".'));
+  box.appendChild(mk('Nguồn câu hỏi', fsdTypeSelect('gen', f.gen, again)));
+  f.views.forEach((v, i)=>{
+    const rm = f.views.length > 1 ? fseBtn('✕', ()=>{ f.views.splice(i, 1); again(); }) : null;
+    box.appendChild(mk(i === 0 ? 'Hiển thị' : 'Hiển thị ' + (i + 1), fsdTypeSelect('view', v, again), rm));
+  });
+  box.appendChild(mk('Cách chấm', fsdTypeSelect('judge', f.judge, again)));
+}
+let galMode = 'new';
+function fseApplySwap(key){
+  const d = fsdData(), t = FSW.TEMPLATES[key]; if (!d || !t) return;
+  const nd = JSON.parse(JSON.stringify(t.data)), keep = $('galKeep').checked;
+  d.flows = (nd.flows && nd.flows.length) ? nd.flows : [nd.flow]; delete d.flow;
+  if (nd.flowPick) d.flowPick = nd.flowPick; else delete d.flowPick;
+  if (nd.vars) d.vars = nd.vars; else delete d.vars;
+  if (nd.scene) d.scene = nd.scene; else delete d.scene;
+  d.theme = nd.theme || d.theme; d.sync = !!nd.sync;
+  if (!keep) d.items = nd.items;
+  fsdFlowIdx = 0; fseRoundIdx = -1; renderFsd();
+  const e = FSW.validate(d); if (e) alert('Đã đổi cơ chế, nhưng cần chỉnh thêm:\n' + e + '\n\n(Mẹo: bỏ tick "Giữ ảnh & vật của tôi" để lấy cả vật mẫu.)');
+}
+function fseOpenSwap(){ openGallery('swap'); }
+
+// ── Round (câu hỏi): Tự động (sinh từ kho vật) hoặc Viết tay (từng câu soạn sẵn: vật nào, đáp án nào) ──
+let fseRoundIdx = -1;   // round đang xem; -1 = câu tự động
+function fseCanManual(){ const f = fseFlow(); return !!f && FSW.ROUND_TYPES.indexOf(f.gen.type) >= 0; }
+function fseIsManual(){ const f = fseFlow(); return !!(f && f.manual && f.rounds && f.rounds.length && fseCanManual()); }
+function fseSyncAll(){
+  if (!fse) return;
+  fse.flowIdx = fsdFlowIdx; fse.round = fseIsManual() ? fseRoundIdx : -1; fse.refresh();
+  fseRenderRail(); fseRenderRound(); fseRenderProps(); fseCheck(); fseRenderMech();
+}
+function fseSetManual(on){
+  const f = fseFlow(); if (!f || !fse) return;
+  if (on){
+    if (!fseCanManual()){ fseToast('Cơ chế này tự sinh câu hỏi, chưa có chế độ viết tay.'); return; }
+    if (!f.rounds || !f.rounds.length){ const rs = fse.sampleRounds(3, fsdFlowIdx); if (!rs.length){ fseToast('Chưa tạo được câu mẫu — kiểm tra kho vật.'); return; } f.rounds = rs; }
+    f.manual = true; fseRoundIdx = Math.min(Math.max(fseRoundIdx, 0), f.rounds.length - 1);
+  } else { f.manual = false; fseRoundIdx = -1; }
+  fseSyncAll(); fsTab(on ? 'round' : 'obj');
+}
+function fseRoundOp(op){
+  const f = fseFlow(); if (!f) return;
+  if (!fseIsManual()){ fseToast('Bấm "Viết tay" ở danh sách câu hỏi để tự soạn từng câu.'); return; }
+  const R = f.rounds, i = fseRoundIdx;
+  if (op === 'dup'){ R.splice(i + 1, 0, JSON.parse(JSON.stringify(R[i]))); fseRoundIdx = i + 1; }
+  else if (op === 'new'){ const r = fse.sampleRounds(1, fsdFlowIdx)[0]; if (!r){ fseToast('Chưa tạo được câu mẫu.'); return; } R.splice(i + 1, 0, r); fseRoundIdx = i + 1; }
+  else if (op === 'del'){
+    if (R.length <= 1){ if (!confirm('Đây là câu cuối. Xoá sẽ chuyển game về chế độ Tự động. Tiếp tục?')) return; f.manual = false; delete f.rounds; fseRoundIdx = -1; }
+    else { R.splice(i, 1); fseRoundIdx = Math.min(i, R.length - 1); }
+  }
+  else if (op === 'up' && i > 0){ [R[i - 1], R[i]] = [R[i], R[i - 1]]; fseRoundIdx = i - 1; }
+  else if (op === 'down' && i < R.length - 1){ [R[i + 1], R[i]] = [R[i], R[i + 1]]; fseRoundIdx = i + 1; }
+  fseSyncAll();
+}
+function fseItemName(d, id){ const it = d.items.find(x=> x.id === id); return it ? (it.label || it.id) : '?'; }
+function fseRoundIds(f, r){
+  switch (f.gen.type){
+    case 'match': return [r.subject].concat(r.options || []);
+    case 'sequence': return (r.seq || []).map(k=> (r.items || [])[k]);
+    case 'number': return [];
+    default: return r.items || [];
+  }
+}
+function fseRoundLabel(d, f, r){
+  const nm = id=> fseItemName(d, id);
+  switch (f.gen.type){
+    case 'set': return 'Chọn ' + nm(r.target);
+    case 'match': return nm(r.subject) + ' → ' + nm(r.answer);
+    case 'values': return (r.less ? 'Nhẹ / nhỏ hơn' : 'Nặng / lớn hơn');
+    case 'sequence': return (r.seq || []).map(k=> nm((r.items || [])[k])).join(' → ');
+    case 'pairs': return (r.items || []).length + ' cặp thẻ';
+    case 'number': return 'Đếm ' + r.count;
+  }
+  return '';
+}
+function fseRenderRail(){
+  if (!document.body.classList.contains('fsd-mode')) return;
+  const rail = $('colRail'), list = $('railList'); if (!rail || !list) return;
+  const d = fsdData(), f = fseFlow(); if (!d || !f) return;
+  rail.querySelector('h2').textContent = 'Câu hỏi'; list.innerHTML = '';
+  if (d.flows.length > 1){
+    const b = fsdEl('div', 'fsd-bar'); b.appendChild(fsdEl('span', 'fsd-desc', 'Dạng:')); d.flows.forEach((_, i)=> b.appendChild(fseBtn(String(i + 1), ()=>{ fsdFlowIdx = i; renderFsd(); }, i === fsdFlowIdx ? 'primary' : ''))); list.appendChild(b);
+  }
+  if (fseCanManual()){
+    const seg = fsdEl('div', 'fse-seg');
+    [['Tự động', false], ['Viết tay', true]].forEach(([t, v])=>{ const b = fsdEl('button', fseIsManual() === v ? 'on' : '', t); b.type = 'button'; b.title = v ? 'Tự soạn từng câu: chọn vật và đáp án' : 'Máy tự ra câu từ kho vật'; b.addEventListener('click', ()=>{ if (fseIsManual() !== v) fseSetManual(v); }); seg.appendChild(b); });
+    list.appendChild(seg);
+  } else list.appendChild(fsdEl('div', 'fsd-desc', 'Cơ chế này tự sinh câu hỏi.'));
+  if (fseIsManual()){
+    f.rounds.forEach((r, i)=>{
+      const b = fsdEl('button', 'rl' + (i === fseRoundIdx ? ' on' : '')); b.type = 'button'; b.title = 'Câu ' + (i + 1) + ' — Ctrl+D nhân bản, Delete xoá';
+      b.appendChild(fsdEl('span', 'rn', String(i + 1)));
+      const th = fsdEl('div', 'rth2'); th.appendChild(fsdEl('span', 'rq', fseRoundLabel(d, f, r)));
+      const tr = fsdEl('div', 'rtr'); fseRoundIds(f, r).slice(0, 6).forEach(id=>{ const it = d.items.find(x=> x.id === id); if (!it) return; const c = fsdEl('div', 'fsd-thumb'); fsdThumb(it, c); tr.appendChild(c); });
+      th.appendChild(tr); b.appendChild(th);
+      b.addEventListener('click', ()=>{ fseRoundIdx = i; fseSyncAll(); fsTab('round'); });
+      list.appendChild(b);
+    });
+  } else {
+    const b = fsdEl('button', 'rl on'); b.type = 'button'; b.appendChild(fsdEl('span', 'rn', '∞')); const th = fsdEl('div', 'rth2'); th.appendChild(fsdEl('span', 'rq', 'Câu hỏi tự động')); th.appendChild(fsdEl('span', 'fsd-desc', 'Xem thử 1 câu ngẫu nhiên — bấm "Câu khác".')); b.appendChild(th); list.appendChild(b);
+  }
+  let bt = $('fsdRailBtns');
+  if (!bt){ bt = fsdEl('div'); bt.id = 'fsdRailBtns'; rail.appendChild(bt); }
+  bt.innerHTML = '';
+  if (fseIsManual()){
+    bt.appendChild(fseBtn('＋ Câu mới', ()=> fseRoundOp('new'), '')); bt.lastChild.title = 'Thêm 1 câu mẫu mới sau câu đang chọn';
+    bt.appendChild(fseBtn('⧉ Nhân bản câu', ()=> fseRoundOp('dup'), '')); bt.lastChild.title = 'Ctrl+D';
+    bt.appendChild(fseBtn('↑', ()=> fseRoundOp('up'), '')); bt.appendChild(fseBtn('↓', ()=> fseRoundOp('down'), '')); bt.appendChild(fseBtn('🗑 Xoá câu', ()=> fseRoundOp('del'), 'danger'));
+    const sh = fseCheckbox('Xáo thứ tự khi chơi', ()=> f.roundOrder === 'shuffle', v=>{ if (v) f.roundOrder = 'shuffle'; else delete f.roundOrder; }); sh.style.marginTop = '4px'; bt.appendChild(sh);
+  }
+}
+
+// danh sách chọn vật từ kho (bấm để bật/tắt); `list` là mảng id sửa tại chỗ
+function fsePicker(d, list, onChange, max){
+  const g = fsdEl('div', 'fse-pick');
+  d.items.forEach(it=>{
+    const on = list.indexOf(it.id) >= 0, b = fsdEl('button', 'fse-pk' + (on ? ' on' : '')); b.type = 'button'; b.title = it.label || it.id;
+    const th = fsdEl('div', 'fsd-thumb'); fsdThumb(it, th); b.appendChild(th); b.appendChild(fsdEl('span', null, it.label || it.id));
+    b.addEventListener('click', ()=>{ const i = list.indexOf(it.id); if (i >= 0) list.splice(i, 1); else { if (max && list.length >= max){ fseToast('Tối đa ' + max + ' vật cho dạng câu này.'); return; } list.push(it.id); } onChange(); });
+    g.appendChild(b);
+  });
+  if (!d.items.length) g.appendChild(fsdEl('div', 'fsd-desc', 'Kho vật đang trống — thêm vật ở tab "Kho vật".'));
+  return g;
+}
+function fseAnswerRow(d, ids, cur, set){
+  const row = fsdEl('div', 'fsd-bar'); ids.forEach(id=> row.appendChild(fseBtn((id === cur ? '✔ ' : '') + fseItemName(d, id), ()=> set(id), id === cur ? 'primary' : ''))); return row;
+}
+function fseRenderRound(){
+  const box = $('fseRound'); if (!box) return; box.innerHTML = '';
+  const d = fsdData(), f = fseFlow(); if (!d || !f) return;
+  const type = f.gen.type;
+  box.appendChild(fsdEl('div', 'fsd-sec', 'Cách ra câu hỏi'));
+  if (!fseCanManual()){ box.appendChild(fsdEl('p', 'fsd-desc', 'Nguồn "' + FSW.MOD.gen[type].name + '" chỉ ra câu hỏi tự động. Muốn soạn từng câu, đổi nguồn ở nút "Tuỳ biến…" (Cài đặt chung → Cơ chế).')); return; }
+  const seg = fsdEl('div', 'fse-seg');
+  [['Tự động', false], ['Viết tay', true]].forEach(([t, v])=>{ const b = fsdEl('button', fseIsManual() === v ? 'on' : '', t); b.type = 'button'; b.addEventListener('click', ()=>{ if (fseIsManual() !== v) fseSetManual(v); }); seg.appendChild(b); });
+  box.appendChild(seg);
+  if (!fseIsManual()){ box.appendChild(fsdEl('p', 'fsd-desc', 'Máy tự ra câu từ kho vật mỗi lượt chơi. Chuyển sang "Viết tay" để tự soạn từng câu: chọn vật nào xuất hiện, đáp án nào đúng.')); return; }
+  const r = f.rounds[fseRoundIdx]; if (!r) return;
+  const chg = ()=>{ fseSoon(); fseRenderRail(); fseRenderRound(); };
+  box.appendChild(fsdEl('div', 'fsd-sec', 'Câu ' + (fseRoundIdx + 1) + ' / ' + f.rounds.length));
+  const need = (t)=> box.appendChild(fsdEl('div', 'fsd-desc', t));
+  if (type === 'set'){
+    r.items = r.items || []; need('Chọn các vật xuất hiện (2 trở lên), rồi bấm tên vật là đáp án đúng:');
+    box.appendChild(fsePicker(d, r.items, ()=>{ if (r.items.indexOf(r.target) < 0) r.target = r.items[0]; chg(); }, 6));
+    box.appendChild(fseAnswerRow(d, r.items, r.target, id=>{ r.target = id; chg(); }));
+  } else if (type === 'match'){
+    r.options = r.options || [];
+    const ss = document.createElement('select'); d.items.forEach(it=>{ const op = document.createElement('option'); op.value = it.id; op.textContent = it.label || it.id; if (it.id === r.subject) op.selected = true; ss.appendChild(op); });
+    ss.addEventListener('change', ()=>{ r.subject = ss.value; chg(); }); box.appendChild(fseRow('Đề bài', ss));
+    need('Các lựa chọn (2 trở lên) và đáp án đúng:');
+    box.appendChild(fsePicker(d, r.options, ()=>{ if (r.options.indexOf(r.answer) < 0) r.answer = r.options[0]; chg(); }, 12));
+    box.appendChild(fseAnswerRow(d, r.options, r.answer, id=>{ r.answer = id; chg(); }));
+  } else if (type === 'values'){
+    r.items = r.items || []; need('Chọn 2–3 vật có giá trị (số) khác nhau; đáp án tự tính theo cột "giá trị" của vật:');
+    box.appendChild(fsePicker(d, r.items, chg, 3));
+    box.appendChild(fseCheckbox('Hỏi vật NHẸ / NHỎ hơn (bỏ tick = hỏi nặng / lớn hơn)', ()=> !!r.less, v=>{ if (v) r.less = 1; else delete r.less; chg(); }));
+  } else if (type === 'sequence'){
+    r.items = r.items || []; r.seq = r.seq || []; const ids0 = r.items.slice();
+    need('Chọn các loại hình sẽ dùng (2–6):');
+    box.appendChild(fsePicker(d, r.items, ()=>{ r.seq = r.seq.map(k=> r.items.indexOf(ids0[k])).filter(k=> k >= 0); chg(); }, 6));
+    need('Thứ tự cần nhớ / chạm (bấm ＋ để nối thêm, bấm số thứ tự để bỏ):');
+    const sb = fsdEl('div', 'fsd-bar'); r.seq.forEach((k, i)=> sb.appendChild(fseBtn((i + 1) + '. ' + fseItemName(d, r.items[k]), ()=>{ r.seq.splice(i, 1); chg(); }))); box.appendChild(sb);
+    const ab = fsdEl('div', 'fsd-bar'); r.items.forEach((id, k)=> ab.appendChild(fseBtn('＋ ' + fseItemName(d, id), ()=>{ r.seq.push(k); chg(); }))); box.appendChild(ab);
+    if (r.seq.length) box.appendChild(fseBtn('Xoá thứ tự', ()=>{ r.seq = []; chg(); }));
+  } else if (type === 'pairs'){
+    r.items = r.items || []; need('Chọn các vật làm cặp thẻ (2–8 vật = 2–8 cặp):');
+    box.appendChild(fsePicker(d, r.items, chg, 8));
+  } else if (type === 'number'){
+    const c = document.createElement('input'); c.type = 'number'; c.min = 1; c.max = 12; c.value = r.count || 1; c.addEventListener('input', ()=>{ const v = parseInt(c.value, 10); if (v >= 1 && v <= 12){ r.count = v; fseSoon(); fseRenderRail(); } });
+    box.appendChild(fseRow('Số lượng', c));
+    const o = document.createElement('input'); o.type = 'text'; o.placeholder = 'để trống = tự tạo (vd 3,4,5)'; o.value = (r.options || []).join(','); o.title = 'Các số làm đáp án (1–12). Số đúng tự được thêm vào.';
+    o.addEventListener('change', ()=>{ const a = o.value.split(/[,\s]+/).map(Number).filter(v=> v >= 1 && v <= 12); if (a.length) r.options = a; else delete r.options; fseSoon(); });
+    box.appendChild(fseRow('Các đáp án', o));
+  }
+  box.appendChild(fsdEl('p', 'fsd-desc', 'Hình ảnh các vật sửa ở tab "Kho vật". Lời hỏi / câu khen sửa ở tab "Luật chơi".'));
+}
+
+// ── tab bên phải ──
+let fsTabCur = 'obj';
+function fsTab(k){
+  fsTabCur = k;
+  document.querySelectorAll('#fsTabs button').forEach(b=> b.setAttribute('aria-selected', b.dataset.k === k ? 'true' : 'false'));
+  document.querySelectorAll('#colSideF .fsp').forEach(p=> p.classList.toggle('on', p.dataset.k === k));
+}
+
+// ── ribbon + dời khối form cũ vào khung chung ──
+function initFsdShell(){
+  const rib = $('ribbon'), tabs = $('ribTabs'); if (!rib || !tabs) return;
+  const mk = (tag, cls, html)=>{ const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  const btn = (label, fn, sub, tip)=>{ const b = mk('button', 'rb', '<i class=""></i><span>' + label + '</span>' + (sub ? '<small>' + sub + '</small>' : '')); b.type = 'button'; b.title = tip || sub || label; b.addEventListener('click', fn); return b; };
+  const group = (label, nodes, cls)=>{ const g = mk('div', 'rg'); const it = mk('div', 'ri' + (cls ? ' ' + cls : '')); nodes.forEach(n=> n && it.appendChild(n)); g.appendChild(it); g.appendChild(mk('div', 'gl', label)); return g; };
+  const guard = fn=> ()=>{ if (!fse) return; fn(); };
+  // popover
+  const pops = {};
+  const makePop = (id, title, nodes)=>{ const p = mk('div', 'pop'); p.hidden = true; p.appendChild(mk('div', 'pt', title)); nodes.forEach(n=> n && p.appendChild(n)); document.body.appendChild(p); pops[id] = p; return p; };
+  const closePops = ()=> Object.values(pops).forEach(p=> p.hidden = true);
+  const openPop = (id, anchor)=>{ const was = !pops[id].hidden; closePops(); if (was) return; const p = pops[id]; p.hidden = false; const r = anchor.getBoundingClientRect(); p.style.top = (r.bottom + 6) + 'px'; p.style.left = Math.max(8, Math.min(r.left, window.innerWidth - p.offsetWidth - 10)) + 'px'; };
+  document.addEventListener('click', e=>{ if (!e.target.closest('.pop') && !e.target.closest('[data-fpop]')) closePops(); });
+  const popBtn = (label, id, sub)=>{ const b = btn(label, ()=> openPop(id, b), sub); b.dataset.fpop = '1'; return b; };
+  const rowOf = id=>{ const el = $(id); return el ? (el.closest('.fsd-row') || el) : null; };
+
+  // nội dung các tab bên phải
+  const mid = $('fsdMid'), items = $('fseItems'); if (mid && items) Array.from(mid.children).forEach(c=> items.appendChild(c));
+  const rule = $('fseRule'); if (rule){
+    rule.appendChild(fsdEl('div', 'fsd-sec', 'Luật chơi của cơ chế'));
+    rule.appendChild(fsdEl('p', 'fsd-desc', 'Thông số, lời hỏi và câu khen của từng dạng câu hỏi. Phần "Nâng cao" (biến, cảnh, hành động khi đúng / sai) dành cho người rành kỹ thuật.'));
+    rule.appendChild($('fsdBasic')); rule.appendChild($('fsdAdv'));
+  }
+  // popover chữ / âm thanh / tuỳ biến cơ chế
+  const fb = mk('div'); fb.id = 'fmechBox';
+  makePop('fonts', 'Định dạng chữ', [$('fsdFonts')]); makePop('sounds', 'Âm thanh chung', [$('fsdSounds')]); makePop('mech', 'Tuỳ biến cơ chế', [fb]);
+  const gTog = mk('label', 'tg'); const gc = document.createElement('input'); gc.type = 'checkbox'; gc.id = 'fseGroupRib'; gc.addEventListener('change', ()=> fseSetGroup(gc.checked)); gTog.appendChild(gc); gTog.appendChild(document.createTextNode('Kéo cả nhóm thẻ / vật'));
+  const itemSel = document.createElement('select'); itemSel.id = 'fseItemSel'; itemSel.style.maxWidth = '130px';
+  const shapes = mk('div'); shapes.style.cssText = 'display:grid; grid-template-columns:repeat(5,34px); gap:4px;';
+  FSE_SHAPES.forEach(s=>{ const b = mk('button', 'btn sm', s[1]); b.type = 'button'; b.title = s[2]; b.style.cssText = 'padding:4px 0; font-size:16px;'; b.addEventListener('click', guard(()=> fseAdd(FSW.editOps.newShape(s[0])))); shapes.appendChild(b); });
+  const mechLab = mk('div', 'fxtgt'); mechLab.id = 'fsMechName'; mechLab.style.cssText = 'max-width:150px; align-self:center; font-weight:700; font-size:12.5px;';
+  const toggle = (label, cls)=>{ const l = mk('label', 'tg'); const c = document.createElement('input'); c.type = 'checkbox'; c.checked = true; c.addEventListener('change', ()=>{ document.body.classList.toggle(cls, !c.checked); setTimeout(()=>{ if (fse && fse.fit) fse.fit(); }, 30); }); l.appendChild(c); l.appendChild(document.createTextNode(label)); return l; };
+  const panes = {
+    fset: [
+      group('Game', [rowOf('fsdId'), rowOf('fsdSync')], 'col'),
+      group('Nền chung', [rowOf('fsdBg'), $('fsdTheme')], 'col'),
+      group('Chữ & âm thanh', [popBtn('Định dạng chữ', 'fonts', 'Cỡ, màu, đậm, viền'), popBtn('Âm thanh chung', 'sounds', 'Đúng / sai / nhạc nền')]),
+      group('Cơ chế', [mechLab, btn('Đổi cơ chế…', fseOpenSwap, 'Lấy từ game mẫu'), popBtn('Tuỳ biến', 'mech', 'Nguồn / hiển thị / chấm')])],
+    fhome: [
+      group('Câu hỏi', [btn('Câu mới', ()=> fseRoundOp('new'), 'Thêm câu mẫu'), btn('Nhân bản câu', ()=> fseRoundOp('dup'), 'Ctrl+D'), btn('Xoá câu', ()=> fseRoundOp('del'), 'Delete khi chưa chọn vật')]),
+      group('Đối tượng', [btn('Nhân đôi', guard(fseDuplicate), 'Hình / chữ / ảnh'), btn('Xoá', guard(fseDelete), 'Phím Delete'), btn('Lên lớp trên', guard(()=> fseMoveOrder(1)), 'Đè lên đối tượng khác'), btn('Xuống lớp dưới', guard(()=> fseMoveOrder(-1)), 'Nằm dưới')]),
+      group('Căn giữa', [btn('Giữa ngang', guard(()=> fseAlign('x')), 'X = 0,5'), btn('Giữa dọc', guard(()=> fseAlign('y')), 'Y = 0,5')]),
+      group('Xem thử', [btn('Câu khác', guard(()=> fse.reroll()), 'Một câu hỏi mẫu khác'), gTog], 'col')],
+    fins: [
+      group('Hình', [shapes]),
+      group('Nội dung', [btn('Chữ', guard(()=> fseAdd(FSW.editOps.newText())), 'Hộp chữ mới'), btn('Ảnh', guard(fseInsertImage), 'Chọn ảnh từ máy')]),
+      group('Vật từ kho', [itemSel, btn('Thêm vật', guard(()=>{ const id = itemSel.value; if (id) fseAdd(FSW.editOps.newItem(id)); }), 'Đặt vật vào màn hình')], 'col'),
+      group('Kho', [btn('Kho ảnh & vật', ()=> fsTab('items'), 'Thêm / sửa ảnh, âm thanh từng vật')])],
+    ffx: [
+      group('Phản hồi', [btn('Khi đúng / sai…', ()=>{ fsTab('rule'); const a = $('fsdAdv'); if (a){ a.open = true; a.scrollIntoView({ block: 'start' }); } }, 'Hành động theo sự kiện'), popBtn('Âm thanh', 'sounds', 'Tiếng đúng / sai / nhạc')]),
+      group('Ghi chú', [mk('div', 'hint', 'Hiệu ứng khi đúng / sai / từng bước nằm ở "Luật chơi → Nâng cao". Âm thanh riêng từng dạng câu hỏi nằm ngay trong "Luật chơi".')])],
+    fview: [group('Hiển thị khung', [toggle('Danh sách câu hỏi', 'hide-rail'), toggle('Thuộc tính', 'hide-props')])],
+  };
+  const names = { fset: 'Cài đặt chung', fhome: 'Trang chủ', fins: 'Chèn', ffx: 'Hiệu ứng', fview: 'Xem' };
+  Object.keys(panes).forEach(k=>{
+    const p = mk('div', 'pane fsd-only'); p.dataset.p = k; panes[k].forEach(g=> p.appendChild(g)); rib.appendChild(p);
+    const t = mk('button', 'fsd-only', names[k]); t.type = 'button'; t.dataset.t = k; t.setAttribute('role', 'tab'); tabs.appendChild(t);
+  });
+  tabs.addEventListener('click', e=>{ if (e.target.closest('button')) closePops(); });
+  // tab bên phải
+  const ft = $('fsTabs'); if (ft) ft.addEventListener('click', e=>{ const b = e.target.closest('button'); if (b) fsTab(b.dataset.k); });
+  fsTab('obj');
+}
+function fseFillItemSel(){ const s = $('fseItemSel'), d = fsdData(); if (!s || !d) return; s.innerHTML = ''; d.items.forEach(it=>{ const op = document.createElement('option'); op.value = it.id; op.textContent = it.label || it.id; s.appendChild(op); }); }
+// phím tắt: Ctrl+D nhân bản câu (như game kéo-thả), Delete xoá đối tượng đang chọn, không chọn thì xoá câu; mũi tên dịch chuyển
+document.addEventListener('keydown', e=>{
+  if (!document.body.classList.contains('fsd-mode') || !fse) return;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable) || (tag === 'INPUT' && !/^(checkbox|radio|button|range|file|color)$/.test(t.type))) return;
+  if (pt || document.querySelector('dialog[open]')) return;
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'd'){ e.preventDefault(); if (fseIsManual()) fseRoundOp('dup'); else fseToast('Chuyển sang "Viết tay" để nhân bản câu.'); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); if (fseCur()) fseDelete(); else if (fseIsManual()) fseRoundOp('del'); return; }
+  const st = e.shiftKey ? .02 : .005;
+  if (e.key === 'ArrowLeft'){ e.preventDefault(); fseNudge(-st, 0); }
+  else if (e.key === 'ArrowRight'){ e.preventDefault(); fseNudge(st, 0); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); fseNudge(0, st); }
+  else if (e.key === 'ArrowDown'){ e.preventDefault(); fseNudge(0, -st); }
+  else if (e.key === 'Escape' && fseCur()){ fse.select(null); }
+});
+
 let fsdPending = null;
 $('fsdFileInput') || (()=>{ const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.id = 'fsdFileInput'; i.style.display = 'none'; document.body.appendChild(i); })();
 $('fsdFileInput').addEventListener('change', e=>{
@@ -4369,24 +5311,37 @@ function galCard(key, name, desc, thumb){
   return b;
 }
 const $$gal = ()=> Array.from($('galGrid').querySelectorAll('.gal-card'));
-function openGallery(){
+function openGallery(mode){
   if (!window.FSW){ alert('Thiếu engine FloorStory (fs/*.js chưa được nhúng).'); return; }
   FSW.injectCss();
+  galMode = mode === 'swap' ? 'swap' : 'new';
+  const swap = galMode === 'swap', dlg = $('galDlg');
+  dlg.querySelector('h2').textContent = swap ? 'Đổi cơ chế' : 'Game mới';
+  dlg.querySelector('.gal-sub').textContent = swap ? 'Chọn một game mẫu để lấy cách ra câu hỏi, cách chấm và cảnh nền của nó. Ảnh & vật của bạn có thể giữ lại.' : 'Chọn một game mẫu rồi sửa ảnh, chữ, luật chơi. Hoặc bắt đầu từ trang trống.';
+  dlg.querySelector('label[for="galId"]').style.display = $('galId').style.display = swap ? 'none' : '';
+  let kw = $('galKeepWrap');
+  if (!kw){ kw = document.createElement('label'); kw.id = 'galKeepWrap'; kw.className = 'chk'; kw.style.margin = '0'; kw.innerHTML = '<input type="checkbox" id="galKeep" checked> Giữ ảnh &amp; vật của tôi'; $('galOk').parentNode.insertBefore(kw, $('galOk')); }
+  kw.style.display = swap ? '' : 'none'; $('galOk').textContent = swap ? 'Dùng cơ chế này' : 'Tạo game';
+  let ew = $('galEmptyWrap');
+  if (!ew){ ew = document.createElement('label'); ew.id = 'galEmptyWrap'; ew.className = 'chk'; ew.style.margin = '0'; ew.title = 'Giữ cơ chế (cách ra câu hỏi, cách chấm, luật) nhưng xoá ảnh / vật / cảnh mẫu để tự thêm. Một số cơ chế cần vật có tag (xem Kho vật → { }).'; ew.innerHTML = '<input type="checkbox" id="galEmpty"> Chỉ lấy cơ chế (xoá ảnh &amp; vật mẫu)'; $('galOk').parentNode.insertBefore(ew, $('galOk')); }
+  ew.style.display = swap ? 'none' : ''; $('galEmpty').checked = false;
   const grid = $('galGrid'); grid.innerHTML = ''; galPick = null; galAuto = true; $('galOk').disabled = true; $('galId').value = ''; $('galHint').textContent = '';
   const bt = fsdEl('div', 'gal-thumb'); bt.style.background = 'var(--panel-2)'; bt.appendChild(fsdEl('span', 'blank', '＋'));
-  grid.appendChild(galCard('_blank', 'Trang trống (kéo thả)', 'Tự dựng câu hỏi và đáp án bằng cách kéo thả ảnh, chữ lên màn hình.', bt));
-  Object.keys(FSW.TEMPLATES).sort((a, b)=> FSW.TEMPLATES[a].name.localeCompare(FSW.TEMPLATES[b].name, 'vi')).forEach(k=>{
+  if (!swap) grid.appendChild(galCard('_blank', 'Trang trống (kéo thả)', 'Tự dựng câu hỏi và đáp án bằng cách kéo thả ảnh, chữ lên màn hình.', bt));
+  const mechOf = k=> fsdMechName(fsdTplFlow(FSW.TEMPLATES[k]));
+  Object.keys(FSW.TEMPLATES).sort((a, b)=> swap ? (mechOf(a).localeCompare(mechOf(b), 'vi') || FSW.TEMPLATES[a].name.localeCompare(FSW.TEMPLATES[b].name, 'vi')) : FSW.TEMPLATES[a].name.localeCompare(FSW.TEMPLATES[b].name, 'vi')).forEach(k=>{
     const t = FSW.TEMPLATES[k], th = fsdEl('div', 'gal-thumb'), tm = (t.data && t.data.theme) || {};
     th.style.background = tm.bg || tm.floor || '#CFD8DC';
     (t.data.items || []).slice(0, 4).forEach(it=>{ const c = fsdEl('div', 'fsd-thumb'); try{ fsdThumb(it, c); }catch(e){} th.appendChild(c); });
-    grid.appendChild(galCard(k, t.name, t.desc || '', th));
+    grid.appendChild(galCard(k, t.name, (swap ? '【' + mechOf(k) + '】 ' : '') + (t.desc || ''), th));
   });
   $('galDlg').showModal();
 }
 $('galId').addEventListener('input', ()=>{ galAuto = false; });
-$('btnNewFs').addEventListener('click', openGallery);
+$('btnNewFs').addEventListener('click', ()=> openGallery('new'));
 $('galClose').addEventListener('click', ()=> $('galDlg').close());
 $('galOk').addEventListener('click', ()=>{
+  if (galMode === 'swap'){ if (!galPick) return; $('galDlg').close(); fseApplySwap(galPick); return; }
   const id = $('galId').value.trim();
   if (!galPick) return;
   if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(id)){ $('galHint').textContent = 'Mã game: chữ cái đầu, chỉ chữ/số/_ (không dấu, không cách).'; return; }
@@ -4395,6 +5350,7 @@ $('galOk').addEventListener('click', ()=>{
   if (galPick === '_blank'){ applyBlankGame(id); return; }
   applyBlankGame(id);   // dọn sạch dữ liệu kéo-thả cũ rồi mới chuyển sang game mẫu
   const t = FSW.TEMPLATES[galPick], data = JSON.parse(JSON.stringify(t.data)); data.version = 3;
+  if ($('galEmpty') && $('galEmpty').checked){ data.items = []; delete data.scene; }   // chỉ lấy cơ chế: người soạn tự thêm ảnh / vật
   game.meta = { gameId:id, displayName:data.title, category:'FloorStory', kind:'fsdata', fsData:data };
   fsdFlowIdx = 0; updateFsMode();
 });
@@ -6030,6 +6986,7 @@ function undoApply(snap){
     Object.assign(game, st);
     undoLast = snap;
     syncUiFromGame(true);
+    updateFsMode();   // game cơ chế: dựng lại form + sân khấu theo dữ liệu vừa khôi phục
   } finally { undoBusy = false; }
 }
 function doUndo(){ undoCheck(); if (!undoStack.length) return; redoStack.push(undoLast); undoApply(undoStack.pop()); }
@@ -6074,6 +7031,7 @@ document.querySelectorAll('details.panel-section').forEach(d=>{
 // (không chọn gì = hiệu ứng chung). Chỉ dời DOM + thêm đồng bộ chọn — logic soạn cũ giữ nguyên. Phím: Ctrl+D nhân bản round, Delete xoá đối tượng/round.
 // ─────────────────────────────────────────────────────────────────
 function renderRail(){
+  if (document.body.classList.contains('fsd-mode')){ fseRenderRail(); return; }
   const list = document.getElementById('railList'); if (!list) return;
   list.innerHTML = '';
   game.rounds.forEach((r, ri)=>{
@@ -6245,10 +7203,13 @@ let shellShow = null;
 /// Game cơ chế / gói ảnh chỉ có tab File (ẩn các tab soạn kéo-thả).
 function shellModeSync(){
   if (!shellShow) return;
-  const special = document.body.classList.contains('fs-mode') || document.body.classList.contains('fsd-mode');
-  if (special) shellShow('file'); else if (shellTab === 'file') shellShow('home');
+  const pack = document.body.classList.contains('fs-mode'), fsd = document.body.classList.contains('fsd-mode'), FT = ['fset', 'fhome', 'fins', 'ffx', 'fview'];
+  if (pack) shellShow('file');
+  else if (fsd){ if (FT.indexOf(shellTab) < 0) shellShow('fhome'); }
+  else if (shellTab === 'file' || FT.indexOf(shellTab) >= 0) shellShow('home');
 }
 initShell();
+initFsdShell();
 syncCanvasUi();
 renderPoolList();
 renderRounds();

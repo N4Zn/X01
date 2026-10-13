@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Nhúng WebTools/GenericGameBuilder/fs/*.js + fs/games/*.json (mẫu game) vào game_builder_v4.0.html (giữa <!--FS-JS-BEGIN--> và <!--FS-JS-END-->)
 để builder vẫn là 1 file. Chạy sau mỗi lần sửa fs/*.js hoặc gen_games.py:  python Tools/floorstory_pack/inline_web.py"""
-import glob, json, os
+import glob, json, os, sys
 here = os.path.dirname(os.path.abspath(__file__))
 web = os.path.join(here, '..', '..', 'WebTools', 'GenericGameBuilder')
-html = os.path.join(web, 'game_builder_v4.0.html')
-order = ['fs_core.js', 'fs_expr.js', 'fs_game.js', 'fs_act.js', 'fs_flow.js']
+html = os.path.join(web, sys.argv[1] if len(sys.argv) > 1 else 'game_builder_v4.1.html')
+order = ['fs_core.js', 'fs_expr.js', 'fs_game.js', 'fs_act.js', 'fs_flow.js', 'fs_edit.js']
 s = open(html, encoding='utf-8').read()
 a, b = '<!--FS-JS-BEGIN-->', '<!--FS-JS-END-->'
 assert s.count(a) == 1 and s.count(b) == 1, 'thiếu marker FS-JS'

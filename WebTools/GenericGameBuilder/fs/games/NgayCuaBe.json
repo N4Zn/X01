@@ -434,9 +434,12 @@
    "p": {}
   },
   "text": {
-   "prompt": "Na làm gì nào?",
-   "say": "{label}!",
-   "wrong": "Chưa đúng! Na làm gì lúc này nhỉ?"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "right": [

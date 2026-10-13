@@ -35,8 +35,11 @@
    }
   },
   "text": {
-   "prompt": "Có bao nhiêu khối hộp?",
-   "say": "{count} khối hộp!",
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
    "wrong": ""
   }
  },

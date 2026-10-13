@@ -53,7 +53,7 @@ const MOD = {
   },
   view: {
     cards: { name:'Hàng thẻ', desc:'Hàng thẻ chạm được: hiện các vật của câu hỏi, hoặc các số đáp án.',
-      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF') } },
+      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), x:FL('Vị trí ngang (0 trái – 1 phải)',.5,.1,.9), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF') } },
     strip: { name:'Dải hình (theo chuỗi)', desc:'Hàng ô hiện các hình của chuỗi theo thứ tự. Thường dùng với "Hiện n giây rồi úp".',
       p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1) } },
     grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1) } },
@@ -93,6 +93,8 @@ const jpar = (kind, spec, key, d)=>{ const v = par(kind, spec, key); if (v && ty
 const PALETTE = ['#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA'];
 const tagOf = (it, k)=> ((it && it.tags) || {})[k];
 const sceneFor = (w, extra)=> w.scope(extra);
+/** Vị trí ghi đè từng phần tử của view (do trình soạn kéo thả): spec.p.ov = { "<chỉ số>": [fx, fy] } (toạ độ 0..1 của world, như P()). Trả về {x,y} px hoặc null. */
+const ovPos = (w, spec, i)=>{ const ov = (spec.p || {}).ov, v = ov && ov[i]; return (Array.isArray(v) && v.length > 1 && isFinite(+v[0]) && isFinite(+v[1])) ? w.P(+v[0], +v[1]) : null; };
 
 // ═════════════════════════ GEN ═════════════════════════════════════════════════
 const GEN = {
@@ -191,6 +193,67 @@ const GEN = {
   },
 };
 
+// ═════════════════════════ ROUNDS (câu hỏi VIẾT TAY) ═══════════════════════════
+// flow.manual = true + flow.rounds[] → mỗi lượt lấy 1 round thay vì sinh ngẫu nhiên (flow.roundOrder: 'seq' mặc định | 'shuffle'). Round KHÔNG hợp lệ
+// (thiếu vật…) → rơi về nguồn tự động. Schema 1 round theo loại nguồn (vật tham chiếu bằng id):
+//   set {items:[id..], target:id} · match {subject:id, options:[id..], answer:id} · values {items:[id..], less?:1} · sequence {items:[id..], seq:[chỉ số vào items..]}
+//   pairs {items:[id..]} · number {count:n, options?:[n..]}.   (calc / none chỉ chạy tự động.)  Bản C#: FlowGens.FromRound — PHẢI khớp.
+const itemById = (w, id)=> w.items.find(i=> i.id === String(id));
+const itemsOfRound = (w, r, key)=> { const out = []; for (const id of (r[key] || [])){ const it = itemById(w, id); if (!it) return null; out.push(it); } return out; };
+const ROUND = {
+  set(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    let t = its.findIndex(x=> x.id === String(r.target)); if (t < 0) t = 0;
+    const name = w.nameOf(its[t]);
+    return { items: its, target: t, vars:{ label:name }, id:'SET_' + (its[t].id || name), desc:'Chọn ' + name, answers: its.map(p=> w.nameOf(p)) };
+  },
+  match(w, spec, r){
+    const subject = itemById(w, r.subject), opts = itemsOfRound(w, r, 'options'); if (!subject || !opts || opts.length < 2) return null;
+    let ai = opts.findIndex(x=> x.id === String(r.answer)); if (ai < 0) ai = 0;
+    return { items: opts, target: ai, subject, vars:{ subject: w.nameOf(subject), label: w.nameOf(opts[ai]) }, id:'MATCH_' + (subject.id || '') + '_' + opts[ai].id, desc:'Ghép ' + w.nameOf(subject), answers: opts.map(p=> w.nameOf(p)) };
+  },
+  values(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    const P = k=> par('gen', spec, k), less = !!(+r.less), n = its.length;
+    let target = 0; for (let i=1;i<n;i++) if (less ? (+its[i].value < +its[target].value) : (+its[i].value > +its[target].value)) target = i;
+    const word = less ? P('wordLess') : P('wordMore'), suffix = n === 2 ? P('suffix2') : P('suffix3');
+    return { items: its, target, vars:{ word, suffix, label:w.nameOf(its[target]) }, id:'VAL_' + (its[target].id || target) + (less?'_min':'_max') + n, desc:'Con nào ' + word + ' ' + suffix, answers: its.map(p=> w.nameOf(p)) };
+  },
+  sequence(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    const seq = (r.seq || []).map(Number).filter(i=> Number.isInteger(i) && i >= 0 && i < its.length); if (!seq.length) return null;
+    return { items: its, seq, target: seq[0], vars:{ len: seq.length, names: seq.map(i=> w.nameOf(its[i]).toLowerCase()).join(', rồi ') }, id:'SEQ_' + seq.length + '_' + seq.join('-'), desc:'Chuỗi ' + seq.length + ' hình', answers: its.map(p=> w.nameOf(p)) };
+  },
+  pairs(w, spec, r){
+    const its = itemsOfRound(w, r, 'items'); if (!its || its.length < 2) return null;
+    const pairs = its.length, faces = []; for (let i=0;i<pairs;i++) faces.push(i, i); w.shuffle(faces);
+    return { items: its, faces, pairs, vars:{ pairs }, id:'PAIRS_' + pairs, desc:'Lật thẻ giống nhau: ' + pairs + ' cặp', answers:[faces.join(',')] };
+  },
+  number(w, spec, r){
+    const P = k=> par('gen', spec, k), count = Math.max(1, Math.min(12, Math.round(+r.count) || 1));
+    let opts;
+    if (Array.isArray(r.options) && r.options.length){ opts = []; r.options.map(Number).forEach(v=>{ if (v >= 1 && v <= 12 && opts.indexOf(v) < 0) opts.push(v); }); if (opts.indexOf(count) < 0) opts.push(count); }
+    else { opts = [count]; let g = 0; while (opts.length < P('options') && g++ < 80){ const v = count + w.rand(-2, 3); if (v >= 1 && v <= 12 && opts.indexOf(v) < 0) opts.push(v); } w.shuffle(opts); }
+    const obj = w.items.find(i=> i.id === P('objectId')) || null;
+    return { items: obj ? [obj] : [], options: opts, number: count, target: opts.indexOf(count), vars:{ count }, id:'NUM_' + count, desc:'Đếm ' + count, answers: opts.map(String) };
+  },
+};
+/** Q hiện tại → 1 round viết tay (dùng cho nút "Thêm round" của trình soạn). Trả null nếu loại nguồn không hỗ trợ. */
+function qToRound(type, Q){
+  const ids = a=> (a || []).map(i=> i.id);
+  switch (type){
+    case 'set': return { items: ids(Q.items), target: (Q.items[Q.target] || {}).id };
+    case 'match': return { subject: (Q.subject || {}).id, options: ids(Q.items), answer: (Q.items[Q.target] || {}).id };
+    case 'values': { const o = { items: ids(Q.items) }; if (/_min/.test(Q.id || '')) o.less = 1; return o; }
+    case 'sequence': return { items: ids(Q.items), seq: (Q.seq || []).slice() };
+    case 'pairs': return { items: ids(Q.items) };
+    case 'number': return { count: Q.number, options: (Q.options || []).slice() };
+  }
+  return null;
+}
+const ROUND_TYPES = Object.keys(ROUND);
+
+
 // ═════════════════════════ VIEW ════════════════════════════════════════════════
 // V = { elems:[{node,key,kind,name,fig,item}], parts:[{show(),cover(),hide()}], hideAll(), setActive(b), intro(): generator, ready }
 const PRESET_TPL = {
@@ -205,7 +268,7 @@ const VIEW = {
     const spacing = n <= 3 ? .31 : n === 4 ? .24 : .72/(n-1), cs = Math.min(w.U*P('sizeU'), w.W*spacing*.93), tall = P('tall');
     const elems = [];
     list.forEach((it, i)=>{
-      const pos = w.P(.5 + (i - (n-1)/2)*spacing, P('y'));
+      const pos = ovPos(w, spec, i) || w.P(P('x') + (i - (n-1)/2)*spacing, P('y'));
       let card, fig = null;
       if (isNum) card = UI.card(w.root, null, String(it), hex('#7E57C2'), pos.x, pos.y, cs, cs*tall, null, 72).rt;
       else {
@@ -237,8 +300,8 @@ const VIEW = {
     }
     list.forEach((it, i)=>{
       const s = sizeOf(i, it), ex = { opt: Object.assign({}, it, { v: (Q.optv||[])[i] }), i, n, item: it, size: s };
-      const hh = P('hU') > 0 ? P('hU')*U : s*U*tall, py = P('yExpr') ? w.P(0, +w.ev(P('yExpr'), ex)).y : pts[i].y;
-      const cont = UI.pic(w.root, null, col(255,255,255,0), pts[i].x, py, s*U, hh, true); cont.preserveAspect = false; w.track(cont);
+      const hh = P('hU') > 0 ? P('hU')*U : s*U*tall, ovp = ovPos(w, spec, i), py = ovp ? ovp.y : P('yExpr') ? w.P(0, +w.ev(P('yExpr'), ex)).y : pts[i].y;
+      const cont = UI.pic(w.root, null, col(255,255,255,0), ovp ? ovp.x : pts[i].x, py, s*U, hh, true); cont.preserveAspect = false; w.track(cont);
       w.makeObjs(tpl.map(t=> Object.assign({ rel:true }, t)), cont, w.taskObjs, ex);
       if (P('labelBelow')) UI.label(cont, w.nameOf(it), 26, WHITE, 0, -hh*.5 - U*.045, U*.5, U*.08, undefined, 'card');
       if (P('anim') !== 'none') w.taskObjs.push({ node: cont, spec:{ anim:{ type: P('anim') === 'pulse' ? 'pulse' : 'bob', amp: P('anim') === 'float' ? .02 : .012, speed: P('anim') === 'float' ? 1.6 : 3 } }, extra:{}, cur:{}, animOn:true, x0: cont.x, y0: cont.y, t0: w.rng.next()*6.28 });
@@ -256,7 +319,7 @@ const VIEW = {
     const P = k=> par('view', spec, k), len = Q.seq.length, slot = Math.min(w.U*P('slotU'), w.W*.92/len*.9), gap = slot*.1, rowW = len*slot + (len-1)*gap;
     const bg = [], face = [], qq = [], y = w.P(.5, P('y')).y, plain = !!P('plain');
     for (let i=0;i<len;i++){
-      const b = UI.pic(w.root, 'rrect', plain ? col(255,255,255,0) : col(255,255,255,.9), -rowW/2 + slot/2 + i*(slot+gap), y, slot, slot); b.sliced = true; b.preserveAspect = false; w.track(b); bg.push(b);
+      const op = ovPos(w, spec, i), b = UI.pic(w.root, 'rrect', plain ? col(255,255,255,0) : col(255,255,255,.9), op ? op.x : -rowW/2 + slot/2 + i*(slot+gap), op ? op.y : y, slot, slot); b.sliced = true; b.preserveAspect = false; w.track(b); bg.push(b);
       const q = UI.label(b, '?', Math.round(slot*.6), hex('#90A4AE'), 0, 0, slot, slot, false); q.active = false; qq.push(q);
       face.push(w.drawItem(b, Q.items[Q.seq[i]], 0, 0, slot*.82));
     }
@@ -272,7 +335,7 @@ const VIEW = {
     const covered = !!P('covered'), elems = [];
     Q.faces.forEach((fi, i)=>{
       const r = Math.floor(i/cols), c = i % cols;
-      const holder = UI.pic(w.root, null, col(255,255,255,0), origin.x + (c-(cols-1)/2)*stepX, origin.y + ((rows-1)/2 - r)*stepY, cs, cs, true); holder.preserveAspect = false; w.track(holder);
+      const op = ovPos(w, spec, i), holder = UI.pic(w.root, null, col(255,255,255,0), op ? op.x : origin.x + (c-(cols-1)/2)*stepX, op ? op.y : origin.y + ((rows-1)/2 - r)*stepY, cs, cs, true); holder.preserveAspect = false; w.track(holder);
       const back = UI.pic(holder, 'rrect', hex('#26A69A'), 0, 0, cs, cs); back.sliced = true; back.preserveAspect = false; UI.label(back, '?', Math.round(cs*.6), WHITE, 0, 0, cs, cs);
       const front = UI.pic(holder, 'rrect', WHITE, 0, 0, cs, cs); front.sliced = true; front.preserveAspect = false; w.drawItem(front, Q.items[fi], 0, 0, cs*.82);
       back.active = covered; front.active = !covered;
@@ -533,20 +596,34 @@ class FlowWorld extends World {
     const list = ((this.flow.on || {})[ev]) || [];
     if (list.length) yield* this.runActs(list, cx); else if (std) yield* std(cx);
   }
+  /** Chỉ số round viết tay của lượt này (flow.roundOrder: 'seq' lặp vòng | 'shuffle' xáo mỗi vòng). */
+  _nextRound(f, fi){
+    const n = f.rounds.length; this._rc = this._rc || {}; this._rb = this._rb || {};
+    const c = this._rc[fi] = (this._rc[fi] || 0) + 1;
+    if (f.roundOrder === 'shuffle'){ if (!this._rb[fi] || !this._rb[fi].length){ const a = []; for (let i=0;i<n;i++) a.push(i); this._rb[fi] = this.shuffle(a); } return this._rb[fi].shift(); }
+    return (c - 1) % n;
+  }
   /** Chạy hành động tức thì (không chờ) — dùng cho on.start trước khi sinh câu hỏi. */
   exec(list){ const g = this.runActs(list, {}); for (let i=0;i<1000;i++){ const r = g.next(); if (r.done) break; } }
   beginTask(info, done){
     this.clearItems(); this.active = true; this.taskNo++; this._ready = false;
-    const flows = flowsOf(this.data); this.flow = flows[this.data.flowPick === 'random' ? this.rng.int(flows.length) : (this.taskNo-1) % flows.length];
+    // Chơi chung: MỌI random của lượt (bag/rand trong on.start, bố trí, xáo, round) dùng cùng seed ở cả 2 đội → cùng câu hỏi
+    if (this.sync && !this.editMode) this.rng = new F.Rng(this.g.sharedSeed*104729 + this.taskNo*7919 + 13);
+    const flows = flowsOf(this.data); this.flow = this.editMode ? flows[Math.min(this.editFlow || 0, flows.length - 1)] : flows[this.data.flowPick === 'random' ? this.rng.int(flows.length) : (this.taskNo-1) % flows.length];
     const f = this.flow, gen = this.gen, T = f.text || {};
     this.vars._task = this.taskNo; this.vars._ok = this.ok;
     if ((f.on || {}).start) this.exec(f.on.start);
-    const Q = this._Q = GEN[f.gen.type](this, f.gen);
+    let Q0 = null, rprompt = '';
+    if (f.manual && f.rounds && f.rounds.length && ROUND[f.gen.type]){   // câu hỏi viết tay
+      const ri = this.editMode ? (this.editRound === undefined ? -1 : this.editRound) : this._nextRound(f, flows.indexOf(f));
+      if (ri >= 0 && ri < f.rounds.length){ const rd = f.rounds[ri]; Q0 = ROUND[f.gen.type](this, f.gen, rd); if (Q0){ Q0.round = ri; if (rd.sound) Q0.rsound = rd.sound; if (rd.vars && typeof rd.vars === 'object') Object.assign(this.vars, rd.vars); if (typeof rd.prompt === 'string') rprompt = rd.prompt; } }   // rd.vars: biến đặt riêng cho câu này (vd {need:'uong'})
+    }
+    const Q = this._Q = Q0 || GEN[f.gen.type](this, f.gen);
     Object.assign(info, { id:Q.id, topic:f.gen.type, description:Q.desc, answers:Q.answers, correct:Q.target });
     this.makeObjs((f.objects || []).filter(o=> o.z !== 'front'), this.root, this.taskObjs, {});
-    const first = this.taskNo === 1 && T.first ? T.first : T.prompt;
-    this.prompt.text = X.template(first, Q.vars, this.scope()); this.playItem(Q.items && Q.target >= 0 ? Q.items[Q.target] : null);
-    const V = (f.views || []).map(s=> VIEW[s.type](this, s, Q));
+    const first = rprompt || (this.taskNo === 1 && T.first ? T.first : T.prompt);   // rprompt: lời hỏi riêng của round viết tay
+    this.prompt.text = X.template(first, Q.vars, this.scope()); this.playPrompt(Q);
+    const V = this.V = (f.views || []).map(s=> VIEW[s.type](this, s, Q));
     this.makeObjs((f.objects || []).filter(o=> o.z === 'front'), this.root, this.taskObjs, {});
     this.objs.filter(o=> (o.spec||{}).z === 'front').forEach(o=> o.node.setAsLast()); this.prompt.setAsLast();
     this.elems = allElems(V);
@@ -557,6 +634,10 @@ class FlowWorld extends World {
   }
   *_present(f, V, Q, gen, T){
     const specs = f.views || [];
+    if (this.editMode){   // trình soạn web: hiện ngay trạng thái cuối của mọi view, không chờ dòng thời gian
+      V.forEach((v,i)=>{ if (((specs[i].reveal || {}).mode || 'none') !== 'none') v.parts.forEach(p=> p.show()); else this.run(v.intro()); });
+      this._ready = true; return;
+    }
     const revs = V.map((v,i)=> ({ v, r: specs[i].reveal || {} })).filter(o=> (o.r.mode || 'none') !== 'none');
     const defer = V.filter((v,i)=> specs[i].appear === 'afterReveal' && revs.length);
     defer.forEach(v=> v.elems.forEach(e=> e.node.active = false));
@@ -576,7 +657,7 @@ class FlowWorld extends World {
         this.sfx('plop');
       }
       defer.forEach(v=>{ v.elems.forEach(e=>{ e.node.active = true; this.run(tw.popIn(e.node, .25)); }); });
-      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.playItem(Q.items && Q.target >= 0 ? Q.items[Q.target] : null); }
+      if (T.ready){ this.prompt.text = X.template(T.ready, Q.vars, this.scope()); this.playPrompt(Q); }
     }
     while (V.some(v=> v.ready === false)) { if (gen !== this.gen) return; yield null; }
     this._ready = true; const cbs = this._readyCbs; this._readyCbs = []; cbs.forEach(cb=> cb());
@@ -585,7 +666,7 @@ class FlowWorld extends World {
 Game.WorldClass = FlowWorld;
 
 F.MOD = MOD; F.par = par; F.flowsOf = flowsOf; F.GEN = GEN; F.FlowWorld = FlowWorld;
-F.cubeCells = cubeCells;
+F.cubeCells = cubeCells; F.qToRound = qToRound; F.ROUND_TYPES = ROUND_TYPES; F.ROUND = ROUND;
 /** Kiểm tra cấu hình trước khi chạy/xuất; trả về chuỗi lỗi hoặc null. */
 F.validate = function(d){
   const flows = flowsOf(d); if (!flows.length) return 'Thiếu cấu hình flow.';

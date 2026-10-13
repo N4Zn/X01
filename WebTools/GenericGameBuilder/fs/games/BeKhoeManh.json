@@ -568,8 +568,12 @@
    }
   },
   "text": {
-   "prompt": "{{label(\"bi_\"+$need)}}",
-   "wrong": "{{tag(tapped.itemId,\"why\")}}"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   },
   "on": {
    "start": [
@@ -593,13 +597,6 @@
      "on": "#bi",
      "sec": 0.45,
      "amp": 16
-    },
-    {
-     "do": "say",
-     "text": "{{tag(tapped.itemId,\"why\")||\"Bi không cần cái này!\"}}",
-     "fy": 0.4,
-     "color": "#FFE27A",
-     "sec": 1.8
     }
    ],
    "right": [
@@ -660,13 +657,6 @@
        "var": "stage"
       },
       {
-       "do": "say",
-       "text": "Bi lớn lên rồi! Khỏe quá!",
-       "fy": 0.4,
-       "color": "#FFE27A",
-       "sec": 2
-      },
-      {
        "do": "confetti",
        "at": "#bi",
        "n": 22
@@ -682,12 +672,6 @@
       }
      ],
      "else": [
-      {
-       "do": "say",
-       "text": "Bi khỏe hơn rồi!",
-       "fy": 0.4,
-       "sec": 1.2
-      },
       {
        "do": "wait",
        "sec": 0.8

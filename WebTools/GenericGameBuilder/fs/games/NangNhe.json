@@ -187,9 +187,12 @@
    }
   },
   "text": {
-   "prompt": "Con nào {WORD} {suffix}?",
-   "say": "{label} {word} {suffix}!",
-   "wrong": "Nhìn bên nào chúi xuống nhé!"
+   "prompt": "",
+   "first": "",
+   "ready": "",
+   "say": "",
+   "sayOk": "",
+   "wrong": ""
   }
  },
  "version": 3,
