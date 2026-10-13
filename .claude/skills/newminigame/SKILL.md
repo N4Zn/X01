@@ -17,6 +17,10 @@ nằm ở: (a) 1 controller kế thừa `MiniGameControllerBase`, (b) nếu ý t
 khác chọn-nút/matching thì thêm 1 `IAnswerDisplay` tự viết, (c) 1 Editor SceneBuilder, (d) CSV
 nội dung.
 
+## Bước 0 — Áp dụng cho MỌI cách tạo game
+
+Dù game dựng bằng cách nào (controller Kit, import zip GenericGame, game soạn trên web builder…), TRƯỚC khi làm đọc mục "Cơ chế chung" trong `Core/MiniGameKit/README.md` và chạy checklist ở đó. Không có "loại game" riêng được miễn.
+
 ## Bước 1 — Nhận mô tả sơ bộ
 
 Lấy mô tả ý tưởng từ user (arg của lệnh, hoặc hỏi trực tiếp nếu chạy `/newminigame` không kèm mô
@@ -57,14 +61,7 @@ KHÔNG hiển nhiên nếu không hỏi trước, dễ phải sửa lại nhiề
    `MusicManager.Instance?.PlayCorrectSfx()` thủ công (Independent mode KHÔNG tự phát gì); (c) cần
    GHÉP nhiều clip audio thành 1 câu (vd "số + tên vật") → dùng pattern hàng đợi phát lần lượt giữa
    2 bên để không chồng tiếng, xem `DemQuaController.AnnounceCount`/`_audioQueue`.
-8. **Đếm ngược đầu round ("Start/Next in Ns")**: (a) mặc định Kit — chỉ có "Start in Ns" 1 LẦN lúc
-   vào game (`InitialStartCountdownThenBegin`), không lặp lại mỗi round; (b) cần đếm ngược "Next in
-   Ns" MỖI ROUND — Combined mode đã bật sẵn (`UseDefaultTransitionCountdown`), Independent mode cần
-   bật thêm `useIndependentRoundCountdown` (mặc định tắt) VÀ gán `leftCountdownText/
-   rightCountdownText` ở SceneBuilder (bật cờ mà quên gán Text = khoảng dừng vô hình mỗi round,
-   bug thật đã gặp); (c) cần chờ vùng trả lời THẬT SỰ sạch (không còn ai đứng/chạm) trước khi đếm,
-   không chỉ chờ hết thời gian feedback cố định → bật `waitForZoneClearBeforeCountdown` (hiện chỉ
-   có ở Combined mode).
+8. **Cơ chế chung (đếm ngược "Start/Next in Ns", chờ vùng sạch, dọn câu sau feedback, đồng bộ 2 đội, âm câu hỏi lặp 4s)** — KHÔNG hỏi và KHÔNG tự code: đã nằm sẵn ở `MiniGameControllerBase`, game nào cũng có. Chỉ nối hook (xem bảng + checklist ở mục "Cơ chế chung" trong `Core/MiniGameKit/README.md`): `CleanupIndependentDisplay`, `SyncIndependentRounds`, `PlayQuestionAudioOnce`. Muốn tắt/đổi hành vi thì override, đừng viết lại.
 9. **Cách tính điểm**: (a) mặc định Kit — +1 điểm/round đúng, tự động; (b) +N điểm/round tuỳ số
    lượng item thu thập được TRONG round đó (không phải cố định +1 dù hái được mấy quả) → override
    `OnRoundResult`, cộng thêm phần chênh lệch qua `ScoreManager.AddPoints(team, N-1)` (Kit đã tự

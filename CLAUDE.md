@@ -95,10 +95,11 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Game FloorStory (Ngày của bé, Hình học, Bé khỏe mạnh, Vỡ bóng bay, Sàn kỳ diệu, Dài-ngắn, Trên-dưới, Đồng hồ khổng lồ) | `docs/floor-story-game.md`, `docs/floor-story-mechanics.md` (web builder "flow") |
 | Import zip GenericGame, scene riêng | `docs/generic-game-import.md`, `WebTools/GenericGameBuilder/CLAUDE.md` |
 | Thiết kế lại web game builder (8 lớp, thời gian thực, giao diện kiểu PowerPoint) — bản nháp | `docs/game-builder-design.md` |
-| Engine lõi kiểu PowerPoint cho game builder (Deck/Slide/Đối tượng/Hoạt ảnh/Trigger) — đang phân tích | `docs/game-builder-core-engine.md`; khảo sát các họ game: `docs/game-builder-generalization.md` |
+| Kiến trúc tổng quát hoá game builder (đối tượng v2 + ổ cắm Kiểu hiển thị / Kiểu chấm / Hiệu ứng) — đang phân tích | `docs/game-builder-architecture.md`; khảo sát các họ game: `docs/game-builder-generalization.md` |
 | Build `.aar` (Android modules) | `/build-aar` hoặc `sh Tools/build-aar.sh changed`, `handoff/build-aar.md` |
 | Giao thức Java↔Unity (message, JSON settings) | `docs/contracts/java-unity-bridge.md` |
 | Vì sao kiến trúc như vậy | `docs/adr/` |
+| **Tạo / import / sửa BẤT KỲ minigame nào** (cơ chế chung: Next in, chờ vùng sạch, dọn câu, đồng bộ 2 đội, âm câu hỏi lặp) | skill `newminigame` + `Assets/Game/Scripts/Core/MiniGameKit/README.md` mục "Cơ chế chung" |
 | Giao việc / quy tắc agent | `AGENTS.md`, `handoff/README.md` |
 | Việc đang dở | `TODO.md` · nhật ký theo ngày: `notes/YYYY-MM.md` (không tự đọc) |
 
@@ -122,3 +123,4 @@ Dự án web riêng, ghi chú đầy đủ tại `WebTools/GenericGameBuilder/CL
 - 2026-10-03: GenericGame import zip → scene riêng; lớp/điểm thật (hết mock); USB/audio K02 cấu hình bằng root.
 - 2026-10-04: settings chuyển sang ControlActivity (JSON contract); wait-clear dùng chung; đóng băng 7 game; chuẩn hoá docs (tách CLAUDE.md), LFS, workflow agent (`AGENTS.md`, `handoff/`).
 - 2026-10-10: FloorStory "flow" — 16 game thành dữ liệu zip, web builder dựng/chơi thử/xuất, Unity có engine C# + importer (chưa chạy Editor); ADR 0007.
+- 2026-10-13: cơ chế chung của minigame gom về `MiniGameControllerBase` (Next in, chờ vùng sạch, dọn câu, đồng bộ 2 đội, âm lặp 4s); builder v4.6; ADR 0008.

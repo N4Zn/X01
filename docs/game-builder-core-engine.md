@@ -1,5 +1,7 @@
 # Engine lõi cho Game Builder kiểu PowerPoint
 
+> **⚠ 2026-10-13: hướng này (Slide/Trigger/engine lõi mới) đã bị thay thế** bởi [game-builder-architecture.md](game-builder-architecture.md) — giữ mô hình đối tượng v2 (Nền · Item · Câu hỏi · Đáp án…) và mở rộng bằng 3 ổ cắm (Kiểu hiển thị · Kiểu chấm · Hiệu ứng). File này chỉ còn để tham khảo.
+
 > **TL;DR**: Bỏ hướng "game.json chọn Generator/Judge/View trong danh mục do code định sẵn". Hướng mới: **một engine lõi nhỏ, tổng quát** (Deck › Slide › Đối tượng + Hoạt ảnh + Trigger + Biến) — người dùng **tự gắn** đối tượng, hiệu ứng, sự kiện, chuyển round giống PowerPoint. Code chỉ cài "động từ" (đối tượng, sự kiện, hành động, hiệu ứng); **game là chương trình-bằng-dữ-liệu do người dùng ghép**. Logic quen thuộc (đúng 1 phần / đúng hết / sai) là **macro sinh ra trigger thường**, không phải code ẩn. Engine seed: lõi `fs/*.js ⇄ FlowWorld` đã có (scene, bind, 20+ action, biến, biểu thức) — phải **tổng quát hoá**, không viết mới.
 > **Cấu trúc file**: **Phần A** = mô hình cho **cô giáo** (6 phần của một vòng chơi: Nền · Câu hỏi · Đáp án · Luật chấm · Phản hồi · Kết thúc; đáp án có 4 "ý nghĩa": Đúng/Sai · Cặp · Thứ tự · Giá trị; luật chấm = Khay chọn). **Phần B** = engine bên dưới (Deck/Slide/Trigger…) cho người phát triển.
 > **Đọc khi**: định thiết kế/mở rộng engine builder, hoặc thêm đối tượng/sự kiện/hành động mới.

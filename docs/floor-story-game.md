@@ -10,7 +10,7 @@
 - Đăng ký: `GameRegistry.cs` (khối "FloorStory", `sceneName` = tên game) + `game_registry.json` → sau khi sửa json phải build lại aar (`sh Tools/build-aar.sh controlui`).
 - 1 "round" của Kit = 1 lượt (task) của 1 đội. Điểm +1 chỉ khi đúng NGAY lần đầu; chạm sai vẫn được thử lại (có gợi ý sau 2 lần sai). Log = đúng/sai của lần đầu (`QuestionData` điền trong `BeginTask`, id dạng `NGAY_0_danh_rang`).
 - **LiDAR chỉ bắn 1 cú chạm tức thời (pointerDown+Up+Click cùng lúc) — KHÔNG có kéo/giữ.** Mọi tương tác phải là "chạm". `StoryUI.OnTap`, `StoryUI.TapArea`.
-- **Chế độ chung (Synchronized)**: world override `Synchronized => true` + dùng `NextTaskRng()` (cùng seed 2 đội → cùng câu). Controller giữ `BeginTask` của lượt k tới khi đội kia xong k lượt (đội xong trước thấy "Chờ bạn nhé..."); `onDone` vẫn gọi ngay nên thời gian log đúng. Game tự chấm điểm nhiều lần trong 1 lượt dùng `AddPoint()` (cộng thẳng ScoreManager).
+- **Chế độ chung (Synchronized)**: world override `Synchronized => true` + dùng `NextTaskRng()` (cùng seed 2 đội → cùng câu). Nhịp chuyển lượt / đồng bộ 2 đội / âm câu hỏi lặp / dọn câu do `MiniGameControllerBase` lo cho MỌI game (xem `Core/MiniGameKit/README.md` mục "Cơ chế chung"); world chỉ khai báo `Synchronized`, `PlayPrompt()`, `EndTask()`; `onDone` vẫn gọi ngay nên thời gian log đúng. Game tự chấm điểm nhiều lần trong 1 lượt dùng `AddPoint()` (cộng thẳng ScoreManager).
 - Icon ghép bằng code: `StoryIcons.Build(parent, key, pos, size)` (8 hình); khối hộp 3D: `StoryCube` (Graphic mesh).
 - Thêm game mới: viết `XxxWorld : StoryWorld` (`Build()` + `BeginTask(info, done)`), thêm 1 dòng `case` ở `FloorStoryController.CreateWorld`, thêm tên vào `FloorStorySceneBuilder.Games` (+ 1 MenuItem), thêm `Set(...)` ở GameRegistry + json.
 

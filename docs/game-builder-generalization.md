@@ -4,7 +4,7 @@
 > **Đọc khi**: định mở rộng engine (`fs/*.js` ⇄ `FlowWorld`, `GenericGameController`), thêm cơ chế, hoặc thiết kế luồng "Game mới → Từ đầu".
 > **Cập nhật**: 2026-10-13 — bản 3 (bản 1 phân theo game; bản 2 chỉ xét FloorStory và lẫn đối tượng với thuộc tính). **Chưa làm gì trong code.** Độ tin cậy: FloorStory + GenericGame kiểm kê từ dữ liệu/schema; các game viết tay (F3–F8) mới đọc **ghi chú đầu class + field `[SerializeField]` + SCHEMA/README**, chưa đọc từng dòng logic — ghi rõ ở §9.
 
-> **⚠ 2026-10-13 (sau bản 3)**: §10–§11 (6 chỗ cắm Generator/Judge/… chọn từ danh mục trong code) **bị thay thế** bởi hướng "engine lõi kiểu PowerPoint" trong [game-builder-core-engine.md](game-builder-core-engine.md). Phần khảo sát §1–§9 (họ game, đối tượng vs thuộc tính) vẫn là bằng chứng hợp lệ.
+> **⚠ 2026-10-13 (sau bản 3)**: §10–§11 (6 chỗ cắm Generator/Judge/… chọn từ danh mục trong code) **bị thay thế** bởi [game-builder-architecture.md](game-builder-architecture.md) (mô hình đối tượng v2 + 3 ổ cắm Hiển thị / Chấm / Hiệu ứng). Phần khảo sát §1–§9 (họ game, đối tượng vs thuộc tính) vẫn là bằng chứng hợp lệ.
 
 ## 1. Phạm vi: 8 họ game (trừ 7 game đóng băng + HaiQua)
 

@@ -125,6 +125,10 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Thân/ổ/hoa/nền vẽ bằng hình tô màu ở các mẫu chưa thay được ảnh; chờ user chỉ game cần rà — (2026-10-13)
 - [ ] Flow chưa có giọng đọc; khác world cũ: HinhHoc (khung nét đứt), TrungMauSac (nở nốt trứng còn lại), VoBongBay (bóng bay lên) — (2026-10-10)
 - [ ] Thay world code tay bằng flow hẳn (xoá `Worlds/*` + `FloorStorySceneBuilder.Games`) sau khi flow ổn trên K02 — (2026-10-10)
+- [ ] Unity: compile + test cơ chế chung mới ở base (`SyncIndependentRounds` barrier, `PlayQuestionAudioOnce` lặp 4s, `CleanupIndependentDisplay`) với `ConNaoNangHon` (sync) + `NhoChuoiHinh` + 1 game GenericGame Combined/wait-both (không hồi quy) — (2026-10-13)
+- [ ] `NhoChuoiHinh2` (id trong zip user import lúc 16:52) trùng nội dung `NhoChuoiHinh` (tên hiển thị cùng "Nhớ chuỗi hình"): chọn giữ 1, xoá cái kia (scene, StoryData, registry, Build Settings, aar) — (2026-10-13)
+- [ ] `NhoChuoiHinh` không thấy "Next in …": xem lại sau khi dọn câu; nếu vẫn không hiện thì kiểm `GameSettings.RoundEndDelay`/chờ vùng sạch và thêm log — (2026-10-13)
+- [ ] Web builder: chơi thử chưa có audio câu hỏi lặp 4s (Unity đã có); đồng bộ `fs_game.js` — (2026-10-13)
 
 ## Đánh giá năng lực học sinh (2026-10-08)
 - [ ] Mai: nhận log K02 bổ sung → chạy `python -I -X utf8 docs/danh-gia-nang-luc/tool/pipeline/run.py --from <ngày> --to <ngày>` (đọc thẳng Google Sheet), cập nhật Excel + phiếu A4; Minh Trí / Hòa Vũ / Minh Anh (`CASA-22001`) cần điểm — (2026-10-08)
