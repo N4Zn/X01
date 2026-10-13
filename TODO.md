@@ -120,6 +120,9 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 ## FloorStory flow — zip game (2026-10-10) — Unity chưa chạy, mới compile-check Roslyn + test parity logic
 - [ ] Mở Unity compile `FloorStoryGame/Flow/*.cs`; **Tools → FloorStoryGame → Import Pack Zips** thư mục `WebTools/FloorStoryFlows/`; mở `Assets/Game/Scenes/FloorStory/<id>.unity` Play từng game, so với web (hiển thị/hoạt hình C# chưa ai nhìn) — (2026-10-10)
 - [ ] `NhanBietMau`: đã đăng ký tay (GameRegistry.cs `Set(0,36…)` + game_registry.json + FloorStorySceneBuilder.Games, 2026-10-13; `MAX_PER_CATEGORY` 36→48 vì Toán đầy). Còn: Tools → FloorStoryGame → Import Pack Zip `NhanBietMau.zip` (tạo scene + StoryData), build lại aar (`sh Tools/build-aar.sh controlui`), test K02 — (2026-10-10)
+- [ ] Unity: chạy lại Import Pack Zips (17 zip) + Build All Scene (scene cần 4 icon ✔/✖); kiểm tra tiếng/icon đúng mặc định, `round.sound`, đổi hình trứng — (2026-10-13)
+- [ ] Bi (viết tay): 9 vật chưa có ảnh (tivi, dienthoai, chaynhay, ruatay, lauao, anluon, aoam, coiao, ankem); `BeKhoeManhRound` đang `enabled:0` trong EditorBuildSettings — (2026-10-13)
+- [ ] Thân/ổ/hoa/nền vẽ bằng hình tô màu ở các mẫu chưa thay được ảnh; chờ user chỉ game cần rà — (2026-10-13)
 - [ ] Flow chưa có giọng đọc; khác world cũ: HinhHoc (khung nét đứt), TrungMauSac (nở nốt trứng còn lại), VoBongBay (bóng bay lên) — (2026-10-10)
 - [ ] Thay world code tay bằng flow hẳn (xoá `Worlds/*` + `FloorStorySceneBuilder.Games`) sau khi flow ổn trên K02 — (2026-10-10)
 

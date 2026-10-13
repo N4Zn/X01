@@ -2,7 +2,7 @@
 
 > **TL;DR**: 1 game = kho vật + biến trạng thái + cảnh + 1..n `flow`; mỗi flow = **nguồn (gen) → hiển thị (views) → chấm (judge) → phản hồi (on.\*)**. Soạn + chơi thử trên web builder, xuất zip (`meta.kind = "fsdata"`), Unity import rồi chạy CÙNG dữ liệu. **Cả 16 game FloorStory đã có zip** (`WebTools/FloorStoryFlows/`).
 > **Đọc khi**: thêm/sửa mô-đun (cơ chế mới), sửa luật chơi, đồng bộ web ↔ Unity, thêm game mới.
-> **Cập nhật**: 2026-10-13 (builder v4.1: sân khấu chia đôi + khối lệnh Hiệu ứng) / 2026-10-10 — builder v4.0 (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh bằng file); web builder chạy thử đủ 16 game; Unity C# đã viết + biên dịch + kiểm chứng logic nguồn khớp JS, **chưa chạy trong Unity Editor/K02**.
+> **Cập nhật**: 2026-10-13 @ 63314531 (builder v4.1: sân khấu chia đôi + khối lệnh Hiệu ứng, round.sound, bỏ chữ lời hỏi, fallback tiếng/icon đúng của Unity) / 2026-10-10 — builder v4.0 (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh bằng file); web builder chạy thử đủ 16 game; Unity C# đã viết + biên dịch + kiểm chứng logic nguồn khớp JS, **chưa chạy trong Unity Editor/K02**.
 
 ## Luồng làm việc dài hạn
 1. **Thử logic bằng code** → chạy thử trong Unity (world code tay `FloorStoryGame/Worlds/*`).
