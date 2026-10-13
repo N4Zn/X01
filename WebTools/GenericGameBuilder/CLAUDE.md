@@ -4,6 +4,7 @@ Công cụ web soạn game cho runtime Unity `GenericGameController`. Trả lờ
 
 ## File
 - **Bản mới nhất: `game_builder_v4.1.html`** (v4.0 giữ nguyên để người dùng thử; v4.1 = v4.0 + sân khấu game cơ chế chia đôi 2 đội + tab Hiệu ứng khối lệnh, xem `docs/floor-story-mechanics.md` mục "Builder v4.1"). Ghi chú bên dưới nói "v4.0" thì áp dụng cả v4.1.
+- **Mới nhất: `game_builder_v4.6.html`** (= v4.5 + `cardImgScale`). Trước đó: `game_builder_v4.5.html` (v4.2 = ảnh nền chung + audio câu hỏi chung; v4.5 = ảnh nền vật/thẻ/ô, engine JS đã back-port vào `fs/*.js`; xem `docs/floor-story-mechanics.md`). `python Tools/floorstory_pack/inline_web.py game_builder_v4.6.html` tái tạo y hệt file (đã kiểm). Mặc định `inline_web.py` vẫn trỏ v4.1.
 - (cũ) `game_builder_v4.0.html` (1 file, 1 IIFE → `game` không truy cập được từ ngoài). Các file `game_builder*.html` khác là bản cũ/backup (v1, 1002...).
 - Publish làm Claude Artifact: https://claude.ai/artifact/J8VjLjobGYkDWJq456ddQ8
 - Unity runtime: `Assets/Game/Scripts/Core/MiniGameKit/GenericGame/` — `GenericGameTypes.cs`, `GenericGameMigration.cs`, `GenericGameController.cs`, `SCHEMA.md`, `capabilities.json`; thêm `UIScripts/_TestTongHop/Items/ButtonItem.cs`.

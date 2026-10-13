@@ -18,6 +18,7 @@ const FL = (label, def, min, max, help)=> ({ label, type:'float', def, min, max,
 const S = (label, def, help)=> ({ label, type:'text', def, help });
 const J = (label, def, help)=> ({ label, type:'json', def, help });
 const SEL = (label, def, opts, help)=> ({ label, type:'select', def, opts, help });
+const IMG = (label, help)=> ({ label, type:'img', def:'', help });   // tên file ảnh trong assets/ ('' = không dùng); khoá kết thúc bằng Img để xuất zip
 const MOD = {
   gen: {
     set: { name:'Bốc n vật, hỏi 1 vật', desc:'Bốc n vật từ kho; 1 vật là đáp án. Có thể lọc đáp án/vật nhiễu bằng biểu thức (theo tag + biến) và buộc vật nhiễu khác nhóm.',
@@ -53,9 +54,9 @@ const MOD = {
   },
   view: {
     cards: { name:'Hàng thẻ', desc:'Hàng thẻ chạm được: hiện các vật của câu hỏi, hoặc các số đáp án.',
-      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), x:FL('Vị trí ngang (0 trái – 1 phải)',.5,.1,.9), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF') } },
+      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), x:FL('Vị trí ngang (0 trái – 1 phải)',.5,.1,.9), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF'), cardImg:IMG('Ảnh nền thẻ','Ảnh thay cho nền thẻ (vd ô gỗ); có ảnh thì bỏ qua Màu thẻ'), cardImgScale:FL('Tỉ lệ ảnh nền thẻ',1,.3,2,'1 = vừa khít thẻ; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to') } },
     strip: { name:'Dải hình (theo chuỗi)', desc:'Hàng ô hiện các hình của chuỗi theo thứ tự. Thường dùng với "Hiện n giây rồi úp".',
-      p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1) } },
+      p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1), slotImg:IMG('Ảnh nền ô','Ảnh thay cho ô nền trắng (vd ô gỗ)'), slotImgScale:FL('Tỉ lệ ảnh nền ô',1,.3,2,'1 = vừa khít ô; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to'), coverImg:IMG('Ảnh ô úp (?)','Ảnh hiện khi úp hình lại, thay cho dấu ?'), coverImgScale:FL('Tỉ lệ ảnh ô úp (?)',1,.3,2,'1 = vừa khít ô; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to') } },
     grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1) } },
     seesaw: { name:'Bập bênh', desc:'Các vật đứng trên bập bênh; bên giá trị LỚN hơn chúi xuống. Chạm vào chính vật. 3 vật = 2 bập bênh nối nhau.', p: {} },
     stack: { name:'Đống khối 3D', desc:'Khối (hoặc vật) đẳng cự đúng số lượng của câu hỏi, không che nhau: cụm sát nhau ngẫu nhiên trong lưới 3×3, thi thoảng 1–3 khối ra ngoài; không chồng tầng. Số đếm hiện NGOÀI hình, có gạch chỉ vào khối.', p: { color:SEL('Màu khối','random',['random','#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA']) } },
@@ -86,7 +87,7 @@ const MOD = {
 // ── tiện ích ─────────────────────────────────────────────────────────────────
 function par(kind, spec, key){
   const defs = ((MOD[kind]||{})[spec.type] || {}).p || {}, d = (defs[key]||{}).def, v = (spec.p||{})[key], t = (defs[key]||{}).type;
-  if (t === 'text' || t === 'select' || t === 'json') return (v === undefined || v === null) ? d : v;
+  if (t === 'text' || t === 'select' || t === 'json' || t === 'img') return (v === undefined || v === null) ? d : v;
   const n = parseFloat(v); return (v === undefined || v === null || v === '' || isNaN(n)) ? d : n;
 }
 const jpar = (kind, spec, key, d)=>{ const v = par(kind, spec, key); if (v && typeof v === 'object') return v; try { return JSON.parse(v); } catch(e){ return d; } };
@@ -273,6 +274,8 @@ const VIEW = {
       if (isNum) card = UI.card(w.root, null, String(it), hex('#7E57C2'), pos.x, pos.y, cs, cs*tall, null, 72).rt;
       else {
         card = UI.card(w.root, null, '', hex(P('bg')), pos.x, pos.y, cs, cs*tall, null).rt; card.alpha = .96;
+        const cu = P('cardImg') ? w.img(P('cardImg')) : null;
+        if (cu){ card.color = col(255,255,255,0); const k = P('cardImgScale'), bi = UI.pic(card, { url: cu }, WHITE, 0, 0, cs*k, cs*tall*k); bi.preserveAspect = false; }   // ảnh nền thẻ là con của thẻ (nằm dưới hình) để chỉnh tỉ lệ riêng
         fig = w.drawItem(card, it, 0, P('label') ? cs*tall*.1 : 0, cs*P('fig'));
         if (P('label')) UI.label(card, w.nameOf(it), 22, hex('#3A2A12'), 0, -cs*tall*.38, cs*.96, cs*tall*.26, false, 'card');
       }
@@ -317,16 +320,18 @@ const VIEW = {
   },
   strip(w, spec, Q){
     const P = k=> par('view', spec, k), len = Q.seq.length, slot = Math.min(w.U*P('slotU'), w.W*.92/len*.9), gap = slot*.1, rowW = len*slot + (len-1)*gap;
-    const bg = [], face = [], qq = [], y = w.P(.5, P('y')).y, plain = !!P('plain');
+    const bg = [], face = [], qq = [], y = w.P(.5, P('y')).y, plain = !!P('plain'), su = P('slotImg') ? w.img(P('slotImg')) : null, cvu = P('coverImg') ? w.img(P('coverImg')) : null;
     for (let i=0;i<len;i++){
       const op = ovPos(w, spec, i), b = UI.pic(w.root, 'rrect', plain ? col(255,255,255,0) : col(255,255,255,.9), op ? op.x : -rowW/2 + slot/2 + i*(slot+gap), op ? op.y : y, slot, slot); b.sliced = true; b.preserveAspect = false; w.track(b); bg.push(b);
-      const q = UI.label(b, '?', Math.round(slot*.6), hex('#90A4AE'), 0, 0, slot, slot, false); q.active = false; qq.push(q);
+      if (su){ b.color = col(255,255,255,0); const ss = slot*P('slotImgScale'), bi = UI.pic(b, { url: su }, WHITE, 0, 0, ss, ss); bi.preserveAspect = false; }   // ảnh nền ô là con của ô (nằm dưới hình) để chỉnh tỉ lệ riêng
+      let q; if (cvu){ const cs2 = slot*P('coverImgScale'); q = UI.pic(b, { url: cvu }, WHITE, 0, 0, cs2, cs2); q.preserveAspect = false; } else q = UI.label(b, '?', Math.round(slot*.6), hex('#90A4AE'), 0, 0, slot, slot, false);
+      q.active = false; qq.push(q);
       face.push(w.drawItem(b, Q.items[Q.seq[i]], 0, 0, slot*.82));
     }
     return { elems: [], bg, ready: true,
       parts: face.map((f,i)=> ({ show(){ f.active = true; qq[i].active = false; w.run(tw.popIn(f, .3)); }, cover(){ f.active = false; qq[i].active = true; }, hide(){ f.active = false; qq[i].active = false; } })),
       hideAll(){ face.forEach((f,i)=>{ f.active = false; qq[i].active = false; }); }, setActive(){}, *intro(){},
-      mark(i){ face[i].active = true; qq[i].active = false; w.run(tw.popIn(face[i], .3)); bg[i].color = plain ? bg[i].color : hex('#C8F7C5'); if (plain) w.run(tw.fade(face[i], .4, .3)); },
+      mark(i){ face[i].active = true; qq[i].active = false; w.run(tw.popIn(face[i], .3)); bg[i].color = (plain || su) ? bg[i].color : hex('#C8F7C5'); if (plain) w.run(tw.fade(face[i], .4, .3)); },
       pulseSlot(i, alive){ w.run(tw.pulse(bg[i], alive, .06, 6)); } };
   },
   grid(w, spec, Q){

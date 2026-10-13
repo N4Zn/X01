@@ -42,6 +42,8 @@ class World {
 
   /** Vẽ 1 vật theo "diện mạo" item: ảnh > icon dựng sẵn > hình + màu. `size` = cạnh hộp. */
   drawItem(parent, item, x, y, size){
+    // vật có ảnh nền (bgImage): ô ảnh nền + hình / icon của vật nằm trên, cỡ = figScale × ô (giống ô kéo-thả: ảnh nền + icon)
+    if (item && item.bgImage){ const bu = this.img(item.bgImage); if (bu){ const box = UI.pic(parent, { url:bu }, WHITE, x, y, size, size); box.preserveAspect = false; const fs = +item.figScale > 0 ? +item.figScale : .72; World.prototype.drawItem.call(this, box, Object.assign({}, item, { bgImage: '' }), 0, 0, size*fs); return box; } }
     if (item && item.image){ const u = this.img(item.image); if (u) return UI.pic(parent, { url:u }, WHITE, x, y, size, size); }
     if (item && item.icon && F.ICON_KEYS.indexOf(item.icon) >= 0) return buildIcon(parent, item.icon, x, y, size);
     const sh = (item && item.shape) || 'circle';

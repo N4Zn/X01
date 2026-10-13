@@ -42,7 +42,7 @@ P.drawLook = function(parent, look, x, y, w, h, extra){
   const itemId = look.item !== undefined ? String(ev(look.item)) : null;
   if (itemId){
     const it = this.items.find(i=> i.id === itemId);
-    if (it){ const n = this.drawItem(parent, it, x, y, Math.min(w, h) || w); if (w && h && !(it.image || it.icon)){ n.setSize(w, h); } return n; }
+    if (it){ const n = this.drawItem(parent, it, x, y, Math.min(w, h) || w); if (w && h && !(it.image || it.icon || it.bgImage)){ n.setSize(w, h); } return n; }
   }
   if (look.image){ const u = this.img(String(ev(look.image))); if (u) return UI.pic(parent, { url:u }, WHITE, x, y, w, h); }
   if (look.icon) return F.buildIcon(parent, String(ev(look.icon)), x, y, Math.min(w, h));
