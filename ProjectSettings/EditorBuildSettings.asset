@@ -206,5 +206,11 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Game/Scenes/FloorStory/BeKhoeManhRound.unity
     guid: 2ec5d8ebcab702b4595ef4ac3121543b
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/ConNaoNangHon.unity
+    guid: 47d028d7d88a4111b8fb08199bf35225
+  - enabled: 1
+    path: Assets/Game/Scenes/FloorStory/NhoChuoiHinh2.unity
+    guid: ec4cfb35f6214fa7adcaacbbf2156d4b
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
