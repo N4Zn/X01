@@ -78,8 +78,13 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     // ── Independent mode state (playMode == Independent) ─────────────────────
     bool _independentRunning;
+    /// <summary>true khi vòng chơi Independent đang chạy (false sau GameOver/dừng) — subclass dùng để thoát coroutine chờ.</summary>
+    protected bool IndependentRunning => _independentRunning;
     int _leftRoundIndex;
     int _rightRoundIndex;
+    // Độ tiến của 2 đội theo "lượt" (1-based) — dùng cho điểm hẹn đồng bộ (SyncIndependentRounds) và vòng lặp âm câu hỏi.
+    int[] _indArrived = new int[2], _indDone = new int[2];
+    bool[] _indEnded = new bool[2];
     Coroutine _leftIndependentLoop;
     Coroutine _rightIndependentLoop;
 
@@ -118,7 +123,56 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
+        StopQuestionAudio();
         if (Current == this) Current = null;
+    }
+
+    // ═══ CƠ CHẾ CHUNG của mọi minigame (viết MỘT lần ở đây — game mới KHÔNG tự viết lại; xem Core/MiniGameKit/README.md) ═══
+    // • Âm câu hỏi: phát lúc câu hiện → phát xong NGHỈ 4s → lặp lại, tới khi lượt kết thúc (Combined; hoặc Independent có SyncIndependentRounds).
+    // • Thứ tự cuối lượt (Combined VÀ Independent giống nhau): kết quả → icon đúng/sai → nghỉ feedbackDelay → DỌN câu hỏi/đáp án + ẩn icon
+    //   → chờ vùng sạch → đếm "Next in Ns" → (Independent đồng bộ: chờ đội kia tới) → câu mới.
+    // • Đồng bộ 2 đội ở Independent (SyncIndependentRounds): điểm hẹn — cả 2 đội cùng tới mới hiện câu mới.
+
+    /// <summary>Thời gian NGHỈ giữa 2 lần phát âm câu hỏi (giây), tính từ lúc phát xong.</summary>
+    protected const float QuestionAudioRepeatPause = 4f;
+
+    /// <summary>Phát âm đọc câu hỏi 1 LẦN, trả về tổng độ dài (giây); 0 = câu không có âm → không lặp. Mặc định không có âm.
+    /// Base lo việc lặp + dừng; game chỉ cần phát và báo độ dài.</summary>
+    protected virtual float PlayQuestionAudioOnce(QuestionData q) => 0f;
+
+    /// <summary>Base vừa dừng vòng lặp âm câu hỏi giữa chừng (sang bước kết quả/thoát) — game cắt nốt đoạn âm đang phát nếu muốn.</summary>
+    protected virtual void OnQuestionAudioStopped() { }
+
+    Coroutine _qAudioLoop;
+    bool _qAudioActive;
+
+    void StartQuestionAudio(QuestionData q, Func<bool> stillOpen)
+    {
+        StopQuestionAudio();
+        if (q == null) return;
+        _qAudioActive = true;
+        _qAudioLoop = StartCoroutine(QuestionAudioLoop(q, stillOpen));
+    }
+
+    protected void StopQuestionAudio()
+    {
+        _qAudioActive = false;
+        if (_qAudioLoop == null) return;   // không có vòng lặp đang chạy → không đụng tới sfx khác (đúng/sai...)
+        StopCoroutine(_qAudioLoop);
+        _qAudioLoop = null;
+        OnQuestionAudioStopped();
+    }
+
+    IEnumerator QuestionAudioLoop(QuestionData q, Func<bool> stillOpen)
+    {
+        while (_qAudioActive && (stillOpen == null || stillOpen()))
+        {
+            float len = PlayQuestionAudioOnce(q);
+            if (len <= 0f) break;   // câu không có âm
+            yield return new WaitForSeconds(len);
+            for (float t = 0f; t < QuestionAudioRepeatPause && _qAudioActive && (stillOpen == null || stillOpen()); t += Time.deltaTime) yield return null;
+        }
+        _qAudioLoop = null;
     }
 
     public void Pause()
@@ -299,6 +353,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         }
         (display as MonoBehaviour)?.gameObject.SetActive(true);
         display.Setup(CurrentQuestion, HandleResult, HandlePlayerFailed);
+        StartQuestionAudio(CurrentQuestion, null);   // Combined/Solo: lặp tới khi sang Feedback (wait-both: tới khi CẢ 2 đội xong)
 
         if (questionTimeout > 0)
         {
@@ -447,6 +502,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
 
     protected virtual void StateMachineEnter_Feedback(Enum prev, Dictionary<string, object> opts)
     {
+        StopQuestionAudio();
         bool correct = opts != null && opts.TryGetValue("correct", out var c) && (bool)c;
         float delay = correct ? feedbackDelayCorrect : feedbackDelayWrong;
         if (_nextRoundCoroutine != null) StopCoroutine(_nextRoundCoroutine);
@@ -546,6 +602,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         Debug.Log($"[MiniGameControllerBase][DEBUG] StateMachineEnter_GameOver — type={GetType().Name} instance={GetInstanceID()} t={Time.unscaledTime:F1}");
         if (_timeoutCoroutine != null) { StopCoroutine(_timeoutCoroutine); _timeoutCoroutine = null; }
         if (_nextRoundCoroutine != null) { StopCoroutine(_nextRoundCoroutine); _nextRoundCoroutine = null; }
+        StopQuestionAudio();
 
         if (_independentRunning)
         {
@@ -638,6 +695,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         if (playMode == MiniGamePlayMode.Independent)
         {
             _independentRunning = true;
+            _indArrived = new int[2]; _indDone = new int[2]; _indEnded = new bool[2];
             Fsm.StateMachineChange(MiniGameState.WaitAnswer);
             _leftIndependentLoop = StartCoroutine(IndependentPlayerLoop(Team.Left));
             _rightIndependentLoop = StartCoroutine(IndependentPlayerLoop(Team.Right));
@@ -762,21 +820,32 @@ public abstract class MiniGameControllerBase : MonoBehaviour
                 }
             }
 
+            if (SyncIndependentRounds)
+            {
+                yield return IndependentBarrier(team, roundCount);
+                if (!_independentRunning) yield break;
+            }
+
             QuestionData q = PullNextQuestion();
             if (q == null) break;
 
             bool done = false;
             bool correctResult = false;
             float questionStart = Time.time;
+            int rc = roundCount, me = team == Team.Left ? 0 : 1;
 
             SetupIndependentDisplay(team, q, (correct, t, answer) =>
             {
                 done = true;
+                _indDone[me] = rc;
                 correctResult = correct;
                 if (correct) ScoreManager.AddPoint(team);
                 LogRoundResult(team, q, answer, correct, Time.time - questionStart);
                 OnRoundResult(correct, team, answer);
             });
+
+            // Đồng bộ: âm câu hỏi do ĐỘI TRÁI phát 1 lần cho cả 2 (2 đội cùng câu), lặp tới khi cả 2 xong lượt này.
+            if (SyncIndependentRounds && team == Team.Left) StartQuestionAudio(q, () => !(_indDone[0] >= rc && _indDone[1] >= rc));
 
             yield return new WaitUntil(() => done || !_independentRunning);
             if (!_independentRunning) yield break;
@@ -787,9 +856,35 @@ public abstract class MiniGameControllerBase : MonoBehaviour
             PlayerRecognitionService.Instance.RecognizeSlot(team == Team.Left ? 0 : 1, _ => RefreshHudNames());
 
             yield return new WaitForSeconds(correctResult ? feedbackDelayCorrect : feedbackDelayWrong);
+
+            // Giống Combined (NextRoundAfterDelay): hết feedback → DỌN câu hỏi/đáp án của đội này + ẩn icon, rồi mới chờ vùng sạch / đếm "Next".
+            CleanupIndependentDisplay(team);
+            HideFeedbackIcon(team);
         }
 
+        _indEnded[team == Team.Left ? 0 : 1] = true;
         CheckIndependentBothDone();
+    }
+
+    /// <summary>true = 2 đội ở Independent vẫn CÙNG nhịp: lượt k chỉ hiện câu khi CẢ 2 đội đã xong lượt k-1 VÀ qua dọn câu / chờ vùng sạch /
+    /// đếm "Next" của mình (điểm hẹn). Game cho 2 đội cùng 1 câu (cùng seed) bật cờ này. Mặc định false (mỗi đội nhịp riêng).</summary>
+    protected virtual bool SyncIndependentRounds => false;
+
+    /// <summary>Đội `team` tới điểm hẹn trước và đang chờ đội kia (on=true), hoặc hết chờ (on=false) — game hiện/ẩn chữ "Chờ bạn nhé...".</summary>
+    protected virtual void OnWaitingForPartner(Team team, bool on) { }
+
+    /// <summary>Independent: hết feedback của đội `team` → dọn câu hỏi + đáp án của đội đó khỏi màn hình (bản Independent của
+    /// CleanupCurrentDisplay). Mặc định không làm gì — game nào hiện câu hỏi riêng từng đội thì override.</summary>
+    protected virtual void CleanupIndependentDisplay(Team team) { }
+
+    IEnumerator IndependentBarrier(Team team, int round)
+    {
+        int me = team == Team.Left ? 0 : 1, other = 1 - me;
+        _indArrived[me] = round;
+        if (_indArrived[other] >= round || _indEnded[other]) yield break;
+        OnWaitingForPartner(team, true);
+        while (_independentRunning && _indArrived[other] < round && !_indEnded[other]) yield return null;
+        OnWaitingForPartner(team, false);
     }
 
     /// <summary>"Next in 3,2,1" riêng cho TỪNG BÊN — xem UseIndependentRoundCountdown. Dùng lại

@@ -107,31 +107,19 @@ public class FloorStoryController : MiniGameControllerBase
         }
         var world = team == Team.Left ? _left : _right;
         HideFeedbackIcon(team);
-        int mine = team == Team.Left ? 0 : 1, other = 1 - mine;
-        int taskIdx = _begun[mine]++;      // lượt thứ taskIdx (0-based) của đội này
         bool finished = false;
-        Action begin = () => world.BeginTask(q, (correct, answer) =>
+        world.BeginTask(q, (correct, answer) =>
         {
             if (finished) return;
             finished = true;
-            _finished[mine]++;
             onDone(correct, team, answer);
         });
-
-        // Chế độ chung: lượt k chỉ bắt đầu khi đội kia đã xong k lượt (đội xong trước chờ). Giữ BeginTask chứ không giữ onDone
-        // để thời gian trả lời ghi log vẫn đúng.
-        if (!world.Synchronized || _finished[other] >= taskIdx) begin();
-        else StartCoroutine(WaitPartner(world, other, taskIdx, begin));
     }
 
-    readonly int[] _begun = new int[2];
-    readonly int[] _finished = new int[2];
-
-    System.Collections.IEnumerator WaitPartner(StoryWorld world, int other, int taskIdx, Action begin)
-    {
-        world.SetWaiting(true);
-        while (_finished[other] < taskIdx) yield return null;
-        world.SetWaiting(false);
-        begin();
-    }
+    // Nhịp chuyển lượt, đồng bộ 2 đội, âm câu hỏi lặp 4s, dọn câu khi xong lượt: TẤT CẢ do MiniGameControllerBase lo (cơ chế chung) —
+    // ở đây chỉ nối vào world.
+    protected override bool SyncIndependentRounds => _left != null && _left.Synchronized;
+    protected override void OnWaitingForPartner(Team team, bool on) => (team == Team.Left ? _left : _right).SetWaiting(on);
+    protected override void CleanupIndependentDisplay(Team team) => (team == Team.Left ? _left : _right).EndTask();
+    protected override float PlayQuestionAudioOnce(QuestionData q) => _left.PlayPrompt();
 }

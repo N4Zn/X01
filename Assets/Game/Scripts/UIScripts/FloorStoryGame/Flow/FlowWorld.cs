@@ -155,11 +155,23 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     /// <summary>Tiếng của vật là đáp án (nếu câu hỏi có đáp án và vật đó có file tiếng).</summary>
     void PlayTargetItem()
     {
-        if (J.Str(Q, "rsound") != "") { PlayFile(J.Str(Q, "rsound"), true); return; }   // tiếng riêng của câu (round.sound)
+        if (Sync) return;   // chế độ chung: controller phát + lặp lại 1 lần cho cả 2 đội (PlayPrompt) — tránh 2 đội phát chồng nhau
+        PlayFile(PromptSoundFile(), true);
+    }
+    /// <summary>File âm đọc câu hỏi: round.sound &gt; flow.sounds.prompt &gt; tiếng của vật là đáp án.</summary>
+    string PromptSoundFile()
+    {
+        if (Q == null) return "";
+        if (J.Str(Q, "rsound") != "") return J.Str(Q, "rsound");   // tiếng riêng của câu (round.sound)
         var fsnd = Flow != null ? J.Obj(Flow, "sounds") : null; string ps = fsnd != null ? J.Str(fsnd, "prompt") : "";
-        if (ps != "") { PlayFile(ps, true); return; }   // tiếng câu hỏi riêng của dạng câu hỏi
+        if (ps != "") return ps;   // tiếng câu hỏi riêng của dạng câu hỏi
         int t = (int)J.Num(Q, "target", -1); var its = J.Arr(J.Get(Q, "items"));
-        if (t >= 0 && t < its.Count) PlayItem(its[t]);
+        return t >= 0 && t < its.Count ? J.Str(its[t], "sound") : "";
+    }
+    public override float PlayPrompt()
+    {
+        string f = PromptSoundFile(); var clip = LoadClip(f); if (clip == null) return 0f;
+        PlayFile(f, true); return clip.length;
     }
     string GameSound(string key) { var s = J.Obj(_data, "sounds"); return s == null ? "" : J.Str(s, key); }
     /// <summary>Tiếng của DẠNG CÂU HỎI hiện tại (flow.sounds[key]) nếu có, không thì tiếng chung cả game (sounds[key]).</summary>
@@ -219,6 +231,20 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         _tracked.Clear(); _readyCbs.Clear();
         foreach (var o in TaskObjs) o.node?.Destroy();
         TaskObjs.Clear(); Elems = new List<FsElem>();
+    }
+
+    /// <summary>Xong lượt: dọn view/vật của câu (nền cảnh `scene[]` ở lại). Hoãn 1 khung hình để judge/hành động đang chạy kịp thoát; GenId đổi (đã sang lượt mới) thì bỏ qua.</summary>
+    public override void EndTask()
+    {
+        int gen = GenId;
+        Run(EndTaskNextFrame(gen));
+    }
+    IEnumerator EndTaskNextFrame(int gen)
+    {
+        yield return null;
+        if (gen != GenId) yield break;
+        ClearTask();
+        if (_prompt != null) _prompt.text = "";
     }
 
     public override void BeginTask(QuestionData info, Action<bool, int[]> done)

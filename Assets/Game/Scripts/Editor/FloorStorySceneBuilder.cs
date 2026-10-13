@@ -18,7 +18,7 @@ public static class FloorStorySceneBuilder
     public static readonly string[] Games =
     {
         "NgayCuaBe", "HinhHoc", "CongHinh", "BeKhoeManh", "VoBongBay", "SanKyDieu", "CauBacQua", "DatDoVaoCho", "DongHoKhongLo",
-        "TrungMauSac", "HinhDonGian", "NhoChuoiHinh", "LatTheNhoGiong", "NangNhe", "DemKhoiHop", "NhanBietMau", "BeKhoeManhRound",
+        "TrungMauSac", "HinhDonGian", "NhoChuoiHinh", "LatTheNhoGiong", "NangNhe", "DemKhoiHop", "NhanBietMau", "BeKhoeManhRound", "ConNaoNangHon",
     };
 
     [MenuItem("Tools/FloorStoryGame/Build ALL Scenes")]
@@ -45,6 +45,7 @@ public static class FloorStorySceneBuilder
     [MenuItem("Tools/FloorStoryGame/Build One/DemKhoiHop")]     static void B14() => BuildScene("DemKhoiHop");
     [MenuItem("Tools/FloorStoryGame/Build One/NhanBietMau")]    static void B15() => BuildScene("NhanBietMau");
     [MenuItem("Tools/FloorStoryGame/Build One/BeKhoeManhRound")] static void B16() => BuildScene("BeKhoeManhRound");
+    [MenuItem("Tools/FloorStoryGame/Build One/ConNaoNangHon")] static void B17() => BuildScene("ConNaoNangHon");
 
     public static void BuildScene(string game)
     {

@@ -55,6 +55,12 @@ public static class FlowViews
                 {
                     card = StoryUI.Card(w.Root, "Card", null, "", FlowWorld.Hex(S(spec, "bg")), pos, new Vector2(cs, cs * tall), null);
                     var c = card.bg.color; c.a = 0.96f; card.bg.color = c;
+                    var cardSpr = w.ImageSprite(S(spec, "cardImg"));   // ảnh nền thẻ là con của thẻ (nằm dưới hình) để chỉnh tỉ lệ riêng
+                    if (cardSpr != null)
+                    {
+                        card.bg.color = new Color(1, 1, 1, 0);
+                        float ik = (float)P(spec, "cardImgScale"); var ci = StoryUI.Pic(card.rt, "CardImg", cardSpr, Color.white, Vector2.zero, new Vector2(cs * ik, cs * tall * ik)); ci.preserveAspect = false;
+                    }
                     bool lbl = P(spec, "label") != 0;
                     fig = w.DrawItem(FsNode.Of(card.rt), it, 0, lbl ? cs * tall * 0.1f : 0f, cs * (float)P(spec, "fig"));
                     if (lbl) StoryUI.Label(card.rt, w.NameOf(it), 22, StoryUI.Hex("#3A2A12"), new Vector2(0, -cs * tall * 0.38f), new Vector2(cs * 0.96f, cs * tall * 0.26f), TextAnchor.MiddleCenter, false, "card");
@@ -175,17 +181,26 @@ public static class FlowViews
     // ── strip ──
     public sealed class StripView : FsView
     {
-        readonly FlowWorld _w; readonly List<Image> _bg = new List<Image>(); readonly List<FsNode> _face = new List<FsNode>(); readonly List<Text> _q = new List<Text>(); readonly bool _plain;
+        readonly FlowWorld _w; readonly List<Image> _bg = new List<Image>(); readonly List<FsNode> _face = new List<FsNode>(); readonly List<GameObject> _q = new List<GameObject>(); readonly bool _plain; readonly bool _hasSlotImg;
         public StripView(FlowWorld w, object spec, Dictionary<string, object> q)
         {
             _w = w; var seq = J.Arr(J.Get(q, "seq")); var items = J.Arr(J.Get(q, "items")); int len = seq.Count; _plain = P(spec, "plain") != 0;
             float slot = Mathf.Min(w.Unit * (float)P(spec, "slotU"), w.WorldW * 0.92f / len * 0.9f), gap = slot * 0.1f, rowW = len * slot + (len - 1) * gap, y = w.PP(0.5f, (float)P(spec, "y")).y;
+            var slotSpr = w.ImageSprite(S(spec, "slotImg")); var coverSpr = w.ImageSprite(S(spec, "coverImg")); _hasSlotImg = slotSpr != null;
             for (int i = 0; i < len; i++)
             {
                 var sp0 = OvPos(w, spec, i);
                 var b = StoryUI.Pic(w.Root, "Slot", ShapeSprites.RoundedRect, _plain ? new Color(1, 1, 1, 0) : new Color(1, 1, 1, 0.9f), sp0 ?? new Vector2(-rowW * 0.5f + slot * 0.5f + i * (slot + gap), y), Vector2.one * slot);
                 b.type = Image.Type.Sliced; b.preserveAspect = false; w.Track(FsNode.Of(b)); _bg.Add(b);
-                var qq = StoryUI.Label(b.transform, "?", Mathf.RoundToInt(slot * 0.6f), StoryUI.Hex("#90A4AE"), Vector2.zero, Vector2.one * slot, TextAnchor.MiddleCenter, false); qq.gameObject.SetActive(false); _q.Add(qq);
+                if (slotSpr != null)   // ảnh nền ô là con của ô (nằm dưới hình) để chỉnh tỉ lệ riêng
+                {
+                    b.color = new Color(1, 1, 1, 0);
+                    var bi = StoryUI.Pic(b.transform, "SlotImg", slotSpr, Color.white, Vector2.zero, Vector2.one * slot * (float)P(spec, "slotImgScale")); bi.preserveAspect = false;
+                }
+                GameObject qq;
+                if (coverSpr != null) { var ci = StoryUI.Pic(b.transform, "Cover", coverSpr, Color.white, Vector2.zero, Vector2.one * slot * (float)P(spec, "coverImgScale")); ci.preserveAspect = false; qq = ci.gameObject; }
+                else qq = StoryUI.Label(b.transform, "?", Mathf.RoundToInt(slot * 0.6f), StoryUI.Hex("#90A4AE"), Vector2.zero, Vector2.one * slot, TextAnchor.MiddleCenter, false).gameObject;
+                qq.SetActive(false); _q.Add(qq);
                 _face.Add(w.DrawItem(FsNode.Of(b), items[(int)FsExpr.ToNum(seq[i])], 0, 0, slot * 0.82f));
             }
             for (int i = 0; i < len; i++)
@@ -193,17 +208,18 @@ public static class FlowViews
                 int k = i;
                 Parts.Add(new FsPart
                 {
-                    Show = () => { _face[k].Active = true; _q[k].gameObject.SetActive(false); _w.Go(StoryUI.PopIn(_face[k].rt, 0.3f)); },
-                    Cover = () => { _face[k].Active = false; _q[k].gameObject.SetActive(true); },
-                    Hide = () => { _face[k].Active = false; _q[k].gameObject.SetActive(false); },
+                    Show = () => { _face[k].Active = true; _q[k].SetActive(false); _w.Go(StoryUI.PopIn(_face[k].rt, 0.3f)); },
+                    Cover = () => { _face[k].Active = false; _q[k].SetActive(true); },
+                    Hide = () => { _face[k].Active = false; _q[k].SetActive(false); },
                 });
             }
         }
-        public override void HideAll() { for (int i = 0; i < _face.Count; i++) { _face[i].Active = false; _q[i].gameObject.SetActive(false); } }
+        public override void HideAll() { for (int i = 0; i < _face.Count; i++) { _face[i].Active = false; _q[i].SetActive(false); } }
         public void Mark(int i)
         {
-            _face[i].Active = true; _q[i].gameObject.SetActive(false); _w.Go(StoryUI.PopIn(_face[i].rt, 0.3f));
-            if (!_plain) _bg[i].color = StoryUI.Hex("#C8F7C5"); else if (_face[i].G != null) _w.Go(StoryUI.Fade(_face[i].G, 0.4f, 0.3f));
+            _face[i].Active = true; _q[i].SetActive(false); _w.Go(StoryUI.PopIn(_face[i].rt, 0.3f));
+            if (!_plain && !_hasSlotImg) _bg[i].color = StoryUI.Hex("#C8F7C5");
+            if (_plain && _face[i].G != null) _w.Go(StoryUI.Fade(_face[i].G, 0.4f, 0.3f));
         }
         public void PulseSlot(int i, Func<bool> alive) { _w.Go(StoryUI.Pulse(_bg[i].rectTransform, alive, 0.06f, 6f)); }
     }

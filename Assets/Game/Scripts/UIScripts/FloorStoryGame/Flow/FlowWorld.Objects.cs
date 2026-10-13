@@ -25,8 +25,24 @@ public sealed partial class FlowWorld
     }
 
     /// <summary>Vẽ 1 vật theo diện mạo của item: ảnh &gt; icon dựng sẵn &gt; hình + màu. `size` = cạnh hộp.</summary>
+    public Sprite ImageSprite(string name) => string.IsNullOrEmpty(name) ? null : StoryUI.Load(ImagePath(name));
+
     public FsNode DrawItem(FsNode parent, object item, float x, float y, float size)
     {
+        // vật có ảnh nền (bgImage): ô ảnh nền + hình / icon của vật nằm trên, cỡ = figScale × ô (khớp drawItem trong fs_game.js)
+        string bgName = J.Str(item, "bgImage");
+        if (bgName != "")
+        {
+            var bsp = StoryUI.Load(ImagePath(bgName));
+            if (bsp != null)
+            {
+                var box = StoryUI.Pic(parent.rt, "ItemBg", bsp, Color.white, new Vector2(x, y), new Vector2(size, size)); box.preserveAspect = false;
+                double fsc = J.Num(item, "figScale"); float fs = fsc > 0 ? (float)fsc : 0.72f;
+                var plain = new Dictionary<string, object>(item as Dictionary<string, object>) { ["bgImage"] = "" };
+                DrawItem(FsNode.Of(box.rectTransform), plain, 0, 0, size * fs);
+                return FsNode.Of(box);
+            }
+        }
         string image = J.Str(item, "image");
         if (image != "")
         {
@@ -74,7 +90,7 @@ public sealed partial class FlowWorld
             {
                 float sz = Mathf.Min(w, h) != 0 ? Mathf.Min(w, h) : w;
                 var n = DrawItem(parent, it, x, y, sz);
-                if (w != 0 && h != 0 && J.Str(it, "image") == "" && J.Str(it, "icon") == "") n.SetSize(w, h);
+                if (w != 0 && h != 0 && J.Str(it, "image") == "" && J.Str(it, "icon") == "" && J.Str(it, "bgImage") == "") n.SetSize(w, h);
                 return n;
             }
         }

@@ -59,9 +59,6 @@ public class GenericGameController : MiniGameControllerBase
     /// <summary>Giá trị "giữ chỗ" của QuestionData.answers[i] khi slot đáp án không có chữ (chỉ ảnh/icon) — ButtonDisplay bỏ qua đáp án
     /// rỗng/toàn khoảng trắng nên phải có ký tự thật; chữ hiển thị thật do ApplyAnswerContent đặt lại ngay sau Setup().</summary>
     const string PlaceholderAnswer = "·";
-    /// <summary>Âm thanh câu hỏi: phát hết (lần lượt các slot câu hỏi có âm thanh) rồi NGHỈ ngần này giây mới lặp lại.</summary>
-    const float QuestionAudioRepeatPause = 4f;
-
     GenericGamePackageV2 _package;
     string _gameId;
     readonly List<QuestionData> _pool = new List<QuestionData>();
@@ -170,7 +167,7 @@ public class GenericGameController : MiniGameControllerBase
 
     protected override void OnDestroy()
     {
-        StopQuestionAudio();
+        StopQuestionAudioSeq();
         base.OnDestroy();
     }
 
@@ -862,16 +859,13 @@ public class GenericGameController : MiniGameControllerBase
         }
     }
 
-    // ── Âm thanh câu hỏi: vào round phát, nghỉ 4s rồi lặp lại — CHỈ ở chế độ Combined ──────────
+    // ── Âm thanh câu hỏi: base lo vòng lặp (phát → nghỉ 4s → lặp, xem MiniGameControllerBase); đây chỉ phát 1 lần các slot câu hỏi có âm ──
 
-    Coroutine _qAudioLoop;
+    Coroutine _qAudioSeq;
 
-    void StartQuestionAudio(QuestionData q)
+    protected override float PlayQuestionAudioOnce(QuestionData q)
     {
-        StopQuestionAudio();
-        // Independent: 2 bên mỗi bên 1 nhịp câu hỏi riêng → âm thanh chồng nhau gây nhiễu, nên KHÔNG phát.
-        if (playMode == MiniGamePlayMode.Independent || sfxAudioSource == null || q == null) return;
-        if (!_rounds.TryGetValue(q.id, out var rr)) return;
+        if (sfxAudioSource == null || q == null || !_rounds.TryGetValue(q.id, out var rr)) return 0f;
         var clips = new List<AudioClip>();
         foreach (var s in rr.spec.question.slots)
         {
@@ -879,29 +873,33 @@ public class GenericGameController : MiniGameControllerBase
             var clip = AssetOverrideLoader.GetClip(ResolveAudioPath(s.sound));
             if (clip != null) clips.Add(clip);
         }
-        if (clips.Count == 0) return;
-        _qAudioLoop = StartCoroutine(QuestionAudioLoop(clips));
+        if (clips.Count == 0) return 0f;
+        float total = 0f;
+        foreach (var c in clips) total += c.length;
+        StopQuestionAudioSeq();
+        _qAudioSeq = StartCoroutine(PlayClipsInOrder(clips));
+        return total;
     }
 
-    void StopQuestionAudio()
+    IEnumerator PlayClipsInOrder(List<AudioClip> clips)
     {
-        if (_qAudioLoop == null) return; // không có vòng lặp đang chạy → không đụng tới sfx khác (đúng/sai...)
-        StopCoroutine(_qAudioLoop);
-        _qAudioLoop = null;
-        if (sfxAudioSource != null) sfxAudioSource.Stop(); // cắt nốt đoạn âm thanh câu hỏi đang phát dở
-    }
-
-    IEnumerator QuestionAudioLoop(List<AudioClip> clips)
-    {
-        while (true)
+        foreach (var clip in clips)
         {
-            foreach (var clip in clips)
-            {
-                sfxAudioSource.PlayOneShot(clip);
-                yield return new WaitForSeconds(clip.length);
-            }
-            yield return new WaitForSeconds(QuestionAudioRepeatPause);
+            sfxAudioSource.PlayOneShot(clip);
+            yield return new WaitForSeconds(clip.length);
         }
+        _qAudioSeq = null;
+    }
+
+    void StopQuestionAudioSeq()
+    {
+        if (_qAudioSeq != null) { StopCoroutine(_qAudioSeq); _qAudioSeq = null; }
+    }
+
+    protected override void OnQuestionAudioStopped()
+    {
+        StopQuestionAudioSeq();
+        if (sfxAudioSource != null) sfxAudioSource.Stop(); // cắt nốt đoạn âm thanh câu hỏi đang phát dở
     }
 
     // ── Bối cảnh (nền) + Nhân vật/Item ─────────────────────────────────────────
@@ -1254,7 +1252,6 @@ public class GenericGameController : MiniGameControllerBase
         ApplyRoundLayout(Team.Right, q);
         ShowQuestionSlots(Team.Left, q);
         ShowQuestionSlots(Team.Right, q);
-        StartQuestionAudio(q); // chỉ Combined
     }
 
     // ── Independent mode ───────────────────────────────────────────────────────
@@ -1277,7 +1274,7 @@ public class GenericGameController : MiniGameControllerBase
         RefreshDecoScoreTexts();
         ApplyRoundLayout(team, q);
         ShowQuestionSlots(team, q);
-        // Không phát âm thanh câu hỏi ở Independent (2 bên tranh nhau) — xem StartQuestionAudio.
+        // Không phát âm thanh câu hỏi ở Independent (2 bên tranh nhau) — base chỉ lặp âm ở Combined / SyncIndependentRounds.
         Action<bool, Team, int[]> wrappedOnDone = (correct, t, answer) =>
         {
             // SumToTarget: sai (vượt mục tiêu) KHÔNG BAO GIỜ kết thúc round — chờ người chơi chạm thanh
@@ -1396,7 +1393,6 @@ public class GenericGameController : MiniGameControllerBase
         base.CleanupCurrentDisplay();
         StopIdleEffects(Team.Left);
         StopIdleEffects(Team.Right);
-        StopQuestionAudio();
         HideQuestionAndAnswers(Team.Left);
         HideQuestionAndAnswers(Team.Right);
     }
@@ -1509,7 +1505,6 @@ public class GenericGameController : MiniGameControllerBase
         {
             case ClickResult.CorrectFinal:
                 LaunchDecos(team);
-                if (!WaitBothActive) StopQuestionAudio(); // chờ cả 2 đội: âm thanh câu hỏi còn lặp cho đội kia, CleanupCurrentDisplay sẽ tắt
                 // Đáp án cuối dùng hiệu ứng "đúng — hết round" (onCorrectTap: slot tự đặt thì theo slot, không thì theo chung) —
                 // câu chỉ có 1 đáp án đúng thì đây là hiệu ứng DUY NHẤT chạy. onCorrectRemove (đúng chưa hết round) KHÔNG áp cho
                 // đáp án cuối, trừ thu thập: slot không tự đặt onCorrectTap mà onCorrectRemove chung có FlyToStay thì đáp án cuối
@@ -2034,7 +2029,6 @@ public class GenericGameController : MiniGameControllerBase
         {
             case ClickResult.CorrectFinal:
                 _sumWon[team] = true;
-                if (!WaitBothActive) StopQuestionAudio();
                 // Giống đáp án cuối ở chế độ thường: có hiệu ứng "biến mất" thì đáp án CUỐI cũng bay vào
                 // thanh (lấp nốt các ô còn lại) rồi mới ẩn bản gốc.
                 var remove = Pick(slotFx?.onCorrectRemove, _package.effects.onCorrectRemove);

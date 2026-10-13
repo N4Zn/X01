@@ -87,6 +87,25 @@ phần này riêng (xem `WhoIsItGameController` — đã có feedback text/sfx/m
   (`UIScripts/Common/CountdownStyle.cs`) quyết định, base tự áp lúc `Start()` — đừng đặt màu/cỡ riêng
   trong SceneBuilder; game ngoài Kit gọi `CountdownStyle.Apply(text)` + `CountdownStyle.Format("Next", n)`.
 
+## Cơ chế chung của mọi minigame (viết MỘT lần ở `MiniGameControllerBase`)
+
+Mọi minigame — dựng bằng Kit, GenericGame (web builder), FloorStory/flow hay game mới nào khác — chạy trên `MiniGameControllerBase`
+nên **tự có** các cơ chế dưới đây. **Game mới KHÔNG tự viết lại**: muốn khác thì override đúng hook; muốn thêm cơ chế chung thì sửa ở base
+(1 chỗ), rồi cập nhật mục này — không ghi chú rải rác ở doc từng loại game.
+
+| Cơ chế | Hành vi (mặc định, ở base) | Hook cho game |
+|---|---|---|
+| **Thứ tự cuối lượt** | kết quả → icon đúng/sai → nghỉ `feedbackDelay` → **dọn câu hỏi + đáp án + ẩn icon** → chờ vùng sạch → đếm "Next in Ns" → câu mới. Combined (`NextRoundAfterDelay`) và Independent (`IndependentPlayerLoop`) CÙNG thứ tự | Combined: `CleanupCurrentDisplay()`; Independent: `CleanupIndependentDisplay(team)` |
+| **Âm câu hỏi** | phát lúc câu hiện → phát xong **nghỉ 4s** → lặp, tới khi lượt kết thúc (wait-both: tới khi CẢ 2 đội xong). Chỉ Combined/Solo, hoặc Independent có `SyncIndependentRounds` (khi đó đội TRÁI phát cho cả 2) | `PlayQuestionAudioOnce(q)` (phát 1 lần, trả độ dài; 0 = không có âm), `OnQuestionAudioStopped()` |
+| **Đồng bộ 2 đội ở Independent** | `SyncIndependentRounds = true` → điểm hẹn: lượt k chỉ hiện câu khi CẢ 2 đội đã xong lượt k-1 VÀ qua dọn câu / chờ vùng sạch / "Next" của mình (không bị lệch: 1 bên hiện câu trong khi bên kia còn hiệu ứng) | `SyncIndependentRounds`, `OnWaitingForPartner(team, on)` (hiện "Chờ bạn nhé...") |
+| **Đếm ngược "Start/Next in Ns"** | xem mục Independent ở trên (`UseIndependentRoundCountdown`, `CountdownStyle`) | `UseIndependentRoundCountdown`, `UseDefaultTransitionCountdown` |
+| **Chờ vùng sạch** | `GameSettings.WaitForClear` / `waitForZoneClearBeforeCountdown`, cả Combined lẫn Independent | — |
+| **Chờ cả 2 đội (Combined)** | `WaitForBothTeams`, `OnTeamTurnDone` | xem trên |
+
+Checklist khi làm game mới: (1) kế thừa base, KHÔNG tự đếm ngược / tự lặp âm / tự chờ đội kia; (2) game có câu hỏi riêng từng đội → override
+`CleanupIndependentDisplay`; (3) 2 đội cùng 1 câu ở Independent → `SyncIndependentRounds`; (4) có âm đọc câu → `PlayQuestionAudioOnce`;
+(5) phát hiện thiếu cơ chế → sửa ở base + bảng này. Chưa kiểm chứng trong Unity Editor (2026-10-13).
+
 ## Cơ chế hoàn toàn mới (không phải chọn nút/matching)
 
 Viết 1 class `implements IAnswerDisplay` mới — chỉ cần đúng hợp đồng:

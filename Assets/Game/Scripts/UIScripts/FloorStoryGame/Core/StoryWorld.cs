@@ -54,6 +54,14 @@ public abstract class StoryWorld
     /// (controller giữ BeginTask của lượt sau). Mặc định false = mỗi đội nhịp riêng.</summary>
     public virtual bool Synchronized => false;
 
+    /// <summary>Phát âm đọc câu hỏi của lượt hiện tại 1 LẦN, trả về độ dài (giây); 0 = không có âm. Vòng lặp (nghỉ 4s rồi phát lại)
+    /// do MiniGameControllerBase lo (PlayQuestionAudioOnce) — world KHÔNG tự lặp.</summary>
+    public virtual float PlayPrompt() => 0f;
+
+    /// <summary>Base gọi khi hết feedback của lượt (CleanupIndependentDisplay): world dọn câu hỏi + đáp án khỏi màn hình, để lúc chờ vùng sạch /
+    /// đếm "Next" / chờ đội kia KHÔNG còn hiện câu cũ. Mặc định không làm gì (các world viết tay tự lo).</summary>
+    public virtual void EndTask() { }
+
     int _taskNo;
 
     /// <summary>Random của lượt hiện tại — cùng seed ở cả 2 đội (ctx.sharedSeed + số thứ tự lượt), dùng khi Synchronized

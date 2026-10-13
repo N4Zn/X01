@@ -206,6 +206,8 @@ public static class GameRegistry
         Set(0, 37, "BeKhoeManhRound", "Chăm bạn Bi (từng câu)", "BeKhoeManhRound", Engine.MiniGameKit, group: "Thử nghiệm");   // flow viết tay (round); cần Import Pack Zip BeKhoeManhRound
         Set(0, 36, "NhanBietMau", "Nhận biết màu sắc", "NhanBietMau", Engine.MiniGameKit, group: "Thử nghiệm");   // game flow (không có world code tay): cần Import Pack Zip NhanBietMau.zip
 
+        Set(0, 38, "ConNaoNangHon", "Bập bênh nặng nhẹ", "ConNaoNangHon", Engine.MiniGameKit, group: "Thử nghiệm");   // game flow dựng từ web builder v4.5; cần dữ liệu Resources/StoryData/ConNaoNangHon
+        Set(0, 39, "NhoChuoiHinh2", "Nhớ chuỗi hình", "NhoChuoiHinh2", Engine.MiniGameKit, group: "Thử nghiệm");
         // <GENERIC-GAMES>
     }
 

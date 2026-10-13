@@ -27,7 +27,7 @@ public static class FsMod
         object v = p != null && p.TryGetValue(key, out var vv) ? vv : null;
         string t = d != null ? J.Str(d, "t") : "";
         object def = d != null ? J.Get(d, "d") : null;
-        if (t == "text" || t == "select" || t == "json") return v ?? def;
+        if (t == "text" || t == "select" || t == "json" || t == "img") return v ?? def;
         if (v == null || (v is string s0 && s0 == "")) return def ?? 0.0;
         double n = FsExpr.ToNum(v);
         if (v is string s1 && !double.TryParse(s1, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)) return def ?? 0.0;
