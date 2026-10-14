@@ -219,7 +219,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 → +6–8 thao tác. *Lần lượt trên nhóm* cũng là hiệu ứng dùng cho **Nhớ chuỗi** (hiện lần lượt rồi úp): cùng một mục thư viện, khác tham số (việc làm với mỗi phần tử: hiện / nháy / đánh số; kết thúc: giữ / úp / ẩn).
 
 ## 12. Chưa kiểm chứng
-- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.1.html` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
+- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.6.html (gốc v4.1)` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
 - Thời lượng/độ chặn (blocking) chính xác của từng bước trong `on.right/on.wrong` của `CauBacQua` (bảng §6.3 là minh hoạ).
 - Mức độ tái dùng `ButtonDisplay` cho "thẻ úp + ghép cặp" ở Unity (cần đọc `AnswerValidator.cs`, `ButtonDisplay.cs`).
 - Các họ game viết tay (Tổng hợp CSV, Nghe-tìm, Phép tính, Quiz Kit) mới đọc ở mức field/ghi chú đầu class (xem generalization §9).
