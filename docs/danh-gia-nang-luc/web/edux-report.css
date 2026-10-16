@@ -102,7 +102,7 @@
 .edx-fill { flex: 1; min-height: 0; display: grid; gap: 1em; }
 .edx-fill.khoi { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); }
 .edx-fill.lop { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
-.edx-fill.hs { grid-template-columns: 17em minmax(0, 1fr); }
+.edx-fill.hs { grid-template-columns: 12.5em minmax(0, 1fr); }
 .edx-panel { min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .edx-body { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
 .edx-col { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 0.8em; }
@@ -221,10 +221,67 @@
 .edx-roster button { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5em; align-items: center; text-align: left; border: 1px solid var(--line); background: var(--paper); padding: 0.2em 0.7em; flex: none; min-height: 2.6em; }
 .edx-roster button:hover { background: var(--tint); }
 .edx-roster button.on { border-color: var(--red); background: var(--tint); box-shadow: inset 0.25em 0 0 var(--red); }
-.edx-roster b { font-weight: 600; display: block; }
-.edx-roster small { color: var(--muted); font-size: 0.78em; }
-.edx-roster .sc { font: 600 1.25em/1 var(--serif); color: var(--c); }
+.edx-roster { gap: 0.2em; }
+.edx-roster button { min-height: 2.2em; padding: 0.1em 0.6em; }
+.edx-roster .n1 { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.edx-roster small { color: var(--muted); font-size: 0.78em; font-weight: 400; }
+.edx-roster .sc { font: 600 1.15em/1 var(--serif); color: var(--c); white-space: nowrap; }
+.edx-roster .sc i { font-style: normal; font-size: 0.6em; margin-right: 0.3em; }
+.edx-roster .sc i.up, .edx .up { color: var(--lv3); }
+.edx-roster .sc i.dn, .edx .dn { color: var(--lv0); }
 .edx-roster .sc.none { font: 400 0.8em var(--sans); color: var(--muted); }
+
+/* mức thay đổi (Δ) + sparkline */
+.edx .dl { font-weight: 600; white-space: nowrap; font-size: 0.92em; }
+.edx .dl.up { color: var(--lv3); } .edx .dl.dn { color: var(--lv0); } .edx .dl.fl, .edx .dl.n { color: var(--muted); font-weight: 400; }
+.edx-spark { display: inline-block; vertical-align: middle; }
+.edx-card .hd .dd { margin-left: auto; font-size: 0.7em; }
+.edx-card .hd { align-items: baseline; }
+.edx-attn a { color: var(--slate-dark); font-weight: 600; cursor: pointer; text-decoration: underline dotted; }
+.edx .grp { display: inline-flex; gap: 0.3em; align-items: center; margin-right: 1em; flex-wrap: wrap; }
+.edx-sub.kinds { row-gap: 0.25em; }
+
+/* mức tiến bộ (cột lệch hai phía) */
+.edx-pr { display: grid; grid-template-columns: 3.6em minmax(0, 1fr) 5.2em 9em; gap: 0.7em; align-items: center; padding: 0.3em 0.3em; cursor: pointer; border-bottom: 1px solid var(--line); }
+.edx-pr:hover { background: var(--tint); }
+.edx-pr .nm { font-weight: 600; }
+.edx-pr small { color: var(--muted); font-size: 0.8em; white-space: nowrap; }
+.edx-div { position: relative; height: 1.3em; background: var(--tint); border-radius: 0.15em; }
+.edx-div i { position: absolute; top: 0.15em; bottom: 0.15em; border-radius: 0.1em; }
+.edx-div i.mid { left: 50%; width: 1px; top: 0; bottom: 0; background: var(--muted); }
+.edx-div i.pos { left: 50%; background: var(--lv3); }
+.edx-div i.neg { right: 50%; background: var(--lv0); }
+
+/* tham gia theo tuần */
+.edx-heat td.pc { position: relative; color: var(--ink); }
+.edx-heat td.pc span { position: absolute; inset: 0.15em; background: var(--lv2); border-radius: 0.15em; }
+.edx-heat td.pc b { position: relative; font-weight: 600; }
+.edx-heat th small { font-weight: 400; opacity: 0.85; }
+
+/* lịch sử theo tuần của học sinh */
+.edx-hist .hr { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 0.5em; align-items: center; border-bottom: 1px solid var(--line); padding: 0.15em 0; }
+.edx-hist .lab b { display: block; font-size: 0.92em; }
+.edx-hist .lab small { color: var(--muted); font-size: 0.72em; line-height: 1.2; display: block; }
+.edx-hist .hr.ax { border-bottom: 0; }
+.edx-mini { width: 100%; height: 4.2em; overflow: visible; }
+.edx-mini .ln { fill: none; stroke: var(--red); stroke-width: 2.2; stroke-linejoin: round; }
+.edx-mini .rf { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.edx-mini .pt { fill: var(--red); opacity: 0.6; }
+.edx-mini .ed { fill: var(--red); }
+.edx-mini .bar { fill: var(--slate); opacity: 0.55; }
+.edx-mini .bar.ed { fill: var(--red); opacity: 0.85; }
+.edx-mini text.lb { font-size: 9.5px; fill: var(--muted); }
+.edx-mini text.lb.b { fill: var(--ink); font-weight: 700; }
+.edx-hist .wax { display: grid; text-align: center; font-size: 0.78em; color: var(--muted); }
+.edx-hist .wax .last { color: var(--red); font-weight: 700; }
+
+/* hồ sơ 3 cột kiểu phiếu InBody */
+.edx-hsgrid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.95fr); gap: 1em; align-items: start; }
+.edx-bigscore .big-d { margin: 0.4em 0 0; font-size: 0.9em; color: var(--ink); }
+.edx-goal { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4em; }
+.edx-goal div { background: var(--tint); padding: 0.3em 0.6em; display: flex; justify-content: space-between; gap: 0.5em; align-items: baseline; font-size: 0.88em; }
+.edx-goal b { font: 600 1.3em var(--serif); }
+.edx-cm p { margin: 0; padding: 0.3em 0; border-bottom: 1px solid var(--line); font-size: 0.92em; }
 
 /* hồ sơ học sinh */
 .edx-idbar { display: grid; grid-template-columns: 1fr 1.9fr 1fr 0.8fr 1.4fr; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
@@ -255,7 +312,7 @@
 /* hẹp: xếp một cột, cuộn trang */
 @media (max-width: 999px) {
   .edx-sheet, .edx-main, .edx-fill { height: auto; flex: none; }
-  .edx-fill.khoi, .edx-fill.lop, .edx-fill.hs, .edx-grid { grid-template-columns: minmax(0, 1fr); }
+  .edx-fill.khoi, .edx-fill.lop, .edx-fill.hs, .edx-grid, .edx-hsgrid { grid-template-columns: minmax(0, 1fr); }
   .edx-top { grid-template-columns: minmax(0, 1fr); gap: 0.5em; }
   .edx-tools { justify-content: flex-start; }
   .edx-idbar { grid-template-columns: 1fr 1fr; }

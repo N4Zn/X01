@@ -10,24 +10,24 @@
 |---|---|
 | `index.html` | Trang chạy độc lập (kiosk): tải `data/report.json`, không có thì `data/sample.json`. Cần máy chủ tĩnh (`python -m http.server 8080` trong thư mục này). |
 | `edux-report.js` / `edux-report.css` | Widget. CSS nằm dưới `.edx`, không ảnh hưởng trang chủ. |
-| `data/sample.json` | Dữ liệu **minh hoạ** (308 bé giả, khối 1–2, 12 lớp 1A1–2A6, 20–30 bé/lớp). Sinh bằng `tools/make_sample.py`. |
+| `data/sample.json` | Dữ liệu **minh hoạ** (306 bé giả, 6 tuần, khối 1–2, 12 lớp 1A1–2A6). Sinh bằng `tools/make_sample.py`. |
 | `data/report.json` | Dữ liệu thật, **không commit** (có tên bé; `.gitignore`). Sinh bằng `tools/build_report_json.py`. |
 | `tools/bundle.py` | Gói thành 1 file HTML tự chứa `dist/bao-cao-standalone.html` (mở bằng `file://`, gửi qua mail). |
 | `logo.png` | Logo EduXplore (bản sao của `tool/logo.png`). |
 
 ## Giao diện
 
-- **Theo khối**: 3 thẻ (Toàn trường · Khối 1 · Khối 2) chọn phạm vi, hàng KPI, rồi **so sánh các lớp bằng 7 kiểu** (nút "Kiểu xem"):
-  1. **Cột**: 1 cột/lớp, chọn chỉ số (điểm TB, % đạt mục tiêu, % cần hỗ trợ, hoặc điểm TB một học phần), tuỳ chọn xếp giảm dần, vạch TB phạm vi.
-  2. **Bản đồ nhiệt**: lớp × học phần, màu theo mức.
-  3. **Phân bố mức**: thanh chồng 100% Đạt/Mức 3/Mức 2/Mức 1 mỗi lớp, xếp theo % đạt.
-  4. **Biên độ điểm**: box plot điểm từng bé trong lớp (min, Q1, trung vị, Q3, max + từng chấm), cho thấy lớp đều hay phân hoá.
-  5. **Radar**: chồng tối đa 6 lớp (mặc định 3 cao nhất + 3 thấp nhất) so với TB phạm vi.
-  6. **Chính xác × tốc độ**: mỗi lớp 1 bong bóng (cỡ = số bé).
-  7. **Bảng**: sắp xếp theo mọi cột.
-  Click lớp ở bất kỳ kiểu nào để mở tab Theo lớp. Cột phải: phân bố mức, điểm TB học phần (so với toàn trường), danh sách cần chú ý.
-- **Theo lớp**: chọn lớp (12 chip), bảng xếp hạng bé (sắp xếp theo cột, dòng TB lớp), đồ thị chính xác × tốc độ từng bé, phân bố mức, điểm TB học phần so với khối.
-- **Từng học sinh**: danh sách lớp + ô **tìm tên/mã toàn trường**, hồ sơ theo học phần, nhận định riêng từng học phần, hạng, bản đồ kỹ năng.
+- **Theo khối**: 3 thẻ (Toàn trường · Khối 1 · Khối 2, có Δ tiến bộ) chọn phạm vi, hàng KPI (có tiến bộ + tham gia tuần gần nhất), rồi **so sánh các lớp bằng 10 kiểu**, chia 4 nhóm:
+  - *Kết quả*: **Cột** (chọn chỉ số: điểm TB, % đạt, % cần hỗ trợ, % tham gia, hoặc 1 học phần) · **Bản đồ nhiệt** (lớp × học phần) · **Phân bố mức** · **Biên độ điểm** (box plot) · **Radar** (≤ 6 lớp) · **Chính xác × tốc độ**.
+  - *Tiến bộ* (cần ≥ 2 tuần): **Xu hướng tuần** (đường điểm TB từng lớp qua các tuần, so với TB phạm vi) · **Mức tiến bộ** (cột lệch hai phía: lớp nào tăng/giảm so với tuần đầu hoặc tuần trước, kèm số bé ▲ ▬ ▼).
+  - *Tham gia*: **Tham gia theo tuần** (lớp × tuần, % bé có chơi; số bé vắng ≥ 2 tuần).
+  - *Chi tiết*: **Bảng** (sắp xếp mọi cột, có Δ + sparkline).
+  Click lớp ở bất kỳ kiểu nào để mở tab Theo lớp. Cột phải: phân bố mức, điểm TB học phần, danh sách cần chú ý (cao/thấp nhất, tiến bộ nhất, số bé giảm điểm / bỏ chơi).
+- **Theo lớp**: chọn lớp (12 chip), KPI (so khối, tiến bộ, tham gia), bảng xếp hạng bé (điểm + **Δ so tuần đầu + sparkline**, điểm từng học phần, cờ cần chú ý; dòng TB lớp), khung biểu đồ đổi được: **Xu hướng tuần** (lớp vs khối vs trường) · Chính xác × tốc độ · Học phần; phân bố mức; "Cần chú ý" (tiến bộ nhất, đi xuống, bỏ chơi).
+- **Từng học sinh** (kế thừa phiếu InBody `mau/tien-bo-toan-a4.html`): danh sách lớp gọn (tên + điểm + mũi tên), ô tìm tên/mã toàn trường, lọc *Giảm điểm / Ít chơi / Mức 1–2*; hồ sơ 3 cột — (1) **Phân tích kỹ năng** (điểm, **so tuần đầu**, chính xác, giây/câu, **sparkline**, mức) + nhận định từng học phần; (2) thanh điểm so TB lớp + **Lịch sử theo tuần** (điểm tổng so TB lớp, chính xác, thời gian, số câu); (3) điểm EduXplore + Δ, bản đồ kỹ năng, **mục tiêu** (còn thiếu bao nhiêu điểm mỗi học phần để Đạt), **nhận xét** (mạnh nhất, tiến bộ nhất, cần luyện, chăm chỉ + hạng). Bé trước/sau để duyệt nhanh.
+- Chưa có lịch sử (≤ 1 tuần): các kiểu/cột tiến bộ tự ẩn hoặc hiện "–", phần còn lại vẫn dùng bình thường.
+- Quy ước tiến bộ: Δ = điểm tuần có chơi gần nhất − điểm tuần có chơi đầu tiên của từng bé (ghép cặp); ▲ khi ≥ +3, ▼ khi ≤ −3; cảnh báo "giảm" khi tụt ≥ 5 điểm so tuần trước; "ít chơi" = không chơi từ 2 tuần.
+- Yếu tố quản lý cần xem và dữ liệu tương ứng: [quan-ly-can-xem.md](quan-ly-can-xem.md).
 - Địa chỉ `#khoi/all`, `#khoi/1`, `#lop/2/2A5`, `#hs/CASA-19050` mở thẳng 1 màn hình (`hash:true`).
 
 ## Dữ liệu
@@ -38,18 +38,22 @@ log game → pipeline (tool/pipeline/run.py) → out.json → tools/build_report
 
 ```bash
 cd docs/danh-gia-nang-luc/web
-python -I -X utf8 tools/build_report_json.py \
-  --out-json <.../BaoCao/2026-10-08_2026-10-09/out.json> --from 2026-10-08 --to 2026-10-09 \
-  --out data/report.json [--lop-map lop.json]
+# A) từ log -> CÓ lịch sử theo tuần (khuyên dùng)
+python -I -X utf8 tools/build_report_json.py --local <GameLogs> --from 2026-09-07 --to 2026-10-16 --out data/report.json
+python -I -X utf8 tools/build_report_json.py --csv [URL|file.csv] --from ... --to ...      # Google Sheet (mặc định URL trong config.json)
+# B) từ out.json của 1 kỳ -> không có lịch sử
+python -I -X utf8 tools/build_report_json.py --out-json <.../out.json> --from 2026-10-08 --to 2026-10-09 --out data/report.json
+# tuỳ chọn: --lop-map lop.json  --mon Toán  --config <config.json>
 ```
 
-Nhãn nhận định (`diag`), công thức, roster lấy từ pipeline (`edux_lib.DIAG`, `config.json`) — web **không** giữ bản sao riêng.
+Chế độ A chấm cả kỳ bằng công thức chuẩn, rồi chấm lại **từng tuần ISO (thứ Hai–Chủ nhật)** bằng đúng công thức đó → `weeks[]` và `mon[].hist[]`. Cần ≥ 2 tuần có dữ liệu thì mới thấy xu hướng; khoảng `--from/--to` càng dài càng nhiều tuần. Nhãn nhận định (`diag`), công thức, roster lấy từ pipeline (`edux_lib.DIAG`, `config.json`) — web **không** giữ bản sao riêng. Dữ liệu minh hoạ: `python -I -X utf8 tools/make_sample.py` (6 tuần, 12 lớp).
 
-Schema `report.json` (version 1):
+Schema `report.json` (version 2; version 1 — không có `weeks`/`hist` — vẫn đọc được):
 
 ```jsonc
 {
-  "version": 1,
+  "version": 2,
+  "weeks": [ { "id": "2026-W37", "from": "2026-09-07", "to": "2026-09-13", "label": "T37", "range": "07–13/09" } ],   // theo thứ tự thời gian
   "sample": false,                              // true -> hiện nhãn "Dữ liệu minh hoạ"
   "ky": { "from": "2026-10-08", "to": "2026-10-09", "label": "08/10/2026 → 09/10/2026" },
   "formula": { "cuts": [25,50,75], "low_sample": 10, "few_total": 15, "base": 80, "kmax": 1.25, "tfast": 5, "tslow": 20 },
@@ -58,7 +62,9 @@ Schema `report.json` (version 1):
   "students": [{
     "code": "CASA-21001", "name": "Ngô Quốc An", "alias": "Quốc An",
     "khoi": "5 tuổi", "lop": "Lá 1",           // khối > lớp; bé chưa chơi: "mon": {}
-    "mon": { "Toán": { "score": 99.4, "n": 32, "hp": {
+    "mon": { "Toán": { "score": 99.4, "n": 32,
+      "hist": [ { "score": 91.2, "n": 18, "acc": 94.4, "t": 3.9, "days": 3, "hp": { "Đếm": 95.0 } }, null ],   // đúng thứ tự `weeks`; null = tuần đó bé không chơi
+      "hp": {
         "Đếm": { "n": 12, "ok": 12, "acc": 100, "t": 3.37, "k": 1.25, "pt": 100, "low": false,
                  "diag": "good", "tmed": 3.15, "few": false } } } }
   }]
