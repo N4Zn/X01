@@ -9,8 +9,10 @@ using UnityEngine.UI;
 /// </summary>
 public class FeedbackEffect : MonoBehaviour
 {
-    // Visual size multiplier for the feedback icon (1.5 = 50% bigger than the icon's base size)
-    private const float BaseScale = 1.5f;
+    // Thu nhỏ chung icon ✔/✖ của MỌI game (trước to quá, che màn hình): chia 1.3 so với cỡ cũ (1.5)
+    private const float Shrink = 1f / 1.3f;
+    // Visual size multiplier for the feedback icon (cỡ cũ 1.5 × Shrink)
+    private const float BaseScale = 1.5f * Shrink;
     private static readonly Vector3 BaseScaleVec = Vector3.one * BaseScale;
 
     private Coroutine _activeRoutine;
@@ -60,14 +62,14 @@ public class FeedbackEffect : MonoBehaviour
             float p = Mathf.Clamp01(t / bounceTime);
             float scale;
             if (p < 0.6f) // Rapidly expand to 2.0 (60% of time)
-                scale = Mathf.Lerp(0f, 2.0f, p / 0.6f);
-            else // Shrink back to 1.5 (40% of time)
-                scale = Mathf.Lerp(2.0f, 1.5f, (p - 0.6f) / 0.4f);
+                scale = Mathf.Lerp(0f, 2.0f * Shrink, p / 0.6f);
+            else // Shrink back to BaseScale (40% of time)
+                scale = Mathf.Lerp(2.0f * Shrink, BaseScale, (p - 0.6f) / 0.4f);
 
             transform.localScale = Vector3.one * scale;
             yield return null;
         }
-        transform.localScale = Vector3.one * 1.5f;
+        transform.localScale = BaseScaleVec;
 
         // Phase 2: Shake (wrong) or Pulse (correct)
         // If duration is short (like 0.25s for wrong answer), skip further phases

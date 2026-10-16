@@ -146,8 +146,10 @@ public static class FloorStoryPackImporter
         }
         if (!GenericGameRegistryWriter.IsRegistered(gid))
         {
-            var rr = GenericGameRegistryWriter.Register(gid, title, 0, "Thử nghiệm");
-            if (rr.registered) Debug.Log($"[FloorStoryPack] Đã đăng ký '{gid}'. Nhớ build lại aar: sh Tools/build-aar.sh controlui (K02 mới thấy game).");
+            // Hỏi category/nhóm/tên hiển thị như import GenericGame (trước đây đăng ký âm thầm vào cat 0 / "Thử nghiệm").
+            var rr = GenericGameRegistryWriter.RegisterWithPrompt(gid, title);
+            if (rr.registered) Debug.Log($"[FloorStoryPack] Đã đăng ký '{gid}'" + (rr.jsonChanged ? ". game_registry.json đã sửa → CHẠY: sh Tools/build-aar.sh controlui rồi build lại APK (K02 mới thấy game)." : "."));
+            else Debug.LogWarning($"[FloorStoryPack] '{gid}' CHƯA đăng ký (bỏ qua hộp thoại) — import lại zip để đăng ký, không thì ControlActivity/menu không có game.");
         }
         Debug.Log($"[FloorStoryPack] Flow '{gid}': {n} file → {dir}");
         return n;

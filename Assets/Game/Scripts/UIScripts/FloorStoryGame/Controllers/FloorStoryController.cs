@@ -39,8 +39,9 @@ public class FloorStoryController : MiniGameControllerBase
             runner = this, voice = voiceSource,
             sharedSeed = Environment.TickCount & 0xFFFFF,
             addPoint = t => ScoreManager?.AddPoint(t),
-            showIcon = (t, ok) => ShowFeedbackIcon(t, ok),
+            showIcon = (t, ok) => { AlignIconsToAnswers(t, ok); ShowFeedbackIcon(t, ok); },
             hideIcon = t => HideFeedbackIcon(t),
+            stopPromptVoice = () => _left?.StopVoice(),   // âm câu hỏi chung do đội trái phát
         };
         _left = CreateWorld(game);
         _right = CreateWorld(game);
@@ -49,6 +50,17 @@ public class FloorStoryController : MiniGameControllerBase
         // Chưa hiện thế giới trong lúc "Start in 3" — chỉ nền.
         leftWorldRoot.gameObject.SetActive(false);
         rightWorldRoot.gameObject.SetActive(false);
+    }
+
+    /// <summary>Game bật `iconAlign`="answers": đặt tâm icon ✔/✖ của đội `t` ngang tâm các đáp án (chỉ đổi y, giữ x). Gọi ngay trước khi hiện icon.</summary>
+    void AlignIconsToAnswers(Team t, bool ok)
+    {
+        var w = (t == Team.Left ? _left : _right) as FlowWorld;
+        if (w == null || !w.TryAnswersWorldY(out float y)) return;
+        var go = t == Team.Left ? (ok ? leftCorrectIcon : leftWrongIcon) : (ok ? rightCorrectIcon : rightWrongIcon);
+        if (go == null) return;
+        var rt = go.GetComponent<RectTransform>(); if (rt == null) return;
+        var p = rt.position; p.y = y; rt.position = p;
     }
 
     static StoryWorld CreateWorld(string game)
@@ -119,7 +131,15 @@ public class FloorStoryController : MiniGameControllerBase
     // Nhịp chuyển lượt, đồng bộ 2 đội, âm câu hỏi lặp 4s, dọn câu khi xong lượt: TẤT CẢ do MiniGameControllerBase lo (cơ chế chung) —
     // ở đây chỉ nối vào world.
     protected override bool SyncIndependentRounds => _left != null && _left.Synchronized;
+    // Game chấm điểm theo bước (order + pointPerStep: mỗi ô đúng +1) đã cộng điểm rồi → không cộng thêm điểm lượt.
+    protected override bool AwardTaskPoint(Team team) => !(team == Team.Left ? _left : _right).PointsPerStep;
     protected override void OnWaitingForPartner(Team team, bool on) => (team == Team.Left ? _left : _right).SetWaiting(on);
     protected override void CleanupIndependentDisplay(Team team) => (team == Team.Left ? _left : _right).EndTask();
     protected override float PlayQuestionAudioOnce(QuestionData q) => _left.PlayPrompt();
+    // Cả 2 đội đã trả lời xong (hiện đúng/sai) → cắt NGAY mọi tiếng nói của câu (đọc câu hỏi, tiếng vật) còn đang phát; tiếng đúng/sai là fx riêng nên không bị cắt.
+    void StopRoundVoices() { _left?.StopVoice(); _right?.StopVoice(); }
+    protected override void OnQuestionAudioClosed() => StopRoundVoices();
+    protected override void OnQuestionAudioStopped() => StopRoundVoices();
+    // Có đội đang chờ 0,2s / phát tiếng vật vừa chạm → chưa đếm nghỉ 4s / chưa phát lại âm câu hỏi.
+    protected override bool QuestionAudioHold => (_left != null && _left.ItemBusy) || (_right != null && _right.ItemBusy);
 }

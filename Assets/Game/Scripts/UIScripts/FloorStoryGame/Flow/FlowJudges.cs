@@ -48,7 +48,17 @@ public static class FlowJudges
         {
             if (!w.Active || answered || busy || !w.Ready) yield break;
             var cx = Cx(el, 0, mistakes);
-            { var its = J.Arr(J.Get(q, "items")); if (el.key >= 0 && el.key < its.Count) w.PlayItem(its[el.key]); }
+            // soundWrong=0: thẻ sai không kêu tên vật. Thứ tự: chạm → tiếng vật → nghỉ 0,2s → icon + tiếng đúng/sai (hiệu ứng khác)
+            var its = J.Arr(J.Get(q, "items"));
+            if (el.key >= 0 && el.key < its.Count && (P(spec, "soundWrong") != 0 || el.key == target) && w.PlayItem(its[el.key]))
+            {
+                busy = true;
+                float guard = 0f;
+                while (w.ItemBusy && guard < 8f) { if (w.Stale(q)) yield break; guard += Time.unscaledDeltaTime; yield return null; }
+                yield return new WaitForSecondsRealtime(0.2f);
+                busy = false;
+                if (!w.Active || w.Stale(q)) yield break;
+            }
             if (el.key == target)
             {
                 answered = true; hint = false; busy = true;
@@ -69,6 +79,15 @@ public static class FlowJudges
             {
                 mistakes++; if (firstWrong < 0) firstWrong = el.key; busy = true;
                 yield return w.Fire("wrong", cx, w.StdWrong);
+                if (w.WrongEnds)
+                {
+                    answered = true; w.ShowIcon(false);   // sai là hết câu: icon ✖, chờ rồi sang câu sau (câu tính sai)
+                    yield return new WaitForSeconds((float)P(spec, "finishSec"));
+                    if (w.Stale(q)) yield break;
+                    yield return w.Fire("end", cx);
+                    finish(false, new[] { el.key });
+                    yield break;
+                }
                 busy = false;
                 if (w.Stale(q)) yield break;
                 if (mistakes >= P(spec, "hintAfter") && !hint)
@@ -96,6 +115,7 @@ public static class FlowJudges
             if (el.key == seq[cur])
             {
                 hint = false; stepMist = 0; int my = cur; cur++;
+                if (FsMod.Flag("judge", spec, "pointPerStep")) w.Point();   // mỗi ô đúng +1 điểm (điểm lượt bị tắt: StoryWorld.PointsPerStep)
                 strip?.Mark(my);
                 bool last = cur >= len; cx.last = last; if (last) finished = true;
                 yield return w.Fire("step", cx, c => StepStd(w, el));
@@ -114,6 +134,15 @@ public static class FlowJudges
             {
                 total++; stepMist++; busy = true;
                 yield return w.Fire("wrong", cx, c => OrderWrongStd(w, q, T, el, c));
+                if (w.WrongEnds)
+                {
+                    finished = true; w.ShowIcon(false);   // sai là hết câu
+                    yield return new WaitForSeconds((float)P(spec, "finishSec"));
+                    if (w.Stale(q)) yield break;
+                    yield return w.Fire("end", cx);
+                    finish(false, taps.ToArray());
+                    yield break;
+                }
                 busy = false;
                 if (w.Stale(q)) yield break;
                 if (stepMist >= P(spec, "hintAfter") && !hint)

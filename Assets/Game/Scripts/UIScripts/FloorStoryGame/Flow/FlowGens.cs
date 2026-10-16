@@ -24,39 +24,42 @@ public interface IFlowCore : IFsEnv
 public static class FlowGens
 {
     /// <summary>
-    /// Ô đặt khối cho view stack (đếm khối): danh sách [x,y] (3×3 là x,y ∈ 0..2; "ra ngoài" là x hoặc y = -1 hoặc 3). Mỗi ô 1 khối, không tầng.
-    /// n ≥ 10: đủ 9 ô trong 3×3 + (n−9) khối ra ngoài. n 4..9: thi thoảng 1–3 khối ra ngoài (r&lt;6→0, r&lt;8→1, r=8→2, r=9→3; luôn còn ≥ 3 khối trong cụm).
-    /// Cụm trong 3×3 LIỀN NHAU (mỗi ô mới kề ô đã có, kể cả chéo); khối ra ngoài kề một khối đã có. Thứ tự gọi RNG KHỚP cubeCells (fs_flow.js).
+    /// Ô đặt khối cho view stack (đếm khối): danh sách [x,y]. Cụm chính nằm trong lưới 3×3 (x,y ∈ 0..2), mỗi ô 1 khối, không tầng, các khối LIỀN CẠNH nhau (kề 4 hướng, không kề chéo).
+    /// n ≥ 10: đủ 9 ô trong 3×3 + (n−9) khối lẻ. n 4..9: thi thoảng khối lẻ (r&lt;6→0, r&lt;8→1, r=8→2, r=9→3; luôn còn ≥ 3 khối trong cụm).
+    /// Khối lẻ KHÔNG liền cạnh: vẽ tách hẳn sang 1 bên (RNG chọn trái/phải), cách cụm 1 bề rộng khối, mỗi khối đứng riêng. Toạ độ ô của khối lẻ được chọn sao cho
+    /// (x−y, −(x+y)/2) rơi đúng vị trí màn hình mong muốn (luôn ngoài 3×3). Thứ tự gọi RNG KHỚP cubeCells (fs_flow.js).
     /// </summary>
     public static List<int[]> CubeCells(IFlowCore w, int count)
     {
         int n = Math.Max(1, count); int R(int k) => w.Rng.Range(0, k);
-        var g = new bool[5, 5];   // g[x+1, y+1]
+        var g = new bool[3, 3];
         int outCount = 0;
         if (n >= 10) outCount = n - 9;
         else if (n >= 4) { int r = R(10); outCount = r < 6 ? 0 : r < 8 ? 1 : r == 8 ? 2 : 3; outCount = Math.Min(outCount, n - 3); }
         int inside = n - outCount, cluster = Math.Min(inside, 9);
-        bool Adj(int x, int y)
-        {
-            for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) { int nx = x + dx, ny = y + dy; if (nx >= -1 && nx <= 3 && ny >= -1 && ny <= 3 && g[nx + 1, ny + 1]) return true; }
-            return false;
-        }
-        int a0 = R(3), b0 = R(3); g[a0 + 1, b0 + 1] = true; int placed = 1, guard = 0;
+        bool Adj(int x, int y) => (x > 0 && g[x - 1, y]) || (x < 2 && g[x + 1, y]) || (y > 0 && g[x, y - 1]) || (y < 2 && g[x, y + 1]);
+        int a0 = R(3), b0 = R(3); g[a0, b0] = true; int placed = 1, guard = 0;
         while (placed < cluster && guard++ < 400)
         {
-            int x = R(3), y = R(3); if (g[x + 1, y + 1]) continue;
-            if (!Adj(x, y)) continue; g[x + 1, y + 1] = true; placed++;
+            int x = R(3), y = R(3); if (g[x, y]) continue;
+            if (!Adj(x, y)) continue; g[x, y] = true; placed++;
         }
-        for (int i = 0; placed < cluster && i < 9; i++) { int x = i / 3, y = i % 3; if (!g[x + 1, y + 1]) { g[x + 1, y + 1] = true; placed++; } }
-        for (int k = 0; k < outCount; k++)
+        for (int pass = 0; placed < cluster && pass < 9; pass++)
+            for (int i = 0; i < 9 && placed < cluster; i++) { int x = i / 3, y = i % 3; if (!g[x, y] && Adj(x, y)) { g[x, y] = true; placed++; } }
+        var cells = new List<int[]>(); int uMin = 99, uMax = -99;
+        for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++) if (g[x, y]) { cells.Add(new[] { x, y }); uMin = Math.Min(uMin, x - y); uMax = Math.Max(uMax, x - y); }
+        if (outCount > 0)
         {
-            var cand = new List<int[]>();
-            for (int x = -1; x <= 3; x++) for (int y = -1; y <= 3; y++) { if (x >= 0 && x <= 2 && y >= 0 && y <= 2) continue; if (!g[x + 1, y + 1] && Adj(x, y)) cand.Add(new[] { x, y }); }
-            if (cand.Count == 0) break;
-            var c = cand[R(cand.Count)]; g[c[0] + 1, c[1] + 1] = true;
+            int side = R(2);   // 0 = bên phải, 1 = bên trái
+            int ux0 = side == 0 ? uMax + 4 : uMin - 4;
+            for (int j = 0; j < outCount; j++)
+            {
+                int ux = ux0 + (side == 0 ? 4 : -4) * (j / 2);          // 2 khối lẻ / cột, cột kế tiếp lùi ra xa
+                int P = ((ux % 2) + 2) % 2 == 0 ? 2 : 3;                  // P = x+y, cùng tính chẵn lẻ với ux = x−y
+                P += 6 * (j % 2);                                         // khối thứ 2 trong cột nằm thấp hơn 3 đơn vị
+                cells.Add(new[] { (ux + P) / 2, (P - ux) / 2 });
+            }
         }
-        var cells = new List<int[]>();
-        for (int x = -1; x <= 3; x++) for (int y = -1; y <= 3; y++) if (g[x + 1, y + 1]) cells.Add(new[] { x, y });
         return cells;
     }
 
@@ -298,6 +301,13 @@ public static class FlowGens
         int kinds = (int)Math.Min(P(spec, "kinds"), src.Count);
         double cnt = S(spec, "lenBy") == "task" ? (w.TaskNo - 1) : w.Ok;
         int len = (int)Math.Min(P(spec, "maxLen"), P(spec, "startLen") + Math.Floor(cnt / Math.Max(1.0, P(spec, "growEvery"))));
+        // `lenPlan` (chỉ Unity, thêm ở p của gen): [[số lượt, độ dài], ...] theo thứ tự lượt (không tính đúng/sai); hết kế hoạch thì giữ `maxLen`. Có thì ghi đè công thức tuyến tính ở trên.
+        var plan = J.Arr(J.Get(J.Obj(spec, "p"), "lenPlan"));
+        if (plan.Count > 0)
+        {
+            int t = w.TaskNo - 1; len = (int)P(spec, "maxLen");
+            foreach (var step in plan) { var st = J.Arr(step); if (st.Count < 2) continue; int c = (int)FsExpr.ToNum(st[0]); if (t < c) { len = (int)FsExpr.ToNum(st[1]); break; } t -= c; }
+        }
         var all = new List<int>(); for (int i = 0; i < src.Count; i++) all.Add(i);
         w.ShuffleList(all);
         var items = new List<object>(); for (int i = 0; i < kinds; i++) items.Add(src[all[i]]);
@@ -313,7 +323,7 @@ public static class FlowGens
             {
                 int v, g = 0;
                 do { v = w.Rng.Range(0, kinds); g++; }
-                while (g < 30 && ((len <= 3 && seq.IndexOf(v) >= 0) || (i >= 2 && seq[i - 1] == v && seq[i - 2] == v)));
+                while (g < 30 && ((len <= 3 && seq.IndexOf(v) >= 0) || (P(spec, "noAdjacent") != 0 ? (i >= 1 && seq[i - 1] == v) : (i >= 2 && seq[i - 1] == v && seq[i - 2] == v))));
                 seq.Add(v);
             }
         }
@@ -341,8 +351,13 @@ public static class FlowGens
 
     static Dictionary<string, object> Number(IFlowCore w, object spec)
     {
-        double lv = Math.Floor(w.Ok / Math.Max(1.0, P(spec, "growEvery"))); double maxC = Math.Min(12, P(spec, "maxCount"));
-        double lo = Math.Min(P(spec, "minStart") + lv, 4), hi = Math.Min(P(spec, "startMax") + 2 * lv, maxC);
+        double maxC = Math.Min(12, P(spec, "maxCount")), easy = P(spec, "easyCount"), lo, hi;
+        if (easy > 0)
+        {
+            int tn = w.TaskNo - 1; double step = tn < easy ? 0 : 1 + Math.Floor((tn - easy) / Math.Max(1.0, P(spec, "growEvery")));
+            hi = tn < easy ? Math.Min(P(spec, "easyMax"), maxC) : Math.Min(P(spec, "rampFrom") + step - 1, maxC); lo = Math.Min(P(spec, "minStart") + step, 4);
+        }
+        else { double lv = Math.Floor(w.Ok / Math.Max(1.0, P(spec, "growEvery"))); lo = Math.Min(P(spec, "minStart") + lv, 4); hi = Math.Min(P(spec, "startMax") + 2 * lv, maxC); }
         int count = w.Rng.Range((int)Math.Min(lo, hi), (int)hi + 1);
         var opts = new List<int> { count }; int g = 0;
         while (opts.Count < P(spec, "options") && g++ < 80) { int v = count + w.Rng.Range(-2, 3); if (v >= 1 && v <= 12 && !opts.Contains(v)) opts.Add(v); }

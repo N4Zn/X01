@@ -69,7 +69,7 @@ public static class GameRegistry
     // nữa sau này — chỉ cần tăng số này + thêm dòng CategoryNames + Set() tương ứng, không cần
     // sửa gì khác.
     public const int CATEGORY_COUNT   = 9;
-    public const int MAX_PER_CATEGORY = 48;
+    public const int MAX_PER_CATEGORY = 64;
 
     // ── Tên hiển thị cho từng tab category (= môn học) ────────────────────────
     public static readonly string[] CategoryNames =
@@ -98,15 +98,25 @@ public static class GameRegistry
         // game mới với group:"Hình học", tự động xuất hiện thành 1 mục mới, không cần sửa UI).
         Set(0, 0, "Counting5",  "Đếm số (dễ)",         "TestTongHopGame", Engine.TongHopGame, group: "Đếm");
         Set(0, 1, "Counting",   "Đếm số",               "TestTongHopGame", Engine.TongHopGame, group: "Đếm");
-        Set(0, 2, "AddNumber5", "Cộng số (dễ)",         "AddNumberGame",   Engine.MathGame,    group: "Cộng");
-        Set(0, 3, "AddNumber",  "Cộng số",              "AddNumberGame",   Engine.MathGame,    group: "Cộng");
-        Set(0, 17, "SubNumber5", "Trừ trong phạm vi 5", "SubNumberGame",   Engine.MathGame,    group: "Trừ");
-        Set(0, 18, "SubNumber",  "Trừ trong phạm vi 10", "SubNumberGame",  Engine.MathGame,    group: "Trừ");
-        // Biến thể hiện CHỮ SỐ thay cho hình (controller đọc hậu tố "Digit" của tên game) — cùng scene với bản hình.
-        Set(0, 19, "AddNumber5Digit", "Cộng trong phạm vi 5\n(chữ số)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
-        Set(0, 20, "AddNumberDigit",  "Cộng trong phạm vi 10\n(chữ số)", "AddNumberGame", Engine.MathGame, group: "Cộng");
-        Set(0, 21, "SubNumber5Digit", "Trừ trong phạm vi 5\n(chữ số)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
-        Set(0, 22, "SubNumberDigit",  "Trừ trong phạm vi 10\n(chữ số)",  "SubNumberGame", Engine.MathGame, group: "Trừ");
+        // Mỗi game cộng/trừ có 2 mức: gốc = (Khó) (level tăng dần: ẩn c → b → a → nhiều ô) và bản clone đuôi "Easy" = (Dễ)
+        // (khoá level 1: chỉ ẩn ô c). Cùng scene, controller đọc đuôi "Easy" của tên game; `name` đừng đổi.
+        Set(0, 2, "AddNumber5", "Cộng trong phạm vi 5 (Khó)",   "AddNumberGame",   Engine.MathGame,    group: "Cộng");
+        Set(0, 3, "AddNumber",  "Cộng trong phạm vi 10 (Khó)",  "AddNumberGame",   Engine.MathGame,    group: "Cộng");
+        Set(0, 17, "SubNumber5", "Trừ trong phạm vi 5 (Khó)",   "SubNumberGame",   Engine.MathGame,    group: "Trừ");
+        Set(0, 18, "SubNumber",  "Trừ trong phạm vi 10 (Khó)",  "SubNumberGame",   Engine.MathGame,    group: "Trừ");
+        Set(0, 42, "AddNumber5Easy", "Cộng trong phạm vi 5 (Dễ)",   "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 43, "AddNumberEasy",  "Cộng trong phạm vi 10 (Dễ)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 44, "SubNumber5Easy", "Trừ trong phạm vi 5 (Dễ)",    "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 45, "SubNumberEasy",  "Trừ trong phạm vi 10 (Dễ)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
+        // Biến thể hiện CHỮ SỐ thay cho hình (controller đọc "Digit" trong tên game) — cùng scene với bản hình.
+        Set(0, 19, "AddNumber5Digit", "Cộng trong phạm vi 5\n(chữ số) (Khó)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 20, "AddNumberDigit",  "Cộng trong phạm vi 10\n(chữ số) (Khó)", "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 21, "SubNumber5Digit", "Trừ trong phạm vi 5\n(chữ số) (Khó)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 22, "SubNumberDigit",  "Trừ trong phạm vi 10\n(chữ số) (Khó)",  "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 46, "AddNumber5DigitEasy", "Cộng trong phạm vi 5\n(chữ số) (Dễ)",  "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 47, "AddNumberDigitEasy",  "Cộng trong phạm vi 10\n(chữ số) (Dễ)", "AddNumberGame", Engine.MathGame, group: "Cộng");
+        Set(0, 48, "SubNumber5DigitEasy", "Trừ trong phạm vi 5\n(chữ số) (Dễ)",   "SubNumberGame", Engine.MathGame, group: "Trừ");
+        Set(0, 49, "SubNumberDigitEasy",  "Trừ trong phạm vi 10\n(chữ số) (Dễ)",  "SubNumberGame", Engine.MathGame, group: "Trừ");
         Set(0, 4, "SoDem",      "Số đếm",               "SoDemGame",       Engine.ListenGame,  group: "Đếm");
         // DISABLED 2026-10-04 (chưa mở lại, đừng đụng): Set(0, 5, "SoDem2",     "Số đếm - Bóng bay",    "BalloonGame",     Engine.BalloonGame, group: "Đếm");
         Set(0, 6, "Numbers",    "Nhận biết số",         "NumbersGame",     Engine.ListenGame);
@@ -208,6 +218,8 @@ public static class GameRegistry
 
         Set(0, 38, "ConNaoNangHon", "Bập bênh nặng nhẹ", "ConNaoNangHon", Engine.MiniGameKit, group: "Thử nghiệm");   // game flow dựng từ web builder v4.5; cần dữ liệu Resources/StoryData/ConNaoNangHon
         Set(0, 39, "NhoChuoiHinh2", "Nhớ chuỗi hình", "NhoChuoiHinh2", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 40, "HinhQuanhBe", "Hình nào đây? ", "HinhQuanhBe", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 41, "LatTheNhoGiong2", "Lật thẻ giống nhau", "LatTheNhoGiong2", Engine.MiniGameKit, group: "Thử nghiệm");
         // <GENERIC-GAMES>
     }
 

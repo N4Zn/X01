@@ -58,6 +58,13 @@ public abstract class StoryWorld
     /// do MiniGameControllerBase lo (PlayQuestionAudioOnce) — world KHÔNG tự lặp.</summary>
     public virtual float PlayPrompt() => 0f;
 
+    /// <summary>Đang chờ 0,2s / đang phát tiếng của vật vừa chạm — vòng lặp âm câu hỏi của controller phải chờ (QuestionAudioHold).</summary>
+    public virtual bool ItemBusy => false;
+    /// <summary>Dừng tiếng đang phát trên kênh giọng của world (controller gọi khi bên kia chạm vật ở chế độ chung).</summary>
+    public virtual void StopVoice() { }
+    /// <summary>true = world tự cộng điểm từng bước (vd mỗi ô đúng của chuỗi +1) → controller KHÔNG cộng thêm điểm lượt khi xong. Mặc định false (+1 nếu cả lượt đúng).</summary>
+    public virtual bool PointsPerStep => false;
+
     /// <summary>Base gọi khi hết feedback của lượt (CleanupIndependentDisplay): world dọn câu hỏi + đáp án khỏi màn hình, để lúc chờ vùng sạch /
     /// đếm "Next" / chờ đội kia KHÔNG còn hiện câu cũ. Mặc định không làm gì (các world viết tay tự lo).</summary>
     public virtual void EndTask() { }

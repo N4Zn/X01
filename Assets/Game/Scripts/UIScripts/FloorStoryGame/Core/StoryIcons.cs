@@ -102,6 +102,7 @@ public static class StoryIcons
 }
 
 /// <summary>Khối hộp đẳng cự (isometric) vẽ bằng mesh: mặt trên sáng, mặt trái vừa, mặt phải tối. Hộp vuông W×W.</summary>
+[RequireComponent(typeof(CanvasRenderer))]   // MaskableGraphic tự viết phải có sẵn CanvasRenderer, nếu không RectMask2D ném MissingComponentException
 public sealed class StoryCube : MaskableGraphic
 {
     protected override void OnPopulateMesh(VertexHelper vh)
@@ -115,6 +116,22 @@ public sealed class StoryCube : MaskableGraphic
         Quad(vh, T, R, c, L, Shade(1.12f));
         Quad(vh, L, c, B, LB, Shade(0.86f));
         Quad(vh, c, R, RB, B, Shade(0.68f));
+
+        // Viền đen: 6 cạnh ngoài + 3 cạnh trong (chung đỉnh ở tâm), vẽ bằng mesh nên luôn đủ nét ở mọi cỡ khối.
+        float t = Mathf.Max(2f, w * 0.045f) * 0.5f;
+        var k = new Color(0f, 0f, 0f, color.a);
+        Line(vh, T, R, t, k); Line(vh, R, RB, t, k); Line(vh, RB, B, t, k);
+        Line(vh, B, LB, t, k); Line(vh, LB, L, t, k); Line(vh, L, T, t, k);
+        Line(vh, L, c, t, k); Line(vh, c, R, t, k); Line(vh, c, B, t, k);
+    }
+
+    // Đoạn thẳng dày 2t, kéo dài t ở hai đầu để các góc liền nét.
+    static void Line(VertexHelper vh, Vector2 a, Vector2 b, float t, Color col)
+    {
+        Vector2 d = (b - a).normalized;
+        Vector2 n = new Vector2(-d.y, d.x) * t;
+        a -= d * t; b += d * t;
+        Quad(vh, a + n, b + n, b - n, a - n, col);
     }
 
     Color Shade(float k)

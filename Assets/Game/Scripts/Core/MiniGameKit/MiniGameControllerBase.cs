@@ -143,6 +143,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     /// <summary>Base vừa dừng vòng lặp âm câu hỏi giữa chừng (sang bước kết quả/thoát) — game cắt nốt đoạn âm đang phát nếu muốn.</summary>
     protected virtual void OnQuestionAudioStopped() { }
 
+    /// <summary>true = đang có tiếng khác chen vào (vd tiếng vật lúc chạm) → vòng lặp âm câu hỏi CHƯA đếm 4s nghỉ / chưa phát lại; hết true mới đếm lại 4s.</summary>
+    protected virtual bool QuestionAudioHold => false;
+
     Coroutine _qAudioLoop;
     bool _qAudioActive;
 
@@ -163,16 +166,26 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         OnQuestionAudioStopped();
     }
 
+    /// <summary>Vòng lặp âm câu hỏi tự kết thúc vì lượt đã xong (`stillOpen` hết đúng — vd cả 2 đội đều đã trả lời, đã hiện đúng/sai) sau khi đã phát ít nhất 1 lần
+    /// → game CẮT NGAY âm câu hỏi/âm vật còn đang phát dở của lượt đó. Khác <see cref="OnQuestionAudioStopped"/> (Base chủ động dừng): hook này KHÔNG được cắt tiếng đúng/sai
+    /// vừa phát, nên mặc định không làm gì.</summary>
+    protected virtual void OnQuestionAudioClosed() { }
+
     IEnumerator QuestionAudioLoop(QuestionData q, Func<bool> stillOpen)
     {
+        bool played = false;
         while (_qAudioActive && (stillOpen == null || stillOpen()))
         {
             float len = PlayQuestionAudioOnce(q);
             if (len <= 0f) break;   // câu không có âm
-            yield return new WaitForSeconds(len);
-            for (float t = 0f; t < QuestionAudioRepeatPause && _qAudioActive && (stillOpen == null || stillOpen()); t += Time.deltaTime) yield return null;
+            played = true;
+            // Chờ phát xong nhưng thoát ngay nếu lượt đã xong (không đợi hết đoạn âm dài mới biết).
+            for (float t = 0f; t < len && _qAudioActive && (stillOpen == null || stillOpen()); t += Time.deltaTime) yield return null;
+            for (float t = 0f; t < QuestionAudioRepeatPause && _qAudioActive && (stillOpen == null || stillOpen()); t += Time.deltaTime) { if (QuestionAudioHold) t = 0f; yield return null; }
         }
+        bool closed = played && _qAudioActive && stillOpen != null && !stillOpen();
         _qAudioLoop = null;
+        if (closed) OnQuestionAudioClosed();
     }
 
     public void Pause()
@@ -839,7 +852,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
                 done = true;
                 _indDone[me] = rc;
                 correctResult = correct;
-                if (correct) ScoreManager.AddPoint(team);
+                if (correct && AwardTaskPoint(team)) ScoreManager.AddPoint(team);
                 LogRoundResult(team, q, answer, correct, Time.time - questionStart);
                 OnRoundResult(correct, team, answer);
             });
@@ -869,6 +882,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     /// <summary>true = 2 đội ở Independent vẫn CÙNG nhịp: lượt k chỉ hiện câu khi CẢ 2 đội đã xong lượt k-1 VÀ qua dọn câu / chờ vùng sạch /
     /// đếm "Next" của mình (điểm hẹn). Game cho 2 đội cùng 1 câu (cùng seed) bật cờ này. Mặc định false (mỗi đội nhịp riêng).</summary>
     protected virtual bool SyncIndependentRounds => false;
+
+    /// <summary>Independent: lượt của `team` vừa xong ĐÚNG → có cộng +1 điểm lượt không. Game tự cộng điểm từng bước (vd mỗi ô đúng) override trả false để khỏi cộng đôi. Mặc định true.</summary>
+    protected virtual bool AwardTaskPoint(Team team) => true;
 
     /// <summary>Đội `team` tới điểm hẹn trước và đang chờ đội kia (on=true), hoặc hết chờ (on=false) — game hiện/ẩn chữ "Chờ bạn nhé...".</summary>
     protected virtual void OnWaitingForPartner(Team team, bool on) { }

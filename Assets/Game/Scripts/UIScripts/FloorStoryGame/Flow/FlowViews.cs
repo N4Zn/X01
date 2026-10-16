@@ -50,11 +50,12 @@ public static class FlowViews
             {
                 var pos = OvPos(w, spec, i) ?? w.PP((float)P(spec, "x") + (i - (n - 1) * 0.5f) * spacing, (float)P(spec, "y"));
                 StoryCard card; FsNode fig = null; var it = isNum ? null : list[i];
-                if (isNum) card = StoryUI.Card(w.Root, "Num", null, FsExpr.Str(list[i]), StoryUI.Hex("#7E57C2"), pos, new Vector2(cs, cs * tall), null, 72);
+                if (isNum) card = StoryUI.Card(w.Root, "Num", null, FsExpr.Str(list[i]), StoryUI.Hex("#7E57C2"), pos, new Vector2(cs, cs * tall), null, Mathf.RoundToInt(72f * Mathf.Max(1f, cs * tall / (U * 0.22f) * 0.85f)));   // thẻ cao hơn chuẩn → chữ to tương ứng
                 else
                 {
-                    card = StoryUI.Card(w.Root, "Card", null, "", FlowWorld.Hex(S(spec, "bg")), pos, new Vector2(cs, cs * tall), null);
-                    var c = card.bg.color; c.a = 0.96f; card.bg.color = c;
+                    string bgv = (S(spec, "bg") ?? "").Trim(); bool noBg = bgv == "" || bgv.ToLowerInvariant() == "none";   // trống / none = thẻ trong suốt
+                    card = StoryUI.Card(w.Root, "Card", null, "", noBg ? new Color(1, 1, 1, 0) : FlowWorld.Hex(bgv), pos, new Vector2(cs, cs * tall), null);
+                    if (!noBg) { var c = card.bg.color; c.a = 0.96f; card.bg.color = c; }
                     var cardSpr = w.ImageSprite(S(spec, "cardImg"));   // ảnh nền thẻ là con của thẻ (nằm dưới hình) để chỉnh tỉ lệ riêng
                     if (cardSpr != null)
                     {
@@ -181,7 +182,7 @@ public static class FlowViews
     // ── strip ──
     public sealed class StripView : FsView
     {
-        readonly FlowWorld _w; readonly List<Image> _bg = new List<Image>(); readonly List<FsNode> _face = new List<FsNode>(); readonly List<GameObject> _q = new List<GameObject>(); readonly bool _plain; readonly bool _hasSlotImg;
+        readonly FlowWorld _w; readonly List<Image> _bg = new List<Image>(); readonly List<FsNode> _face = new List<FsNode>(); readonly Dictionary<int, Image> _glow = new Dictionary<int, Image>(); readonly List<GameObject> _q = new List<GameObject>(); readonly bool _plain; readonly bool _hasSlotImg;
         public StripView(FlowWorld w, object spec, Dictionary<string, object> q)
         {
             _w = w; var seq = J.Arr(J.Get(q, "seq")); var items = J.Arr(J.Get(q, "items")); int len = seq.Count; _plain = P(spec, "plain") != 0;
@@ -201,7 +202,10 @@ public static class FlowViews
                 if (coverSpr != null) { var ci = StoryUI.Pic(b.transform, "Cover", coverSpr, Color.white, Vector2.zero, Vector2.one * slot * (float)P(spec, "coverImgScale")); ci.preserveAspect = false; qq = ci.gameObject; }
                 else qq = StoryUI.Label(b.transform, "?", Mathf.RoundToInt(slot * 0.6f), StoryUI.Hex("#90A4AE"), Vector2.zero, Vector2.one * slot, TextAnchor.MiddleCenter, false).gameObject;
                 qq.SetActive(false); _q.Add(qq);
-                _face.Add(w.DrawItem(FsNode.Of(b), items[(int)FsExpr.ToNum(seq[i])], 0, 0, slot * 0.82f));
+                // vật có khung riêng (bgImage): vẽ cùng cỡ ô "?" để lật ra không bị nhỏ đi (khớp fs_flow.js strip)
+                var it = items[(int)FsExpr.ToNum(seq[i])];
+                bool own = J.Str(it, "bgImage") != "" && w.ImageSprite(J.Str(it, "bgImage")) != null;
+                _face.Add(w.DrawItem(FsNode.Of(b), it, 0, 0, own ? (coverSpr != null ? slot * (float)P(spec, "coverImgScale") : slot) : slot * 0.82f));
             }
             for (int i = 0; i < len; i++)
             {
@@ -209,17 +213,31 @@ public static class FlowViews
                 Parts.Add(new FsPart
                 {
                     Show = () => { _face[k].Active = true; _q[k].SetActive(false); _w.Go(StoryUI.PopIn(_face[k].rt, 0.3f)); },
-                    Cover = () => { _face[k].Active = false; _q[k].SetActive(true); },
-                    Hide = () => { _face[k].Active = false; _q[k].SetActive(false); },
+                    Cover = () => { _face[k].Active = false; _q[k].SetActive(true); SetGlow(k, false); },
+                    Hide = () => { _face[k].Active = false; _q[k].SetActive(false); SetGlow(k, false); },
                 });
             }
         }
-        public override void HideAll() { for (int i = 0; i < _face.Count; i++) { _face[i].Active = false; _q[i].SetActive(false); } }
+        public override void HideAll() { for (int i = 0; i < _face.Count; i++) { _face[i].Active = false; _q[i].SetActive(false); SetGlow(i, false); } }
+        void SetGlow(int i, bool on) { if (_glow.TryGetValue(i, out var g) && g != null) g.gameObject.SetActive(on); }
         public void Mark(int i)
         {
             _face[i].Active = true; _q[i].SetActive(false); _w.Go(StoryUI.PopIn(_face[i].rt, 0.3f));
             if (!_plain && !_hasSlotImg) _bg[i].color = StoryUI.Hex("#C8F7C5");
-            if (_plain && _face[i].G != null) _w.Go(StoryUI.Fade(_face[i].G, 0.4f, 0.3f));
+            if ((_plain || _hasSlotImg) && _face[i].G is Image src && src.sprite != null)   // đã chọn đúng: quầng sáng vàng quanh hình (bóng viền theo hình, như drop-shadow bên web) — KHÔNG dùng Outline (nó vẽ 4 bản sao lệch → nhìn như 2 viền)
+            {
+                if (!_glow.TryGetValue(i, out var gi) || gi == null)
+                {
+                    var go = new GameObject("Glow", typeof(RectTransform), typeof(Image)); var grt = go.GetComponent<RectTransform>();
+                    grt.SetParent(src.rectTransform.parent, false);
+                    grt.anchorMin = src.rectTransform.anchorMin; grt.anchorMax = src.rectTransform.anchorMax; grt.pivot = src.rectTransform.pivot;
+                    grt.anchoredPosition = src.rectTransform.anchoredPosition; grt.sizeDelta = src.rectTransform.sizeDelta * 1.14f;
+                    grt.SetSiblingIndex(src.rectTransform.GetSiblingIndex());   // nằm ngay dưới hình
+                    gi = go.GetComponent<Image>(); gi.sprite = src.sprite; gi.type = src.type; gi.preserveAspect = src.preserveAspect; gi.raycastTarget = false;
+                    gi.color = new Color(1f, 0.88f, 0.3f, 0f); _glow[i] = gi;
+                }
+                gi.gameObject.SetActive(true); _w.Go(StoryUI.Fade(gi, 0.8f, 0.3f));
+            }
         }
         public void PulseSlot(int i, Func<bool> alive) { _w.Go(StoryUI.Pulse(_bg[i].rectTransform, alive, 0.06f, 6f)); }
     }
@@ -231,18 +249,31 @@ public static class FlowViews
         public GridView(FlowWorld w, object spec, Dictionary<string, object> q)
         {
             _w = w; var faces = J.Arr(J.Get(q, "faces")); var items = J.Arr(J.Get(q, "items")); int total = faces.Count, pairs = (int)J.Num(q, "pairs");
-            int rows = pairs <= 5 ? 2 : 3, cols = Mathf.CeilToInt(total / (float)rows);
-            float areaW = w.WorldW * 0.94f, areaH = w.WorldH * 0.76f, cs = Mathf.Min(areaW / cols, areaH / rows) * 0.88f, stepX = areaW / cols, stepY = areaH / rows; var origin = w.PP(0.5f, 0.47f);
-            bool covered = P(spec, "covered") != 0;
+            bool uShape = S(spec, "shape") == "u" && total >= 4;   // u: k thẻ mỗi bên (8 thẻ → hàng trên 4, mỗi bên 2), còn lại nằm hết ở hàng trên
+            int uk = uShape ? Mathf.Max(1, total / 4) : 0, rows = uShape ? uk + 1 : (pairs <= 5 ? 2 : 3), cols = uShape ? total - 2 * uk : Mathf.CeilToInt(total / (float)rows);
+            float areaW = w.WorldW * 0.94f, areaH = w.WorldH * 0.76f, cs = Mathf.Min(areaW / cols, areaH / rows) * 0.88f * (float)P(spec, "cardScale"), stepX = areaW / cols, stepY = areaH / rows; var origin = w.PP(0.5f, 0.47f);
+            bool covered = P(spec, "covered") != 0; var backSpr = w.ImageSprite(S(spec, "backImg")); float backScale = (float)P(spec, "backImgScale");
             for (int i = 0; i < total; i++)
             {
                 int fi = (int)FsExpr.ToNum(faces[i]), r = i / cols, c = i % cols;
+                if (uShape && i >= cols) { r = 1 + (i - cols) / 2; c = (i - cols) % 2 != 0 ? cols - 1 : 0; }
                 var holder = StoryUI.Pic(w.Root, "Card", null, new Color(1, 1, 1, 0), OvPos(w, spec, i) ?? (origin + new Vector2((c - (cols - 1) * 0.5f) * stepX, ((rows - 1) * 0.5f - r) * stepY)), Vector2.one * cs, raycast: true);
                 holder.preserveAspect = false; var hn = FsNode.Of(holder); w.Track(hn);
-                var back = StoryUI.Pic(holder.transform, "Back", ShapeSprites.RoundedRect, StoryUI.Hex("#26A69A"), Vector2.zero, Vector2.one * cs); back.type = Image.Type.Sliced; back.preserveAspect = false;
-                StoryUI.Label(back.transform, "?", Mathf.RoundToInt(cs * 0.6f), Color.white, Vector2.zero, Vector2.one * cs);
-                var front = StoryUI.Pic(holder.transform, "Front", ShapeSprites.RoundedRect, Color.white, Vector2.zero, Vector2.one * cs); front.type = Image.Type.Sliced; front.preserveAspect = false;
-                w.DrawItem(FsNode.Of(front), items[fi], 0, 0, cs * 0.82f);
+                Image back;
+                if (backSpr != null)
+                {
+                    back = StoryUI.Pic(holder.transform, "Back", null, new Color(1, 1, 1, 0), Vector2.zero, Vector2.one * cs); back.preserveAspect = false;
+                    var bi = StoryUI.Pic(back.transform, "BackImg", backSpr, Color.white, Vector2.zero, Vector2.one * cs * backScale); bi.preserveAspect = false;
+                }
+                else
+                {
+                    back = StoryUI.Pic(holder.transform, "Back", ShapeSprites.RoundedRect, StoryUI.Hex("#26A69A"), Vector2.zero, Vector2.one * cs); back.type = Image.Type.Sliced; back.preserveAspect = false;
+                    StoryUI.Label(back.transform, "?", Mathf.RoundToInt(cs * 0.6f), Color.white, Vector2.zero, Vector2.one * cs);
+                }
+                // vật có ảnh nền riêng (bgImage): mặt ngửa trong suốt, khung của vật thay thẻ trắng
+                bool own = J.Str(items[fi], "bgImage") != "" && w.ImageSprite(J.Str(items[fi], "bgImage")) != null;
+                var front = StoryUI.Pic(holder.transform, "Front", ShapeSprites.RoundedRect, own ? new Color(1, 1, 1, 0) : Color.white, Vector2.zero, Vector2.one * cs); front.type = Image.Type.Sliced; front.preserveAspect = false;
+                w.DrawItem(FsNode.Of(front), items[fi], 0, 0, own ? cs * backScale : cs * 0.82f);
                 back.gameObject.SetActive(covered); front.gameObject.SetActive(!covered);
                 Elems.Add(new FsElem { node = hn, key = fi, kind = "flip", back = FsNode.Of(back), front = FsNode.Of(front), faceUp = !covered, name = w.NameOf(items[fi]) });
             }
@@ -328,7 +359,7 @@ public static class FlowViews
     // ── stack ── (khớp view stack của fs_flow.js: cụm khối sát nhau, không xếp tầng; ô chọn bởi FlowGens.CubeCells; số đếm vẽ ngoài hình có gạch chỉ)
     public sealed class StackView : FsView
     {
-        readonly FlowWorld _w; readonly List<RectTransform> _cubes = new List<RectTransform>(); readonly float _s, _minX, _maxX, _rowY; readonly Vector2 _center; bool _counted;
+        readonly FlowWorld _w; readonly List<RectTransform> _cubes = new List<RectTransform>(); readonly List<Vector3Int> _cells = new List<Vector3Int>(); readonly float _s, _minX, _maxX, _rowY; readonly Vector2 _center; bool _counted;
         public Vector2 SolvedAt;
         public StackView(FlowWorld w, object spec, Dictionary<string, object> q)
         {
@@ -343,10 +374,13 @@ public static class FlowViews
             float Ux(Vector3Int c) => c.x - c.y; float Uy(Vector3Int c) => -(c.x + c.y) * 0.5f + c.z;
             float uMinX = 1e9f, uMaxX = -1e9f, uMinY = 1e9f, uMaxY = -1e9f;
             foreach (var c in sorted) { uMinX = Mathf.Min(uMinX, Ux(c) - 1f); uMaxX = Mathf.Max(uMaxX, Ux(c) + 1f); uMinY = Mathf.Min(uMinY, Uy(c) - 1f); uMaxY = Mathf.Max(uMaxY, Uy(c) + 1f); }
-            float uRow = uMaxY + 1.35f, uTop = uRow + 0.45f; int n0 = sorted.Count;
-            float s = Mathf.Min(W * 0.9f / Mathf.Max(uMaxX - uMinX, n0 * 1.1f), H * 0.40f / (uTop - uMinY), U * 0.11f); _s = s;
+            float uRow = uMaxY + 1.35f, uTop = uRow + 0.6f + (RowTiers(sorted, out _) - 1) * RowStep; int n0 = sorted.Count;   // số xếp theo HÀNG: mỗi hàng khối (cùng x) 1 hàng số
+            // Cỡ khối chỉ phụ thuộc SỐ KHỐI (không phụ thuộc cách xếp) để cùng số khối thì cùng cỡ ở mọi ô và cả 2 đội; tính theo cách xếp xấu nhất của số đó.
+            // Vùng trống phía trên hàng đáp án ≈ 0,62H (gồm cả hàng số đếm).
+            WorstUnits(n0, out float wU, out float hU);
+            float s = Mathf.Min(W * 0.9f / wU, H * 0.60f / hU, U * 0.17f); _s = s;
             _minX = uMinX * s; _maxX = uMaxX * s; _rowY = uRow * s;
-            var pc = w.PP(0.5f, 0.62f); var center = new Vector2(pc.x - (_minX + _maxX) * 0.5f, pc.y - (uMinY + uTop) * s * 0.5f); _center = center;
+            var pc = w.PP(0.5f, 0.665f); var center = new Vector2(pc.x - (_minX + _maxX) * 0.5f, pc.y - (uMinY + uTop) * s * 0.5f); _center = center;
             foreach (var c in sorted)
             {
                 float px = center.x + Ux(c) * s, py = center.y + Uy(c) * s; RectTransform rt;
@@ -356,34 +390,97 @@ public static class FlowViews
                     rt = StoryUI.Rect(w.Root, "Cube", new Vector2(px, py), Vector2.one * 2f * s);
                     var g = rt.gameObject.AddComponent<StoryCube>(); g.color = color; g.raycastTarget = false;
                 }
-                rt.localScale = Vector3.zero; w.Track(FsNode.Of(rt)); _cubes.Add(rt);
+                rt.localScale = Vector3.zero; w.Track(FsNode.Of(rt)); _cubes.Add(rt); _cells.Add(c);
             }
             SolvedAt = new Vector2(center.x + (_minX + _maxX) * 0.5f, center.y + s);
             foreach (var cb in _cubes) { var r = cb; Parts.Add(new FsPart { Show = () => _w.Go(StoryUI.PopIn(r, 0.25f)), Cover = () => r.localScale = Vector3.zero, Hide = () => r.localScale = Vector3.zero }); }
         }
+        // Bề rộng / bề cao (đơn vị s, gồm cả các hàng số đếm) của cách xếp XẤU NHẤT mà FlowGens.CubeCells có thể sinh cho n khối (cụm trong lưới 3×3 + khối lẻ ngoài lưới).
+        static void WorstUnits(int n, out float wU, out float hU)
+        {
+            wU = n * 1.1f; hU = 0f;
+            int outMin = n >= 10 ? n - 9 : 0, outMax = n >= 10 ? n - 9 : n >= 4 ? Mathf.Min(3, n - 3) : 0;
+            for (int o = outMin; o <= outMax; o++)
+            {
+                int c = Mathf.Min(n - o, 9), rows = Mathf.Min(c, 3); float span = Mathf.Min(c - 1, 4);
+                float w = span + 2f + (o > 0 ? 4f * ((o + 1) / 2) : 0f);
+                float cubesH = o >= 2 ? 6.5f : span * 0.5f + 2f;   // khối lẻ thứ 2 của mỗi cột nằm thấp hơn 3 đơn vị
+                wU = Mathf.Max(wU, w); hU = Mathf.Max(hU, cubesH + 1.35f + 0.6f + (rows - 1) * RowStep);
+            }
+        }
         public override void HideAll() { foreach (var c in _cubes) c.localScale = Vector3.zero; }
         public override IEnumerator Intro() { foreach (var c in _cubes) { if (c == null) yield break; _w.Go(StoryUI.PopIn(c, 0.25f)); yield return new WaitForSeconds(0.07f); } }
+        // Thứ tự đếm: cụm chính (trong lưới 3×3) trước, khối lẻ (tách riêng ngoài lưới) sau. Cụm chính đếm theo "hàng" đẳng cự (cùng x, từ hàng trên/xa
+        // xuống hàng dưới/gần), mỗi hàng đếm từ trái sang phải (y giảm dần). Khớp JS `countOrder`.
+        public static List<int> CountOrder(List<Vector3Int> cells)
+        {
+            var main = new List<int>(); var rest = new List<int>();
+            for (int i = 0; i < cells.Count; i++) { var c = cells[i]; if (c.x >= 0 && c.x <= 2 && c.y >= 0 && c.y <= 2) main.Add(i); else rest.Add(i); }
+            if (main.Count == 0) { main = rest; rest = new List<int>(); }
+            Comparison<int> byRow = (a, b) => { int d = cells[a].x.CompareTo(cells[b].x); return d != 0 ? d : cells[b].y.CompareTo(cells[a].y); };
+            // khối lẻ (tách hẳn sang 1 bên): từ trái sang phải, trên xuống dưới
+            Comparison<int> bySide = (a, b) => { int d = (cells[a].x - cells[a].y).CompareTo(cells[b].x - cells[b].y); return d != 0 ? d : (cells[a].x + cells[a].y).CompareTo(cells[b].x + cells[b].y); };
+            main.Sort(byRow); rest.Sort(bySide);
+            main.AddRange(rest); return main;
+        }
+
+        // Số đếm xếp theo HÀNG: mỗi hàng khối của cụm chính (cùng x) có 1 hàng số nằm ngang thẳng nhau (1-2-3 / 4-5-6 / 7-8-9); hàng đầu cao nhất, hàng sau thấp dần;
+        // khối lẻ ngang hàng với hàng cuối. tier[i] = chỉ số hàng (0 = trên cùng); trả số hàng. Khớp JS `rowTiers`.
+        const float RowStep = 1.2f;   // khoảng cách các hàng số (số rộng 1,1s)
+        public static int RowTiers(List<Vector3Int> cells, out int[] tier)
+        {
+            var main = new List<int>(); var rest = new List<int>();
+            for (int i = 0; i < cells.Count; i++) { var c = cells[i]; if (c.x >= 0 && c.x <= 2 && c.y >= 0 && c.y <= 2) main.Add(i); else rest.Add(i); }
+            if (main.Count == 0) { main = rest; rest = new List<int>(); }
+            var xs = new List<int>(); foreach (int i in main) if (!xs.Contains(cells[i].x)) xs.Add(cells[i].x);
+            xs.Sort(); tier = new int[cells.Count];
+            foreach (int i in main) tier[i] = xs.IndexOf(cells[i].x);
+            foreach (int i in rest) tier[i] = xs.Count - 1;
+            return xs.Count;
+        }
+
+        // Dây thẳng đứng: x của dây mỗi khối = tâm khối ± lệch theo cột (khối đếm trước lệch trái, đếm sau lệch phải), rồi dãn để 2 dây kề nhau cách ≥ 0,65s
+        // (dây không đụng số khác) và 2 số CÙNG hàng cách ≥ 1,2s (số không chồng nhau). Khớp JS `badgeLayout`.
+        void BadgeLayout(List<int> order, int[] tier, out float[] lx)
+        {
+            int n = order.Count; float s = _s; lx = new float[n];
+            var colCount = new Dictionary<int, int>(); var colRank = new Dictionary<int, int>(); var rank = new int[n];
+            foreach (int i in order) { int u = _cells[i].x - _cells[i].y; colCount[u] = colCount.TryGetValue(u, out var m0) ? m0 + 1 : 1; }
+            var want = new float[n];
+            foreach (int i in order)
+            {
+                int u = _cells[i].x - _cells[i].y, m = colCount[u], r = colRank.TryGetValue(u, out var rr) ? rr : 0; colRank[u] = r + 1; rank[i] = r;
+                want[i] = _cubes[i].anchoredPosition.x + (r - (m - 1) * 0.5f) * (m <= 2 ? 0.6f : 0.5f) * s;
+            }
+            var idx = new List<int>(); for (int i = 0; i < n; i++) idx.Add(i);
+            idx.Sort((a, b) => { int d = want[a].CompareTo(want[b]); if (d != 0) return d; d = (_cells[a].x - _cells[a].y).CompareTo(_cells[b].x - _cells[b].y); return d != 0 ? d : rank[a].CompareTo(rank[b]); });
+            float prev = float.NegativeInfinity; var lastT = new Dictionary<int, float>();
+            foreach (int i in idx)
+            {
+                float x = Mathf.Max(want[i], prev + 0.65f * s); int t = tier[i];
+                if (lastT.TryGetValue(t, out var lt)) x = Mathf.Max(x, lt + 1.2f * s);
+                lx[i] = prev = lastT[t] = x;
+            }
+        }
+
         public IEnumerator CountAloud(Action onDone)
         {
-            // đếm từ trái sang phải; số nằm ngoài hình (hàng trên), gạch nối chỉ xuống mặt trên của đúng khối đó
-            var order = new List<int>(); for (int i = 0; i < _cubes.Count; i++) order.Add(i);
-            order.Sort((a, b) =>
-            {
-                var pa = _cubes[a].anchoredPosition; var pb = _cubes[b].anchoredPosition;
-                int c = pa.x.CompareTo(pb.x); if (c != 0) return c;
-                c = pb.y.CompareTo(pa.y); return c != 0 ? c : a.CompareTo(b);
-            });
-            int n = order.Count; float s = _s, bw = Mathf.Max(_maxX - _minX, n * 1.1f * s), x0 = _center.x + (_minX + _maxX) * 0.5f - bw * 0.5f, by = _center.y + _rowY;
+            // số nằm ngoài hình (hàng trên), dây THẲNG ĐỨNG chỉ xuống mặt trên của đúng khối đó
+            var order = CountOrder(_cells); int rows = RowTiers(_cells, out var tiers); BadgeLayout(order, tiers, out var lxs);
+            int n = order.Count; float s = _s, by = _center.y + _rowY;
             var shapes = new List<GameObject>();
             for (int k = 0; k < n; k++)
             {
-                var cb = _cubes[order[k]]; if (cb == null) yield break;
-                float bx = x0 + (k + 0.5f) * bw / n, tx = cb.anchoredPosition.x, ty = cb.anchoredPosition.y + s * 0.5f, dx = tx - bx, dy = ty - by, len = Mathf.Sqrt(dx * dx + dy * dy) - s * 0.4f;
-                var ln = StoryUI.Pic(_w.Root, "Line", ShapeSprites.Square, new Color(0.15f, 0.1f, 0.3f, 0.7f), new Vector2((bx + tx) * 0.5f, (by + ty) * 0.5f - s * 0.1f), new Vector2(Mathf.Max(2f, s * 0.06f), Mathf.Max(1f, len)));
-                ln.rectTransform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(-dx, dy) * Mathf.Rad2Deg);
+                int idx = order[k]; var cb = _cubes[idx]; if (cb == null) yield break;
+                // Dây xuất phát đúng từ tâm mặt trên của khối (không bị BadgeLayout đẩy lệch sang khối bên cạnh) rồi nghiêng nhẹ tới chân số.
+                float lx = lxs[idx], cx = cb.anchoredPosition.x, ty = cb.anchoredPosition.y + s * 0.5f, bY = by + (rows - 1 - tiers[idx]) * RowStep * s;
+                float ey = bY - s * 0.55f, dx = lx - cx, dy = Mathf.Max(1f, ey - ty), len = Mathf.Sqrt(dx * dx + dy * dy);
+                var ln = StoryUI.Pic(_w.Root, "Line", ShapeSprites.Square, new Color(0.15f, 0.1f, 0.3f, 0.7f), new Vector2((cx + lx) * 0.5f, ty + dy * 0.5f), new Vector2(Mathf.Max(2f, s * 0.06f), len));
+                ln.preserveAspect = false;   // Pic mặc định giữ tỉ lệ → đoạn thẳng mảnh co thành chấm nhỏ
+                ln.rectTransform.localEulerAngles = new Vector3(0f, 0f, -Mathf.Atan2(dx, dy) * Mathf.Rad2Deg);
                 ln.rectTransform.localScale = Vector3.zero; _w.Track(FsNode.Of(ln)); shapes.Add(ln.gameObject); _w.Go(StoryUI.PopIn(ln.rectTransform, 0.15f));
-                var b = StoryUI.Pic(_w.Root, "Badge", ShapeSprites.Circle, new Color(0.15f, 0.1f, 0.3f, 0.9f), new Vector2(bx, by), Vector2.one * s * 0.85f);
-                StoryUI.Label(b.transform, (k + 1).ToString(), Mathf.RoundToInt(s * 0.7f), Color.white, Vector2.zero, Vector2.one * s * 0.85f);
+                var b = StoryUI.Pic(_w.Root, "Badge", ShapeSprites.Circle, new Color(0.15f, 0.1f, 0.3f, 0.9f), new Vector2(lx, bY), Vector2.one * s * 1.1f);
+                StoryUI.Label(b.transform, (k + 1).ToString(), Mathf.RoundToInt(s * 0.91f), Color.white, Vector2.zero, Vector2.one * s * 1.1f);
                 shapes.Add(b.gameObject); _w.Track(FsNode.Of(b)); _w.Go(StoryUI.PopIn(b.rectTransform, 0.2f)); _w.Sfx("tap");
                 yield return new WaitForSeconds(0.4f);
             }

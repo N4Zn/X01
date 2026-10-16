@@ -306,30 +306,50 @@ public static class StoryUI
     public static IEnumerator Shake(RectTransform rt, float dur = 0.4f, float amp = 14f)
     {
         if (rt == null) yield break;
-        var origin = rt.anchoredPosition;
-        for (float t = 0f; t < dur; t += Time.deltaTime)
+        // Nhiều lần rung chồng nhau (chạm sai liên tục): dùng chung vị trí gốc, chỉ trả về khi lần rung cuối kết thúc → vật không trôi khỏi chỗ cũ. Khớp JS `shake`.
+        var st = TweenState.Of(rt); if (st.shakeN == 0) st.home = rt.anchoredPosition; st.shakeN++;
+        try
         {
-            if (rt == null) yield break;
-            float damp = 1f - t / dur;
-            rt.anchoredPosition = origin + new Vector2(Mathf.Sin(t * 50f) * amp * damp, 0f);
-            yield return null;
+            for (float t = 0f; t < dur; t += Time.deltaTime)
+            {
+                if (rt == null) yield break;
+                float damp = 1f - t / dur;
+                rt.anchoredPosition = st.home + new Vector2(Mathf.Sin(t * 50f) * amp * damp, 0f);
+                yield return null;
+            }
         }
-        if (rt != null) rt.anchoredPosition = origin;
+        finally { if (st != null && --st.shakeN <= 0) { st.shakeN = 0; if (rt != null) rt.anchoredPosition = st.home; } }
+    }
+
+    /// <summary>Trạng thái tween dùng chung cho 1 vật: nhiều hiệu ứng rung / phóng chồng nhau cùng lấy 1 vị trí / cỡ gốc (tránh vật trôi chỗ hoặc to ra luôn).</summary>
+    sealed class TweenState : MonoBehaviour
+    {
+        public int shakeN, scaleN; public Vector2 home; public Vector3 rest;
+        public static TweenState Of(RectTransform rt) { var s = rt.GetComponent<TweenState>(); return s != null ? s : rt.gameObject.AddComponent<TweenState>(); }
+    }
+    static Vector3 HoldScale(RectTransform rt) { var st = TweenState.Of(rt); if (st.scaleN == 0) st.rest = rt.localScale; st.scaleN++; return st.rest; }
+    static void ReleaseScale(RectTransform rt)
+    {
+        if (rt == null) return; var st = rt.GetComponent<TweenState>(); if (st == null) return;
+        if (--st.scaleN > 0) return; st.scaleN = 0; rt.localScale = st.rest;
     }
 
     /// <summary>Nhún nhảy (to lên rồi về) — dùng cho phản hồi "đúng".</summary>
     public static IEnumerator Bounce(RectTransform rt, float amount = 0.25f, float dur = 0.5f)
     {
         if (rt == null) yield break;
-        var baseScale = rt.localScale;
-        for (float t = 0f; t < dur; t += Time.deltaTime)
+        var baseScale = HoldScale(rt);   // chồng nhiều hiệu ứng phóng: dùng chung cỡ gốc, chỉ trả về khi cái cuối kết thúc. Khớp JS `holdScale`.
+        try
         {
-            if (rt == null) yield break;
-            float k = Mathf.Sin(t / dur * Mathf.PI);
-            rt.localScale = baseScale * (1f + amount * k);
-            yield return null;
+            for (float t = 0f; t < dur; t += Time.deltaTime)
+            {
+                if (rt == null) yield break;
+                float k = Mathf.Sin(t / dur * Mathf.PI);
+                rt.localScale = baseScale * (1f + amount * k);
+                yield return null;
+            }
         }
-        if (rt != null) rt.localScale = baseScale;
+        finally { ReleaseScale(rt); }
     }
 
     public static IEnumerator Fade(Graphic g, float to, float dur)
@@ -376,15 +396,18 @@ public static class StoryUI
     public static IEnumerator Pulse(RectTransform rt, Func<bool> alive, float amount = 0.12f, float speed = 6f)
     {
         if (rt == null) yield break;
-        var baseScale = rt.localScale;
+        var baseScale = HoldScale(rt);
         float t = 0f;
-        while (rt != null && alive())
+        try
         {
-            t += Time.deltaTime * speed;
-            rt.localScale = baseScale * (1f + amount * (0.5f + 0.5f * Mathf.Sin(t)));
-            yield return null;
+            while (rt != null && alive())
+            {
+                t += Time.deltaTime * speed;
+                rt.localScale = baseScale * (1f + amount * (0.5f + 0.5f * Mathf.Sin(t)));
+                yield return null;
+            }
         }
-        if (rt != null) rt.localScale = baseScale;
+        finally { ReleaseScale(rt); }
     }
 }
 
@@ -400,6 +423,8 @@ public sealed class StoryContext
     /// <summary>Hiện / ẩn icon ✔ mặc định của Kit (MiniGameControllerBase.ShowFeedbackIcon) — fallback khi game không tự có icon đúng.</summary>
     public Action<Team, bool> showIcon;
     public Action<Team> hideIcon;
+    /// <summary>Chế độ chung: có đội chạm vật → controller dừng âm câu hỏi đang phát (do đội trái phát) trước khi phát tiếng của vật.</summary>
+    public Action stopPromptVoice;
 
     public Coroutine Run(IEnumerator e) => runner != null ? runner.StartCoroutine(e) : null;
 

@@ -24,6 +24,7 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     readonly List<FsNode> _tracked = new List<FsNode>();
     readonly List<Action> _readyCbs = new List<Action>();
     Text _prompt;
+    static int _seedSerial;
     public int TaskNo { get; set; }
     public int Ok { get; set; }
     public int GenId;
@@ -38,7 +39,7 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         _gid = gameId; _data = data;
         StoryUI.TextStyles = LoadTextStyles(J.Obj(data, "fonts"));
         _items = J.List(data, "items") ?? new List<object>();
-        _rng = new FsRng(Environment.TickCount * 31L + gameId.GetHashCode());
+        _rng = new FsRng(Environment.TickCount * 31L + gameId.GetHashCode() + (++_seedSerial) * 7919L); // mỗi world 1 seed riêng (2 đội không trùng thứ tự câu)
         Vars = new Dictionary<string, object>();
         var v = J.Obj(data, "vars");
         if (v != null) foreach (var kv in v) Vars[kv.Key] = kv.Value;
@@ -48,6 +49,25 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     public FsRng Rng => _rng;
     public List<object> Items => _items;
     public bool Sync => J.Num(_data, "sync") != 0;
+    /// <summary>Cài đặt "Chạm sai": true (mặc định của builder, khi thiếu khoá) = sai là HẾT CÂU → hiện icon ✖ rồi sang câu sau; false = cho chọn lại, chạm sai chỉ phát âm sai, KHÔNG icon.
+    /// Các game mẫu FloorStory ghi false. Áp dụng cho judge equals / order (ghép cặp: lật sai là bản chất của trò, không tính).</summary>
+    public bool WrongEnds => J.Num(_data, "wrongEndsRound", 1) != 0;
+    /// <summary>Dạng câu hỏi hiện tại chấm "order" + `pointPerStep`=1 → điểm đã cộng từng ô đúng, KHÔNG cộng thêm điểm lượt khi xong. Khớp JS World.pointsPerStep.</summary>
+    public override bool PointsPerStep { get { var j = Flow != null ? J.Obj(Flow, "judge") : null; return j != null && J.Str(j, "type") == "order" && FsMod.Flag("judge", j, "pointPerStep"); } }
+    /// Cài đặt game `noIcon`=1 → tắt icon ✔/✖ mặc định (game tự có hiệu ứng riêng). Thiếu khoá = HIỆN. Khớp JS World.showIcon.
+    /// <summary>Cài đặt game `iconAlign`="answers": tâm icon ✔/✖ nằm NGANG tâm các đáp án (mọi độ phân giải). Trả toạ độ y THẾ GIỚI (world space) trung bình của các đáp án đang hiện; false nếu không bật / chưa có đáp án. Khớp JS Game.showIcon.</summary>
+    public bool TryAnswersWorldY(out float y)
+    {
+        y = 0f; if (J.Str(_data, "iconAlign") != "answers") return false;
+        float sum = 0f; int n = 0;
+        foreach (var e in Elems)
+        {
+            if (e.key < 0 || e.node == null || e.node.rt == null || !e.node.rt.gameObject.activeInHierarchy) continue;
+            sum += e.node.rt.TransformPoint(e.node.rt.rect.center).y; n++;
+        }
+        if (n == 0) return false; y = sum / n; return true;
+    }
+    public void ShowIcon(bool ok) { if (J.Num(_data, "noIcon", 0) == 0) ctx.showIcon?.Invoke(team, ok); }
     public override bool Synchronized => Sync;
     public StoryContext Context => ctx;
     public RectTransform Root => root;
@@ -151,7 +171,28 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
         if (voice) { var v = Src(ref _voiceSrc); v.Stop(); v.clip = clip; v.Play(); }
         else Src(ref _fxSrc).PlayOneShot(clip);
     }
-    public void PlayItem(object item) { var d = item as Dictionary<string, object>; if (d != null) PlayFile(J.Str(d, "sound"), true); }
+    int _itemGen; bool _itemBusy;
+    public override bool ItemBusy => _itemBusy;
+    public override void StopVoice() { if (_voiceSrc != null) _voiceSrc.Stop(); }
+    /// <summary>Nhận chạm vật: DỪNG âm câu hỏi đang phát → nghỉ 0,2s cho ngắt quãng → mới phát tiếng của vật. Chế độ chung: âm câu hỏi do đội trái phát nên báo controller dừng nó
+    /// (dù đội nào chạm); trong lúc chờ + lúc tiếng vật phát, vòng lặp câu hỏi giữ nguyên (ItemBusy). Khớp playItemVoice (web).</summary>
+    public bool PlayItem(object item)
+    {
+        var d = item as Dictionary<string, object>; if (d == null) return false;
+        var clip = LoadClip(J.Str(d, "sound")); if (clip == null) return false;
+        if (Sync) ctx.stopPromptVoice?.Invoke();
+        StopVoice();
+        ctx.Run(ItemVoice(clip, ++_itemGen));
+        return true;
+    }
+    IEnumerator ItemVoice(AudioClip clip, int gen)
+    {
+        _itemBusy = true;
+        var v = Src(ref _voiceSrc); v.Stop(); v.clip = clip; v.Play();   // phát NGAY; judge chờ xong + nghỉ 0,2s rồi mới hiện icon / tiếng đúng-sai (FlowJudges.Equals)
+        yield return null;
+        while (gen == _itemGen && v != null && v.isPlaying) yield return null;
+        if (gen == _itemGen) _itemBusy = false;
+    }
     /// <summary>Tiếng của vật là đáp án (nếu câu hỏi có đáp án và vật đó có file tiếng).</summary>
     void PlayTargetItem()
     {
@@ -345,7 +386,9 @@ public sealed partial class FlowWorld : StoryWorld, IFlowCore
     {
         var on = J.Obj(Flow, "on");
         var list = on != null ? J.List(on, ev) : null;
-        if (ev == "right") ctx.showIcon?.Invoke(team, true);   // icon ✔ mặc định của Kit (fallback chung)
+        // Icon ✔ mặc định của Kit (fallback chung); cài đặt game noIcon=1 → không hiện (xem ShowIcon).
+        // Icon ✖: chỉ khi chạm sai KẾT THÚC câu (WrongEnds) — judge tự gọi ShowIcon(false). Cho chọn lại thì chỉ có âm sai.
+        if (ev == "right") ShowIcon(true);
         if (list != null && list.Count > 0)
         {
             if (ev == "right" && !list.Exists(a => J.Str(a, "do") == "sfx" || J.Str(a, "do") == "std")) Sfx("right");   // hành động riêng không có tiếng → vẫn có tiếng đúng mặc định
