@@ -291,7 +291,7 @@ public class SpawnFlowDisplay : MonoBehaviour, IAnswerDisplay
     }
 
     /// <summary>Khoảng cách TỐI THIỂU (% cạnh nửa màn hình) giữa 2 đáp án flow — không bao giờ đè/chạm nhau.
-    /// Khớp SPAWN_GAP_PCT của web (game_builder_v2.html).</summary>
+    /// Khớp SPAWN_GAP_PCT của web (game_builder_v4.16.html).</summary>
     const float MinGapPct = 2f;
 
     /// <summary>Tính điểm đầu/cuối (%) theo hướng cấu hình + chọn vị trí trên trục VUÔNG GÓC trong `area`

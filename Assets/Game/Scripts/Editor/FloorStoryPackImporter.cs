@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Import "gói thay ảnh" của game FloorStory (zip mở/sửa được bằng game_builder_v2.html; tạo bằng Tools/floorstory_pack/make_packs.py).
+/// Import "gói thay ảnh" của game FloorStory (zip mở/sửa được bằng game_builder_v4.16.html; tạo bằng Tools/floorstory_pack/make_packs.py).
 /// zip: game.json (meta.kind = "floorstory", meta.floorStory.images[] = {key, label, group, file, default}) + assets/*.
 /// Ảnh nào bị thay (file != default) → Assets/Game/Resources/StoryPack/&lt;Game&gt;/&lt;key&gt;.&lt;ext&gt; (StoryUI.Load ưu tiên thư mục này);
 /// ảnh về mặc định (file == default) → xoá bản thay thế cũ nếu có. Không đụng scene/registry/aar. Sau import: build lại APK.

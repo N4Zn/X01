@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh các gói zip "thay ảnh" cho game FloorStory — mở/sửa được bằng WebTools/GenericGameBuilder/game_builder_v4.0.html.
+"""Sinh các gói zip "thay ảnh" cho game FloorStory — mở/sửa được bằng WebTools/GenericGameBuilder/game_builder_v4.16.html.
 
 Chạy (từ gốc repo):  python Tools/floorstory_pack/make_packs.py [--out WebTools/FloorStoryPacks] [Game ...]
 

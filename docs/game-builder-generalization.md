@@ -277,7 +277,7 @@ L0  Platform      Viewport 2 đội · HUD · Input tap · Audio · Log · Score
 8. **Chơi thử hai nửa → Xuất zip → Import Unity** (đã có).
 Mẫu (template) = một combination đặt sẵn cho 6 chỗ cắm; người dùng mở lên là có game chạy được rồi mới sửa — đây là chỗ 16 game FloorStory + 10 game GenericGame trở thành **thư viện mẫu**, không còn là engine riêng.
 
-### 10.5 Khoảng trống so với builder v4.1 (xếp theo tầng phủ game)
+### 10.5 Khoảng trống so với builder (v4.1 lúc khảo sát; bản cuối nay v4.16) (xếp theo tầng phủ game)
 | Khoảng trống | Tầng | Game được mở khoá | Ghi chú |
 |---|---|---|---|
 | Judge `tập-đủ`, `cặp`, `thứ-tự` chọn được ở UI cho Generator `chọn` | L5 | DemQua, SentenceBuilder, PlanetOrder, F4 | engine đã có `order/pairs`, UI chưa phơi hết |
@@ -329,7 +329,7 @@ Round có hai nguồn: **thủ công** (người soạn liệt kê) hoặc **t�
 - **F2 không có cấp Dạng câu**: 1 game GenericGame = 1 dạng; muốn luân phiên "chọn" ↔ "kéo thả" phải đẻ game khác. F1 có `flows[]` nhưng bố cục nhóm slot nằm trong `views`, không ở Round.
 - **Hai nơi đặt Judge/`answerMode`**: F2 ở `settings` (Game), F1 ở `flow.judge` (Dạng câu) ⇒ khi hợp nhất, F2 `answerMode` = Judge của flow ngầm.
 - **Reaction**: F2 gắn *trên slot* (cấp Đối tượng), F1 gắn *theo sự kiện* (cấp Dạng câu); cần hỗ trợ cả hai theo thứ tự kế thừa trên.
-- **Round tự sinh vs thủ công**: UI v4.1 chỉ cho sửa vật/đáp án ở round thủ công; Generator thì ẩn tham số ⇒ người soạn khó thấy "round này ra từ đâu".
+- **Round tự sinh vs thủ công**: UI builder (lúc khảo sát v4.1) chỉ cho sửa vật/đáp án ở round thủ công; Generator thì ẩn tham số ⇒ người soạn khó thấy "round này ra từ đâu".
 
 ## 10c. Hướng "đối tượng + hiệu ứng + trigger → flow": đánh giá & thiết kế
 

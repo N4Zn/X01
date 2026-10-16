@@ -2,7 +2,7 @@
 
 > **TL;DR**: Giữ nguyên **mô hình đối tượng của v2** (Nền · Item · Câu hỏi chung/riêng · Đáp án · Vùng thu thập · Round · Cài đặt) vì đã chạy tốt với cô giáo. Mọi game khác nhau thật sự ở **3 chỗ** → làm thành **3 ổ cắm** khai báo trong `capabilities.json`: **Kiểu hiển thị** (đáp án vẽ/hành xử thế nào), **Kiểu chấm** (chạm thế nào thì đúng), **Hiệu ứng** (khi nào · lên ai · làm gì · trễ bao lâu). Thêm game kiểu mới = thêm một mục vào ổ cắm, không đổi mô hình.
 > **Đọc khi**: mở rộng web builder / `GenericGameController`, thêm kiểu chấm, kiểu hiển thị hoặc hiệu ứng mới.
-> **Cập nhật**: 2026-10-13 · **chưa làm gì trong code**. Thay thế hướng "Slide/Trigger" trong [game-builder-core-engine.md](game-builder-core-engine.md). Khảo sát các họ game: [game-builder-generalization.md](game-builder-generalization.md) §1–§9. Bằng chứng: `Assets/Game/Scripts/Core/MiniGameKit/GenericGame/{SCHEMA.md,capabilities.json}`, `WebTools/GenericGameBuilder/fs/games/*.json`.
+> **Cập nhật**: 2026-10-13 · **chưa làm gì trong code**. Thay thế hướng "Slide/Trigger" trong [game-builder-core-engine.md](game-builder-core-engine.md). Khảo sát các họ game: [game-builder-generalization.md](game-builder-generalization.md) §1–§9. Bằng chứng: `Assets/Game/Scripts/Core/MiniGameKit/GenericGame/{SCHEMA.md,capabilities.json}`, zip mẫu `WebTools/FloorStoryFlows/*.zip` (`fs/games/*.json` đã bỏ).
 
 ## 1. Nguyên tắc
 1. **Người dùng cuối là cô giáo**: chỉ thấy các đối tượng quen (nền, câu hỏi, đáp án, nhân vật), danh sách lựa chọn và bảng điền. Không có "trigger", "biến", "sự kiện".
@@ -186,7 +186,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 ## 11. Ví dụ dựng từ đầu: **Đếm khối hộp**
 **Game gốc** (FloorStory `DemKhoiHop`, zip `WebTools/FloorStoryFlows/DemKhoiHop.zip` + view `stack` trong `fs_flow.js`): hiện một cụm N khối (N tăng dần: 5 câu đầu ≤ 3, rồi tối đa 5 → 10, mỗi mức 2 câu — tham số `easyCount/easyMax/rampFrom/growEvery` của generator `number`), bé chạm số đúng trong 3 số; sai thì thử lại; **sai từ lần thứ 2 → các khối được đếm lần lượt 1, 2, 3… (số nằm ngoài hình, có gạch chỉ vào từng khối) và số đúng nhấp nháy**; khi đúng cũng đếm lại rồi pháo giấy.
 
-### 11.1 Thao tác của cô giáo (tên tab/nút thật của builder v4.1)
+### 11.1 Thao tác của cô giáo (tên tab/nút thật của builder v4.16)
 | # | Tab / nút | Thao tác | Đối tượng · ổ cắm | Lần | Có sẵn |
 |---|---|---|---|---|---|
 | 0 | File → **Game mới** | chọn game mẫu quiz gần nhất rồi sửa | — | 1 | ✔ |
@@ -220,7 +220,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 → +6–8 thao tác. *Lần lượt trên nhóm* cũng là hiệu ứng dùng cho **Nhớ chuỗi** (hiện lần lượt rồi úp): cùng một mục thư viện, khác tham số (việc làm với mỗi phần tử: hiện / nháy / đánh số; kết thúc: giữ / úp / ẩn).
 
 ## 12. Chưa kiểm chứng
-- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.16.html (gốc v4.1)` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
+- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.16.html` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
 - Thời lượng/độ chặn (blocking) chính xác của từng bước trong `on.right/on.wrong` của `CauBacQua` (bảng §6.3 là minh hoạ).
 - Mức độ tái dùng `ButtonDisplay` cho "thẻ úp + ghép cặp" ở Unity (cần đọc `AnswerValidator.cs`, `ButtonDisplay.cs`).
 - Các họ game viết tay (Tổng hợp CSV, Nghe-tìm, Phép tính, Quiz Kit) mới đọc ở mức field/ghi chú đầu class (xem generalization §9).

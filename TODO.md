@@ -107,9 +107,9 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] TongHopToan: mỗi bên câu riêng (đếm/cộng/trừ/dấu), chỉ ẩn kết quả C, đếm 6-10 ở đoạn 3; thử trên K02 — `ButtonDisplay.SetupPerTeam` + hook `QuestionForTeam` ở MiniGameControllerBase — (2026-10-09)
 - [ ] Thứ trong tuần + chữ cái: chờ user chọn phương án (đã bỏ Tàu 7 toa và Đi nét chữ) — (2026-10-09)
 
-## Game Builder v4.0 — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
+## Game Builder (bản cuối v4.16) — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
 - [ ] Đợt 1 đã xong (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh file). **User dùng thử rồi chỉnh tiếp** — (2026-10-10)
-- [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.16.html (gốc v4.1)` 2026-10-13; **chờ user thử v4.0 rồi mới thử v4.1**
+- [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.16.html` (bản cuối; mọi bản cũ đã xoá) 2026-10-13
 - [ ] Định dạng chữ cho game kéo-thả v2 (câu hỏi/đáp án/item/slot): đổi schema + `GenericGameController`/`ButtonItem` + web preview — (2026-10-10)
 - [x] Game cơ chế: sân khấu kéo-thả (chọn/kéo/đổi cỡ, Chèn hình-chữ-ảnh-vật, ghi đè vị trí `p.ov`, kéo cả nhóm, Đổi cơ chế từ mẫu) — web xong 2026-10-13; **Unity cần thử**: `FlowViews.OvPos` + `cards.x` (parity chưa chạy Editor)
 - [x] Game cơ chế dùng khung chung (rail câu hỏi, tab phải, ribbon), round Tự động / Viết tay, cơ chế = chữ ký gen|views|judge, "Chỉ lấy cơ chế" khi tạo mới — web xong 2026-10-13; **Unity cần thử**: `FlowGens.FromRound`/`FlowWorld.NextRound` (khớp JS bằng test Roslyn, chưa chạy Editor)
