@@ -18,8 +18,6 @@ class FaceDatabase {
 
     companion object {
         const val DB_PATH = "/sdcard/EduXplore/enrolled.json"
-        private const val MATCH_THRESHOLD  = 0.363f
-        private const val MARGIN_THRESHOLD = 0.08f
     }
 
     private var persons: List<EnrolledPerson> = emptyList()
@@ -74,7 +72,8 @@ class FaceDatabase {
     fun isEmpty() = persons.isEmpty()
 
     /**
-     * Returns best match if sim >= MATCH_THRESHOLD and margin over runner-up >= MARGIN_THRESHOLD.
+     * Returns best match if sim >= matchThreshold and margin over runner-up >= marginThreshold
+     * (both from [FaceMatchConfig]).
      * Returns null name if no confident match.
      */
     fun bestMatch(embedding: FloatArray): DbMatchResult {
@@ -97,7 +96,8 @@ class FaceDatabase {
             }
         }
         val margin = bestSim - runnerSim
-        return if (bestSim >= MATCH_THRESHOLD && margin >= MARGIN_THRESHOLD)
+        val cfg = FaceMatchConfig.get()
+        return if (bestSim >= cfg.matchThreshold && margin >= cfg.marginThreshold)
             DbMatchResult(bestName, bestSim)
         else
             DbMatchResult(null, bestSim)

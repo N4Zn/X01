@@ -58,9 +58,6 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         return _owner[slot] ?? fallback;
     }
 
-    /// <summary>Sau khi hết timeout mà chưa nhận ra ai, vẫn tiếp tục dò thêm ngần này giây (người chơi bước vào muộn).</summary>
-    const float LateWatchSec = 30f;
-
     /// <summary>Tên mặc định khi không nhận ra ai ở slot (cùng quy ước với nhánh timeout).</summary>
     string DefaultName(int slot)
     {
@@ -159,14 +156,26 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         string result    = null;
         float confidence = -1f;
 
+        // Frame đầu tiên nhận được người → hiện tên NGAY (tạm); sau đó native bỏ phiếu, đủ phiếu thì KHOÁ
+        // (có thể ra người khác → hiện lại tên đúng) và kết thúc sớm. Hết timeout mà chưa khoá thì dùng
+        // người nhận được đầu tiên; không nhận được ai → khoá tên mặc định.
+        string shown = null;
         while (t < timeout && _gen[slot] == myGen)
         {
-            var (left, right, leftSim, rightSim) = plugin != null ? plugin.GetConfirmed() : (null, null, -1f, -1f);
+            var (left, right, leftSim, rightSim, leftLocked, rightLocked) =
+                plugin != null ? plugin.GetConfirmedLocked() : (null, null, -1f, -1f, false, false);
             string candidate = slot == 0 ? left : right;
-            if (candidate != null) { result = candidate; confidence = slot == 0 ? leftSim : rightSim; break; }
+            float  sim       = slot == 0 ? leftSim : rightSim;
+            bool   isLocked  = slot == 0 ? leftLocked : rightLocked;
+            if (candidate != null)
+            {
+                if (isLocked) { result = candidate; confidence = sim; break; }
+                if (shown == null) { shown = candidate; confidence = sim; ShowTentative(slot, shown, onDone); }
+            }
             yield return null;
             t += Time.deltaTime;
         }
+        if (result == null) result = shown;   // chưa khoá: giữ người đầu tiên
 
         // _gen đổi = có RecognizeSlot() mới cho cùng slot (hoặc ván mới) thay thế request này → không ghi đè kết quả của nó.
         if (_gen[slot] == myGen)
@@ -174,25 +183,6 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             bool recognized = result != null;
             if (!recognized) result = DefaultName(slot);
             ApplyRecognition(slot, result, recognized, Time.time - startTime, confidence, onDone);
-
-            // Hết timeout mà chưa ai được nhận ra → KHÔNG tắt slot ngay: người chơi bước vào muộn vẫn được nhận,
-            // tên cập nhật lại (HUD + ControlActivity + log) thay vì giữ tên mặc định cả round.
-            if (!recognized)
-            {
-                float watched = 0f;
-                while (watched < LateWatchSec && _gen[slot] == myGen)
-                {
-                    var (left, right, leftSim, rightSim) = plugin != null ? plugin.GetConfirmed() : (null, null, -1f, -1f);
-                    string candidate = slot == 0 ? left : right;
-                    if (candidate != null)
-                    {
-                        ApplyRecognition(slot, candidate, true, Time.time - startTime, slot == 0 ? leftSim : rightSim, onDone);
-                        break;
-                    }
-                    yield return null;
-                    watched += Time.deltaTime;
-                }
-            }
         }
 
         // Chỉ tắt slot khi không còn request nào khác đang chờ nó (request mới cùng slot có thể đã thay thế request này);
@@ -201,6 +191,17 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         if (_slotActive[slot] <= 0) { _slotActive[slot] = 0; plugin?.SetSlotRecognitionEnabled(slot, false); }
         _activeRequests--;
         if (_activeRequests < 0) _activeRequests = 0;
+    }
+
+    /// <summary>Hiện tên tạm của frame đầu tiên nhận được người (HUD/session) — chưa cộng phiếu 1 vs 1, chưa ghi log
+    /// (ApplyRecognition làm khi kết thúc request). 1 vs 1: người đang giữ chỗ vẫn được ưu tiên hiển thị.</summary>
+    void ShowTentative(int slot, string name, Action<string> onDone)
+    {
+        if (Individual && _owner[slot] != null) name = _owner[slot];
+        SetSessionName(slot, name);
+        _lastName[slot] = name;
+        _lastRecognized[slot] = true;
+        onDone?.Invoke(name);
     }
 
     void ApplyRecognition(int slot, string name, bool recognized, float elapsed, float confidence, Action<string> onDone)

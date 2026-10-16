@@ -238,6 +238,37 @@ public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
 #endif
     }
 
+    /// <summary>
+    /// Như <see cref="GetConfirmed"/> nhưng kèm cờ khoá từng slot: tên != null &amp;&amp; chưa khoá = tên TẠM
+    /// (frame đầu tiên nhận được, chưa đủ phiếu); khoá = đã đủ phiếu, native ngừng nhận diện slot đó.
+    /// </summary>
+    public (string left, string right, float leftSim, float rightSim, bool leftLocked, bool rightLocked) GetConfirmedLocked()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!_initialized) return (null, null, -1f, -1f, false, false);
+        try
+        {
+            string json = _bridge.CallStatic<string>("getConfirmedNames");
+            var (l, r, ls, rs) = ParseConfirmedJson(json);
+            return (l, r, ls, rs, ExtractBoolField(json, "leftLocked"), ExtractBoolField(json, "rightLocked"));
+        }
+        catch { return (null, null, -1f, -1f, false, false); }
+#else
+        return (null, null, -1f, -1f, false, false);
+#endif
+    }
+
+    static bool ExtractBoolField(string json, string key)
+    {
+        if (string.IsNullOrEmpty(json)) return false;
+        string search = $"\"{key}\":";
+        int start = json.IndexOf(search, StringComparison.Ordinal);
+        if (start < 0) return false;
+        start += search.Length;
+        while (start < json.Length && json[start] == ' ') start++;
+        return start < json.Length && json[start] == 't';
+    }
+
     /// <summary>Seconds a round has to recognize both players before falling back to default names.</summary>
     public float GetTimeoutSec()
     {

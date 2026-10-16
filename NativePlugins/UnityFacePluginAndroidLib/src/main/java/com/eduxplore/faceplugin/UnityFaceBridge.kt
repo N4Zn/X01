@@ -33,8 +33,9 @@ import java.util.concurrent.atomic.AtomicReference
  *   string json = bridge.CallStatic<string>("getConfirmedNames");  // poll during/after countdown
  *   bridge.CallStatic("shutdown");
  *
- * Recognition logic: single-frame confirm. The LAST person confidently recognised in each
- * slot during the active round is returned by getConfirmedNames(). clearRoundVotes() resets.
+ * Recognition logic: frame đầu tiên khớp chắc → hiện tên NGAY (tạm, locked=false); sau đó khi 1 người
+ * đạt votesNeeded/voteWindow frame (FaceMatchConfig) thì KHOÁ (locked=true), ghi đè tên tạm nếu khác.
+ * Chưa khoá thì vẫn trả tên tạm đầu tiên. getConfirmedNames() trả tên + cờ locked; clearRoundVotes() reset.
  */
 object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
 
@@ -96,6 +97,13 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
     // Độ tin cậy (cosine sim, 0..1) của lần khoá lastRecognized[slot] tương ứng — song song với
     // mảng trên, cùng bị khoá/xoá tại cùng thời điểm. -1 = chưa nhận diện lần nào trong round này.
     private val lastConfidence = FloatArray(MAX_FACES) { -1f }
+    // Cửa sổ bỏ phiếu mỗi slot: kết quả của voteWindow frame gần nhất (chỉ tính frame mặt thẳng đã
+    // chạy so khớp) — tên người nhận được, hoặc null nếu frame đó không khớp chắc. Khoá khi 1 tên
+    // đạt votesNeeded phiếu trong cửa sổ (xem FaceMatchConfig). Truy cập dưới khoá lastRecognized.
+    private class Vote(val name: String?, val sim: Float)
+    // true = slot đã khoá (đủ phiếu) → ngừng nhận diện slot đó. lastRecognized != null mà chưa khoá = tên tạm.
+    private val locked = BooleanArray(MAX_FACES)
+    private val votes = Array(MAX_FACES) { ArrayDeque<Vote>() }
 
     @Volatile private var initialized = false
 
@@ -227,7 +235,9 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
     /** Reset at the start of each round's countdown. Reloads config so edits apply without a rebuild. */
     @JvmStatic
     fun clearRoundVotes() {
-        synchronized(lastRecognized) { lastRecognized.fill(null); lastConfidence.fill(-1f) }
+        synchronized(lastRecognized) {
+            lastRecognized.fill(null); lastConfidence.fill(-1f); locked.fill(false); votes.forEach { it.clear() }
+        }
     }
 
     /**
@@ -251,7 +261,7 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
     @JvmStatic
     fun clearSlotVote(slot: Int) {
         if (slot < 0 || slot >= MAX_FACES) return
-        synchronized(lastRecognized) { lastRecognized[slot] = null; lastConfidence[slot] = -1f }
+        synchronized(lastRecognized) { lastRecognized[slot] = null; lastConfidence[slot] = -1f; locked[slot] = false; votes[slot].clear() }
     }
 
     @JvmStatic fun getTimeoutSec(): Float = config.timeoutSec
@@ -261,7 +271,8 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
     /**
      * Returns the last confirmed names + confidence (cosine sim, 0..1) for each slot as JSON.
      * null name = nobody recognised yet this round for that slot (sim is -1 in that case).
-     * Example: {"left":"Nguyen Van A","leftSim":0.412,"right":null,"rightSim":-1}
+     * locked=false + name != null = tên tạm (frame đầu tiên), chưa đủ phiếu.
+     * Example: {"left":"Nguyen Van A","leftSim":0.412,"leftLocked":true,"right":null,"rightSim":-1,"rightLocked":false}
      */
     @JvmStatic
     fun getConfirmedNames(): String {
@@ -269,15 +280,19 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
         val r: String?
         val lSim: Float
         val rSim: Float
+        val lLock: Boolean
+        val rLock: Boolean
         synchronized(lastRecognized) {
             l = lastRecognized[0]
             r = lastRecognized[1]
             lSim = lastConfidence[0]
             rSim = lastConfidence[1]
+            lLock = locked[0]
+            rLock = locked[1]
         }
         val ls = if (l != null) "\"$l\"" else "null"
         val rs = if (r != null) "\"$r\"" else "null"
-        return """{"left":$ls,"leftSim":$lSim,"right":$rs,"rightSim":$rSim}"""
+        return """{"left":$ls,"leftSim":$lSim,"leftLocked":$lLock,"right":$rs,"rightSim":$rSim,"rightLocked":$rLock}"""
     }
 
     // ── USBMonitor.OnDeviceConnectListener ───────────────────────────────────
@@ -565,11 +580,17 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
         // takes, freezing the whole app instead of just delaying the name update.
         for (slot in 0 until MAX_FACES) {
             if (!slotEnabled[slot].get()) continue      // nobody is currently waiting on this slot
-            if (lastRecognized[slot] != null) continue // already locked this round — stop re-recognizing
+            if (locked[slot]) continue // đã khoá round này — ngừng nhận diện lại
 
-            val face = slots[slot] ?: continue
+            val face = slots[slot]
+            if (face == null) {
+                // Hết mặt trong slot → người khác có thể bước vào, bỏ phiếu cũ.
+                synchronized(lastRecognized) { votes[slot].clear() }
+                continue
+            }
             val pose = eng.estimatePose(face)
-            if (!pose.isFrontal(FaceEngine.YAW_TOLERANCE, FaceEngine.ROLL_TOLERANCE)) continue
+            val matchCfg = FaceMatchConfig.get()
+            if (!pose.isFrontal(matchCfg.yawTolerance, matchCfg.rollToleranceDeg)) continue
 
             val tAlignStart = System.nanoTime()
             val aligned   = eng.alignFace(bgr, face)
@@ -584,14 +605,42 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
                 "align=${"%.1f".format((tAlignEnd - tAlignStart) / 1_000_000.0)}ms " +
                 "embed=${"%.1f".format((tEmbedEnd - tAlignEnd) / 1_000_000.0)}ms " +
                 "match=${"%.1f".format((tMatchEnd - tEmbedEnd) / 1_000_000.0)}ms")
-            if (match.name != null) {
-                synchronized(lastRecognized) {
-                    if (lastRecognized[slot] == null) {
-                        lastRecognized[slot] = match.name
+            // Frame đầu tiên khớp chắc → hiện tên ngay (tạm). Mọi frame đều vào cửa sổ voteWindow frame
+            // gần nhất (khớp chắc → tên, không thì null); tên vừa nhận đủ votesNeeded phiếu thì KHOÁ,
+            // ghi đè tên tạm nếu khác. Mỗi frame chỉ kiểm tra tên mới nhận → người ĐẦU TIÊN đủ phiếu thắng.
+            var lockedName: String? = null
+            var lockedSim = -1f
+            var tally = 0
+            var tentative = false
+            synchronized(lastRecognized) {
+                if (!locked[slot]) {
+                    val name = match.name
+                    if (name != null && lastRecognized[slot] == null) {
+                        lastRecognized[slot] = name
                         lastConfidence[slot] = match.sim
+                        tentative = true
+                    }
+                    val q = votes[slot]
+                    q.addLast(Vote(name, match.sim))
+                    while (q.size > matchCfg.voteWindow) q.removeFirst()
+                    if (name != null) {
+                        val same = q.filter { it.name == name }
+                        tally = same.size
+                        if (tally >= matchCfg.votesNeeded) {
+                            lockedName = name
+                            lockedSim = same.map { it.sim }.average().toFloat()
+                            lastRecognized[slot] = name
+                            lastConfidence[slot] = lockedSim
+                            locked[slot] = true
+                            q.clear()
+                        }
                     }
                 }
-                Log.i(TAG, "slot $slot LOCKED → ${match.name} (sim=${"%.3f".format(match.sim)})")
+            }
+            if (lockedName != null) {
+                Log.i(TAG, "slot $slot LOCKED → $lockedName (sim=${"%.3f".format(lockedSim)}, votes=$tally/${matchCfg.voteWindow})")
+            } else {
+                Log.i(TAG, "slot $slot ${if (tentative) "TENTATIVE" else "vote"} name=${match.name} sim=${"%.3f".format(match.sim)} (cần ${matchCfg.votesNeeded}/${matchCfg.voteWindow})")
             }
         }
     }

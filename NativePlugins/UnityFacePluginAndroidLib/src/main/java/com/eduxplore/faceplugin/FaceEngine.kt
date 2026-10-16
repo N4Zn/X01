@@ -31,11 +31,6 @@ data class PoseEstimate(val yawOffset: Float, val rollDeg: Float) {
  */
 class FaceEngine(context: Context) {
 
-    companion object {
-        const val YAW_TOLERANCE  = 0.60f
-        const val ROLL_TOLERANCE = 45f
-    }
-
     private val detector:   FaceDetectorYN
     private val recognizer: FaceRecognizerSF
 

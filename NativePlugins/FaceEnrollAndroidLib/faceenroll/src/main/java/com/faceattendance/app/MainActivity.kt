@@ -142,19 +142,16 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // người thứ 2 che người 1). Lock tên nằm trong track và được kiểm chứng lại bằng embedding
     // định kỳ / khi box thay đổi đột ngột.
     private val MAX_FACES = 2
-    // OpenCV's own recommendation for the SFace model (opencv_zoo demo.py):
-    // cosine similarity >= 0.363 means same identity.
-    private val matchThreshold = 0.363f
-    // Minimum lead the best match must have over the runner-up to be trusted. Without this,
-    // a large gallery (dozens-hundreds of people) makes it increasingly likely some other
-    // enrolled person's embedding also clears matchThreshold by coincidence. This is also
-    // what catches near-identical faces (e.g. identical twins) - two people whose embeddings
-    // are this close trigger a manual confirmation instead of a silent (possibly wrong) pick.
-    private val marginThreshold = 0.08f
-    // Loosened as far as still makes sense: beyond this, SFace's own alignment/embedding
-    // accuracy degrades regardless of whether YuNet still reports a detection.
-    private val yawTolerance = 0.60f
-    private val rollToleranceDeg = 45f
+    // Các ngưỡng nhận diện đọc từ /sdcard/EduXplore/face_match.json (FaceMatchConfig, dùng chung
+    // với game; mặc định 0.38 / 0.10 / yaw 0.40). matchThreshold: cosine sim tối thiểu (OpenCV khuyến
+    // nghị 0.363 cho SFace, nhưng với mặt trẻ em dễ nhầm nên đặt cao hơn).
+    // marginThreshold: người xếp 1 phải hơn người xếp 2 chừng này, nếu không thì coi là mơ hồ
+    // (gallery lớn dễ có người khác vượt ngưỡng ngẫu nhiên; bắt cả cặp song sinh).
+    // yawTolerance: quá lệch thì embedding của SFace kém tin cậy dù YuNet vẫn dò được mặt.
+    private val matchThreshold: Float get() = FaceMatchConfig.get().matchThreshold
+    private val marginThreshold: Float get() = FaceMatchConfig.get().marginThreshold
+    private val yawTolerance: Float get() = FaceMatchConfig.get().yawTolerance
+    private val rollToleranceDeg: Float get() = FaceMatchConfig.get().rollToleranceDeg
     private val cooldownMs = 15_000L
 
     @Volatile private var lastDetected: DetectedFace? = null
