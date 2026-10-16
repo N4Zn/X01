@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Báo cáo kết quả học tập · EduXplore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:wght@600&display=swap">
+<link rel="stylesheet" href="edux-report.css">
+<style>html,body{margin:0;min-height:100%;background:#e9ebee}@media(prefers-color-scheme:dark){body{background:#101316}}</style>
+</head>
+<body>
+<!-- Trang chạy độc lập. Mở bằng máy chủ tĩnh (fetch không chạy với file://): python -m http.server 8080 -->
+<div id="edux-report"></div>
+<script src="edux-report.js"></script>
+<script>
+  // ?data=...  đổi file dữ liệu (mặc định data/report.json, không có thì dùng data/sample.json)
+  var q = new URLSearchParams(location.search), src = q.get('data') || 'data/report.json';
+  fetch(src, { method: 'HEAD' }).then(function (r) { return r.ok ? src : 'data/sample.json'; }, function () { return 'data/sample.json'; }).then(function (url) {
+    EduxReport.mount('#edux-report', { dataUrl: url, logo: 'logo.png', theme: 'auto', hash: true });
+  });
+</script>
+</body>
+</html>

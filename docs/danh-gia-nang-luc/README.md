@@ -8,6 +8,7 @@
 
 | Đường dẫn | Là gì |
 |---|---|
+| `web/` | **Web báo cáo máy chiếu sàn** (tab Khối · Lớp · Học sinh), widget nhúng được. Xem `web/INTEGRATION.md`. |
 | `tool/bao-cao-nang-luc.html` | Tool web 1 file: import JSON log → báo cáo A4. Mở thẳng bằng trình duyệt (cần `logo.png` cạnh nó). |
 | `tool/tests/test3.js`, `test4.js` | Test Node (stub DOM): công thức điểm; nhiều môn, TỔNG, tắt môn/học phần. Chạy: `node tool/tests/test3.js` |
 | `mau/hoso-nang-luc-toan.html` | Mẫu InBody-style đầu tiên (dữ liệu giả, môn Toán). |
