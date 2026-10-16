@@ -109,7 +109,7 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 
 ## Game Builder v4.0 — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
 - [ ] Đợt 1 đã xong (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh file). **User dùng thử rồi chỉnh tiếp** — (2026-10-10)
-- [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.6.html (gốc v4.1)` 2026-10-13; **chờ user thử v4.0 rồi mới thử v4.1**
+- [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.16.html (gốc v4.1)` 2026-10-13; **chờ user thử v4.0 rồi mới thử v4.1**
 - [ ] Định dạng chữ cho game kéo-thả v2 (câu hỏi/đáp án/item/slot): đổi schema + `GenericGameController`/`ButtonItem` + web preview — (2026-10-10)
 - [x] Game cơ chế: sân khấu kéo-thả (chọn/kéo/đổi cỡ, Chèn hình-chữ-ảnh-vật, ghi đè vị trí `p.ov`, kéo cả nhóm, Đổi cơ chế từ mẫu) — web xong 2026-10-13; **Unity cần thử**: `FlowViews.OvPos` + `cards.x` (parity chưa chạy Editor)
 - [x] Game cơ chế dùng khung chung (rail câu hỏi, tab phải, ribbon), round Tự động / Viết tay, cơ chế = chữ ký gen|views|judge, "Chỉ lấy cơ chế" khi tạo mới — web xong 2026-10-13; **Unity cần thử**: `FlowGens.FromRound`/`FlowWorld.NextRound` (khớp JS bằng test Roslyn, chưa chạy Editor)
@@ -139,3 +139,4 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Sheet đang để "ai có link đều xem" và chứa tên bé — cân nhắc khoá, tải CSV bằng tài khoản (2026-10-09)
 - [ ] Hòa Vũ / Minh Anh chưa có điểm: cho chơi Tổng hợp Toán rồi chạy lại; hoặc quyết định thêm `SoSanhSo` vào `scored_games` (cần xác nhận game độc lập) và có đưa log `2025-04-14` (đồng hồ K02 sai, thực tế trước 06/10) vào "ngày chưa rõ" không (2026-10-09)
 - [ ] Nhận định học phần nhiều bé chỉ 2–3 câu ("ít mẫu"): cần nhiều câu hơn mỗi học phần; ngưỡng `diag` (5s/9s/75%) do tôi tự chọn — user duyệt lại (2026-10-09)
+- [ ] **Giao diện game builder chưa ok — tối ưu sau** (2026-10-14): thống nhất cách hiển thị cài đặt kiểu PowerPoint cho mọi game (tab Hiệu ứng chung/riêng đối tượng, panel phải), còn popover lẻ (Định dạng chữ, Tuỳ biến cơ chế), ghi chú nút "?" chưa có phần riêng cho cơ chế, panel hiệu ứng riêng mới có hiệu ứng chờ. Xem `WebTools/GenericGameBuilder/CLAUDE.md` mục "Cài đặt hiển thị thống nhất".

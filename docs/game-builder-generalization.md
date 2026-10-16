@@ -433,7 +433,7 @@ Nguyên tắc: **cái gì thường thay giữa các game → khối/thẻ; cái
 
 ## 10e. Ví dụ: game **Nặng – Nhẹ** (`NangNhe`, FloorStory)
 
-**Luật chơi (đọc từ `fs/games/NangNhe.json` + `fs_flow.js` `values` / `seesaw`)**: bốc 2 (rồi 3) con vật có `value` khác nhau (1 nhẹ · 2 vừa · 3 nặng); các con đứng trên bập bênh, bên giá trị lớn chúi xuống; hỏi con nặng nhất hoặc nhẹ nhất (`less`); đội chạm đúng con; `judge = equals`, chờ `finishSec 2.4` rồi sang lượt kế. 3 vật = 2 bập bênh nối nhau. Không có chữ trên màn hình (`text` rỗng) — đề bằng âm `round.sound`.
+**Luật chơi (đọc từ `WebTools/FloorStoryFlows/NangNhe.zip` (`meta.fsData`) + `fs_flow.js` `values` / `seesaw`)**: bốc 2 (rồi 3) con vật có `value` khác nhau (1 nhẹ · 2 vừa · 3 nặng); các con đứng trên bập bênh, bên giá trị lớn chúi xuống; hỏi con nặng nhất hoặc nhẹ nhất (`less`); đội chạm đúng con; `judge = equals`, chờ `finishSec 2.4` rồi sang lượt kế. 3 vật = 2 bập bênh nối nhau. Không có chữ trên màn hình (`text` rỗng) — đề bằng âm `round.sound`.
 
 ### Phân rã theo 6 chỗ cắm
 | Chỗ cắm | Giá trị của Nặng–Nhẹ |

@@ -8,7 +8,8 @@
 1. **Người dùng cuối là cô giáo**: chỉ thấy các đối tượng quen (nền, câu hỏi, đáp án, nhân vật), danh sách lựa chọn và bảng điền. Không có "trigger", "biến", "sự kiện".
 2. **Mô hình đối tượng cố định** (v2). Cái được mở rộng là *thuộc tính của đối tượng* và *3 ổ cắm*.
 3. **`capabilities.json` là nguồn chân lý** (đã có): web builder đọc nó để vẽ form; Unity cài từng mục. Thêm một lựa chọn = **1 mục registry + 1 bản cài JS (chơi thử) + 1 bản cài C#**.
-4. **Ngoài phạm vi builder** (giữ là game viết code): thời gian thực (LaneDash, SaveTheAstronaut), khám phá 3D (SolarSystem), công cụ (FRTest), lớp thưởng cược/hộp quà (WhoIsIt).
+4. **Định hướng dài hạn (2026-10-14)**: game builder là TOOL DỰNG GAME CHUNG; luồng duy nhất: zip → mở web builder → sửa → xuất zip → import Unity; mọi game (cũ/mới) chỉ lưu 1 zip, template mở lên = đọc zip gốc. Tạm thời chấp nhận tính năng đặc thù của 1 game gắn thành **code kèm trong zip**, nhưng lâu dài **không có đặc thù nào mà không có option tương ứng trên web** (đặc thù → gom thành cơ chế/tham số chung của builder). Tham số chỉ lưu 1 nguồn (zip), không nhân bản.
+5. **Ngoài phạm vi builder** (giữ là game viết code): thời gian thực (LaneDash, SaveTheAstronaut), khám phá 3D (SolarSystem), công cụ (FRTest), lớp thưởng cược/hộp quà (WhoIsIt).
 
 ```
  Cô giáo ─ kéo thả / điền form ─▶ Web builder ──▶ game.json (+ ảnh, âm) ──▶ Unity (GenericGame, C#)
@@ -183,7 +184,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 - Chưa có gợi ý theo số lần sai và chưa có hiệu ứng tuần tự trên một nhóm (đếm 1, 2, 3…).
 
 ## 11. Ví dụ dựng từ đầu: **Đếm khối hộp**
-**Game gốc** (FloorStory `DemKhoiHop`, `fs/games/DemKhoiHop.json` + view `stack` trong `fs_flow.js`): hiện một cụm N khối (N tăng dần từ 1–3 tới 10), bé chạm số đúng trong 3 số; sai thì thử lại; **sai từ lần thứ 2 → các khối được đếm lần lượt 1, 2, 3… (số nằm ngoài hình, có gạch chỉ vào từng khối) và số đúng nhấp nháy**; khi đúng cũng đếm lại rồi pháo giấy.
+**Game gốc** (FloorStory `DemKhoiHop`, zip `WebTools/FloorStoryFlows/DemKhoiHop.zip` + view `stack` trong `fs_flow.js`): hiện một cụm N khối (N tăng dần: 5 câu đầu ≤ 3, rồi tối đa 5 → 10, mỗi mức 2 câu — tham số `easyCount/easyMax/rampFrom/growEvery` của generator `number`), bé chạm số đúng trong 3 số; sai thì thử lại; **sai từ lần thứ 2 → các khối được đếm lần lượt 1, 2, 3… (số nằm ngoài hình, có gạch chỉ vào từng khối) và số đúng nhấp nháy**; khi đúng cũng đếm lại rồi pháo giấy.
 
 ### 11.1 Thao tác của cô giáo (tên tab/nút thật của builder v4.1)
 | # | Tab / nút | Thao tác | Đối tượng · ổ cắm | Lần | Có sẵn |
@@ -219,7 +220,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 → +6–8 thao tác. *Lần lượt trên nhóm* cũng là hiệu ứng dùng cho **Nhớ chuỗi** (hiện lần lượt rồi úp): cùng một mục thư viện, khác tham số (việc làm với mỗi phần tử: hiện / nháy / đánh số; kết thúc: giữ / úp / ẩn).
 
 ## 12. Chưa kiểm chứng
-- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.6.html (gốc v4.1)` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
+- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.16.html (gốc v4.1)` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
 - Thời lượng/độ chặn (blocking) chính xác của từng bước trong `on.right/on.wrong` của `CauBacQua` (bảng §6.3 là minh hoạ).
 - Mức độ tái dùng `ButtonDisplay` cho "thẻ úp + ghép cặp" ở Unity (cần đọc `AnswerValidator.cs`, `ButtonDisplay.cs`).
 - Các họ game viết tay (Tổng hợp CSV, Nghe-tìm, Phép tính, Quiz Kit) mới đọc ở mức field/ghi chú đầu class (xem generalization §9).

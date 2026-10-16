@@ -105,6 +105,12 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 
 Nhiều doc có thể lỗi thời so với code: kiểm tra dòng "Cập nhật" đầu mỗi doc, nghi ngờ thì đối chiếu code.
 
+## Nguyên tắc làm việc
+
+- **Một tham số / một dữ liệu chỉ lưu ở MỘT nguồn** (tối đa 2 chỗ: 1 bản Unity + 1 bản web). Không nhân bản setting qua nhiều file/script sinh → nhiều phiên bản, khó maintain. Game FloorStory: **zip trong `WebTools/FloorStoryFlows/` là nguồn duy nhất**; luồng: zip → mở web builder → sửa → xuất zip → import Unity. Bản Resources/StoryData và mẫu nhúng trong HTML chỉ là sản phẩm SINH từ zip (`sync_storydata.py`, `inline_web.py`), không sửa tay.
+- **Định hướng game builder**: là tool dựng game CHUNG, luồng duy nhất zip → web builder → sửa → xuất zip → import Unity. Tạm chấp nhận tính năng đặc thù của game gắn thành code kèm trong zip; dài hạn không có đặc thù nào thiếu option tương ứng trên web (`docs/game-builder-architecture.md` §1).
+- **Mặc định 2 đội có thứ tự câu khác nhau** (seed riêng); chỉ chế độ chơi chung (`sync`) mới cùng câu.
+
 ## Phase roadmap
 
 - **Phase 1** ✅ — Dự án mới, launcher, vào thẳng MenuScene
