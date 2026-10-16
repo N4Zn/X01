@@ -58,11 +58,12 @@ public class AddNumberGameController : MonoBehaviour
         // }
         // if (!isLoaded) { Debug.LogError("NDL: Failed to load AddUpMaster after retries. Returning to MenuScene."); SceneManager.LoadScene("MenuScene"); yield break; }
 
-        // Biến thể theo tên game (GameRegistry): AddNumber5 / AddNumber (hình) · AddNumber5Digit / AddNumberDigit (chữ số).
+        // Biến thể theo tên game (GameRegistry): AddNumber5 / AddNumber (hình) · AddNumber5Digit / AddNumberDigit (chữ số); thêm đuôi Easy = bản Dễ (AddNumber5Easy, AddNumberDigitEasy...).
         string gameName = GameSessionManager.Instance?.SelectedGameName ?? "";
         int maxSum = gameName.Contains("5") ? 5 : 10;
-        bool digitMode = gameName.EndsWith("Digit");
-        _gameModel = new AddNumberGameModel(maxSum);
+        bool digitMode = gameName.Contains("Digit");
+        bool easy = gameName.EndsWith("Easy"); // bản (Dễ): chỉ ẩn ô c
+        _gameModel = new AddNumberGameModel(maxSum, easy);
         // _gameModel.LoadQuestions(); // Removed as we use procedural generation now
 
         if (GameSettings.Instance != null) _feedbackDelay = GameSettings.Instance.RoundEndDelay;

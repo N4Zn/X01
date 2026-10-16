@@ -54,10 +54,13 @@ public class AddNumberGameModel
     private List<AddUpMaster.Param> allQuestions;
 
     private int _maxSum;
+    // Bản (Dễ): khoá level 1 (chỉ ẩn ô c, chọn 1 đáp án) — không lên level dù trả lời đúng liên tiếp.
+    private readonly bool _easy;
 
-    public AddNumberGameModel(int maxSum = 10)
+    public AddNumberGameModel(int maxSum = 10, bool easy = false)
     {
         _maxSum = maxSum;
+        _easy = easy;
         Player1Score = 0;
         Player2Score = 0;
         CurrentRound = 0;
@@ -331,7 +334,7 @@ public class AddNumberGameModel
 
     private void AdvanceLevel(int playerIndex)
     {
-        if (PlayerLevel[playerIndex] < 6)
+        if (!_easy && PlayerLevel[playerIndex] < 6)
         {
             PlayerLevel[playerIndex]++;
             MaxLevelReached[playerIndex] = Mathf.Max(MaxLevelReached[playerIndex], PlayerLevel[playerIndex]);
