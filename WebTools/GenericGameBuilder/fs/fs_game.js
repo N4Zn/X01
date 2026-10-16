@@ -16,6 +16,10 @@ class World {
   }
   get U(){ return Math.min(this.W, this.H); }
   get sync(){ return !!this.data.sync; }
+  /** Cài đặt "Chạm sai": mặc định (thiếu khoá) = sai là hết câu; false = cho chọn lại (mẫu FloorStory). Khớp FlowWorld.WrongEnds (C#). */
+  get wrongEnds(){ return this.data.wrongEndsRound !== false; }
+  /** Cài đặt game `noIcon`=1 → tắt icon ✔/✖ mặc định (game tự có hiệu ứng riêng). Mặc định (thiếu khoá) = HIỆN. Khớp FlowWorld.ShowIcon (C#). */
+  showIcon(ok){ if (!this.data.noIcon) this.g.showIcon(this.team, ok); }
   get items(){ return this.data.items || []; }
   /** Tham số số học (p.key) — thiếu thì dùng mặc định `d`. */
   num(key, d){ const v = this.p[key]; return (v === undefined || v === null || v === '' || isNaN(+v)) ? d : +v; }
@@ -30,9 +34,17 @@ class World {
   sfx(k){ const fs = (this.flow && this.flow.sounds) || {}; if ((k === 'right' || k === 'wrong') && fs[k]){ this.g.playSound(fs[k], 'fx'); return; } this.g.sfx(k); }
   right(){ this.sfx('right'); }
   /** Phát tiếng của vật (file âm thanh gắn vào vật: tiếng đọc tên). Không dùng giọng đọc của trình duyệt. */
-  playItem(item){ if (item && item.sound) this.g.playSound(item.sound, 'voice'); }
+  playItem(item){ return !!(item && item.sound && this.g.playItemVoice(item.sound)); }
   /** Tiếng câu hỏi lúc đặt câu: file riêng của dạng câu hỏi (flow.sounds.prompt) nếu có, không thì tiếng của vật là đáp án. */
-  playPrompt(Q){ if (Q && Q.rsound){ this.g.playSound(Q.rsound, 'voice'); return; } const S = (this.flow && this.flow.sounds) || {}; if (S.prompt){ this.g.playSound(S.prompt, 'voice'); return; } this.playItem(Q && Q.items && Q.target >= 0 ? Q.items[Q.target] : null); }
+  /** File âm đọc câu hỏi: round.sound > flow.sounds.prompt > tiếng của vật là đáp án (khớp FlowWorld.PromptSoundFile). */
+  promptFile(Q){
+    if (Q && Q.rsound) return Q.rsound;
+    const S = (this.flow && this.flow.sounds) || {}; if (S.prompt) return S.prompt;
+    const it = Q && Q.items && Q.target >= 0 ? Q.items[Q.target] : null; return (it && it.sound) || '';
+  }
+  /** Tiếng câu hỏi lúc đặt câu. Chế độ CHUNG (sync): chỉ 1 luồng âm cho cả 2 đội — đội TRÁI khởi động vòng lặp (phát → nghỉ 4s → phát lại, tới khi cả 2 đội xong câu),
+   *  đội phải KHÔNG phát gì (tránh 2 đội phát đè nhau). Chế độ riêng: mỗi đội tự phát. */
+  playPrompt(Q){ const f = this.promptFile(Q); if (this.sync){ if (this.team === 0) this.g.promptLoop(f); return; } if (f) this.g.playSound(f, 'voice'); }
   img(name){ return this.g.imgUrl(name); }
   theme(key, d){ const t = this.data.theme || {}; return t[key] || d; }
 
@@ -109,7 +121,8 @@ class Game {
     this._timer = setInterval(()=> this._tick(), 16);
     this.worlds.forEach((w,i)=> this.run(this._teamLoop(i)));
   }
-  run(gen){ const t = { gen, wait: 0, dead: false }; this.tasks.push(t); return t; }
+  // run: chạy ngay bước đầu (như StartCoroutine) để không lộ 1 khung hình trước khi ẩn/thu nhỏ
+  run(gen){ const t = { gen, wait: 0, dead: false }; let r; try{ r = gen.next(); }catch(e){ console.error('[FloorStory]', e); t.dead = true; return t; } if (r.done){ t.dead = true; return t; } if (typeof r.value === 'number') t.wait = r.value; this.tasks.push(t); return t; }
   _tick(){
     const now = performance.now(); let dt = (now - this._last)/1000; this._last = now; dt = Math.min(dt, .1); T.dt = dt;
     for (let i = this.tasks.length-1; i >= 0; i--){
@@ -130,7 +143,7 @@ class Game {
       let done = false;
       const info = {};
       const begin = ()=> world.beginTask(info, (correct, ans)=>{
-        if (done) return; done = true; this.finished[i]++;
+        if (done) return; done = true; this.finished[i]++; this.hideIcon(i);
         if (correct) this.addPoint(i);
       });
       if (!world.sync || this.finished[other] >= taskIdx) begin();
@@ -139,6 +152,18 @@ class Game {
       yield .4;
     }
   }
+  /** Icon ✔ mặc định khi chạm đúng (khớp MiniGameControllerBase.ShowFeedbackIcon): hiện giữa nửa màn hình của đội, bật nảy, giữ tới khi đội đó xong lượt (hideIcon). */
+  showIcon(team, ok){
+    this.hideIcon(team);
+    const w = this.worlds[team]; if (!w || this.opts.mute) return;
+    // Đúng như icon của Unity (FeedbackIconBuilder): vòng tròn xanh #26C752 / đỏ #E02E2E + ✔/✖ trắng đậm; khung 20%×30% màn hình ở giữa nửa của đội (neo 0,15–0,35 × 0,30–0,60), vòng tròn vừa khung.
+    const sz = Math.min(w.W * .4, w.H * .3 * 540/500), pos = w.P(.5, .45);
+    if (w.data.iconAlign === 'answers'){ const ys = (w.elems || []).filter(e=> e.key != null && e.node && !e.node.dead && e.node.active !== false).map(e=> e.node.y); if (ys.length) pos.y = ys.reduce((a, b)=> a + b, 0) / ys.length; }   // iconAlign='answers': tâm icon ngang tâm đáp án (khớp FloorStoryController.AlignIconsToAnswers)
+    const bg = F.UI.pic(w.root, 'circle', hex(ok ? '#26C752' : '#E02E2E'), pos.x, pos.y, sz, sz);
+    F.UI.label(bg, ok ? '✔' : '✖', Math.round(sz*.3), WHITE, 0, 0, sz, sz, undefined, undefined, { bold:true });
+    bg.setAsLast(); (this._icon = this._icon || [])[team] = bg; this.run(tw.popIn(bg, .3));
+  }
+  hideIcon(team){ const n = this._icon && this._icon[team]; if (n){ n.destroy(); this._icon[team] = null; } }
   addPoint(team){ this.scores[team]++; (team === 0 ? this.hudL : this.hudR).textContent = (team === 0 ? 'Đội trái: ' : 'Đội phải: ') + this.scores[team]; }
   /** Hiệu ứng ngắn: dùng file người dùng gắn (data.sounds.right / wrong) nếu có, không thì tiếng tổng hợp sẵn. */
   sfx(k){
@@ -154,8 +179,39 @@ class Game {
     try{
       if (ch === 'voice' && this._voice){ try{ this._voice.pause(); }catch(e){} }
       const a = new Audio(url); if (ch === 'voice') this._voice = a;
-      const pr = a.play(); if (pr && pr.catch) pr.catch(()=>{});
+      const pr = a.play(); if (pr && pr.catch) pr.catch(()=>{ a._blocked = true; });   // trình duyệt chặn tự phát → vòng lặp câu hỏi thử lại sau 4s
+      return a;
     }catch(e){}
+  }
+  /** Nhận chạm vật: DỪNG âm câu hỏi đang phát → phát NGAY tiếng của vật (trả true nếu có phát). Judge chờ tiếng này xong + nghỉ 0,2s rồi mới hiện icon / phát tiếng đúng-sai
+   *  (xem JUDGE.equals). Trong lúc tiếng vật phát, vòng lặp âm câu hỏi chưa đếm 4s nghỉ / chưa phát lại. Khớp FlowWorld.PlayItem (C#). */
+  playItemVoice(name){
+    if (this.opts.mute || !name || !this.opts.audioUrl) return false;
+    if (this._voice){ this._voice._stopped = true; try{ this._voice.pause(); }catch(e){} }
+    const it = this._item = { gen: ((this._item && this._item.gen) || 0) + 1, pending: false, a: null };
+    it.a = this.playSound(name, 'voice');
+    return !!it.a;
+  }
+  /** Đang có tiếng vật đang phát → vòng lặp âm câu hỏi phải chờ. */
+  itemBusy(){ const it = this._item; return !!(it && (it.pending || (it.a && !it.a.ended && !it.a.paused && !it.a._blocked))); }
+  /** Vòng lặp âm câu hỏi CHUNG 2 đội (chế độ sync): phát 1 lần → nghỉ 4s → phát lại, tới khi cả 2 đội đã xong câu hiện tại (khớp MiniGameControllerBase.QuestionAudioLoop).
+   *  Gọi lại trong cùng 1 câu (vd lời "ready" của game ghi nhớ) thì bỏ qua — vòng đang chạy. Câu không có âm thì không lặp. */
+  promptLoop(name){
+    const idx = this.begun[0] - 1;
+    if (this._pl && this._pl.idx === idx && this._pl.open) return;
+    if (this._pl) this._pl.open = false;
+    const pl = this._pl = { idx, open: true };
+    const stillOpen = ()=> pl.open && !this.stopped && !(this.finished[0] > idx && this.finished[1] > idx);
+    const self = this;
+    this.run((function*(){
+      while (stillOpen()){
+        const a = self.playSound(name, 'voice'); if (!a) break;   // không có âm (hoặc tắt tiếng) → không lặp
+        let ended = false; a.addEventListener('ended', ()=> ended = true); a.addEventListener('error', ()=> ended = true);
+        while (!ended && !a._blocked && !a._stopped && stillOpen()) yield null;   // _stopped: bị ngắt vì có chạm vật
+        for (let t = 0; t < 4 && stillOpen(); t += T.dt){ if (self.itemBusy()) t = 0; yield null; }   // nghỉ 4s chỉ đếm khi không có tiếng vật
+      }
+      pl.open = false;
+    })());
   }
   _startMusic(){
     const m = (this.data.sounds || {}).music; if (!m || this.opts.mute || !this.opts.audioUrl) return;

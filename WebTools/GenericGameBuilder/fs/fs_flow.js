@@ -41,23 +41,24 @@ const MOD = {
            wordMore:S('Từ "lớn"','nặng'), wordLess:S('Từ "nhỏ"','nhẹ'), suffix2:S('Đuôi khi 2 vật','hơn'), suffix3:S('Đuôi khi 3 vật','nhất') },
       vars:'{word} = từ lớn/nhỏ, {suffix} = hơn/nhất, {label} = tên vật đáp án' },
     none: { name:'Không có câu hỏi', desc:'Không sinh câu hỏi (dùng cho game chạm tự do như Sàn kỳ diệu).', minItems:()=> 0, p: {}, vars:'' },
-    sequence: { name:'Chuỗi hình', desc:'Bốc k loại hình rồi xếp thành chuỗi dài dần (có thể lặp hình hoặc bắt khác nhau).', minItems: p=> Math.max(3, p.kinds||4),
+    sequence: { name:'Chuỗi hình', desc:'Bốc k loại hình rồi xếp thành chuỗi dài dần (hình có thể lặp lại nhưng không đứng liền nhau, hoặc bắt khác nhau hết).', minItems: p=> Math.max(3, p.kinds||4),
       p: { where:S('Lọc vật được bốc (biểu thức)','','vd: item.tags.kind == "shape"'), kinds:I('Số loại hình mỗi lượt',4,3,6), startLen:I('Chuỗi bắt đầu dài',1,1,6), maxLen:I('Chuỗi dài tối đa',6,1,8), growEvery:I('Dài thêm 1 sau mỗi (lượt)',2,1,10),
-           lenBy:SEL('Đếm theo','ok',['ok','task'],'ok = lượt đúng ngay lần đầu; task = mọi lượt'), distinct:I('Mọi hình trong chuỗi khác nhau (1/0)',0,0,1) },
+           lenBy:SEL('Đếm theo','ok',['ok','task'],'ok = lượt đúng ngay lần đầu; task = mọi lượt'), distinct:I('Mọi hình trong chuỗi khác nhau (1/0)',0,0,1), noAdjacent:I('Không cho 2 hình giống nhau đứng liền nhau (1/0)',1,0,1) },
       vars:'{len} = độ dài chuỗi, {names} = tên các hình nối bằng ", rồi "' },
     pairs: { name:'Các cặp thẻ giống nhau', desc:'Bốc số cặp tăng dần (mỗi bảng +1 cặp); mỗi vật xuất hiện 2 lần, xáo trộn.', minItems: p=> Math.max(2, p.startPairs||2),
       p: { startPairs:I('Số cặp bảng đầu',2,2,6), maxPairs:I('Số cặp tối đa',6,2,8) }, vars:'{pairs} = số cặp' },
     number: { name:'Một số đếm', desc:'Chọn 1 số (tăng dần theo lượt) + các số gần nó làm đáp án. Dùng với view "Đống khối" để đếm.', minItems:()=> 0,
-      p: { minStart:I('Số nhỏ nhất lúc đầu',1,1,6), startMax:I('Số lớn nhất lúc đầu',3,2,12), maxCount:I('Số lớn nhất tối đa',10,3,12), growEvery:I('Tăng độ khó sau mỗi (lượt đúng ngay lần đầu)',2,1,10),
+      p: { minStart:I('Số nhỏ nhất lúc đầu',1,1,6), startMax:I('Số lớn nhất lúc đầu',3,2,12), maxCount:I('Số lớn nhất tối đa',10,3,12), growEvery:I('Tăng độ khó sau mỗi (lượt đúng ngay lần đầu; nếu có giai đoạn dễ: sau mỗi câu)',2,1,10),
+           easyCount:I('Giai đoạn dễ: số câu đầu (0 = tắt)',0,0,20), easyMax:I('Giai đoạn dễ: số lớn nhất',3,2,12), rampFrom:I('Sau giai đoạn dễ: số lớn nhất ban đầu (tăng +1 mỗi bước)',5,2,12),
            options:I('Số đáp án',3,2,4), objectId:S('Vật cần đếm (id; trống = khối hộp 3D)','') },
       vars:'{count} = số đúng' },
   },
   view: {
     cards: { name:'Hàng thẻ', desc:'Hàng thẻ chạm được: hiện các vật của câu hỏi, hoặc các số đáp án.',
-      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), x:FL('Vị trí ngang (0 trái – 1 phải)',.5,.1,.9), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF'), cardImg:IMG('Ảnh nền thẻ','Ảnh thay cho nền thẻ (vd ô gỗ); có ảnh thì bỏ qua Màu thẻ'), cardImgScale:FL('Tỉ lệ ảnh nền thẻ',1,.3,2,'1 = vừa khít thẻ; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to') } },
+      p: { source:SEL('Nội dung','items',['items','options'],'items = các vật; options = các số (dùng với gen "Một số đếm")'), x:FL('Vị trí ngang (0 trái – 1 phải)',.5,.1,.9), y:FL('Vị trí dọc (0 dưới – 1 trên)',.46,.1,.9), sizeU:FL('Cỡ thẻ (theo cạnh nhỏ)',.32,.1,.4), tall:FL('Tỉ lệ cao/rộng',1.1,.8,1.3), fig:FL('Cỡ hình trong thẻ',.66,.4,.9), label:I('Chữ tên dưới hình (1/0)',0,0,1), bg:S('Màu thẻ','#FFFFFF','Để trống hoặc ghi none = không có nền thẻ (trong suốt)'), cardImg:IMG('Ảnh nền thẻ','Ảnh thay cho nền thẻ (vd ô gỗ); có ảnh thì bỏ qua Màu thẻ'), cardImgScale:FL('Tỉ lệ ảnh nền thẻ',1,.3,2,'1 = vừa khít thẻ; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to') } },
     strip: { name:'Dải hình (theo chuỗi)', desc:'Hàng ô hiện các hình của chuỗi theo thứ tự. Thường dùng với "Hiện n giây rồi úp".',
       p: { y:FL('Vị trí dọc',.70,.1,.9), slotU:FL('Cỡ ô (đơn vị U, tối đa)',.2,.05,.3), plain:I('Chỉ hình, không ô nền (1/0)',0,0,1), slotImg:IMG('Ảnh nền ô','Ảnh thay cho ô nền trắng (vd ô gỗ)'), slotImgScale:FL('Tỉ lệ ảnh nền ô',1,.3,2,'1 = vừa khít ô; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to'), coverImg:IMG('Ảnh ô úp (?)','Ảnh hiện khi úp hình lại, thay cho dấu ?'), coverImgScale:FL('Tỉ lệ ảnh ô úp (?)',1,.3,2,'1 = vừa khít ô; nhỏ hơn 1 thu nhỏ, lớn hơn 1 phóng to') } },
-    grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1) } },
+    grid: { name:'Lưới thẻ', desc:'Lưới thẻ cho các cặp (có thể úp sẵn). Chạm để lật.', p: { covered:I('Úp sẵn (1/0)',1,0,1), cardScale:FL('Cỡ thẻ (nhân)',1,.5,1.6,'1 = vừa ô lưới; 1.2 = to hơn 20% (các thẻ sát nhau hơn)'), shape:SEL('Kiểu xếp','grid',['grid','u'],'grid = hàng lối đều; u = hàng trên đủ thẻ, các thẻ còn lại xếp dọc 2 bên (chừa trống giữa phía dưới)'), backImg:IMG('Ảnh mặt úp','Ảnh thay cho mặt úp xanh có dấu ? (vd ô "?" của Nhớ chuỗi hình)'), backImgScale:FL('Tỉ lệ ảnh mặt úp / khung vật',1,.3,2,'1 = vừa thẻ; áp dụng cho cả ảnh mặt úp và khung riêng của vật') } },
     seesaw: { name:'Bập bênh', desc:'Các vật đứng trên bập bênh; bên giá trị LỚN hơn chúi xuống. Chạm vào chính vật. 3 vật = 2 bập bênh nối nhau.', p: {} },
     stack: { name:'Đống khối 3D', desc:'Khối (hoặc vật) đẳng cự đúng số lượng của câu hỏi, không che nhau: cụm sát nhau ngẫu nhiên trong lưới 3×3, thi thoảng 1–3 khối ra ngoài; không chồng tầng. Số đếm hiện NGOÀI hình, có gạch chỉ vào khối.', p: { color:SEL('Màu khối','random',['random','#FF7043','#42A5F5','#66BB6A','#FFCA28','#AB47BC','#26C6DA']) } },
     props: { name:'Vật đặt tự do (props)', desc:'Mỗi lựa chọn là 1 vật tại 1 vị trí (hàng, cột, vòng tròn, lưới, ngẫu nhiên, cố định). Hình dạng mỗi vật vẽ theo mẫu `tpl` (danh sách đối tượng, biểu thức dùng opt/i/n/size). Dùng cho: trứng, bóng bay, cổng, cửa, khúc gỗ, vùng đặt đồ, số trên đồng hồ...',
@@ -69,7 +70,7 @@ const MOD = {
   },
   judge: {
     equals: { name:'Chạm đúng đáp án', desc:'Chạm vật/số đúng = đúng; sai thì thử lại. Đúng/sai chạy hành động on.right / on.wrong (mặc định: bounce + confetti + câu khen; rung + câu sai).',
-      p: { hintAfter:I('Gợi ý sau (lần sai)',2,1,5), finishSec:FL('Giây chờ trước câu sau',1.8,.5,4) } },
+      p: { hintAfter:I('Gợi ý sau (lần sai)',2,1,5), finishSec:FL('Giây chờ trước câu sau',1.8,.5,4), soundWrong:I('Phát tiếng của vật khi chạm SAI (1 = có, 0 = chỉ thẻ đúng mới kêu)',1,0,1) } },
     order: { name:'Chạm theo đúng thứ tự chuỗi', desc:'Chạm các vật theo thứ tự chuỗi. Mỗi bước đúng chạy on.step; xong chạy on.right. Nếu có view "Dải hình" thì ô tương ứng lật ra.',
       p: { hintAfter:I('Gợi ý sau (lần sai ở 1 bước)',2,1,5), finishSec:FL('Giây chờ trước câu sau',2.2,.5,4) } },
     pairs: { name:'Lật 2 thẻ ghép cặp', desc:'Chạm lật 2 thẻ: giống nhau thì ăn (+1 điểm ngay), khác nhau thì úp lại sau vài giây.',
@@ -171,7 +172,7 @@ const GEN = {
     if (P('distinct')){ const idx = items.map((_,i)=> i); w.shuffle(idx); seq = idx.slice(0, Math.min(len, kinds)); }
     else for (let i=0;i<len;i++){
       let v, g = 0;
-      do { v = w.rand(0, kinds); g++; } while (g < 30 && ((len <= 3 && seq.indexOf(v) >= 0) || (i >= 2 && seq[i-1] === v && seq[i-2] === v)));
+      do { v = w.rand(0, kinds); g++; } while (g < 30 && ((len <= 3 && seq.indexOf(v) >= 0) || (P('noAdjacent') ? (i >= 1 && seq[i-1] === v) : (i >= 2 && seq[i-1] === v && seq[i-2] === v))));   // noAdjacent=1 (mặc định): không 2 hình giống nhau liền nhau; 0: chỉ cấm 3 hình liền
       seq.push(v);
     }
     return { items, seq, target: seq[0], vars:{ len: seq.length, names: seq.map(i=> w.nameOf(items[i]).toLowerCase()).join(', rồi ') }, id:'SEQ_' + seq.length + '_' + seq.join('-'), desc:'Chuỗi ' + seq.length + ' hình', answers: items.map(p=> w.nameOf(p)) };
@@ -184,8 +185,12 @@ const GEN = {
     return { items: all.slice(0, pairs).map(i=> w.items[i]), faces, pairs, vars:{ pairs }, id:'PAIRS_' + pairs, desc:'Lật thẻ giống nhau: ' + pairs + ' cặp', answers:[faces.join(',')] };
   },
   number(w, spec){
-    const P = k=> par('gen', spec, k), lv = Math.floor(w.ok / Math.max(1, P('growEvery'))), maxC = Math.min(12, P('maxCount'));
-    const lo = Math.min(P('minStart') + lv, 4), hi = Math.min(P('startMax') + 2*lv, maxC);
+    const P = k=> par('gen', spec, k), maxC = Math.min(12, P('maxCount')), easy = P('easyCount');
+    let lo, hi;
+    if (easy > 0){
+      const q = w.taskNo - 1, step = q < easy ? 0 : 1 + Math.floor((q - easy) / Math.max(1, P('growEvery')));
+      hi = q < easy ? Math.min(P('easyMax'), maxC) : Math.min(P('rampFrom') + step - 1, maxC); lo = Math.min(P('minStart') + step, 4);
+    } else { const lv = Math.floor(w.ok / Math.max(1, P('growEvery'))); lo = Math.min(P('minStart') + lv, 4); hi = Math.min(P('startMax') + 2*lv, maxC); }
     const count = w.rand(Math.min(lo, hi), hi + 1), opts = [count]; let g = 0;
     while (opts.length < P('options') && g++ < 80){ const v = count + w.rand(-2, 3); if (v >= 1 && v <= 12 && opts.indexOf(v) < 0) opts.push(v); }
     w.shuffle(opts);
@@ -271,9 +276,10 @@ const VIEW = {
     list.forEach((it, i)=>{
       const pos = ovPos(w, spec, i) || w.P(P('x') + (i - (n-1)/2)*spacing, P('y'));
       let card, fig = null;
-      if (isNum) card = UI.card(w.root, null, String(it), hex('#7E57C2'), pos.x, pos.y, cs, cs*tall, null, 72).rt;
+      if (isNum) card = UI.card(w.root, null, String(it), hex('#7E57C2'), pos.x, pos.y, cs, cs*tall, null, Math.round(72*Math.max(1, cs*tall/(w.U*.22)*.85))).rt;
       else {
-        card = UI.card(w.root, null, '', hex(P('bg')), pos.x, pos.y, cs, cs*tall, null).rt; card.alpha = .96;
+        const bgv = String(P('bg') || '').trim(), noBg = !bgv || bgv.toLowerCase() === 'none';   // trống / none = thẻ trong suốt
+        card = UI.card(w.root, null, '', noBg ? col(255,255,255,0) : hex(bgv), pos.x, pos.y, cs, cs*tall, null).rt; if (!noBg) card.alpha = .96;
         const cu = P('cardImg') ? w.img(P('cardImg')) : null;
         if (cu){ card.color = col(255,255,255,0); const k = P('cardImgScale'), bi = UI.pic(card, { url: cu }, WHITE, 0, 0, cs*k, cs*tall*k); bi.preserveAspect = false; }   // ảnh nền thẻ là con của thẻ (nằm dưới hình) để chỉnh tỉ lệ riêng
         fig = w.drawItem(card, it, 0, P('label') ? cs*tall*.1 : 0, cs*P('fig'));
@@ -326,23 +332,32 @@ const VIEW = {
       if (su){ b.color = col(255,255,255,0); const ss = slot*P('slotImgScale'), bi = UI.pic(b, { url: su }, WHITE, 0, 0, ss, ss); bi.preserveAspect = false; }   // ảnh nền ô là con của ô (nằm dưới hình) để chỉnh tỉ lệ riêng
       let q; if (cvu){ const cs2 = slot*P('coverImgScale'); q = UI.pic(b, { url: cvu }, WHITE, 0, 0, cs2, cs2); q.preserveAspect = false; } else q = UI.label(b, '?', Math.round(slot*.6), hex('#90A4AE'), 0, 0, slot, slot, false);
       q.active = false; qq.push(q);
-      face.push(w.drawItem(b, Q.items[Q.seq[i]], 0, 0, slot*.82));
+      // vật có khung riêng (🖼 Nền) → vẽ cùng cỡ với ô "?" để lật ra không bị nhỏ đi
+      const it = Q.items[Q.seq[i]], own = !!(it && it.bgImage && w.img(it.bgImage));
+      face.push(w.drawItem(b, it, 0, 0, own ? (cvu ? slot*P('coverImgScale') : slot) : slot*.82));
     }
     return { elems: [], bg, ready: true,
       parts: face.map((f,i)=> ({ show(){ f.active = true; qq[i].active = false; w.run(tw.popIn(f, .3)); }, cover(){ f.active = false; qq[i].active = true; }, hide(){ f.active = false; qq[i].active = false; } })),
       hideAll(){ face.forEach((f,i)=>{ f.active = false; qq[i].active = false; }); }, setActive(){}, *intro(){},
-      mark(i){ face[i].active = true; qq[i].active = false; w.run(tw.popIn(face[i], .3)); bg[i].color = (plain || su) ? bg[i].color : hex('#C8F7C5'); if (plain) w.run(tw.fade(face[i], .4, .3)); },
+      mark(i){ face[i].active = true; qq[i].active = false; w.run(tw.popIn(face[i], .3)); bg[i].color = (plain || su) ? bg[i].color : hex('#C8F7C5'); if (plain || su){ const fe = face[i].el; if (fe){ fe.style.transition = 'filter .3s'; fe.style.filter = 'brightness(1.12) drop-shadow(0 0 6px #FFF59D) drop-shadow(0 0 16px #FFD54F)'; } } },   // đã chọn đúng: sáng lên (trước đây mờ đi)
       pulseSlot(i, alive){ w.run(tw.pulse(bg[i], alive, .06, 6)); } };
   },
   grid(w, spec, Q){
-    const P = k=> par('view', spec, k), total = Q.faces.length, pairs = Q.pairs, rows = pairs <= 5 ? 2 : 3, cols = Math.ceil(total/rows);
-    const areaW = w.W*.94, areaH = w.H*.76, cs = Math.min(areaW/cols, areaH/rows)*.88, stepX = areaW/cols, stepY = areaH/rows, origin = w.P(.5,.47);
-    const covered = !!P('covered'), elems = [];
+    const P = k=> par('view', spec, k), total = Q.faces.length, pairs = Q.pairs, uShape = P('shape') === 'u' && total >= 4;
+    // u: k thẻ mỗi bên (8 thẻ → hàng trên 4, mỗi bên 2), còn lại nằm hết ở hàng trên
+    const uk = uShape ? Math.max(1, Math.floor(total/4)) : 0, rows = uShape ? uk + 1 : (pairs <= 5 ? 2 : 3), cols = uShape ? total - 2*uk : Math.ceil(total/rows);
+    const cellOf = i=> !uShape ? { r: Math.floor(i/cols), c: i % cols } : (i < cols ? { r: 0, c: i } : { r: 1 + Math.floor((i - cols)/2), c: (i - cols) % 2 ? cols - 1 : 0 });
+    const areaW = w.W*.94, areaH = w.H*.76, cs = Math.min(areaW/cols, areaH/rows)*.88*P('cardScale'), stepX = areaW/cols, stepY = areaH/rows, origin = w.P(.5,.47);
+    const covered = !!P('covered'), elems = [], bku = P('backImg') ? w.img(P('backImg')) : null;
     Q.faces.forEach((fi, i)=>{
-      const r = Math.floor(i/cols), c = i % cols;
+      const { r, c } = cellOf(i);
       const op = ovPos(w, spec, i), holder = UI.pic(w.root, null, col(255,255,255,0), op ? op.x : origin.x + (c-(cols-1)/2)*stepX, op ? op.y : origin.y + ((rows-1)/2 - r)*stepY, cs, cs, true); holder.preserveAspect = false; w.track(holder);
-      const back = UI.pic(holder, 'rrect', hex('#26A69A'), 0, 0, cs, cs); back.sliced = true; back.preserveAspect = false; UI.label(back, '?', Math.round(cs*.6), WHITE, 0, 0, cs, cs);
-      const front = UI.pic(holder, 'rrect', WHITE, 0, 0, cs, cs); front.sliced = true; front.preserveAspect = false; w.drawItem(front, Q.items[fi], 0, 0, cs*.82);
+      let back;
+      if (bku){ back = UI.pic(holder, null, col(255,255,255,0), 0, 0, cs, cs); back.preserveAspect = false; const bi = UI.pic(back, { url: bku }, WHITE, 0, 0, cs*P('backImgScale'), cs*P('backImgScale')); bi.preserveAspect = false; }
+      else { back = UI.pic(holder, 'rrect', hex('#26A69A'), 0, 0, cs, cs); back.sliced = true; back.preserveAspect = false; UI.label(back, '?', Math.round(cs*.6), WHITE, 0, 0, cs, cs); }
+      // vật có ảnh nền riêng (🖼 Nền trong Kho vật) → mặt ngửa trong suốt, khung của vật thay cho thẻ trắng
+      const own = !!(Q.items[fi] && Q.items[fi].bgImage && w.img(Q.items[fi].bgImage));
+      const front = UI.pic(holder, 'rrect', own ? col(255,255,255,0) : WHITE, 0, 0, cs, cs); front.sliced = true; front.preserveAspect = false; w.drawItem(front, Q.items[fi], 0, 0, own ? cs*P('backImgScale') : cs*.82);
       back.active = covered; front.active = !covered;
       elems.push({ node: holder, key: fi, kind:'flip', back, front, faceUp: !covered, matched:false, name: w.nameOf(Q.items[fi]) });
     });
@@ -393,7 +408,7 @@ const VIEW = {
     return V;
   },
   /** Đống khối 3D — cụm khối đẳng cự SÁT NHAU, KHÔNG xếp tầng (mọi khối thấy mặt trên, không che nhau). Khối nằm ngẫu nhiên trong lưới 3×3, thi thoảng có 1–3 khối
-   *  "ra ngoài" cạnh cụm cho sinh động (xem cubeCells). Số đếm vẽ NGOÀI hình (hàng phía trên) có gạch chỉ xuống đúng khối. */
+   *  khối lẻ tách hẳn sang 1 bên, không liền cạnh (xem cubeCells). Số đếm vẽ NGOÀI hình (hàng phía trên) có gạch chỉ xuống đúng khối. */
   stack(w, spec, Q){
     const P = k=> par('view', spec, k), count = Q.number, U = w.U, W = w.W, H = w.H;
     const cells = cubeCells(w, count), cp = P('color');
@@ -402,8 +417,8 @@ const VIEW = {
     const ux = c=> c[0]-c[1], uy = c=> -(c[0]+c[1])*.5;                  // đơn vị 's' (khối rộng 2s, ô liền kề sát nhau)
     let uMinX=1e9, uMaxX=-1e9, uMinY=1e9, uMaxY=-1e9;
     cells.forEach(c=>{ uMinX=Math.min(uMinX,ux(c)-1); uMaxX=Math.max(uMaxX,ux(c)+1); uMinY=Math.min(uMinY,uy(c)-1); uMaxY=Math.max(uMaxY,uy(c)+1); });
-    const uRow = uMaxY + 1.35, uTop = uRow + .45, n0 = cells.length;
-    const s = Math.min(W*.9/Math.max(uMaxX-uMinX, n0*1.1), H*.40/(uTop-uMinY), U*.11);
+    const uRow = uMaxY + 1.35, uTop = uRow + .6 + (rowTiers(cells).rows - 1)*ROW_STEP, n0 = cells.length;   // số xếp theo HÀNG: mỗi hàng khối (cùng x) 1 hàng số, hàng sau thấp hơn
+    const s = Math.min(W*.9/Math.max(uMaxX-uMinX, n0*1.1), H*.46/(uTop-uMinY), U*.125);
     const minX = uMinX*s, maxX = uMaxX*s, rowY = uRow*s;
     const pc = w.P(.5,.62), center = { x: pc.x - (minX+maxX)/2, y: pc.y - (uMinY + uTop)*s/2 };
     const cubes = cells.map(c=>{
@@ -415,15 +430,15 @@ const VIEW = {
       hideAll(){ cubes.forEach(c=> c.scale = 0); }, setActive(){},
       *intro(){ for (const c of cubes){ if (c.dead) return; w.run(tw.popIn(c, .25)); yield .07; } },
       *countAloud(onDone){
-        // đếm từ trái sang phải; số nằm ngoài hình (hàng trên), gạch nối chỉ xuống mặt trên của đúng khối đó
-        const order = cubes.map((c,i)=> i).sort((a,b)=> (cubes[a].x - cubes[b].x) || (cubes[b].y - cubes[a].y) || (a - b));
-        const n = order.length, bw = Math.max(maxX - minX, n*1.1*s), x0 = center.x + (minX+maxX)/2 - bw/2, by = center.y + rowY, shapes = [];
+        // số nằm ngoài hình (hàng trên), dây THẲNG ĐỨNG chỉ xuống mặt trên của đúng khối đó. Khớp FlowViews.cs
+        const order = countOrder(cells), n = order.length, by = center.y + rowY, shapes = [];
+        const { tier, rows } = rowTiers(cells), lx = badgeLayout(order, cells, cubes, s, tier);
         for (let k=0;k<n;k++){
-          const cb = cubes[order[k]]; if (cb.dead) return;
-          const bx = x0 + (k+.5)*bw/n, tx = cb.x, ty = cb.y + s*.5, dx = tx - bx, dy = ty - by, len = Math.hypot(dx, dy) - s*.4;
-          const ln = UI.pic(w.root, 'rect', col(38,26,77,.7), (bx+tx)/2, (by+ty)/2 - s*.1, Math.max(2, s*.06), Math.max(1, len));
-          ln.rot = Math.atan2(-dx, dy) * 180 / Math.PI; ln.scale = 0; w.track(ln); shapes.push(ln); w.run(tw.popIn(ln, .15));
-          const b = UI.pic(w.root, 'circle', col(38,26,77,.9), bx, by, s*.85, s*.85); UI.label(b, String(k+1), Math.round(s*.7), WHITE, 0, 0, s*.85, s*.85);
+          const idx = order[k], cb = cubes[idx]; if (cb.dead) return;
+          const ty = cb.y + s*.5, bY = by + (rows - 1 - tier[idx])*ROW_STEP*s, len = Math.max(1, bY - s*.55 - ty);
+          const ln = UI.pic(w.root, 'rect', col(38,26,77,.7), lx[idx], ty + len/2, Math.max(2, s*.06), len);
+          ln.scale = 0; w.track(ln); shapes.push(ln); w.run(tw.popIn(ln, .15));
+          const b = UI.pic(w.root, 'circle', col(38,26,77,.9), lx[idx], bY, s*1.1, s*1.1); UI.label(b, String(k+1), Math.round(s*.91), WHITE, 0, 0, s*1.1, s*1.1);
           shapes.push(b); w.track(b); w.run(tw.popIn(b, .2)); w.sfx('tap'); yield .4;
         }
         if (onDone) onDone(); yield 1.6; shapes.forEach(b=> b.destroy());
@@ -433,29 +448,69 @@ const VIEW = {
     return V;
   },
 };
-/** Chọn ô đặt khối: danh sách [x,y] (toạ độ lưới, 3×3 là x,y ∈ 0..2; "ra ngoài" là x hoặc y = -1 hoặc 3). Mỗi ô 1 khối, không tầng.
- *  n ≥ 10: đủ 9 ô trong 3×3 + (n−9) khối ra ngoài. n 4..9: thi thoảng (40%) có 1–3 khối ra ngoài (r<6→0, r<8→1, r=8→2, r=9→3; luôn còn ≥ 3 khối trong cụm). Khối trong cụm: cụm LIỀN NHAU
- *  ngẫu nhiên (mỗi ô mới kề ô đã có, kể cả chéo). Khối ra ngoài: ô vòng ngoài kề một khối đã có. Thứ tự gọi RNG PHẢI khớp FlowGens.CubeCells (C#). */
+/** Thứ tự đếm khối: cụm chính (trong lưới 3×3) trước, khối lẻ (ra ngoài lưới) sau. Trong mỗi nhóm đếm theo "hàng" đẳng cự (cùng x, từ hàng trên/xa xuống
+ *  hàng dưới/gần), mỗi hàng đếm từ trái sang phải (y giảm dần). PHẢI khớp StackView.CountOrder (C#). */
+function countOrder(cells){
+  let main = [], rest = [];
+  cells.forEach((c,i)=> (c[0] >= 0 && c[0] <= 2 && c[1] >= 0 && c[1] <= 2 ? main : rest).push(i));
+  if (!main.length){ main = rest; rest = []; }
+  const byRow = (a,b)=> (cells[a][0] - cells[b][0]) || (cells[b][1] - cells[a][1]);
+  const bySide = (a,b)=> ((cells[a][0]-cells[a][1]) - (cells[b][0]-cells[b][1])) || ((cells[a][0]+cells[a][1]) - (cells[b][0]+cells[b][1]));   // khối lẻ: trái→phải, trên→dưới
+  return main.sort(byRow).concat(rest.sort(bySide));
+}
+/** Số đếm xếp theo HÀNG: mỗi hàng khối của cụm chính (cùng x) có 1 hàng số nằm ngang thẳng nhau (1-2-3 / 4-5-6 / 7-8-9); hàng đầu cao nhất, hàng sau thấp dần;
+ *  khối lẻ ngang hàng với hàng cuối (vd 10 ngang 7-8-9). tier[i] = chỉ số hàng (0 = trên cùng). PHẢI khớp StackView.RowTiers (C#). */
+const ROW_STEP = 1.2;   // khoảng cách các hàng số (số rộng 1,1s)
+function rowTiers(cells){
+  let main = [], rest = [];
+  cells.forEach((c,i)=> (c[0] >= 0 && c[0] <= 2 && c[1] >= 0 && c[1] <= 2 ? main : rest).push(i));
+  if (!main.length){ main = rest; rest = []; }
+  const xs = [...new Set(main.map(i=> cells[i][0]))].sort((a,b)=> a - b), tier = [];
+  main.forEach(i=> tier[i] = xs.indexOf(cells[i][0])); rest.forEach(i=> tier[i] = xs.length - 1);
+  return { tier, rows: xs.length };
+}
+/** Dây thẳng đứng: x dây mỗi khối = tâm khối ± lệch theo cột (đếm trước lệch trái, đếm sau lệch phải), dãn để 2 dây kề nhau cách ≥ 0,65s (dây không đụng số khác)
+ *  và 2 số CÙNG hàng cách ≥ 1,2s (số không chồng nhau). PHẢI khớp StackView.BadgeLayout (C#). */
+function badgeLayout(order, cells, cubes, s, tier){
+  const colCount = {}, colRank = {}, rank = [], want = [], lx = [], lastT = {};
+  order.forEach(i=>{ const u = cells[i][0] - cells[i][1]; colCount[u] = (colCount[u]||0) + 1; });
+  order.forEach(i=>{ const u = cells[i][0] - cells[i][1], m = colCount[u], r = colRank[u] || 0; colRank[u] = r + 1; rank[i] = r; want[i] = cubes[i].x + (r - (m-1)/2)*(m <= 2 ? .6 : .5)*s; });
+  const idx = cells.map((c,i)=> i).sort((a,b)=> (want[a] - want[b]) || ((cells[a][0]-cells[a][1]) - (cells[b][0]-cells[b][1])) || (rank[a] - rank[b]));
+  let prev = -Infinity;
+  for (const i of idx){
+    let x = Math.max(want[i], prev + .65*s); const t = tier[i]; if (lastT[t] !== undefined) x = Math.max(x, lastT[t] + 1.2*s);
+    lx[i] = prev = lastT[t] = x;
+  }
+  return lx;
+}
+/** Chọn ô đặt khối: danh sách [x,y]. Cụm chính nằm trong lưới 3×3 (x,y ∈ 0..2), mỗi ô 1 khối, không tầng, các khối LIỀN CẠNH nhau (kề 4 hướng, không kề chéo).
+ *  n ≥ 10: đủ 9 ô trong 3×3 + (n−9) khối lẻ. n 4..9: thi thoảng (40%) có 1–3 khối lẻ (r<6→0, r<8→1, r=8→2, r=9→3; luôn còn ≥ 3 khối trong cụm).
+ *  Khối lẻ KHÔNG liền cạnh: vẽ tách hẳn sang 1 bên (RNG chọn trái/phải), cách cụm 1 bề rộng khối, mỗi khối đứng riêng. Toạ độ ô của khối lẻ chọn sao cho
+ *  (x−y, −(x+y)/2) rơi đúng vị trí màn hình mong muốn (luôn ngoài 3×3). Thứ tự gọi RNG PHẢI khớp FlowGens.CubeCells (C#). */
 function cubeCells(w, count){
-  const n = Math.max(1, count|0), R = k=> w.rand(0, k), g = []; for (let i=0;i<5;i++) g.push([0,0,0,0,0]);   // g[x+1][y+1]
+  const n = Math.max(1, count|0), R = k=> w.rand(0, k), g = []; for (let i=0;i<3;i++) g.push([0,0,0]);
   let out = 0;
   if (n >= 10) out = n - 9;
   else if (n >= 4){ const r = R(10); out = r < 6 ? 0 : r < 8 ? 1 : r === 8 ? 2 : 3; out = Math.min(out, n - 3); }
-  const inside = n - out, adj = (x, y)=>{ for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++){ const nx=x+dx, ny=y+dy; if (nx>=-1&&nx<=3&&ny>=-1&&ny<=3&&g[nx+1][ny+1]) return true; } return false; };
-  const cluster = Math.min(inside, 9);
-  g[R(3)+1][R(3)+1] = 1; let placed = 1, guard = 0;
+  const inside = n - out, cluster = Math.min(inside, 9);
+  const adj = (x, y)=> (x > 0 && g[x-1][y]) || (x < 2 && g[x+1][y]) || (y > 0 && g[x][y-1]) || (y < 2 && g[x][y+1]);
+  const a0 = R(3), b0 = R(3); g[a0][b0] = 1; let placed = 1, guard = 0;
   while (placed < cluster && guard++ < 400){
-    const x = R(3), y = R(3); if (g[x+1][y+1]) continue;
-    if (!adj(x, y)) continue; g[x+1][y+1] = 1; placed++;
+    const x = R(3), y = R(3); if (g[x][y]) continue;
+    if (!adj(x, y)) continue; g[x][y] = 1; placed++;
   }
-  for (let i=0; placed < cluster && i < 9; i++){ const x = Math.floor(i/3), y = i%3; if (!g[x+1][y+1]){ g[x+1][y+1] = 1; placed++; } }
-  for (let k=0;k<out;k++){
-    const cand = [];
-    for (let x=-1;x<=3;x++) for (let y=-1;y<=3;y++){ if (x>=0&&x<=2&&y>=0&&y<=2) continue; if (!g[x+1][y+1] && adj(x, y)) cand.push([x,y]); }
-    if (!cand.length) break;
-    const c = cand[R(cand.length)]; g[c[0]+1][c[1]+1] = 1;
+  for (let pass = 0; placed < cluster && pass < 9; pass++)
+    for (let i=0; i < 9 && placed < cluster; i++){ const x = Math.floor(i/3), y = i%3; if (!g[x][y] && adj(x, y)){ g[x][y] = 1; placed++; } }
+  const cells = []; let uMin = 99, uMax = -99;
+  for (let x=0;x<3;x++) for (let y=0;y<3;y++) if (g[x][y]){ cells.push([x,y]); uMin = Math.min(uMin, x-y); uMax = Math.max(uMax, x-y); }
+  if (out > 0){
+    const side = R(2), ux0 = side === 0 ? uMax + 4 : uMin - 4;   // 0 = bên phải, 1 = bên trái
+    for (let j=0;j<out;j++){
+      const ux = ux0 + (side === 0 ? 4 : -4)*Math.floor(j/2);    // 2 khối lẻ / cột, cột kế tiếp lùi ra xa
+      const P = (((ux % 2) + 2) % 2 === 0 ? 2 : 3) + 6*(j % 2);   // P = x+y cùng tính chẵn lẻ với ux = x−y; khối thứ 2 trong cột thấp hơn 3 đơn vị
+      cells.push([(ux + P)/2, (P - ux)/2]);
+    }
   }
-  const cells = []; for (let x=-1;x<=3;x++) for (let y=-1;y<=3;y++) if (g[x+1][y+1]) cells.push([x,y]);
   return cells;
 }
 
@@ -469,7 +524,13 @@ const JUDGE = {
     const onTap = function*(el){
       if (!w.active || answered || busy || !w.isReady()) return;
       const cx = { tapped: el, tap: { x: el.node.x, y: el.node.y }, mistakes };
-      w.playItem(Q.items && Q.items[el.key]);
+      // soundWrong=0: thẻ sai không kêu tên vật. Thứ tự: chạm → tiếng vật → nghỉ 0,2s → icon + tiếng đúng/sai (hiệu ứng khác)
+      if ((P('soundWrong') || el.key === Q.target) && w.playItem(Q.items && Q.items[el.key])){
+        busy = true;
+        for (let t = 0; t < 8 && w.g.itemBusy(); t += F.T.dt){ if (w.stale(Q)) return; yield null; }
+        yield .2; busy = false;
+        if (!w.active || w.stale(Q)) return;
+      }
       if (el.key === Q.target){
         answered = true; hint = false; busy = true;
         yield* w.fire('right', cx, w._stdRight.bind(w));
@@ -482,6 +543,11 @@ const JUDGE = {
       } else {
         mistakes++; if (firstWrong < 0) firstWrong = el.key; busy = true;
         yield* w.fire('wrong', cx, w._stdWrong.bind(w));
+        if (w.wrongEnds){
+          answered = true; w.showIcon(false);   // sai là hết câu: icon ✖, chờ rồi sang câu sau (câu tính sai)
+          yield P('finishSec'); if (w.stale(Q)) return;
+          yield* w.fire('end', cx); finish(false, [el.key]); return;
+        }
         busy = false;
         if (w.stale(Q)) return;
         if (mistakes >= P('hintAfter') && !hint){
@@ -513,7 +579,9 @@ const JUDGE = {
           yield* w.fire('end', cx); finish(perfect, taps.slice());
         } else if (strip){ const nx = cur; strip.pulseSlot(nx, ()=> w.active && !finished && cur === nx); }
       } else {
-        total++; stepMist++; busy = true; yield* w.fire('wrong', cx, function*(){ w.sfx('wrong'); w.run(tw.shake(el.node, .35, 10)); const t = T.wrong ? X.template(T.wrong, Object.assign({}, Q.vars, { name: el.name }), w.scope(cx)) : ''; if (t) w.say(t, w.P(.5,.14), hex('#BF360C'), 1.3); }); busy = false;
+        total++; stepMist++; busy = true; yield* w.fire('wrong', cx, function*(){ w.sfx('wrong'); w.run(tw.shake(el.node, .35, 10)); const t = T.wrong ? X.template(T.wrong, Object.assign({}, Q.vars, { name: el.name }), w.scope(cx)) : ''; if (t) w.say(t, w.P(.5,.14), hex('#BF360C'), 1.3); });
+        if (w.wrongEnds){ finished = true; w.showIcon(false); yield P('finishSec'); if (w.stale(Q)) return; yield* w.fire('end', cx); finish(false, taps.slice()); return; }   // sai là hết câu
+        busy = false;
         if (w.stale(Q)) return;
         if (stepMist >= P('hintAfter') && !hint){
           hint = true; const at = cur, want = elems.find(e=> e.key === Q.seq[cur]);
@@ -598,6 +666,8 @@ class FlowWorld extends World {
   onReadyOnce(cb){ if (this._ready) cb(); else this._readyCbs.push(cb); }
   /** Chạy hành động của sự kiện `ev` (on[ev]); không có thì chạy mặc định `std` (generator function). */
   *fire(ev, cx, std){
+    // icon ✔ mặc định (khớp Unity); cài đặt game noIcon=1 → không hiện (xem World.showIcon). Icon ✖ chỉ khi chạm sai KẾT THÚC câu (wrongEnds) — judge tự gọi showIcon(false); cho chọn lại thì chỉ có âm sai.
+    if (ev === 'right') this.showIcon(true);
     const list = ((this.flow.on || {})[ev]) || [];
     if (list.length) yield* this.runActs(list, cx); else if (std) yield* std(cx);
   }

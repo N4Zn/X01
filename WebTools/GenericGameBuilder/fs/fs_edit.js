@@ -48,7 +48,7 @@ F.edit = function(host, data, opts){
 
   const g = {
     data, opts: { mute: true }, sharedSeed: ed.seed, tasks: [],
-    run(gen){ const t = { gen, wait: 0, dead: false }; this.tasks.push(t); return t; },
+    run(gen){ const t = { gen, wait: 0, dead: false }; let r; try{ r = gen.next(); }catch(e){ console.error('[FloorStory]', e); t.dead = true; return t; } if (r.done){ t.dead = true; return t; } if (typeof r.value === 'number') t.wait = r.value; this.tasks.push(t); return t; },
     sfx(){}, playSound(){}, addPoint(){}, imgUrl: n=> opts.imgUrl ? opts.imgUrl(n) : null,
   };
   function tick(){

@@ -248,15 +248,21 @@ function* scaleTo(n, to, dur, overshoot){
 function* popIn(n, dur){ if (!n || n.dead) return; n.scale = 0; yield* scaleTo(n, 1, dur == null ? .35 : dur, true); }
 function* shake(n, dur, amp){
   dur = dur == null ? .4 : dur; amp = amp == null ? 14 : amp;
-  if (!n || n.dead) return; const o = { x:n.x, y:n.y };
-  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; n.setPos(o.x + Math.sin(t*50)*amp*(1-t/dur), o.y); yield null; }
-  if (!n.dead) n.setPos(o.x,o.y);
+  if (!n || n.dead) return;
+  // nhiều lần rung chồng nhau (chạm sai liên tục): dùng chung vị trí gốc, chỉ trả về khi lần rung cuối kết thúc → không bị trôi khỏi chỗ cũ
+  if (!n._shN){ n._shN = 0; n._home = { x:n.x, y:n.y }; } n._shN++; const o = n._home;
+  try{ for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; n.setPos(o.x + Math.sin(t*50)*amp*(1-t/dur), o.y); yield null; } }
+  finally{ if (--n._shN <= 0){ n._shN = 0; if (!n.dead) n.setPos(o.x, o.y); } }
 }
+// Nhiều hiệu ứng phóng (bounce/pulse) chồng lên cùng 1 vật: dùng chung cỡ gốc, chỉ trả về cỡ gốc khi hiệu ứng cuối cùng kết thúc
+// (trước đây hiệu ứng sau lấy cỡ đang phóng làm gốc → vật bị to ra luôn)
+function holdScale(n){ if (!n._twN){ n._twN = 0; n._rest = { x:n.sx, y:n.sy }; } n._twN++; return n._rest; }
+function releaseScale(n){ if (--n._twN > 0) return; n._twN = 0; if (!n.dead){ n._sx = n._rest.x; n._sy = n._rest.y; n._layout(); } }
 function* bounce(n, amount, dur){
   amount = amount == null ? .25 : amount; dur = dur == null ? .5 : dur;
-  if (!n || n.dead) return; const b = { x:n.sx, y:n.sy };
-  for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; const k = 1 + amount*Math.sin(t/dur*Math.PI); n._sx = b.x*k; n._sy = b.y*k; n._layout(); yield null; }
-  if (!n.dead){ n._sx = b.x; n._sy = b.y; n._layout(); }
+  if (!n || n.dead) return; const b = holdScale(n);
+  try{ for (let t=0; t<dur; t+=T.dt){ if (n.dead) return; const k = 1 + amount*Math.sin(t/dur*Math.PI); n._sx = b.x*k; n._sy = b.y*k; n._layout(); yield null; } }
+  finally{ releaseScale(n); }
 }
 function* fade(n, to, dur){
   if (!n || n.dead) return; const f = n.alpha;
@@ -270,9 +276,9 @@ function* colorTo(n, to, dur){
 }
 function* pulse(n, alive, amount, speed){
   amount = amount == null ? .12 : amount; speed = speed == null ? 6 : speed;
-  if (!n || n.dead) return; const b = { x:n.sx, y:n.sy }; let t = 0;
-  while (!n.dead && alive()){ t += T.dt*speed; const k = 1 + amount*(.5+.5*Math.sin(t)); n._sx = b.x*k; n._sy = b.y*k; n._layout(); yield null; }
-  if (!n.dead){ n._sx = b.x; n._sy = b.y; n._layout(); }
+  if (!n || n.dead) return; const b = holdScale(n); let t = 0;
+  try{ while (!n.dead && alive()){ t += T.dt*speed; const k = 1 + amount*(.5+.5*Math.sin(t)); n._sx = b.x*k; n._sy = b.y*k; n._layout(); yield null; } }
+  finally{ releaseScale(n); }
 }
 
 // ── Âm thanh (bíp WebAudio; không có giọng thật — Unity dùng StoryVoice/*.mp3) ──
@@ -286,9 +292,14 @@ function tone(f, d, type, v, delay){
     o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + d + .02);
   }catch(e){}
 }
+function clip(k){
+  const u = window.FSW_SFX && window.FSW_SFX[k]; if (!u) return false;
+  try{ const a = new Audio(u); const p = a.play(); if (p && p.catch) p.catch(()=>{}); return true; }catch(e){ return false; }
+}
 const SFX = {
-  right(){ tone(523,.12,'triangle'); tone(659,.12,'triangle',.12,.1); tone(784,.2,'triangle',.12,.2); },
-  wrong(){ tone(180,.25,'sawtooth',.08); },
+  // đúng / sai: phát file gốc của Unity (fs_sfx.js); không phát được (vd Safari không đọc .ogg) thì dùng tiếng tổng hợp
+  right(){ if (!clip('right')){ tone(523,.12,'triangle'); tone(659,.12,'triangle',.12,.1); tone(784,.2,'triangle',.12,.2); } },
+  wrong(){ if (!clip('wrong')) tone(180,.25,'sawtooth',.08); },
   tap(){ tone(380,.06,'square',.05); }, pop(){ tone(620,.07,'sine'); }, plop(){ tone(300,.1,'sine'); },
   wood(){ tone(160,.15,'triangle',.15); }, powerup(){ [523,659,784,1047].forEach((f,i)=> tone(f,.12,'triangle',.1,i*.07)); },
   star(){ tone(880,.15,'sine'); }, up(){ tone(440,.1,'sine'); tone(660,.12,'sine',.1,.08); }, bell(){ tone(1046,.3,'sine'); },

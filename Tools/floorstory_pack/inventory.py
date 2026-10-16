@@ -1,5 +1,5 @@
-"""Kiểm kê mọi thứ trong fs/games/*.json (loại đối tượng, thuộc tính, hành động, biểu thức, tag, biến) kèm số game dùng. Chạy từ gốc repo: python Tools/floorstory_pack/inventory.py — dùng cho docs/game-builder-generalization.md."""
-import json,glob,os,re,collections,sys
+"""Kiểm kê mọi thứ trong WebTools/FloorStoryFlows/*.zip (meta.fsData) (loại đối tượng, thuộc tính, hành động, biểu thức, tag, biến) kèm số game dùng. Chạy từ gốc repo: python Tools/floorstory_pack/inventory.py — dùng cho docs/game-builder-generalization.md."""
+import json,glob,os,re,collections,sys,zipfile
 sys.stdout.reconfigure(encoding='utf-8')
 C=collections.defaultdict(lambda: collections.defaultdict(set))   # category -> key -> games
 def add(cat,key,g): C[cat][key].add(g)
@@ -30,8 +30,8 @@ def acts(lst,g,ev):
             if isinstance(v,str): add('target-ref', re.sub(r'[A-Za-z0-9_]+$','X',v) if v.startswith('#') else v if v.startswith('@') else 'expr', g)
             elif isinstance(v,dict): add('target-ref','{point}',g)
 FUN=re.compile(r'\b([a-zA-Z_]+)\(')
-for f in sorted(glob.glob('WebTools/GenericGameBuilder/fs/games/*.json')):
-    g=os.path.basename(f)[:-5]; d=json.load(open(f,encoding='utf-8'))
+for f in sorted(glob.glob('WebTools/FloorStoryFlows/*.zip')):
+    g=os.path.basename(f)[:-4]; d=json.loads(zipfile.ZipFile(f).read('game.json').decode('utf-8'))['meta']['fsData']
     s=json.dumps(d,ensure_ascii=False)
     for fn in FUN.findall(re.sub(r'"[a-zA-Z]+":','',s)): 
         if fn not in('do',): add('expr.func',fn,g)
