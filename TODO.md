@@ -142,6 +142,7 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] **Giao diện game builder chưa ok — tối ưu sau** (2026-10-14): thống nhất cách hiển thị cài đặt kiểu PowerPoint cho mọi game (tab Hiệu ứng chung/riêng đối tượng, panel phải), còn popover lẻ (Định dạng chữ, Tuỳ biến cơ chế), ghi chú nút "?" chưa có phần riêng cho cơ chế, panel hiệu ứng riêng mới có hiệu ứng chờ. Xem `WebTools/GenericGameBuilder/CLAUDE.md` mục "Cài đặt hiển thị thống nhất".
 
 ## LiDAR C1 option (2026-10-19) — cần build APK Unity rồi test K02
-- [ ] Build APK (đã build lại `liblidar_unity.so` + `lidarlib-release.aar`); cài K02, thêm `"lidar_model": "c1"` vào `/sdcard/EduXplore/lidar_config.json`, đóng hẳn app mở lại: chạm có ăn, hướng đúng; `adb logcat -s FloorGame_Main LidarUsbBridge` thấy `Lidar_SetModel → C1` + `startC1Scan` — (2026-10-19)
+- [ ] Build APK (đã build lại `liblidar_unity.so` + `lidarlib-release.aar`; mặc định C# = C1 + fast + bộ #2); cài K02, push `NativePlugins/K02DeviceConfig/backups/lidar_config_C1_projector2.json` thành `/sdcard/EduXplore/lidar_config.json`, đóng hẳn app mở lại: chạm có ăn, hướng đúng; `adb logcat -s FloorGame_Main LidarUsbBridge` thấy `Lidar_SetModel → C1` + `startC1Scan` — (2026-10-19)
 - [ ] Cắm D200 vào laptop, chạy `Tools/lidar_bench` (README) đo thật, điền mục 4.2 `docs/lidar-touch-algorithm.md` — (2026-10-19)
 - [ ] Quyết: thêm ô chọn loại LiDAR trên ControlActivity (hiện chỉ sửa JSON)? Cần tuỳ chọn lật gương góc cho C1 không? — (2026-10-19)
+- [ ] C1 đảo trục (`c1_flip_x`, `c1_flip_y` mặc định bật, xem `docs/lidar-touch-algorithm.md` §3c): test hướng chạm trên sàn K02; sai thì tắt từng trục trong `lidar_config.json`, rồi chỉnh `offset_angle`/`shift_*` — (2026-10-19)

@@ -36,6 +36,8 @@ def main():
     ap.add_argument("--model", default="c1", choices=["c1", "d200", "sim-c1", "sim-d200"])
     ap.add_argument("--port")
     ap.add_argument("--baud", type=int)
+    ap.add_argument("--no-flip-x", action="store_true", help="C1: KHÔNG đảo trục X (mặc định đảo cho giống D200)")
+    ap.add_argument("--no-flip-y", action="store_true", help="C1: KHÔNG đảo trục Y (mặc định đảo cho giống D200)")
     ap.add_argument("--mode", default="auto", choices=["auto", "standard", "dense"], help="chế độ quét C1")
     ap.add_argument("--config", help="lidar_config.json (mặc định: máy chiếu #2)")
     ap.add_argument("--replay")
@@ -54,7 +56,7 @@ def main():
         print(json.dumps(C1Source(a.port, a.baud).probe(), indent=2, ensure_ascii=False))
         return
 
-    src = make_source(a.model, a.port, a.baud, a.mode, a.replay, a.speed).start()
+    src = make_source(a.model, a.port, a.baud, a.mode, a.replay, a.speed, flip_y=not a.no_flip_y, flip_x=not a.no_flip_x).start()
     pipe = TouchPipeline(cfg)
     rec = None
     paused = False

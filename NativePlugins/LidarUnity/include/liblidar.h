@@ -74,6 +74,8 @@ bool ld14p_xypoint_is_valid(DataPoint* dpoint);
 bool point_is_in_area(DataPoint* dpoint);
 void find_position(touch_point_event_t point);
 void sendTouch(int x, int y);
+// Chế độ "chạm tức thì": đổi 1 điểm (mm, hệ native sau offset_angle) → ref 1024x600 → sendTouch ngay, không gom cụm/cửa sổ/throttle.
+void report_point_now(double x_mm, double y_mm);
 void sendTouchRelease();
 void sendSwipe(int x_start, int y_start, int x_end, int y_end);
 void init_thread_check_point_disapear(void);

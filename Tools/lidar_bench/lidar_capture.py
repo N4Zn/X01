@@ -20,6 +20,8 @@ def main():
     ap.add_argument("--model", default="c1", choices=["c1", "d200", "sim-c1", "sim-d200"])
     ap.add_argument("--port")
     ap.add_argument("--baud", type=int)
+    ap.add_argument("--no-flip-x", action="store_true", help="C1: KHÔNG đảo trục X (mặc định đảo cho giống D200)")
+    ap.add_argument("--no-flip-y", action="store_true", help="C1: KHÔNG đảo trục Y (mặc định đảo cho giống D200)")
     ap.add_argument("--mode", default="auto", choices=["auto", "standard", "dense"])
     ap.add_argument("--seconds", type=float, default=20.0)
     ap.add_argument("--out", required=True)
@@ -42,7 +44,7 @@ def main():
         rec.close(); print(f"{a.out}: {rec.n} điểm (mô phỏng)")
         return
 
-    src = make_source(a.model, a.port, a.baud, a.mode).start()
+    src = make_source(a.model, a.port, a.baud, a.mode, flip_y=not a.no_flip_y, flip_x=not a.no_flip_x).start()
     rec = Recorder(a.out, {"model": m, "port": a.port, "baud": a.baud or getattr(src, "baud", "")})
     t0 = time.perf_counter()
     try:
@@ -55,7 +57,7 @@ def main():
         src.stop()
         rec.write(src.drain())
         rec.close()
-    print(f"{a.out}: {rec.n} điểm, quét={getattr(src, 'scan_mode', '-')}, gói ok/lỗi={src.stats['frames']}/{src.stats['bad_frames']}")
+    print(f"{a.out}: {rec.n} điểm, quét={getattr(src, 'scan_mode', '-')}, gói ok/lỗi={src.stats['frames']}/{src.stats['bad_frames']}, node dist=0: {src.stats.get('zero', 0)}, byte={src.stats['bytes']}")
 
 
 if __name__ == "__main__":

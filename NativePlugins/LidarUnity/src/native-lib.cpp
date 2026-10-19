@@ -46,6 +46,9 @@ const uint64_t MAX_TRAJECTORY_LIFE = 1000000000;
 
 std::atomic<bool> is_processing_thread_running{false};
 std::atomic<bool> g_touch_enabled{false};   // controlled by Lidar_SetTouchEnabled()
+std::atomic<bool> g_c1_flip_x{true};        // C1: đảo trục X so với D200 (mặc định BẬT) — Lidar_SetC1FlipX()
+std::atomic<bool> g_c1_flip_y{true};        // C1: đảo trục Y so với D200 (mặc định BẬT) — Lidar_SetC1FlipY()
+std::atomic<bool> g_fast_touch{false};      // true = chạm tức thì: mỗi điểm trong vùng → touch ngay (xem Lidar_SetFastTouch)
 std::atomic<int> g_lidar_model{0};          // 0 = D200/LD14P (mặc định), 1 = RPLIDAR C1 — Lidar_SetModel(), gọi TRƯỚC Lidar_Init()
 
 // Queue điểm touch cho Unity C# poll — xem PushTouchPoint()/Lidar_PollTouch() ở cuối file.
@@ -189,6 +192,10 @@ void ld14p_parse_xypoint2touch_fnc(RingBuffer<DataPoint>& ld14p_point_queue) {
 
             // std::cout << "check point:(x/y) = " << std::setw(2) << std::setfill('0') << std::fixed << dpoint.x << "/" << std::setw(2) << std::setfill('0') << std::fixed << dpoint.y << ", size = " << std::setw(2) << std::setfill('0') << std::dec << ld14p_point_queue.getSize() << std::endl;
             if(point_is_in_area(&dpoint) == true){
+                if (g_fast_touch.load()) {  // chạm tức thì: bỏ đệm 300 ms / tick 100 ms / gom cụm / throttle
+                    report_point_now(dpoint.x, dpoint.y);
+                    continue;
+                }
                 LidarPoint_t lp = {dpoint.x, dpoint.y, GetTimestamp()};
                 // std::cout << "be lokked" << std::endl;
                 std::lock_guard<std::mutex> lock(g_buffer_mutex);
@@ -542,6 +549,24 @@ void Lidar_SendConfig(int half_x, int hight_floor, int ymax,
 void Lidar_SetModel(int model) {
     g_lidar_model.store(model == 1 ? 1 : 0);
     LOGI(TAG, "Lidar_SetModel → %s", model == 1 ? "C1" : "D200");
+}
+
+// 1 = chạm tức thì (mỗi điểm hợp lệ trong vùng sàn → 1 touch ngay, không delay); 0 = pipeline cụm cũ (cửa sổ 300 ms, tick 100 ms, ≥3 điểm).
+void Lidar_SetFastTouch(int fast) {
+    g_fast_touch.store(fast != 0);
+    LOGI(TAG, "Lidar_SetFastTouch → %s", fast ? "FAST (mỗi điểm = 1 touch)" : "CLUSTER");
+}
+
+// C1: 1 = đảo trục X so với D200 (góc → −góc, trước đảo Y và offset_angle). Gọi trước Lidar_Init(). Không ảnh hưởng D200.
+void Lidar_SetC1FlipX(int flip) {
+    g_c1_flip_x.store(flip != 0);
+    LOGI(TAG, "Lidar_SetC1FlipX → %d", flip != 0);
+}
+
+// C1: 1 = đảo trục Y so với D200 (góc → 180° − góc, trước offset_angle). Gọi trước Lidar_Init(). Không ảnh hưởng D200.
+void Lidar_SetC1FlipY(int flip) {
+    g_c1_flip_y.store(flip != 0);
+    LOGI(TAG, "Lidar_SetC1FlipY → %d", flip != 0);
 }
 
 void Lidar_SetTouchEnabled(int enabled) {

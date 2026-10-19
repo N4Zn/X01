@@ -25,6 +25,12 @@
 
 // Defined in native-lib.cpp — set via Lidar_SetTouchEnabled()
 extern std::atomic<bool> g_touch_enabled;
+// Defined in native-lib.cpp — Lidar_SetFastTouch(): true = mỗi điểm trong vùng là 1 touch ngay lập tức (bỏ throttle).
+extern std::atomic<bool> g_fast_touch;
+// Defined in native-lib.cpp — Lidar_SetC1FlipY(): C1 có trục Y ngược D200 → đảo góc (180° − a) trước khi cộng offset_angle.
+extern std::atomic<bool> g_c1_flip_y;
+// Defined in native-lib.cpp — Lidar_SetC1FlipX(): C1 có trục X ngược D200 → đảo góc (−a) trước khi đảo Y/cộng offset_angle.
+extern std::atomic<bool> g_c1_flip_x;
 
 // Defined in native-lib.cpp — nhận điểm touch đã tính toạ độ, đẩy vào queue cho Unity poll.
 extern void PushTouchPoint(int x, int y);
@@ -316,8 +322,14 @@ bool rplidar_ParseByte(uint8_t byte, DataPoint* out) {
     if (dist_q2 == 0) return false;  // không có phản xạ
 
     float angle_deg = (float)((buf[2] << 7) | (buf[1] >> 1)) / 64.0f;
+    // Đổi về quy ước toạ độ D200 trước: đảo Y ⇔ a → 180° − a (x = -d·sin a không đổi, y = d·cos a đổi dấu).
+    // offset_angle (bộ #2) là hiệu chỉnh lắp đặt trong quy ước D200 nên cộng SAU bước này.
+    // Đảo X ⇔ a → −a (y = d·cos a giữ nguyên, x = −d·sin a đổi dấu). Làm TRƯỚC đảo Y; cả hai = quay 180°.
+    if (g_c1_flip_x.load()) angle_deg = -angle_deg;
+    if (g_c1_flip_y.load()) angle_deg = 180.0f - angle_deg;
     float angle = angle_deg + G_OFFSET_ANGLE;
-    if (angle >= 360.0f) angle -= 360.0f; else if (angle < 0.0f) angle += 360.0f;
+    while (angle >= 360.0f) angle -= 360.0f;
+    while (angle < 0.0f) angle += 360.0f;
 
     out->distance = (uint16_t)(dist_q2 / 4);
     if (out->distance == 0) return false;
@@ -449,6 +461,13 @@ void convert_to_1024x600(touch_point_event_t point){
 
 void report_touch_event(touch_point_event_t p_old){
     convert_to_1024x600(p_old);
+}
+
+// Cùng công thức convert_to_1024x600() (kể cả việc cộng shift_x_floor 2 lần) nhưng nhận thẳng 1 điểm.
+void report_point_now(double x_mm, double y_mm){
+    int p100_x = (((x_mm - (G_XMIN + G_SHIFT_X_FLOOR))/G_WIDTH_FLOOR) * P100_WIDTH) + G_SHIFT_X;
+    int p100_y = (P100_HEIGH - (((y_mm - G_YMIN)/G_HIGHT_FLOOR) * P100_HEIGH)) + G_SHIFT_Y;
+    sendTouch(p100_x, p100_y);
 }
 
 
@@ -587,6 +606,12 @@ void sendTouchRelease() {}   // no-op — kept for linker (called from native-li
 // dùng 1 mốc thời gian chung cho mọi điểm nữa.
 void sendTouch(int x, int y) {
     if (!g_touch_enabled.load()) return;
+
+    // Chạm tức thì: không throttle, đẩy thẳng (queue Unity tối đa 32, đầy thì bỏ điểm cũ nhất).
+    if (g_fast_touch.load()) {
+        PushTouchPoint(x, y);
+        return;
+    }
 
     int64_t now = nowMs();
     std::lock_guard<std::mutex> lock(g_recent_sends_mutex);

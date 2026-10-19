@@ -47,7 +47,7 @@ class Source:
 
     def __init__(self):
         self.q: "queue.Queue[Pt]" = queue.Queue()
-        self.stats = {"bytes": 0, "frames": 0, "bad_frames": 0, "points": 0}
+        self.stats = {"bytes": 0, "frames": 0, "bad_frames": 0, "points": 0, "zero": 0}
         self.info = {}
         self.error: Optional[str] = None
         self._stop = threading.Event()
@@ -201,10 +201,13 @@ class C1Source(SerialSource):
     model = "c1"
     baud = 460800
 
-    def __init__(self, port: str, baud: Optional[int] = None, mode: str = "auto"):
+    def __init__(self, port: str, baud: Optional[int] = None, mode: str = "auto", flip_y: bool = True, flip_x: bool = True):
         super().__init__(port, baud)
         self.mode = mode
         self.scan_mode = None
+        # Trục Y của C1 ngược D200 → đổi về quy ước D200 (góc → 180° − góc), giống rplidar_ParseByte trên K02.
+        self.flip_y = flip_y
+        self.flip_x = flip_x  # đảo X: a → −a (làm trước đảo Y)
 
     # -- giao thức lệnh --
     def _send(self, cmd: int, payload: bytes = b""):
@@ -333,6 +336,14 @@ class C1Source(SerialSource):
         except Exception:  # noqa: BLE001
             pass
 
+    def _orient(self, a: float) -> float:
+        """Quy ước C1 → D200: đảo X (a → −a) rồi đảo Y (a → 180° − a), giống rplidar_ParseByte trên K02."""
+        if self.flip_x:
+            a = -a
+        if self.flip_y:
+            a = 180.0 - a
+        return a % 360.0
+
     def _parse_standard(self, buf: bytearray, t: float):
         while len(buf) >= 5:
             b0 = buf[0]
@@ -346,7 +357,9 @@ class C1Source(SerialSource):
             del buf[:5]
             self.stats["frames"] += 1
             if dist > 0:
-                self._emit(t, ang % 360.0, dist, q)
+                self._emit(t, self._orient(ang), dist, q)
+            else:
+                self.stats["zero"] = self.stats.get("zero", 0) + 1  # node hợp lệ nhưng không có phản xạ (dist=0)
 
     def _parse_dense(self, buf: bytearray, t: float, prev):
         CAP = 84
@@ -377,7 +390,7 @@ class C1Source(SerialSource):
                     a = (cur >> 10) / 64.0
                     cur += inc
                     if d > 0:
-                        self._emit(t, a % 360.0, float(d), 0)
+                        self._emit(t, self._orient(a), float(d), 0)
             prev = (start, cabins)
         return prev
 
@@ -387,7 +400,7 @@ class C1Source(SerialSource):
 # ──────────────────────────────────────────────────────────────────────────────
 SIM_SPEC = {  # tốc độ lấy mẫu (điểm/s), vòng/s, nhiễu khoảng cách σ (mm), tỉ lệ rớt điểm
     "c1": dict(fs=5000.0, hz=10.0, sigma=6.0, drop=0.02),
-    "d200": dict(fs=4000.0, hz=10.0, sigma=10.0, drop=0.03),
+    "d200": dict(fs=4000.0, hz=6.0, sigma=10.0, drop=0.03),  # LD14P: 4000 mẫu/s @ 6 Hz = 667 điểm/vòng = 0,54°
 }
 
 
@@ -543,7 +556,7 @@ class ReplaySource(Source):
 
 
 def make_source(model: str, port: Optional[str], baud: Optional[int] = None, mode: str = "auto",
-                replay: Optional[str] = None, speed: float = 1.0) -> Source:
+                replay: Optional[str] = None, speed: float = 1.0, flip_y: bool = True, flip_x: bool = True) -> Source:
     if replay:
         return ReplaySource(replay, speed)
     if model in ("sim-c1", "sim-d200"):
@@ -551,7 +564,7 @@ def make_source(model: str, port: Optional[str], baud: Optional[int] = None, mod
     if not port:
         raise SystemExit("Cần --port COMx (hoặc --model sim-c1 / --replay file.csv)")
     if model == "c1":
-        return C1Source(port, baud, mode)
+        return C1Source(port, baud, mode, flip_y, flip_x)
     if model == "d200":
         return D200Source(port, baud)
     raise SystemExit(f"Model không hợp lệ: {model}")

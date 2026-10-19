@@ -40,6 +40,9 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         int halfX, int hightFloor, int ymax, int shiftXFloor, int shiftY, int shiftX,
         int offsetAngle, int numsPointReport);
     [DllImport(LibName)] private static extern void Lidar_SetModel(int model); // 0 = D200, 1 = RPLIDAR C1
+    [DllImport(LibName)] private static extern void Lidar_SetC1FlipX(int flip); // C1: đảo trục X so với D200
+    [DllImport(LibName)] private static extern void Lidar_SetC1FlipY(int flip); // C1: đảo trục Y so với D200
+    [DllImport(LibName)] private static extern void Lidar_SetFastTouch(int fast); // 1 = mỗi điểm trong vùng = 1 touch ngay
     [DllImport(LibName)] private static extern void Lidar_SetTouchEnabled(int enabled);
     [DllImport(LibName)] private static extern int Lidar_PollTouch(out int x, out int y);
 
@@ -61,18 +64,27 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     [System.Serializable]
     private class LidarConfigJson
     {
-        public int half_x = 1000;
-        public int hight_floor = 0;
-        public int ymax = 1500;
-        public int shift_x_floor = 0;
-        public int shift_y = 0;
-        public int shift_x = 0;
-        public int offset_angle = 0;
-        public int nums_point_report = 1;
-        // Loại LiDAR gắn trên máy: "d200" (mặc định, LD14P) hoặc "c1" (Slamtec RPLIDAR C1). Thiếu key trong
-        // file cũ → giữ "d200", máy hiện có không đổi hành vi. Đổi loại: sửa file rồi ĐÓNG HẲN app mở lại
+        // Mặc định = bộ máy chiếu #2 (docs/lidar-calib.md, backup lidar_config.json.new_20260918_v2). Chỉ dùng khi
+        // CHƯA có file trên máy; máy đã có file thì giá trị trong file thắng.
+        public int half_x = 1190;
+        public int hight_floor = 1380;
+        public int ymax = -800;
+        public int shift_x_floor = -110;
+        public int shift_y = -15;
+        public int shift_x = -35;
+        public int offset_angle = -5;
+        public int nums_point_report = 2;
+        // Loại LiDAR gắn trên máy: "d200" (LD14P) hoặc "c1" (Slamtec RPLIDAR C1). Đổi loại: sửa file rồi ĐÓNG HẲN app mở lại
         // (baud + lệnh quét chỉ gửi lúc kết nối USB). Cả 2 dùng chung CP2102 nên không tự nhận ra được.
-        public string lidar_model = "d200";
+        // Bản build này mặc định "c1" (key thiếu trong file cũ → c1). Muốn quay lại D200: ghi "lidar_model": "d200".
+        public string lidar_model = "c1";
+        // "fast" (mặc định bản này): MỖI điểm hợp lệ trong vùng sàn = 1 touch ngay, không gom cụm / cửa sổ 300 ms /
+        // tick 100 ms / throttle 150 ms. "cluster": pipeline cũ (cụm ≥ 3 điểm, ~100–300 ms). Đổi cần đóng hẳn app mở lại.
+        public string touch_mode = "fast";
+        // Chỉ có tác dụng khi lidar_model = "c1": trục Y của C1 ngược D200 → đảo (góc → 180° − góc, TRƯỚC offset_angle).
+        public bool c1_flip_y = true;
+        // Tương tự cho trục X (góc → −góc, làm trước đảo Y). Cả hai bật = quay 180° so với D200.
+        public bool c1_flip_x = true;
     }
 
     private const string ConfigFileName = "lidar_config.json";
@@ -227,7 +239,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
             _config = JsonUtility.FromJson<LidarConfigJson>(json);
             Debug.Log($"[LidarTouchBridge] LoadConfig: đã đọc {path} — half_x={_config.half_x} hight_floor={_config.hight_floor} " +
                       $"ymax={_config.ymax} shift_x_floor={_config.shift_x_floor} shift_y={_config.shift_y} shift_x={_config.shift_x} " +
-                      $"offset_angle={_config.offset_angle} nums_point_report={_config.nums_point_report} lidar_model={_config.lidar_model}");
+                      $"offset_angle={_config.offset_angle} nums_point_report={_config.nums_point_report} lidar_model={_config.lidar_model} touch_mode={_config.touch_mode} c1_flip_y={_config.c1_flip_y} c1_flip_x={_config.c1_flip_x}");
         }
         catch (System.Exception e)
         {
@@ -257,6 +269,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     private bool _uartReady;
 
     private bool IsC1 => string.Equals(_config.lidar_model, "c1", StringComparison.OrdinalIgnoreCase);
+    private bool IsFast => !string.Equals(_config.touch_mode, "cluster", StringComparison.OrdinalIgnoreCase);
 
     void Start()
     {
@@ -284,6 +297,9 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
 
         Lidar_SetUartFd(fd);
         Lidar_SetModel(IsC1 ? 1 : 0);
+        Lidar_SetC1FlipX(_config.c1_flip_x ? 1 : 0);
+        Lidar_SetC1FlipY(_config.c1_flip_y ? 1 : 0);
+        Lidar_SetFastTouch(IsFast ? 1 : 0);
         ApplyConfigToNative();
         _uartReady = true;
         Lidar_SetTouchEnabled(_touchEnabled ? 1 : 0); // mặc định OFF — xem _touchEnabled ở trên
@@ -322,8 +338,10 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
             }
 
             Vector2 screenPos = ApplyCalib(RawRefToScreen(refX, refY));
-            Debug.Log($"[LidarTouchBridge] Poll: ref=({refX},{refY}) → screen=({screenPos.x:F0},{screenPos.y:F0}) Screen=({Screen.width}x{Screen.height})");
-            if (showTouchIndicator)
+            // Chế độ fast: hàng trăm điểm/giây — không log từng điểm, và không vẽ chồng vòng tròn debug cùng chỗ.
+            if (!IsFast)
+                Debug.Log($"[LidarTouchBridge] Poll: ref=({refX},{refY}) → screen=({screenPos.x:F0},{screenPos.y:F0}) Screen=({Screen.width}x{Screen.height})");
+            if (showTouchIndicator && ShouldDrawIndicator(screenPos))
             {
                 try { ShowTouchIndicator(screenPos); }
                 catch (System.Exception e) { Debug.LogException(e); }
@@ -444,6 +462,20 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     // shift_x/shift_y trong lidar_config.json cho khớp. Không raycastTarget nên không chặn
     // touch thật của người dùng.
     // ─────────────────────────────────────────────────────────────────────
+
+    private Vector2 _lastIndicatorPos = new Vector2(-9999f, -9999f);
+    private float _lastIndicatorTime = -999f;
+
+    // Fast mode bắn nhiều điểm/giây trên cùng 1 bàn chân — chỉ vẽ lại vòng debug khi khác chỗ (>30px) hoặc sau 80 ms.
+    // KHÔNG ảnh hưởng touch thật (DispatchTap vẫn chạy cho từng điểm).
+    private bool ShouldDrawIndicator(Vector2 pos)
+    {
+        float now = Time.unscaledTime;
+        if ((pos - _lastIndicatorPos).sqrMagnitude < 900f && now - _lastIndicatorTime < 0.08f) return false;
+        _lastIndicatorPos = pos;
+        _lastIndicatorTime = now;
+        return true;
+    }
 
     private void ShowTouchIndicator(Vector2 screenPosition)
     {
@@ -569,6 +601,14 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     }
 
     private bool _capturing;
+
+    // Calib cần điểm đã lọc theo cụm (≥3 điểm, throttle) — trong lúc đo tạm tắt chế độ fast để tường/vật tĩnh
+    // không tràn ra hàng trăm điểm/giây; đo xong trả lại đúng chế độ cấu hình.
+    private void SetCapturing(bool on)
+    {
+        _capturing = on;
+        if (_uartReady && IsFast) Lidar_SetFastTouch(on ? 0 : 1);
+    }
     private List<Vector2> _captureBuffer;
     private Coroutine _captureCoroutine;
 
@@ -591,16 +631,16 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         // Chỉ huỷ capture cũ (nếu đang dở dang) — KHÔNG dùng StopAllCoroutines(), tránh giết
         // luôn coroutine FadeAndDestroy() của vòng tròn debug touch đang chạy song song.
         if (_captureCoroutine != null) StopCoroutine(_captureCoroutine);
-        _capturing = false; // StopCoroutine không chạy nốt phần code sau yield — tự reset cờ
+        SetCapturing(false); // StopCoroutine không chạy nốt phần code sau yield — tự reset cờ
         _captureCoroutine = StartCoroutine(CaptureRoutine(durationSeconds, targets, onDone));
     }
 
     private IEnumerator CaptureRoutine(float durationSeconds, CalibTarget[] targets, Action<CalibCaptureResult> onDone)
     {
         _captureBuffer = new List<Vector2>();
-        _capturing = true;
+        SetCapturing(true);
         yield return new WaitForSecondsRealtime(durationSeconds);
-        _capturing = false;
+        SetCapturing(false);
 
         var result = ProcessCapture(_captureBuffer, targets);
         onDone?.Invoke(result);
@@ -697,7 +737,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     public void StartSinglePointCapture(float durationSeconds, string role, Action<SinglePointCaptureResult> onDone)
     {
         if (_captureCoroutine != null) StopCoroutine(_captureCoroutine);
-        _capturing = false;
+        SetCapturing(false);
         _captureCoroutine = StartCoroutine(SinglePointCaptureRoutine(durationSeconds, role, onDone));
     }
 
@@ -720,9 +760,9 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     private IEnumerator SinglePointCaptureRoutine(float durationSeconds, string role, Action<SinglePointCaptureResult> onDone)
     {
         _captureBuffer = new List<Vector2>();
-        _capturing = true;
+        SetCapturing(true);
         yield return new WaitForSecondsRealtime(durationSeconds);
-        _capturing = false;
+        SetCapturing(false);
 
         Debug.Log($"[LidarTouchBridge] SinglePointCapture: điểm thô = [{string.Join(", ", _captureBuffer.ConvertAll(p => $"({p.x:F0},{p.y:F0})"))}]");
 

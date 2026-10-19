@@ -1,6 +1,6 @@
 # Thuật toán nhận diện chạm LiDAR (D200), độ trễ, và option C1
 
-> **TL;DR**: Điểm chạm = "cụm ≥ 3 điểm trong cửa sổ 300 ms, phân tích mỗi 100 ms, lấy điểm Y lớn nhất". KHÔNG có đếm "n vòng quay" — chỉ có cửa sổ thời gian 300 ms. Độ trễ điển hình ~100 ms, tệ nhất ~300–400 ms (vật nhỏ/xa). Có thể đổi sang RPLIDAR C1 bằng `"lidar_model": "c1"` trong `lidar_config.json`.
+> **TL;DR**: Điểm chạm = "cụm ≥ 3 điểm trong cửa sổ 300 ms, phân tích mỗi 100 ms, lấy điểm Y lớn nhất". KHÔNG có đếm "n vòng quay" — chỉ có cửa sổ thời gian 300 ms. Độ trễ D200 (6 Hz) điển hình ~100–150 ms, tệ nhất ~300–600 ms (vật nhỏ/xa). Có thể đổi sang RPLIDAR C1 bằng `"lidar_model": "c1"` trong `lidar_config.json`.
 > **Đọc khi**: chỉnh độ nhạy/độ trễ chạm, so sánh cảm biến, thêm loại LiDAR mới, nghi ngờ chạm "ma"/chạm trễ.
 > **Cập nhật**: 2026-10-19 (đối chiếu code `NativePlugins/LidarUnity/src/` — nếu native đổi, cập nhật cả `Tools/lidar_bench/touch_pipeline.py`)
 
@@ -30,7 +30,7 @@ Unity Update() ◀─Lidar_PollTouch (queue 32)◀─ sendTouch (throttle) ◀�
 
 ### Trả lời câu hỏi "qua mấy vòng mới nhận, cụm phải đạt gì"
 
-- **Không có đếm số vòng quay.** "Nhiều vòng" chỉ xuất hiện gián tiếp: cửa sổ tích điểm 300 ms ≈ 3 vòng ở 10 Hz, nên 1 vật nhỏ/xa chỉ trúng 1 điểm/vòng vẫn gom đủ 3 điểm sau ~3 vòng.
+- **Không có đếm số vòng quay.** "Nhiều vòng" chỉ xuất hiện gián tiếp: cửa sổ tích điểm 300 ms (xử lý thật 300–400 ms) ≈ 1,8–2,4 vòng với D200 (6 Hz) hoặc 3–4 vòng với C1 (10 Hz), nên 1 vật nhỏ/xa chỉ trúng ít điểm/vòng vẫn có thể gom đủ 3 điểm sau 1–3 vòng.
 - Tiêu chí nhận cụm = **(a)** tổng điểm trong vùng > `nums_point_report` **và (b)** cụm ≥ 3 điểm, các điểm cách nhau chuỗi ≤ 30 mm. Với `nums_point_report = 2`, (a) thừa vì (b) đã kéo theo (a). Chỉ có tác dụng khi đặt ≥ 3.
 - Bộ lọc "ổn định phải xuất hiện trong cả 5 lần quét" (`SCAN_BUFFER_SIZE`) và `find_position`/`POINT_NUMBER_OK = 10` **là code chết** (`LidarProcessor.cpp`, `liblidar.cpp:find_position`): không được gọi trong pipeline thật (`lidar_processing_thread` không bao giờ được tạo; `find_position` đã comment). Nhiều khả năng ký ức "qua một số vòng" đến từ đây.
 
@@ -47,12 +47,12 @@ Từ lúc chân chạm sàn → `pointerDown` trong Unity:
 
 | Thành phần | Điển hình | Tệ nhất | Nguồn |
 |---|---|---|---|
-| Chờ tia quét trúng vật | ~50 ms | 100 ms (1 vòng @10 Hz) | tốc độ quay |
-| Chờ đủ ≥ 3 điểm trong cụm | 0 (vật ≥ 3 điểm/vòng) | +100…200 ms (vật nhỏ/xa, cần 2–3 vòng) | `min_cluster=3` + cửa sổ 300 ms |
+| Chờ tia quét trúng vật | ~83 ms | 167 ms (1 vòng @6 Hz) | tốc độ quay D200 |
+| Chờ đủ ≥ 3 điểm trong cụm | 0 (vật ≥ 3 điểm liên kết/vòng) | +167…330 ms (vật nhỏ/xa, cần 2–3 vòng) | `min_cluster=3` + cửa sổ 300 ms |
 | Chờ tick phân tích | ~50 ms | 100 ms | `CLUSTER_ANALYSIS_INTERVAL` |
 | USB bulk + pipe + 3 thread (sleep 200 µs) | vài ms (ước tính, chưa đo) | ~16 ms (ước: latency timer CP2102) | `LidarUsbBridge`, `native-lib.cpp` |
 | Chờ frame Unity | ~8 ms | 17 ms @60 fps | `Update()` |
-| **Tổng** | **~110–120 ms** | **~235 ms** (vật đủ điểm) **~400 ms** (vật nhỏ/xa) | |
+| **Tổng** | **~145 ms** | **~270 ms** (vật đủ điểm) **~450–600 ms** (vật nhỏ/xa) | |
 
 Throttle 150 ms **không** làm trễ lần báo đầu, chỉ chặn lặp.
 
@@ -72,12 +72,34 @@ Khác biệt kỹ thuật (C1 = Slamtec RPLIDAR C1, đã dò thật trên COM6: 
 | Baud | 230400 | **460800** (Java `initCp2102` đặt theo model) |
 | Khởi động | tự phát dữ liệu | **phải gửi lệnh**: `A5 25` (stop), xả, `A5 20` (quét Standard) — `LidarUsbBridge.startC1Scan`; descriptor phản hồi 7 byte bị Java bỏ trước khi vào pipe |
 | Định dạng | gói 47 byte + CRC8, 12 điểm | node 5 byte (không CRC; đồng bộ bằng 2 bit kiểm tra) — `rplidar_ParseByte` |
-| Mật độ | ~4000 điểm/s, ~0,9°/điểm | 5000 mẫu/s, đo thật ~4300 điểm hợp lệ/s, ~0,70°/điểm |
+| Mật độ | 4000 mẫu/s @ **6 Hz** = 667 điểm/vòng, **0,54°/điểm** | 5000 mẫu/s, đo thật ~4300 điểm hợp lệ/s, ~0,70°/điểm |
 | USB | CP2102 VID `10C4` PID `EA60` | **cùng VID/PID** ⇒ không tự nhận loại được, phải đặt `lidar_model` |
 
 Phần còn lại (lọc vùng, gom cụm, throttle, calib, Unity) **dùng chung nguyên xi**. Đường C1 trong native chỉ thay bước 1 (giải gói); mọi tham số ở mục 1 giữ nguyên.
 
 **Chưa kiểm chứng trên K02** (chỉ chạy được trên laptop): luồng Java gửi lệnh qua bulk OUT, hướng quay/mốc 0° của C1 so với D200 (nếu chạm bị lật/xoay: chỉnh `offset_angle`; lật gương thì hiện chưa có tuỳ chọn — báo để thêm), `lidar_config.json` mới cho C1 (hình học vùng sàn giữ nguyên nếu lắp cùng vị trí). `liblidar_unity.so` và `lidarlib-release.aar` đã build lại nhưng **chưa build APK / chưa cài K02**.
+
+### 3b. Chế độ chạm tức thì (`"touch_mode": "fast"`, mặc định của bản build C1)
+
+Mỗi điểm hợp lệ trong vùng sàn (`point_is_in_area`) → `report_point_now()` → ref 1024×600 → queue Unity **ngay trong thread parse**: bỏ đệm 300 ms, tick 100 ms, gom cụm, ≥ 3 điểm, throttle 150 ms. Công thức đổi toạ độ giữ nguyên. Độ trễ còn: chờ tia quét trúng (~50 ms @C1, 0–100) + USB/thread (vài ms) + chờ frame Unity (~8 ms) ≈ **60–70 ms** trung bình. Không còn chạm ma sau khi rời.
+
+Đánh đổi (cần biết khi test): 1 bàn chân cho ~3–8 touch/vòng ở cùng chỗ (không dedupe) → game nhận nhiều `pointerClick` liên tiếp; vật tĩnh trong vùng (tường/ghế) = chạm liên tục ở tốc độ điểm; mỗi điểm 1 `RaycastAll`. Queue Unity tối đa 32 (đầy thì bỏ điểm cũ nhất). Calib tự tạm chuyển về chế độ cụm lúc đo (`SetCapturing`). Quay lại pipeline cũ: `"touch_mode": "cluster"` rồi đóng hẳn app mở lại.
+
+### 3c. Đảo trục X/Y của C1 so với D200 (2026-10-19)
+
+Hệ trục C1 không trùng D200 trên K02 nên native đổi về quy ước D200 ngay ở bước giải node (`rplidar_ParseByte`, `liblidar.cpp`), **trước** `offset_angle`:
+
+| Đảo | Công thức góc | Hiệu ứng (x = −d·sin a, y = d·cos a) |
+|---|---|---|
+| X (`c1_flip_x`) | a → −a | x đổi dấu, y giữ |
+| Y (`c1_flip_y`) | a → 180° − a | y đổi dấu, x giữ |
+| Cả hai | a → a + 180° | quay 180° |
+
+- Mặc định bản này: **cả hai bật** (config `c1_flip_x`, `c1_flip_y`; chỉ có tác dụng khi `lidar_model = "c1"`; D200 không bị ảnh hưởng). Tắt từng trục bằng JSON, đóng hẳn app mở lại, không cần build.
+- `offset_angle` (bộ #2 = −5) coi như hiệu chỉnh lắp đặt theo quy ước D200 nên cộng SAU khi đảo. Lọc vùng 90–270° cũng áp dụng trên góc đã đảo.
+- Native: `Lidar_SetC1FlipX/Y` (gọi trước `Lidar_Init`), C#: `LidarTouchBridge` đọc 2 khoá và gọi trong `OnUartFdReady`. Tool laptop đảo giống hệt (`--no-flip-x`, `--no-flip-y` để tắt).
+- Chưa kiểm chứng hướng thực tế trên sàn K02 — nếu chạm vẫn lệch hướng thì tắt/bật từng trục, rồi mới chỉnh `offset_angle`/`shift_*`.
+- Các thông số chi tiết (`half_x`, `ymax`, `shift_*`, `offset_angle`...) do user chỉnh trong `lidar_config.json` và ghi lại sau.
 
 ## 4. So sánh C1 vs D200
 
@@ -96,21 +118,23 @@ Hai chế độ cho kết quả gần như trùng ⇒ native dùng **Standard** 
 
 ### 4.2 D200: chưa đo thật
 
-Chưa có D200 nối vào laptop trong phiên này. Số liệu danh định từ code: 4000 điểm/s (`lidar_measure_freq_`), 10 Hz, 12 điểm/gói, ~0,9°/điểm, bỏ qua mọi điểm `d = 0`. Tool đã có driver D200 nhưng **chưa chạy với phần cứng thật** (chỉ kiểm thử bằng mô phỏng) — nếu cắm được D200 vào cổng COM thứ hai, chạy `lidar_view.py --model d200 --port COMx` để xác nhận trước.
+Chưa có D200 nối vào laptop trong phiên này. Số liệu danh định (4000 mẫu/s trong code `lidar_measure_freq_`, 6 Hz theo user): 667 điểm/vòng, 12 điểm/gói, **0,54°/điểm**, bỏ qua mọi điểm `d = 0`. (Bản đầu của doc này nhầm D200 = 10 Hz/0,9° — đã sửa.) Tool đã có driver D200 nhưng **chưa chạy với phần cứng thật** (chỉ kiểm thử bằng mô phỏng) — nếu cắm được D200 vào cổng COM thứ hai, chạy `lidar_view.py --model d200 --port COMx` để xác nhận trước.
 
 ### 4.3 Mô phỏng cùng pipeline, cùng nhiễu (chỉ khác mật độ điểm)
 
-Cấu hình: nhiễu σ = 5 mm cho cả hai, rớt 2%, window 300 ms, tick 100 ms, min_cluster 3, 40 lần/ô, vật đứng yên xuất hiện ở pha ngẫu nhiên. Trễ = từ lúc vật xuất hiện (chân lý trong mô phỏng) → báo chạm đầu tiên. Bảng đầy đủ: `python Tools/lidar_bench/sim_sweep.py`.
+Cấu hình: nhiễu σ = 5 mm cho cả hai, rớt 2%, window 300 ms, tick 100 ms, min_cluster 3, 40 lần/ô, vật đứng yên xuất hiện ở pha ngẫu nhiên. C1: 10 Hz, 0,72°. D200: 6 Hz, 0,54°. Trễ = từ lúc vật xuất hiện (chân lý trong mô phỏng) → báo chạm đầu tiên. Bảng đầy đủ: `python Tools/lidar_bench/sim_sweep.py`.
 
 | Vật | Khoảng cách | Điểm/vòng C1 / D200 | Trễ TB (p95) C1 | Trễ TB (p95) D200 |
 |---|---|---|---|---|
-| Trụ Ø50 | 1 m | 4,0 / 3,2 | 101 (148) ms | 92 (157) ms |
-| Trụ Ø50 | 1,5 m | 2,7 / 2,1 | 106 (162) ms | 157 (234) ms |
-| Trụ Ø50 | ≥ 2 m | ≤ 2,0 / ≤ 1,6 | ~309 (441) ms | ~292 (357) ms |
-| Chân Ø100 | 2 m | 4,0 / 3,2 | 109 (175) ms | 287 (334) ms |
-| Chân Ø100 | ≥ 2,5 m | ≤ 3,2 / ≤ 2,5 | ~301 (348) ms | ~287 (334) ms |
+| Trụ Ø50 | 1 m | 4,0 / 5,3 | 101 (148) ms | 97 (210) ms |
+| Trụ Ø50 | 1,5 m | 2,7 / 3,5 | 106 (162) ms | 112 (275) ms |
+| Trụ Ø50 | 2 m | 2,0 / 2,7 | 309 (441) ms | 262 (409) ms |
+| Trụ Ø50 | 3 m | 1,3 / 1,8 | 309 (441) ms | 352 (482) ms |
+| Chân Ø100 | 2 m | 4,0 / 5,3 | 109 (175) ms | 97 (210) ms |
+| Chân Ø100 | 2,5 m | 3,2 / 4,2 | 301 (348) ms | 127 (409) ms |
+| Chân Ø100 | 3,5 m | 2,3 / 3,0 | 301 (348) ms | 545 (599) ms |
 
-Đọc kết quả: (1) khi vật cho **≥ 3 điểm/vòng** cả hai ≈ 100 ms (sai khác < 15 ms là nhiễu thống kê); (2) khi vật **< 3 điểm/vòng** phải gom nhiều vòng ⇒ nhảy lên ~300 ms. C1 dày hơn ~25% nên giữ được ~100 ms **xa hơn** (trụ Ø50: tới ~1,5 m so với ~1 m của D200; chân Ø100: tới ~2 m so với ~1,5 m) — đây là lợi thế độ trễ thật duy nhất của C1 ở K02 (cả hai vẫn rơi về ~300 ms khi vật quá nhỏ/xa). (3) Không ô nào bị hụt (vật đứng yên, 1,5 s), nhưng vật **di chuyển** sẽ nhoè vì ngưỡng 30 mm — chưa mô phỏng.
+Đọc kết quả: (1) D200 (0,54°) dày hơn C1 (0,72°) **trên mỗi vòng** ~33% nên đủ 3 điểm liên kết ở xa hơn (ngưỡng liên kết 30 mm: D200 tới ~3,2 m, C1 tới ~2,4 m) — chân Ø100 ở 2,5 m D200 vẫn ~127 ms còn C1 đã ~300 ms. (2) Nhưng D200 quay chậm hơn (6 so với 10 Hz): trễ TB gần như ngang nhau khi đủ điểm, **đuôi trễ (p95) dài hơn** (~210 so với ~148 ms) và khi vật quá nhỏ/xa phải gom nhiều vòng thì tệ hơn hẳn (cửa sổ 300 ms chỉ chứa ~1,8–2,4 vòng D200 so với 3–4 vòng C1: ở 3,5 m ~550 ms so với ~300 ms). (3) Vì vậy C1 **không** có lợi thế mật độ; lợi thế của C1 là tốc độ quay (đuôi trễ ngắn, cửa sổ chứa nhiều vòng hơn), không phải độ phân giải góc. Với vùng sàn ≤ 2,5 m, D200 không kém về độ trễ trung bình. (4) Không ô nào bị hụt (vật đứng yên, 1,5 s), nhưng vật **di chuyển** sẽ nhoè vì ngưỡng 30 mm — chưa mô phỏng.
 Mô phỏng là mô hình, không phải đo thật; nhiễu D200 thật có thể khác 5 mm.
 
 ## 5. Việc tiếp theo

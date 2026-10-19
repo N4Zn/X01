@@ -101,6 +101,63 @@ def calc_precision(pts: List[Pt], bands=((0, 1000), (1000, 2000), (2000, 3000), 
     return out
 
 
+# ── glitch: điểm ma / điểm lẻ / lỗi dữ liệu (cảnh TĨNH, không ai đi lại) ─────
+def calc_glitch(pts: List[Pt], spike_mm: float = 150.0) -> Dict:
+    """Chạy trên cảnh tĩnh: mọi thứ "bất thường" đều là lỗi cảm biến/giao tiếp, không phải người.
+      - backward_angle: góc lùi > 1° trong 1 vòng (ghép gói sai / mất byte)
+      - spike: điểm lệch > spike_mm so với CẢ 2 điểm lân cận trong khi 2 lân cận khớp nhau (điểm nhiễu lẻ)
+      - sporadic: điểm nằm ở ô 1° mà < 10% số vòng có phản xạ (xuất hiện từ hư không = "điểm ma")
+      - near: điểm < 100 mm (ngoài tầm đo thật của C1 0,05–12 m nhưng vẫn là dạng ma hay gặp)
+      - dropout: ở ô có phản xạ ≥ 80% số vòng, tỉ lệ vòng bị mất (dist=0 chen giữa)."""
+    revs: Dict[int, List[Pt]] = {}
+    for p in pts:
+        revs.setdefault(p.rev, []).append(p)
+    keys = sorted(revs)[1:-1]
+    dur = (pts[-1].t - pts[0].t) if pts else 0
+    back = spikes = total = near = 0
+    cells: Dict[int, Dict[int, float]] = {}
+    for k in keys:
+        r = revs[k]
+        for i, p in enumerate(r):
+            total += 1
+            if p.dist < 100:
+                near += 1
+            cells.setdefault(int(p.angle * 1.0) % 360, {})[k] = p.dist
+            if i and p.angle < r[i - 1].angle - 1.0:
+                back += 1
+            if 0 < i < len(r) - 1:
+                a, c = r[i - 1], r[i + 1]
+                if (abs(p.angle - a.angle) <= 2 and abs(c.angle - p.angle) <= 2 and abs(a.dist - c.dist) <= spike_mm
+                        and abs(p.dist - a.dist) > spike_mm and abs(p.dist - c.dist) > spike_mm):
+                    spikes += 1
+    n = len(keys)
+    sporadic = 0
+    drop_num = drop_den = 0
+    sporadic_cells = 0
+    for a, byrev in cells.items():
+        frac = len(byrev) / n if n else 0
+        if frac < 0.10:
+            sporadic += len(byrev)
+            sporadic_cells += 1
+        elif frac >= 0.8:
+            drop_num += n - len(byrev)
+            drop_den += n
+    mins = dur / 60.0 if dur else float("nan")
+    return {
+        "revs": n,
+        "points_checked": total,
+        "backward_angle_steps": back,
+        "spikes": spikes,
+        "spikes_per_min": spikes / mins,
+        "spike_pct": 100.0 * spikes / total if total else float("nan"),
+        "sporadic_points": sporadic,
+        "sporadic_per_min": sporadic / mins,
+        "sporadic_cells_1deg": sporadic_cells,
+        "near_lt100mm": near,
+        "dropout_pct_stable_cells": 100.0 * drop_num / drop_den if drop_den else float("nan"),
+    }
+
+
 # ── static (độ chính xác với trụ đứng yên) ───────────────────────────────────
 def _angular_groups(pts: List[Pt], gap_deg: float):
     """Gom điểm trong dải khoảng cách theo góc liền kề (có xử lý vòng 360°)."""
@@ -226,6 +283,7 @@ def main(argv=None):
         p.add_argument("--angle-tol", type=float, default=10.0)
 
     s = sub.add_parser("stats"); s.add_argument("files", nargs="+")
+    s = sub.add_parser("glitch"); s.add_argument("file"); pipe_opts(s)
     s = sub.add_parser("static"); s.add_argument("file"); static_opts(s)
     s = sub.add_parser("latency"); s.add_argument("file"); pipe_opts(s)
     s = sub.add_parser("compare"); s.add_argument("files", nargs="+"); static_opts(s); pipe_opts(s)
@@ -235,6 +293,17 @@ def main(argv=None):
         for f in a.files:
             meta, pts = load_csv(f)
             _print_dict(f"{f} ({meta.get('model', '?')})", {**calc_stats(pts), **calc_precision(pts)})
+    elif a.cmd == "glitch":
+        meta, pts = load_csv(a.file)
+        _print_dict(f"{a.file} ({meta.get('model', '?')}) — glitch (cảnh tĩnh)", calc_glitch(pts))
+        # touch giả: chạy pipeline K02 với vùng sàn do --config (mặc định máy chiếu #2) trên cảnh tĩnh
+        touches, pl = run_offline(pts, _cfg_from(a))
+        sent = [t for t in touches if t.sent]
+        dur = pts[-1].t - pts[0].t
+        print(f"\n== touch giả qua pipeline K02 (vùng sàn theo config): {len(sent)} touch trong {dur:.0f}s "
+              f"({60 * len(sent) / dur:.1f}/phút), điểm trong vùng: {pl.n_in_area}/{pl.n_total}")
+        for t in sent[:10]:
+            print(f"   t={t.t_tick:6.1f}s mm=({t.mm[0]:.0f},{t.mm[1]:.0f}) n={t.n_cluster}")
     elif a.cmd == "static":
         if a.truth_dist is None:
             sys.exit("--truth-dist bắt buộc")

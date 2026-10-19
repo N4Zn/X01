@@ -9,6 +9,7 @@ Python 3.11, `pip install -r requirements.txt` (pyserial + matplotlib). Giải t
 | `lidar_view.py` | Viewer thời gian thực + chạy pipeline chạm K02 (cụm, toe point, màn hình 1024×600), ghi CSV |
 | `lidar_capture.py` | Ghi CSV không cần cửa sổ |
 | `lidar_analyze.py` | `stats` · `static` · `latency` · `compare` trên file CSV |
+| `lidar_analyze.py glitch FILE` | Cảnh TĨNH 60 s: điểm ma (sporadic), điểm lẻ (spike), góc lùi (lỗi ghép gói), dropout dist=0, touch giả qua pipeline K02 — chạy cho cả C1 và D200 để so |
 | `sim_sweep.py` | Mô phỏng trễ/hụt theo khoảng cách, C1 vs D200 |
 | `touch_pipeline.py` | Port Python của pipeline native (đối chiếu `liblidar.cpp`/`native-lib.cpp`) |
 | `lidar_io.py` | Driver C1 (Standard + DenseBoost) và D200 (LD14P), mô phỏng, CSV |

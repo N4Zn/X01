@@ -1,6 +1,6 @@
 """Quét mô phỏng: độ trễ + tỉ lệ bắt hụt theo khoảng cách, C1 vs D200, cùng 1 pipeline chạm của K02.
 
-Chỉ khác nhau ở tốc độ lấy mẫu (C1 5000 điểm/s, D200 4000 điểm/s, cùng 10 vòng/s). Nhiễu khoảng cách
+Chỉ khác nhau ở tốc độ lấy mẫu/quay (C1 5000 điểm/s @10 Hz = 0,72°; D200 4000 điểm/s @6 Hz = 0,54°). Nhiễu khoảng cách
 đặt NHƯ NHAU cho cả 2 (mặc định σ=5 mm) để so sánh thuần theo mật độ điểm — KHÔNG phải số đo thật của D200.
 Có "chân lý": thời điểm vật xuất hiện biết trước nên đo được độ trễ từ lúc xuất hiện → báo chạm
 (file ghi thật không có mốc này).
@@ -72,7 +72,7 @@ def main():
                     else:
                         lat.append(v)
                 row[m] = (lat, miss)
-            ppr = {m: (2 * r / d) * (180 / 3.14159265) / {"c1": 0.72, "d200": 0.9}[m] for m in row}  # xấp xỉ hình học
+            ppr = {m: (2 * r / d) * (180 / 3.14159265) / {"c1": 0.72, "d200": 0.54}[m] for m in row}  # xấp xỉ hình học
 
             def f(m):
                 lat, miss = row[m]
