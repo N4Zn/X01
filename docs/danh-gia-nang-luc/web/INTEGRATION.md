@@ -10,25 +10,28 @@
 |---|---|
 | `index.html` | Trang chạy độc lập (kiosk): tải `data/report.json`, không có thì `data/sample.json`. Cần máy chủ tĩnh (`python -m http.server 8080` trong thư mục này). |
 | `edux-report.js` / `edux-report.css` | Widget. CSS nằm dưới `.edx`, không ảnh hưởng trang chủ. |
-| `data/sample.json` | Dữ liệu **minh hoạ** (306 bé giả, 6 tuần, khối 1–2, 12 lớp 1A1–2A6). Sinh bằng `tools/make_sample.py`. |
+| `data/sample.json` | Dữ liệu **minh hoạ** (296 bé giả, 3 môn, 6 tuần, khối 1–2, 12 lớp 1A1–2A6). Sinh bằng `tools/make_sample.py`. |
 | `data/report.json` | Dữ liệu thật, **không commit** (có tên bé; `.gitignore`). Sinh bằng `tools/build_report_json.py`. |
 | `tools/bundle.py` | Gói thành 1 file HTML tự chứa `dist/bao-cao-standalone.html` (mở bằng `file://`, gửi qua mail). |
 | `logo.png` | Logo EduXplore (bản sao của `tool/logo.png`). |
 
 ## Giao diện
 
-- **Theo khối**: 3 thẻ (Toàn trường · Khối 1 · Khối 2, có Δ tiến bộ) chọn phạm vi, hàng KPI (có tiến bộ + tham gia tuần gần nhất), rồi **so sánh các lớp bằng 10 kiểu**, chia 4 nhóm:
-  - *Kết quả*: **Cột** (chọn chỉ số: điểm TB, % đạt, % cần hỗ trợ, % tham gia, hoặc 1 học phần) · **Bản đồ nhiệt** (lớp × học phần) · **Phân bố mức** · **Biên độ điểm** (box plot) · **Radar** (≤ 6 lớp) · **Chính xác × tốc độ**.
-  - *Tiến bộ* (cần ≥ 2 tuần): **Xu hướng tuần** (đường điểm TB từng lớp qua các tuần, so với TB phạm vi) · **Mức tiến bộ** (cột lệch hai phía: lớp nào tăng/giảm so với tuần đầu hoặc tuần trước, kèm số bé ▲ ▬ ▼).
-  - *Tham gia*: **Tham gia theo tuần** (lớp × tuần, % bé có chơi; số bé vắng ≥ 2 tuần).
-  - *Chi tiết*: **Bảng** (sắp xếp mọi cột, có Δ + sparkline).
-  Click lớp ở bất kỳ kiểu nào để mở tab Theo lớp. Cột phải: phân bố mức, điểm TB học phần, danh sách cần chú ý (cao/thấp nhất, tiến bộ nhất, số bé giảm điểm / bỏ chơi).
-- **Theo lớp**: chọn lớp (12 chip), KPI (so khối, tiến bộ, tham gia), bảng xếp hạng bé (điểm + **Δ so tuần đầu + sparkline**, điểm từng học phần, cờ cần chú ý; dòng TB lớp), khung biểu đồ đổi được: **Xu hướng tuần** (lớp vs khối vs trường) · Chính xác × tốc độ · Học phần; phân bố mức; "Cần chú ý" (tiến bộ nhất, đi xuống, bỏ chơi).
-- **Từng học sinh** (kế thừa phiếu InBody `mau/tien-bo-toan-a4.html`): danh sách lớp gọn (tên + điểm + mũi tên), ô tìm tên/mã toàn trường, lọc *Giảm điểm / Ít chơi / Mức 1–2*; hồ sơ 3 cột — (1) **Phân tích kỹ năng** (điểm, **so tuần đầu**, chính xác, giây/câu, **sparkline**, mức) + nhận định từng học phần; (2) thanh điểm so TB lớp + **Lịch sử theo tuần** (điểm tổng so TB lớp, chính xác, thời gian, số câu); (3) điểm EduXplore + Δ, bản đồ kỹ năng, **mục tiêu** (còn thiếu bao nhiêu điểm mỗi học phần để Đạt), **nhận xét** (mạnh nhất, tiến bộ nhất, cần luyện, chăm chỉ + hạng). Bé trước/sau để duyệt nhanh.
+- **Nguyên tắc**: 2 khối học chương trình khác nhau → **không có số liệu nào gộp hay so sánh giữa các khối** (không "TB toàn trường"). Xếp hạng/so sánh chỉ giữa các lớp trong cùng 1 khối. Học phần của mỗi môn có thể khác nhau theo khối (`mon[].hp` dạng `{ "1": [...], "2": [...] }`).
+- **Môn**: nút "Tất cả môn" (điểm TB các môn bé đã chơi; biểu đồ/bảng lấy *môn* làm chiều thay cho học phần) hoặc từng môn (chiều = học phần của môn đó). Chỉ 1 môn trong dữ liệu thì tự ẩn nút.
+- **Toàn trường**: mỗi khối 1 bảng riêng (cạnh nhau): lớp × (Tất cả môn · từng môn), ô có hạng trong khối, ★ + viền = đứng đầu khối ở cột đó; cột tiến bộ; cột *mức độ chơi* (đều/ít/chưa chơi) + câu/bé; dòng TB khối; dải "Đứng đầu khối" (VD: Toán ★1A1, Tiếng Việt ★1A2); chơi nhiều/ít nhất, số bé chưa chơi (lớp nhiều nhất), số bé điểm thấp. Click tiêu đề cột để xếp lại, click lớp mở tab Theo lớp.
+- **Theo khối** (chọn 1 khối): KPI (đã chơi, điểm TB, tiến bộ, tham gia tuần, chưa chơi/chơi ít, cần hỗ trợ), rồi **so sánh các lớp bằng 11 kiểu**, 4 nhóm:
+  - *Kết quả*: **Cột** (chỉ số: điểm TB, % đạt, % cần hỗ trợ, % đã chơi, % chơi tuần gần nhất, hoặc 1 học phần/môn) · **Bản đồ nhiệt** · **Phân bố mức** · **Biên độ điểm** · **Radar** · **Chính xác × tốc độ**.
+  - *Tiến bộ* (≥ 2 tuần): **Xu hướng tuần** · **Mức tiến bộ**.
+  - *Tham gia*: **Mức độ chơi** (mỗi lớp: chơi đều / chơi ít / chưa chơi + câu/bé) · **Theo tuần** (lớp × tuần).
+  - *Chi tiết*: **Bảng**.
+  Cột phải: phân bố mức, điểm TB từng học phần/môn, "Cần chú ý" (chơi nhiều/ít nhất, lớp có nhiều bé chưa chơi, điểm cao/thấp nhất, tiến bộ, bé giảm điểm/bỏ chơi).
+- **Theo lớp**: KPI (đã chơi/chưa chơi, điểm TB vs khối, **hạng trong khối**, tiến bộ, tham gia tuần), bảng xếp hạng bé (điểm, Δ so tuần đầu, sparkline, điểm từng học phần/môn, cờ chú ý; dòng TB lớp), danh sách **bé chưa chơi** dưới bảng, khung biểu đồ đổi được (Xu hướng tuần lớp vs khối · Chính xác × tốc độ · Học phần/Môn), "Cần chú ý": chưa chơi, chơi ít, điểm thấp, tiến bộ nhất, đi xuống, bỏ chơi ≥ 2 tuần (tên bé click mở hồ sơ).
+- **Từng học sinh** (kế thừa phiếu InBody `mau/tien-bo-toan-a4.html`): danh sách lớp gọn (tên + điểm + mũi tên; bé chưa chơi ghi rõ), tìm tên/mã toàn trường, lọc *Chưa chơi / Giảm điểm / Ít chơi / Mức 1–2*; hồ sơ 3 cột — (1) phân tích kỹ năng (hoặc theo môn khi "Tất cả môn"), so tuần đầu, sparkline + nhận định từng học phần; (2) thanh điểm so TB lớp + lịch sử theo tuần (điểm, chính xác, thời gian, số câu); (3) điểm EduXplore + Δ, bản đồ kỹ năng, mục tiêu, nhận xét. Bé trước/sau để duyệt nhanh.
 - Chưa có lịch sử (≤ 1 tuần): các kiểu/cột tiến bộ tự ẩn hoặc hiện "–", phần còn lại vẫn dùng bình thường.
 - Quy ước tiến bộ: Δ = điểm tuần có chơi gần nhất − điểm tuần có chơi đầu tiên của từng bé (ghép cặp); ▲ khi ≥ +3, ▼ khi ≤ −3; cảnh báo "giảm" khi tụt ≥ 5 điểm so tuần trước; "ít chơi" = không chơi từ 2 tuần.
 - Yếu tố quản lý cần xem và dữ liệu tương ứng: [quan-ly-can-xem.md](quan-ly-can-xem.md).
-- Địa chỉ `#khoi/all`, `#khoi/1`, `#lop/2/2A5`, `#hs/CASA-19050` mở thẳng 1 màn hình (`hash:true`).
+- Địa chỉ `#tq`, `#khoi/1`, `#lop/2/2A5`, `#hs/CASA-19050` mở thẳng 1 màn hình (`hash:true`).
 
 ## Dữ liệu
 
@@ -58,7 +61,8 @@ Schema `report.json` (version 2; version 1 — không có `weeks`/`hist` — v�
   "ky": { "from": "2026-10-08", "to": "2026-10-09", "label": "08/10/2026 → 09/10/2026" },
   "formula": { "cuts": [25,50,75], "low_sample": 10, "few_total": 15, "base": 80, "kmax": 1.25, "tfast": 5, "tslow": 20 },
   "diag": { "good": { "label": "Thành thạo", "advice": "…", "color": "#1f7a52" }, "…": {} },
-  "mon": [ { "id": "Toán", "hp": ["Nhận biết số","Đếm","Cộng","Trừ","So sánh"] } ],   // thêm môn = thêm phần tử; ≥2 môn tự hiện nút chọn môn
+  "mon": [ { "id": "Toán", "hp": ["Nhận biết số","Đếm","Cộng","Trừ","So sánh"] },        // hp: danh sách chung, hoặc {"1":[…],"2":[…]} nếu các khối học khác nhau
+           { "id": "Tiếng Việt", "hp": { "1": ["Ghép vần"], "2": ["Chính tả"] } } ],     // thêm môn = thêm phần tử; ≥2 môn tự hiện nút "Tất cả môn"
   "students": [{
     "code": "CASA-21001", "name": "Ngô Quốc An", "alias": "Quốc An",
     "khoi": "5 tuổi", "lop": "Lá 1",           // khối > lớp; bé chưa chơi: "mon": {}
@@ -141,7 +145,7 @@ Giống B nhưng đặt vào 1 route (`/bao-cao`), để widget chiếm toàn m�
 
 ## Giới hạn hiện tại
 
-- Pipeline mới chấm **môn Toán** (5 học phần). Schema đã sẵn nhiều môn; thêm môn là thêm vào `mon[]` và `students[].mon`.
+- Pipeline mới chấm **môn Toán**; web và schema đã hỗ trợ nhiều môn (thêm vào `mon[]` và `students[].mon`, mỗi môn có `score`, `n`, `hp`, `hist`). Khi có thêm môn, chạy `build_report_json.py` cho từng môn rồi gộp `students[].mon`.
 - Chưa có xu hướng theo thời gian (chỉ 1 kỳ), chưa có chuẩn theo tuổi.
-- Dữ liệu minh hoạ dùng 5 học phần Toán cho cả khối 1–2; khi có đề theo khối, sửa `mon[].hp` trong `report.json`.
+- Dữ liệu minh hoạ có 3 môn (Toán, Tiếng Việt, Khám phá) với học phần khác nhau theo khối; tên môn/học phần trong sample là giả định để xem giao diện.
 - Chưa kiểm tra trên 1920×1080 thật; chưa xuất PDF/Excel từ web (dùng pipeline).

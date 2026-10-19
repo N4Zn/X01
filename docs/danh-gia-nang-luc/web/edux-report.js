@@ -1,14 +1,15 @@
 /* EduXplore · Báo cáo kết quả học tập — dashboard cho quản lý (PC), widget không phụ thuộc thư viện.
  *
  *   EduxReport.mount(element, { data | dataUrl, theme, logo, hash, mon, height, onSelectStudent })
- *     -> { update(data), go({tab,scope,khoi,lop,code,mon}), destroy() }
+ *     -> { update(data), go({tab,khoi,lop,code,mon}), destroy() }
  *
  *   <div data-edux-report data-src="data/report.json" data-logo="logo.png"></div>   // tự gắn khi load
  *
- * Ba tab: Theo khối (so sánh lớp: kết quả · tiến bộ · tham gia) · Theo lớp · Từng học sinh (kế thừa phiếu InBody:
- * so với tuần đầu, xu hướng, lịch sử theo tuần, mục tiêu, nhận xét).
+ * Bốn tab: Toàn trường (xếp hạng lớp TRONG TỪNG KHỐI, theo từng môn) · Theo khối · Theo lớp · Từng học sinh.
+ * Nguyên tắc: các khối học chương trình khác nhau -> KHÔNG có số liệu nào gộp / so sánh giữa các khối;
+ * mọi so sánh chỉ xảy ra giữa các lớp trong cùng 1 khối. Nhiều môn: nút "Tất cả môn" (TB các môn bé đã chơi) hoặc từng môn.
  * Bố cục vừa 1 màn hình (≥1000px rộng); danh sách dài cuộn trong khung của nó, trang không cuộn.
- * Dữ liệu (schema v2: weeks + hist theo tuần) và cách tích hợp: xem INTEGRATION.md.
+ * Dữ liệu (schema v2: nhiều môn, weeks + hist theo tuần) và cách tích hợp: xem INTEGRATION.md.
  */
 (function (global) {
   'use strict';
@@ -17,7 +18,7 @@
   var FLAG = ['slow_wrong', 'fast_wrong', 'slow_ok', 'shaky'];
   var SHORT = { slow_wrong: 'chậm-sai', fast_wrong: 'nhanh-nhầm', slow_ok: 'đúng-chậm', shaky: 'chưa vững' };
   var CMP = [['Kết quả', [['bar', 'Cột'], ['heat', 'Bản đồ nhiệt'], ['dist', 'Phân bố mức'], ['box', 'Biên độ điểm'], ['radar', 'Radar'], ['xy', 'Chính xác × tốc độ']]],
-    ['Tiến bộ', [['trend', 'Xu hướng tuần'], ['prog', 'Mức tiến bộ']]], ['Tham gia', [['part', 'Tham gia theo tuần']]], ['Chi tiết', [['table', 'Bảng']]]];
+    ['Tiến bộ', [['trend', 'Xu hướng tuần'], ['prog', 'Mức tiến bộ']]], ['Tham gia', [['act', 'Mức độ chơi'], ['part', 'Theo tuần']]], ['Chi tiết', [['table', 'Bảng']]]];
   var UP = 3, DOWN = 5;   // ≥ +3 điểm: tiến bộ rõ; ≤ -3: đi xuống; giảm ≥ 5 so tuần trước: cảnh báo
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -38,9 +39,9 @@
 
   function Widget(el, opts) {
     var data = null, M = null;
-    var st = { tab: 'khoi', scope: 'all', khoi: null, lop: null, code: null, mon: opts.mon || null, theme: opts.theme || 'light',
+    var st = { tab: 'tq', khoi: null, lop: null, code: null, mon: opts.mon || null, theme: opts.theme || 'light',
       cmp: 'bar', metric: 'avg', cmpSort: false, rsel: null, tsel: null, prog: 'first', lchart: null, filt: 'all', q: '',
-      sort: { lop: { k: 'name', d: 1 }, rank: { k: 'score', d: -1 } } };
+      sort: { tq: { k: null, d: -1 }, lop: { k: 'name', d: 1 }, rank: { k: 'score', d: -1 } } };
     try { var saved = global.localStorage.getItem('edux-report-theme'); if (saved === 'dark' || saved === 'light') st.theme = saved; } catch (e) { /* không có storage thì thôi */ }
 
     el.classList.add('edx');
@@ -49,80 +50,123 @@
     applyTheme();
 
     // ---------- mô hình dữ liệu ----------
+    // Mỗi học sinh có 1 "view" cho mỗi lựa chọn môn: 'all' (TB các môn đã chơi) hoặc 1 môn. View của 'all' coi mỗi môn là 1 chiều (dim)
+    // như học phần của 1 môn, nên mọi biểu đồ/bảng dùng chung code cho cả hai.
     function build(d) {
-      var F = d.formula, cuts = F.cuts, weeks = d.weeks || [], nW = weeks.length;
-      var monId = st.mon && d.mon.some(function (m) { return m.id === st.mon; }) ? st.mon : d.mon[0].id;
-      st.mon = monId;
-      var hpList = d.mon.filter(function (m) { return m.id === monId; })[0].hp;
+      var F = d.formula, cuts = F.cuts, weeks = d.weeks || [], nW = weeks.length, LOWPLAY = 2 * F.few_total;
+      var monIds = d.mon.map(function (m) { return m.id; });
       function lv(p) { return p >= cuts[2] ? 3 : p >= cuts[1] ? 2 : p >= cuts[0] ? 1 : 0; }
-      var students = d.students.map(function (s) {
-        var m = (s.mon && s.mon[monId]) || null;
-        var o = { s: s, code: s.code, name: s.name, alias: s.alias || s.name, khoi: s.khoi, lop: s.lop, m: m, hist: [], series: [], wIdx: [], idle: 0, days: 0 };
-        if (m) {
-          var n = 0, ok = 0, tw = 0, tn = 0, flags = [];
-          hpList.forEach(function (h) {
-            var v = m.hp[h]; if (!v) return;
-            n += v.n; ok += v.ok;
-            if (v.t != null) { tw += v.t * v.n; tn += v.n; }
-            if (FLAG.indexOf(v.diag) >= 0) flags.push({ hp: h, code: v.diag, few: v.few });
-          });
-          o.score = m.score; o.lv = lv(m.score); o.acc = n ? 100 * ok / n : null; o.t = tn ? tw / tn : null;
-          o.few = m.n < F.few_total; o.flags = flags;
-          o.hist = m.hist || [];
-          var idx = []; o.hist.forEach(function (h, i) { if (h) idx.push(i); });
-          o.wIdx = idx; o.series = o.hist.map(function (h) { return h ? h.score : null; });
-          o.lastW = idx.length ? idx[idx.length - 1] : -1; o.firstW = idx.length ? idx[0] : -1;
-          o.idle = nW ? nW - 1 - o.lastW : 0;
-          o.dFirst = idx.length >= 2 ? o.hist[o.lastW].score - o.hist[o.firstW].score : null;
-          o.dPrev = idx.length >= 2 ? o.hist[o.lastW].score - o.hist[idx[idx.length - 2]].score : null;
-          o.days = o.hist.reduce(function (s, h) { return s + (h ? h.days || 0 : 0); }, 0);
-        }
+      function hpOf(monId, khoi) {
+        var m = d.mon.filter(function (x) { return x.id === monId; })[0], h = m && m.hp;
+        return !h ? [] : Array.isArray(h) ? h : (h[khoi] || h['*'] || []);
+      }
+      function dimsOf(sel, khoi) { return sel === 'all' ? monIds.filter(function (id) { return hpOf(id, khoi).length; }) : hpOf(sel, khoi); }
+
+      function mk(s, m, sel) {
+        var o = { s: s, code: s.code, name: s.name, alias: s.alias || s.name, khoi: s.khoi, lop: s.lop, sel: sel, m: m, hist: [], series: [], wIdx: [], idle: 0, days: 0, flags: [], play: 'none' };
+        if (!m) return o;
+        var n = 0, ok = 0, tw = 0, tn = 0;
+        Object.keys(m.hp).forEach(function (h) {
+          var v = m.hp[h]; n += v.n; ok += v.ok;
+          if (v.t != null) { tw += v.t * v.n; tn += v.n; }
+          if (FLAG.indexOf(v.diag) >= 0) o.flags.push({ hp: h, code: v.diag, few: v.few });
+        });
+        o.score = m.score; o.lv = lv(m.score); o.acc = n ? 100 * ok / n : null; o.t = tn ? tw / tn : null;
+        o.few = m.n < F.few_total;
+        o.hist = m.hist || [];
+        var idx = []; o.hist.forEach(function (h, i) { if (h) idx.push(i); });
+        o.wIdx = idx; o.series = o.hist.map(function (h) { return h ? h.score : null; });
+        o.lastW = idx.length ? idx[idx.length - 1] : -1; o.firstW = idx.length ? idx[0] : -1;
+        o.idle = nW ? nW - 1 - o.lastW : 0;
+        o.dFirst = idx.length >= 2 ? o.hist[o.lastW].score - o.hist[o.firstW].score : null;
+        o.dPrev = idx.length >= 2 ? o.hist[o.lastW].score - o.hist[idx[idx.length - 2]].score : null;
+        o.days = o.hist.reduce(function (sum, h) { return sum + (h ? h.days || 0 : 0); }, 0);
+        o.play = (m.n < LOWPLAY || (nW >= 3 && idx.length <= 1)) ? 'few' : 'ok';
         return o;
-      });
-      var khois = uniq(students.map(function (x) { return x.khoi; }));
+      }
+      function mkAll(s) {
+        var subs = monIds.filter(function (id) { return s.mon && s.mon[id]; }).map(function (id) { return { id: id, m: s.mon[id] }; });
+        if (!subs.length) return mk(s, null, 'all');
+        var hp = {}, n = 0;
+        subs.forEach(function (x) {
+          var nn = 0, oo = 0, ww = 0, tt = 0;
+          Object.keys(x.m.hp).forEach(function (h) { var v = x.m.hp[h]; nn += v.n; oo += v.ok; if (v.t != null) { ww += v.t * v.n; tt += v.n; } });
+          hp[x.id] = { n: nn, ok: oo, acc: nn ? 100 * oo / nn : null, t: tt ? ww / tt : null, pt: x.m.score, low: nn < F.low_sample, diag: null, few: nn < F.few_total };
+          n += x.m.n;
+        });
+        var hist = weeks.map(function (w, i) {
+          var es = subs.map(function (x) { return x.m.hist && x.m.hist[i] ? { id: x.id, e: x.m.hist[i] } : null; }).filter(Boolean);
+          if (!es.length) return null;
+          var nn = 0, ok = 0, tw = 0, tn = 0, hh = {};
+          es.forEach(function (q) { nn += q.e.n; if (q.e.acc != null) ok += q.e.acc * q.e.n / 100; if (q.e.t != null) { tw += q.e.t * q.e.n; tn += q.e.n; } hh[q.id] = q.e.score; });
+          return { score: mean(es.map(function (q) { return q.e.score; })), n: nn, acc: nn ? 100 * ok / nn : null, t: tn ? tw / tn : null,
+            days: Math.max.apply(null, es.map(function (q) { return q.e.days || 0; })), hp: hh };
+        });
+        return mk(s, { score: mean(subs.map(function (x) { return x.m.score; })), n: n, hp: hp, hist: hist }, 'all');
+      }
+
+      var cache = {};
+      function list(sel) {
+        if (!cache[sel]) cache[sel] = d.students.map(function (s) { return sel === 'all' ? mkAll(s) : mk(s, (s.mon && s.mon[sel]) || null, sel); });
+        return cache[sel];
+      }
+      var base = list('all');
+      var khois = uniq(base.map(function (x) { return x.khoi; }));
       var lopsOf = {};
-      khois.forEach(function (k) { lopsOf[k] = uniq(students.filter(function (x) { return x.khoi === k; }).map(function (x) { return x.lop; })); });
-      function group(list) {
-        var sc = list.filter(function (x) { return x.m; });
-        var g = { all: list, sc: sc, n: list.length, ns: sc.length, dist: [0, 0, 0, 0], hp: {} };
+      khois.forEach(function (k) { lopsOf[k] = uniq(base.filter(function (x) { return x.khoi === k; }).map(function (x) { return x.lop; })); });
+
+      function group(lst) {
+        var sc = lst.filter(function (x) { return x.m; });
+        var dims = lst.length ? dimsOf(lst[0].sel, lst[0].khoi) : [];
+        var g = { all: lst, sc: sc, n: lst.length, ns: sc.length, dist: [0, 0, 0, 0], hp: {}, dims: dims };
         sc.forEach(function (x) { g.dist[x.lv]++; });
         g.avg = mean(sc.map(function (x) { return x.score; }));
         g.lv = g.avg == null ? null : lv(g.avg);
         g.pctOk = sc.length ? 100 * g.dist[3] / sc.length : null;
         g.pctLow = sc.length ? 100 * (g.dist[0] + g.dist[1]) / sc.length : null;
-        hpList.forEach(function (h) { var a = sc.filter(function (x) { return x.m.hp[h]; }).map(function (x) { return x.m.hp[h].pt; }); if (a.length) g.hp[h] = { avg: mean(a), n: a.length }; });
+        dims.forEach(function (h) { var a = sc.filter(function (x) { return x.m.hp[h]; }).map(function (x) { return x.m.hp[h].pt; }); if (a.length) g.hp[h] = { avg: mean(a), n: a.length }; });
         g.acc = mean(sc.filter(function (x) { return x.acc != null; }).map(function (x) { return x.acc; }));
         g.t = median(sc.filter(function (x) { return x.t != null; }).map(function (x) { return x.t; }));
         var weak = null; Object.keys(g.hp).forEach(function (h) { if (!weak || g.hp[h].avg < g.hp[weak].avg) weak = h; }); g.weak = weak;
+        // mức độ chơi
+        g.nNone = lst.length - sc.length; g.nFew = sc.filter(function (x) { return x.play === 'few'; }).length; g.nOk = sc.length - g.nFew;
+        g.sumN = sc.reduce(function (s, x) { return s + x.m.n; }, 0);
+        g.perCap = lst.length ? g.sumN / lst.length : null;
+        g.pctPlayed = lst.length ? 100 * sc.length / lst.length : null;
         // tiến bộ (ghép cặp từng bé: tuần có chơi gần nhất so với tuần đầu / tuần trước)
         var df = vals(sc.map(function (x) { return x.dFirst; })), dp = vals(sc.map(function (x) { return x.dPrev; }));
         g.dFirst = mean(df); g.dPrev = mean(dp); g.nTrend = df.length;
         g.up = df.filter(function (v) { return v >= UP; }).length; g.down = df.filter(function (v) { return v <= -UP; }).length; g.flat = df.length - g.up - g.down;
         g.nDown = dp.filter(function (v) { return v <= -DOWN; }).length;
-        g.nIdle = list.filter(function (x) { return nW >= 2 && x.idle >= 2; }).length;
+        g.nIdle = lst.filter(function (x) { return nW >= 2 && x.idle >= 2; }).length;
         g.wavg = weeks.map(function (w, i) { return mean(vals(sc.map(function (x) { return x.hist[i] ? x.hist[i].score : null; }))); });
         g.wpart = weeks.map(function (w, i) { return sc.filter(function (x) { return x.hist[i]; }).length; });
         g.partLast = nW && g.n ? 100 * g.wpart[nW - 1] / g.n : null;
-        g.nAvg = mean(sc.map(function (x) { return x.m.n; }));
         return g;
       }
-      return { d: d, F: F, cuts: cuts, lv: lv, hpList: hpList, weeks: weeks, nW: nW, students: students, khois: khois, lopsOf: lopsOf, group: group,
-        inLop: function (k, l) { return students.filter(function (x) { return x.khoi === k && x.lop === l; }); },
-        inKhoi: function (k) { return students.filter(function (x) { return x.khoi === k; }); },
-        byCode: function (c) { return students.filter(function (x) { return x.code === c; })[0]; } };
+      return { d: d, F: F, cuts: cuts, lv: lv, weeks: weeks, nW: nW, LOWPLAY: LOWPLAY, monIds: monIds, khois: khois, lopsOf: lopsOf, group: group, list: list, dimsOf: dimsOf,
+        inLop: function (k, l, sel) { return list(sel || st.mon).filter(function (x) { return x.khoi === k && x.lop === l; }); },
+        inKhoi: function (k, sel) { return list(sel || st.mon).filter(function (x) { return x.khoi === k; }); },
+        byCode: function (c) { return list(st.mon).filter(function (x) { return x.code === c; })[0]; } };
     }
+    function S() { return M.list(st.mon); }
+    function hpl() { return M.dimsOf(st.mon, st.khoi); }
+    function dimWord() { return st.mon === 'all' ? 'môn' : 'học phần'; }
+    function monLabel() { return st.mon === 'all' ? 'Tất cả môn' : st.mon; }
 
     function reconcile() {
-      if (st.scope !== 'all' && M.khois.indexOf(st.scope) < 0) st.scope = 'all';
+      if (M.monIds.length < 2 || !st.mon || (st.mon !== 'all' && M.monIds.indexOf(st.mon) < 0)) st.mon = M.monIds.length > 1 ? 'all' : M.monIds[0];
       if (st.khoi == null || M.khois.indexOf(st.khoi) < 0) st.khoi = M.khois[0];
       if (st.lop == null || M.lopsOf[st.khoi].indexOf(st.lop) < 0) st.lop = M.lopsOf[st.khoi][0];
       var list = M.inLop(st.khoi, st.lop);
-      if (!st.code || !M.byCode(st.code)) {
+      if (!st.code || !M.byCode(st.code) || M.byCode(st.code).khoi !== st.khoi || M.byCode(st.code).lop !== st.lop) {
         var first = list.filter(function (x) { return x.m; })[0] || list[0];
         st.code = first ? first.code : null;
       }
       if (!st.lchart) st.lchart = M.nW >= 2 ? 'trend' : 'xy';
       if (M.nW < 2 && (st.cmp === 'trend' || st.cmp === 'prog')) st.cmp = 'bar';
+      if (!M.nW && st.cmp === 'part') st.cmp = 'bar';
+      if (st.metric.indexOf('hp:') === 0 && hpl().indexOf(st.metric.slice(3)) < 0) st.metric = 'avg';
     }
 
     // ---------- thành phần nhỏ ----------
@@ -133,12 +177,20 @@
         return g.dist[i] ? '<i class="lv' + i + '" style="width:' + (100 * g.dist[i] / g.ns) + '%" title="' + LV[i] + ': ' + g.dist[i] + ' bé">' + (big && g.dist[i] / g.ns > 0.07 ? g.dist[i] : '') + '</i>' : '';
       }).join('') + '</div>';
     }
+    // mức độ chơi: đều (xanh) / ít (vàng) / chưa chơi (xám); độ rộng theo sĩ số
+    function playStack(g, big) {
+      if (!g.n) return '<div class="edx-stack play"></div>';
+      var seg = [['p2', g.nOk, 'chơi đều'], ['p1', g.nFew, 'chơi ít (< ' + M.LOWPLAY + ' câu)'], ['p0', g.nNone, 'chưa chơi']];
+      return '<div class="edx-stack play' + (big ? ' big' : '') + '">' + seg.map(function (s) {
+        return s[1] ? '<i class="' + s[0] + '" style="width:' + (100 * s[1] / g.n) + '%" title="' + s[2] + ': ' + s[1] + ' bé">' + (big && s[1] / g.n > 0.07 ? s[1] : '') + '</i>' : '';
+      }).join('') + '</div>';
+    }
     function dist(g) { return '<div class="edx-dist">' + [3, 2, 1, 0].map(function (i) { return '<div class="lv' + i + '"><b>' + g.dist[i] + '</b>' + LV[i] + '</div>'; }).join('') + '</div>'; }
     function heat(m, h) { var v = m && m.hp[h]; return v ? '<td class="h lv' + M.lv(v.pt) + (v.low ? ' low' : '') + '">' + Math.round(v.pt) + '</td>' : '<td class="n">–</td>'; }
     function heatAvg(g, h) { var v = g.hp[h]; return v ? '<td class="h lv' + M.lv(v.avg) + '">' + Math.round(v.avg) + '</td>' : '<td class="n">–</td>'; }
     function ticks() { return M.cuts.map(function (c) { return '<s style="left:' + c + '%"></s>'; }).join(''); }
     function hpBars(g, ref, refLabel) {
-      return '<div class="edx-hp">' + M.hpList.map(function (h) {
+      return '<div class="edx-hp">' + g.dims.map(function (h) {
         var a = g.hp[h];
         if (!a) return '<div class="edx-hrow off"><span>' + esc(h) + '</span><span class="edx-track"></span><b>–</b></div>';
         var r = ref && ref.hp[h];
@@ -183,21 +235,24 @@
       var d = pts[pts.length - 1][1] - pts[0][1], c = d >= 1 ? 'var(--lv3)' : d <= -1 ? 'var(--lv0)' : 'var(--muted)', e = P[P.length - 1];
       return '<svg class="edx-spark" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '"><polyline points="' + P.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '" fill="none" style="stroke:' + c + '" stroke-width="1.8" stroke-linejoin="round"/><circle cx="' + e[0].toFixed(1) + '" cy="' + e[1].toFixed(1) + '" r="2.6" style="fill:' + c + '"/></svg>';
     }
+    function nameLinks(a, f, max) {
+      var shown = a.slice(0, max || 6);
+      return shown.map(function (x) { return '<a data-a="code" data-code="' + esc(x.code) + '">' + esc(x.alias) + '</a>' + (f ? ' ' + f(x) : ''); }).join(', ') + (a.length > shown.length ? ' +' + (a.length - shown.length) : '') || '–';
+    }
 
-    // ---------- biểu đồ so sánh lớp ----------
-    function scopeStudents() { return st.scope === 'all' ? M.students : M.inKhoi(st.scope); }
+    // ---------- biểu đồ so sánh lớp (chỉ trong 1 khối) ----------
+    function khoiList() { return M.inKhoi(st.khoi); }
     function lopRows() {
-      var ks = st.scope === 'all' ? M.khois : [st.scope], out = [];
-      ks.forEach(function (k) { M.lopsOf[k].forEach(function (l) { var list = M.inLop(k, l); out.push({ k: k, l: l, key: k + '|' + l, list: list, g: M.group(list) }); }); });
-      return out;
+      return M.lopsOf[st.khoi].map(function (l) { var list = M.inLop(st.khoi, l); return { k: st.khoi, l: l, key: st.khoi + '|' + l, list: list, g: M.group(list) }; });
     }
     function metricDef() {
       var m = st.metric;
-      if (m === 'pctOk') return { label: 'Tỉ lệ đạt mục tiêu (%)', val: function (r) { return r.g.pctOk; }, col: function () { return 3; }, unit: '%' };
-      if (m === 'pctLow') return { label: 'Tỉ lệ cần hỗ trợ, Mức 1–2 (%)', val: function (r) { return r.g.pctLow; }, col: function () { return 0; }, unit: '%' };
-      if (m === 'partLast') return { label: 'Tham gia tuần gần nhất (%)', val: function (r) { return r.g.partLast; }, col: function () { return 2; }, unit: '%' };
-      if (m.indexOf('hp:') === 0) { var h = m.slice(3); return { label: 'Điểm TB · ' + h, val: function (r) { return r.g.hp[h] ? r.g.hp[h].avg : null; }, col: M.lv, unit: '' }; }
-      return { label: 'Điểm TB', val: function (r) { return r.g.avg; }, col: M.lv, unit: '' };
+      if (m === 'pctOk') return { val: function (r) { return r.g.pctOk; }, col: function () { return 3; }, unit: '%' };
+      if (m === 'pctLow') return { val: function (r) { return r.g.pctLow; }, col: function () { return 0; }, unit: '%' };
+      if (m === 'pctPlayed') return { val: function (r) { return r.g.pctPlayed; }, col: function () { return 2; }, unit: '%' };
+      if (m === 'partLast') return { val: function (r) { return r.g.partLast; }, col: function () { return 2; }, unit: '%' };
+      if (m.indexOf('hp:') === 0) { var h = m.slice(3); return { val: function (r) { return r.g.hp[h] ? r.g.hp[h].avg : null; }, col: M.lv, unit: '' }; }
+      return { val: function (r) { return r.g.avg; }, col: M.lv, unit: '' };
     }
     var W = 900, H = 330, measuring = false;
     function frame(inner) { return '<div class="edx-chartbox"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img">' + inner + '</svg></div>'; }
@@ -211,15 +266,14 @@
       if (st.cmpSort) items.sort(function (a, b) { var x = md.val(a), y = md.val(b); return (y == null ? -1 : y) - (x == null ? -1 : x); });
       var ml = 36, mr = 10, mt = 24, mb = 34, pw = W - ml - mr, ph = H - mt - mb, n = items.length, slot = pw / n, bw = Math.min(slot * 0.62, 58);
       function Y(v) { return mt + (100 - v) / 100 * ph; }
-      var o = yGrid(ml, mt, pw, ph, 0, 100, 25), scopeG = M.group(scopeStudents()), ref = md.val({ g: scopeG });
+      var o = yGrid(ml, mt, pw, ph, 0, 100, 25), ref = md.val({ g: M.group(khoiList()) });
       items.forEach(function (r, i) {
         var v = md.val(r), cx = ml + slot * (i + 0.5);
-        if (!st.cmpSort && st.scope === 'all' && i > 0 && items[i - 1].k !== r.k) o += '<line class="quad" x1="' + (cx - slot / 2) + '" x2="' + (cx - slot / 2) + '" y1="' + mt + '" y2="' + (mt + ph) + '"/>';
         o += '<g data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '" class="clk"><title>' + esc(r.l) + ': ' + (v == null ? 'chưa có điểm' : num(v, 1) + md.unit) + '</title><rect class="hit" x="' + (cx - slot / 2) + '" y="' + mt + '" width="' + slot + '" height="' + ph + '"/>' +
           (v == null ? '' : '<rect x="' + (cx - bw / 2) + '" y="' + Y(v) + '" width="' + bw + '" height="' + (mt + ph - Y(v)) + '" rx="2" style="fill:var(--lv' + md.col(v) + ')"/><text class="val" x="' + cx + '" y="' + (Y(v) - 6) + '" text-anchor="middle">' + Math.round(v) + '</text>') +
           '<text class="xl" x="' + cx + '" y="' + (mt + ph + 18) + '" text-anchor="middle">' + esc(r.l) + '</text></g>';
       });
-      if (ref != null) o += '<line class="ref" x1="' + ml + '" x2="' + (ml + pw) + '" y1="' + Y(ref) + '" y2="' + Y(ref) + '"/><text class="reflab" x="' + (ml + pw) + '" y="12" text-anchor="end">- - - TB ' + (st.scope === 'all' ? 'toàn trường' : esc(khoiName(st.scope))) + ': ' + num(ref, 1) + md.unit + '</text>';
+      if (ref != null) o += '<line class="ref" x1="' + ml + '" x2="' + (ml + pw) + '" y1="' + Y(ref) + '" y2="' + Y(ref) + '"/><text class="reflab" x="' + (ml + pw) + '" y="12" text-anchor="end">- - - TB ' + esc(khoiName(st.khoi)) + ': ' + num(ref, 1) + md.unit + '</text>';
       return frame(o);
     }
     function boxChart(rows) {
@@ -279,9 +333,9 @@
       var keys = rows.map(function (r) { return r.key; });
       if (!st.rsel) st.rsel = defaultSel(rows);
       st.rsel = st.rsel.filter(function (k) { return keys.indexOf(k) >= 0; });
-      var sel = st.rsel, hs = M.hpList, n = hs.length, legend = selChips(rows, 'rsel');
-      if (n < 3) return legend + '<p class="edx-empty">Cần ít nhất 3 học phần để vẽ radar.</p>';
-      var all = M.group(scopeStudents()), vs = [];
+      var sel = st.rsel, hs = hpl(), n = hs.length, legend = selChips(rows, 'rsel');
+      if (n < 3) return legend + '<p class="edx-empty">Cần ít nhất 3 ' + dimWord() + ' để vẽ radar.</p>';
+      var all = M.group(khoiList()), vs = [];
       rows.forEach(function (r) { if (sel.indexOf(r.key) >= 0) hs.forEach(function (h) { if (r.g.hp[h]) vs.push(r.g.hp[h].avg); }); });
       hs.forEach(function (h) { if (all.hp[h]) vs.push(all.hp[h].avg); });
       var lo = Math.max(0, Math.min(60, Math.floor((Math.min.apply(null, vs.concat([100])) - 8) / 10) * 10));
@@ -298,7 +352,7 @@
         var p2 = hs.map(function (h, i) { return pt(i, r.g.hp[h] ? r.g.hp[h].avg : lo); });
         o += '<polygon points="' + p2.map(function (p) { return p.join(','); }).join(' ') + '" style="fill:' + PAL[j] + ';fill-opacity:.1;stroke:' + PAL[j] + '" stroke-width="2.4"/>' + p2.map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="3.5" style="fill:' + PAL[j] + '"/>'; }).join('');
       });
-      return legend + frame(o) + '<p class="edx-legend">Nét đứt đen: TB ' + (st.scope === 'all' ? 'toàn trường' : esc(khoiName(st.scope))) + ' · trục bắt đầu từ ' + lo + ' điểm.</p>';
+      return legend + frame(o) + '<p class="edx-legend">Nét đứt đen: TB ' + esc(khoiName(st.khoi)) + ' · trục bắt đầu từ ' + lo + ' điểm.</p>';
     }
     // biểu đồ đường theo tuần: series = [{name, vals[], color, dash, bold}]
     function lineChart(series, unit) {
@@ -326,9 +380,9 @@
       var keys = rows.map(function (r) { return r.key; });
       if (!st.tsel) st.tsel = defaultSel(rows);
       st.tsel = st.tsel.filter(function (k) { return keys.indexOf(k) >= 0; });
-      var all = M.group(scopeStudents()), ser = [{ name: 'TB ' + (st.scope === 'all' ? 'toàn trường' : khoiName(st.scope)), vals: all.wavg, color: 'var(--ink)', dash: true }];
+      var all = M.group(khoiList()), ser = [{ name: 'TB ' + khoiName(st.khoi), vals: all.wavg, color: 'var(--ink)', dash: true }];
       st.tsel.forEach(function (k, j) { var r = rows.filter(function (x) { return x.key === k; })[0]; if (r) ser.push({ name: r.l, vals: r.g.wavg, color: PAL[j], bold: false }); });
-      return selChips(rows, 'tsel') + lineChart(ser) + '<p class="edx-legend">Nét đứt đen: TB ' + (st.scope === 'all' ? 'toàn trường' : esc(khoiName(st.scope))) + ' · điểm TB mỗi tuần của các bé có chơi tuần đó.</p>';
+      return selChips(rows, 'tsel') + lineChart(ser) + '<p class="edx-legend">Nét đứt đen: TB ' + esc(khoiName(st.khoi)) + ' · điểm TB mỗi tuần của các bé có chơi tuần đó.</p>';
     }
     function progView(rows) {
       if (M.nW < 2) return '<p class="edx-empty">Cần dữ liệu từ 2 tuần trở lên.</p>';
@@ -347,13 +401,20 @@
     }
     function partView(rows) {
       if (!M.nW) return '<p class="edx-empty">Chưa có dữ liệu theo tuần.</p>';
-      var g = M.group(scopeStudents());
+      var g = M.group(khoiList());
       function cells(gr) { return M.weeks.map(function (w, i) { var p = gr.n ? 100 * gr.wpart[i] / gr.n : 0; return '<td class="pc" title="' + gr.wpart[i] + '/' + gr.n + ' bé"><span style="opacity:' + (0.12 + 0.88 * p / 100).toFixed(2) + '"></span><b>' + Math.round(p) + '%</b></td>'; }).join(''); }
-      return '<div class="edx-scroll"><table class="edx-heat"><thead><tr><th class="l">Lớp</th>' + M.weeks.map(function (w) { return '<th title="' + esc(w.range) + '">' + esc(w.label) + '<br><small>' + esc(w.range) + '</small></th>'; }).join('') + '<th>Số câu TB / bé</th><th>Bé vắng ≥ 2 tuần</th></tr></thead><tbody>' +
+      return '<div class="edx-scroll"><table class="edx-heat"><thead><tr><th class="l">Lớp</th>' + M.weeks.map(function (w) { return '<th title="' + esc(w.range) + '">' + esc(w.label) + '<br><small>' + esc(w.range) + '</small></th>'; }).join('') + '<th>Câu / bé</th><th>Bé vắng ≥ 2 tuần</th></tr></thead><tbody>' +
         rows.map(function (r) {
-          return '<tr data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td>' + cells(r.g) + '<td>' + num(r.g.nAvg) + '</td><td>' + r.g.nIdle + '/' + r.g.n + '</td></tr>';
-        }).join('') + '</tbody><tfoot><tr><td class="nm">' + (st.scope === 'all' ? 'Toàn trường' : esc(khoiName(st.scope))) + '</td>' + cells(g) + '<td>' + num(g.nAvg) + '</td><td>' + g.nIdle + '/' + g.n + '</td></tr></tfoot></table></div>' +
+          return '<tr data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td>' + cells(r.g) + '<td>' + num(r.g.perCap) + '</td><td>' + r.g.nIdle + '/' + r.g.n + '</td></tr>';
+        }).join('') + '</tbody><tfoot><tr><td class="nm">TB ' + esc(khoiName(st.khoi)) + '</td>' + cells(g) + '<td>' + num(g.perCap) + '</td><td>' + g.nIdle + '/' + g.n + '</td></tr></tfoot></table></div>' +
         '<p class="edx-legend">Ô = % bé của lớp có chơi trong tuần (đậm = nhiều). Điểm của tuần chỉ đáng tin khi nhiều bé tham gia.</p>';
+    }
+    function actView(rows) {
+      var items = rows.slice().sort(function (a, b) { return (b.g.perCap || 0) - (a.g.perCap || 0); });
+      return '<div class="edx-scroll"><div class="edx-dleg"><span><i class="p2"></i>Chơi đều</span><span><i class="p1"></i>Chơi ít (&lt; ' + M.LOWPLAY + ' câu' + (M.nW >= 3 ? ' hoặc ≤ 1 tuần' : '') + ')</span><span><i class="p0"></i>Chưa chơi</span><small>xếp theo số câu / bé · số trong ô = số bé</small></div>' +
+        items.map(function (r) {
+          return '<div class="edx-ar" data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><span class="nm">' + esc(r.l) + '</span>' + playStack(r.g, true) + '<b>' + num(r.g.perCap) + '<small> câu/bé</small></b><small>' + r.g.ns + '/' + r.g.n + ' đã chơi</small></div>';
+        }).join('') + '</div>';
     }
     function distView(rows) {
       var items = rows.slice().sort(function (a, b) { return (b.g.pctOk || 0) - (a.g.pctOk || 0) || (b.g.avg || 0) - (a.g.avg || 0); });
@@ -363,25 +424,26 @@
         }).join('') + '</div>';
     }
     function heatView(rows) {
-      var g = M.group(scopeStudents());
-      return '<div class="edx-scroll"><table class="edx-heat"><thead><tr><th class="l">Lớp</th>' + M.hpList.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '<th>Điểm TB</th></tr></thead><tbody>' +
+      var g = M.group(khoiList()), D = hpl();
+      return '<div class="edx-scroll"><table class="edx-heat"><thead><tr><th class="l">Lớp</th>' + D.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '<th>' + (st.mon === 'all' ? 'Tất cả môn' : 'Điểm TB') + '</th></tr></thead><tbody>' +
         rows.map(function (r) {
-          return '<tr data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td>' + M.hpList.map(function (h) { return heatAvg(r.g, h); }).join('') +
+          return '<tr data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td>' + D.map(function (h) { return heatAvg(r.g, h); }).join('') +
             (r.g.avg == null ? '<td class="n">–</td>' : '<td class="h lv' + r.g.lv + '"><b>' + Math.round(r.g.avg) + '</b></td>') + '</tr>';
-        }).join('') + '</tbody><tfoot><tr><td class="nm">TB ' + (st.scope === 'all' ? 'trường' : esc(khoiName(st.scope))) + '</td>' + M.hpList.map(function (h) { return heatAvg(g, h); }).join('') + '<td class="h lv' + (g.lv == null ? 0 : g.lv) + '"><b>' + Math.round(g.avg) + '</b></td></tr></tfoot></table></div>';
+        }).join('') + '</tbody><tfoot><tr><td class="nm">TB ' + esc(khoiName(st.khoi)) + '</td>' + D.map(function (h) { return heatAvg(g, h); }).join('') + '<td class="h lv' + (g.lv == null ? 0 : g.lv) + '"><b>' + Math.round(g.avg) + '</b></td></tr></tfoot></table></div>';
     }
     function tableView(rows) {
+      var D = hpl();
       var G = {
-        name: function (r) { return r.l; }, ns: function (r) { return r.g.ns; }, avg: function (r) { return r.g.avg; }, pctOk: function (r) { return r.g.pctOk; }, low: function (r) { return r.g.dist[0] + r.g.dist[1]; },
-        d: function (r) { return r.g.dFirst; }, part: function (r) { return r.g.partLast; }
+        name: function (r) { return r.l; }, ns: function (r) { return r.g.pctPlayed; }, avg: function (r) { return r.g.avg; }, pctOk: function (r) { return r.g.pctOk; }, low: function (r) { return r.g.dist[0] + r.g.dist[1]; },
+        d: function (r) { return r.g.dFirst; }, part: function (r) { return r.g.partLast; }, cap: function (r) { return r.g.perCap; }
       };
-      M.hpList.forEach(function (h) { G['hp:' + h] = function (r) { return r.g.hp[h] ? r.g.hp[h].avg : null; }; });
+      D.forEach(function (h) { G['hp:' + h] = function (r) { return r.g.hp[h] ? r.g.hp[h].avg : null; }; });
       var items = sortList(rows, 'lop', G);
-      return '<div class="edx-scroll"><table><thead><tr>' + th('Lớp', 'lop', 'name', 'l') + th('Có điểm', 'lop', 'ns') + th('Điểm TB', 'lop', 'avg') + th('Tiến bộ', 'lop', 'd', '', 'So với tuần đầu') + '<th>Xu hướng</th><th>Phân bố mức</th>' +
-        M.hpList.map(function (h) { return th(esc(h), 'lop', 'hp:' + h); }).join('') + th('Đạt mục tiêu', 'lop', 'pctOk') + th('Cần hỗ trợ', 'lop', 'low') + th('Tham gia', 'lop', 'part', '', 'Tuần gần nhất') + '</tr></thead><tbody>' +
+      return '<div class="edx-scroll"><table><thead><tr>' + th('Lớp', 'lop', 'name', 'l') + th('Đã chơi', 'lop', 'ns') + th('Câu/bé', 'lop', 'cap') + th('Điểm TB', 'lop', 'avg') + th('Tiến bộ', 'lop', 'd', '', 'So với tuần đầu') + '<th>Xu hướng</th><th>Phân bố mức</th>' +
+        D.map(function (h) { return th(esc(h), 'lop', 'hp:' + h); }).join('') + th('Đạt mục tiêu', 'lop', 'pctOk') + th('Cần hỗ trợ', 'lop', 'low') + th('Tuần gần nhất', 'lop', 'part', '', 'Tham gia tuần gần nhất') + '</tr></thead><tbody>' +
         items.map(function (r) {
-          return '<tr data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td><td>' + r.g.ns + '/' + r.g.n + '</td>' +
-            '<td>' + (r.g.avg == null ? '–' : '<b>' + num(r.g.avg) + '</b>') + '</td><td>' + delta(r.g.dFirst) + '</td><td>' + spark(r.g.wavg, 64, 22) + '</td><td style="min-width:8em">' + stack(r.g) + '</td>' + M.hpList.map(function (h) { return heatAvg(r.g, h); }).join('') +
+          return '<tr data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td><td>' + r.g.ns + '/' + r.g.n + '</td><td>' + num(r.g.perCap) + '</td>' +
+            '<td>' + (r.g.avg == null ? '–' : '<b>' + num(r.g.avg) + '</b>') + '</td><td>' + delta(r.g.dFirst) + '</td><td>' + spark(r.g.wavg, 64, 22) + '</td><td style="min-width:8em">' + stack(r.g) + '</td>' + D.map(function (h) { return heatAvg(r.g, h); }).join('') +
             '<td>' + num(r.g.pctOk) + '%</td><td>' + (r.g.dist[0] + r.g.dist[1]) + '</td><td>' + num(r.g.partLast) + '%</td></tr>';
         }).join('') + '</tbody></table></div>';
     }
@@ -390,60 +452,101 @@
     function isDark() { return st.theme === 'dark' || (st.theme === 'auto' && global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches); }
     function header() {
       var d = M.d, logo = opts.logo ? '<img class="edx-logo" src="' + esc(opts.logo) + '" alt="EduXplore">' : '<div class="edx-wordmark">Edu<i>X</i>plore</div>';
-      var mons = d.mon.length > 1 ? d.mon.map(function (m) { return '<button type="button" class="edx-chip sm' + (m.id === st.mon ? ' on' : '') + '" data-a="mon" data-v="' + esc(m.id) + '">' + esc(m.id) + '</button>'; }).join('') : '';
-      var T = [['khoi', 'Theo khối'], ['lop', 'Theo lớp'], ['hs', 'Từng học sinh']];
-      return '<header class="edx-top"><div class="edx-brand">' + logo + '<div><h1>Báo cáo kết quả học tập</h1><p>Môn ' + esc(st.mon) + ' · Kỳ ' + esc(d.ky.label) + (M.nW ? ' · ' + M.nW + ' tuần' : '') + '</p></div></div>' +
+      var mons = M.monIds.length > 1 && st.tab !== 'tq' ? '<span class="edx-monsel"><small>Môn:</small>' + chips([['all', 'Tất cả môn']].concat(M.monIds.map(function (id) { return [id, id]; })), st.mon, 'mon') + '</span>' : '';
+      var T = [['tq', 'Toàn trường'], ['khoi', 'Theo khối'], ['lop', 'Theo lớp'], ['hs', 'Từng học sinh']];
+      var sub = st.tab === 'tq' ? 'Xếp hạng lớp trong từng khối' : monLabel();
+      return '<header class="edx-top"><div class="edx-brand">' + logo + '<div><h1>Báo cáo kết quả học tập</h1><p>' + esc(sub) + ' · Kỳ ' + esc(d.ky.label) + (M.nW ? ' · ' + M.nW + ' tuần' : '') + '</p></div></div>' +
         '<nav class="edx-tabs" role="tablist">' + T.map(function (t) { return '<button type="button" role="tab" class="edx-tab' + (st.tab === t[0] ? ' on' : '') + '" aria-selected="' + (st.tab === t[0]) + '" data-a="tab" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</nav>' +
         '<div class="edx-tools">' + (d.sample ? '<span class="edx-sample">Dữ liệu minh hoạ</span>' : '') + mons + '<button type="button" class="edx-chip sm" data-a="theme">' + (isDark() ? 'Nền sáng' : 'Nền tối') + '</button></div></header>';
     }
     function footer() {
       var F = M.F, c = M.cuts;
-      return '<footer class="edx-foot"><span>Điểm = ' + F.base + ' × tỉ lệ đúng × hệ số tốc độ (tối đa 100); hệ số ' + num(F.kmax, 2) + ' nếu TB ≤ ' + F.tfast + 's, 1,0 nếu ≥ ' + F.tslow + 's. Điểm tuần chấm riêng từng tuần (thứ Hai–Chủ nhật); tiến bộ = tuần có chơi gần nhất so với tuần có chơi đầu tiên của từng bé.</span>' +
+      return '<footer class="edx-foot"><span>Mỗi khối học chương trình riêng: chỉ xếp hạng / so sánh trong cùng khối. Điểm = ' + F.base + ' × tỉ lệ đúng × hệ số tốc độ (tối đa 100; hệ số ' + num(F.kmax, 2) + ' nếu TB ≤ ' + F.tfast + 's, 1,0 nếu ≥ ' + F.tslow + 's). "Tất cả môn" = TB điểm các môn bé đã chơi. Tiến bộ = tuần có chơi gần nhất so với tuần có chơi đầu tiên của từng bé. Chơi ít = dưới ' + M.LOWPLAY + ' câu' + (M.nW >= 3 ? ' hoặc chỉ 1 tuần' : '') + '.</span>' +
         '<span>Mức: &lt; ' + c[0] + ' Mức 1 · ' + c[0] + '–' + c[1] + ' Mức 2 · ' + c[1] + '–' + c[2] + ' Mức 3 · ≥ ' + c[2] + ' Đạt mục tiêu. Ô mờ / dấu *: dưới ' + F.low_sample + ' câu (ít mẫu).</span></footer>';
     }
     function kpi(items) { return '<div class="edx-kpi">' + items.map(function (t) { return '<div><small>' + t[0] + '</small><b>' + t[1] + '</b></div>'; }).join('') + '</div>'; }
     function progKpi(g) { return g.nTrend ? delta(g.dFirst) + '<em>▲ ' + g.up + ' · ▼ ' + g.down + ' bé</em>' : '–'; }
+    function khoiPicker() {
+      return '<div class="edx-picker"><div class="g"><small>Khối</small>' + chips(M.khois.map(function (k) { return [k, khoiName(k)]; }), st.khoi, 'khoi') + '</div><small class="edx-hint">Chỉ so sánh các lớp trong cùng khối.</small></div>';
+    }
+
+    // ---------- tab: toàn trường (xếp hạng lớp trong từng khối, từng môn) ----------
+    function viewTq() {
+      var cols = M.monIds.length > 1 ? [['all', 'Tất cả môn']].concat(M.monIds.map(function (id) { return [id, id]; })) : [[M.monIds[0], 'Điểm TB']];
+      if (!st.sort.tq.k) st.sort.tq.k = 'm:' + cols[0][0];
+      return '<div class="edx-tq">' + M.khois.map(function (k) { return tqPanel(k, cols); }).join('') + '</div>';
+    }
+    function tqPanel(k, cols) {
+      var rows = M.lopsOf[k].map(function (l) {
+        var g = {}; cols.forEach(function (c) { g[c[0]] = M.group(M.inLop(k, l, c[0])); });
+        return { k: k, l: l, g: g, ga: M.group(M.inLop(k, l, 'all')) };
+      });
+      var rank = {};
+      cols.forEach(function (c) {
+        var arr = rows.filter(function (r) { return r.g[c[0]].avg != null; }).sort(function (a, b) { return b.g[c[0]].avg - a.g[c[0]].avg; });
+        rank[c[0]] = { by: {}, top: arr[0] || null, n: arr.length };
+        arr.forEach(function (r, i) { rank[c[0]].by[r.l] = i + 1; });
+      });
+      var G = { name: function (r) { return r.l; }, d: function (r) { return r.ga.dFirst; }, played: function (r) { return r.ga.pctPlayed; }, cap: function (r) { return r.ga.perCap; } };
+      cols.forEach(function (c) { G['m:' + c[0]] = function (r) { return r.g[c[0]].avg; }; });
+      var items = sortList(rows, 'tq', G), gk = M.group(M.inKhoi(k, 'all')), hasW = M.nW >= 2;
+      var most = rows.slice().sort(function (a, b) { return (b.ga.perCap || 0) - (a.ga.perCap || 0); }), least = most[most.length - 1];
+      var noneByLop = rows.filter(function (r) { return r.ga.nNone > 0; }).sort(function (a, b) { return b.ga.nNone - a.ga.nNone; });
+      var o = '<section class="edx-panel"><h2><a class="lk" data-a="khoi" data-v="' + esc(k) + '">' + esc(khoiName(k)) + '</a><small>' + M.lopsOf[k].length + ' lớp · ' + gk.ns + '/' + gk.n + ' bé đã chơi · xếp hạng trong khối</small></h2>' +
+        '<div class="edx-scroll"><table class="edx-rank"><thead><tr>' + th('Lớp', 'tq', 'name', 'l') +
+        cols.map(function (c) { return th(esc(c[1]), 'tq', 'm:' + c[0], '', 'Điểm TB ' + c[1] + ' · ★ = đứng đầu khối'); }).join('') + (hasW ? th('Tiến bộ', 'tq', 'd', '', 'Tất cả môn, so với tuần đầu') : '') +
+        th('Mức độ chơi', 'tq', 'played', '', 'Chơi đều / chơi ít / chưa chơi') + th('Câu/bé', 'tq', 'cap') + '</tr></thead><tbody>' +
+        items.map(function (r) {
+          return '<tr data-a="lop" data-khoi="' + esc(k) + '" data-lop="' + esc(r.l) + '"><td class="nm">' + esc(r.l) + '</td>' + cols.map(function (c) {
+            var g = r.g[c[0]], rk = rank[c[0]].by[r.l];
+            return g.avg == null ? '<td class="n">–</td>' : '<td class="h lv' + g.lv + (rk === 1 ? ' top' : '') + '"><b>' + Math.round(g.avg) + '</b><sup>' + (rk === 1 ? '★' : '#' + rk) + '</sup></td>';
+          }).join('') + (hasW ? '<td>' + delta(r.ga.dFirst) + '</td>' : '') + '<td style="min-width:6.5em" title="' + r.ga.ns + '/' + r.ga.n + ' bé đã chơi">' + playStack(r.ga) + '<small class="pp">' + r.ga.nNone + ' chưa chơi</small></td><td>' + num(r.ga.perCap) + '</td></tr>';
+        }).join('') + '</tbody><tfoot><tr><td class="nm">TB khối</td>' + cols.map(function (c) { var g = M.group(M.inKhoi(k, c[0])); return g.avg == null ? '<td class="n">–</td>' : '<td class="h lv' + g.lv + '"><b>' + Math.round(g.avg) + '</b></td>'; }).join('') +
+        (hasW ? '<td>' + delta(gk.dFirst) + '</td>' : '') + '<td>' + playStack(gk) + '</td><td>' + num(gk.perCap) + '</td></tr></tfoot></table></div>' +
+        '<div class="edx-top3"><small>Đứng đầu khối:</small>' + cols.map(function (c) {
+          var t = rank[c[0]].top; if (!t) return '';
+          return '<span class="tp"><b>' + esc(c[1]) + '</b> <a data-a="lop" data-khoi="' + esc(k) + '" data-lop="' + esc(t.l) + '">★ ' + esc(t.l) + '</a> <em>' + Math.round(t.g[c[0]].avg) + '</em></span>';
+        }).join('') + '</div>' +
+        '<ul class="edx-attn"><li>Chơi nhiều nhất: <b>' + esc(most[0].l) + '</b> (' + num(most[0].ga.perCap) + ' câu/bé) · ít nhất: <b>' + esc(least.l) + '</b> (' + num(least.ga.perCap) + ' câu/bé)</li>' +
+        '<li>Chưa chơi: <b>' + gk.nNone + '</b> bé' + (noneByLop.length ? ' — nhiều nhất ' + noneByLop.slice(0, 3).map(function (r) { return '<a data-a="lop" data-khoi="' + esc(k) + '" data-lop="' + esc(r.l) + '">' + esc(r.l) + '</a> (' + r.ga.nNone + ')'; }).join(', ') : '') + ' · chơi ít: <b>' + gk.nFew + '</b> bé</li>' +
+        '<li>Điểm thấp (Mức 1–2, tất cả môn): <b>' + (gk.dist[0] + gk.dist[1]) + '</b> bé (' + num(gk.pctLow) + '%)</li></ul></section>';
+      return o;
+    }
 
     // ---------- tab: theo khối ----------
     function viewKhoi() {
-      var g = M.group(scopeStudents()), all = M.group(M.students), rows = lopRows();
-      var scopeName = st.scope === 'all' ? 'Toàn trường' : khoiName(st.scope);
-      var cards = [['all', 'Toàn trường', all]].concat(M.khois.map(function (k) { return [k, khoiName(k), M.group(M.inKhoi(k))]; }));
-      var nLopAll = M.khois.reduce(function (s, k) { return s + M.lopsOf[k].length; }, 0);
-      var o = '<div class="edx-cards">' + cards.map(function (c) {
-        var gg = c[2];
-        return '<button type="button" class="edx-card' + (c[0] === st.scope ? ' on' : '') + '" data-a="scope" data-v="' + esc(c[0]) + '"><div class="hd"><span>' + esc(c[1]) + '</span><span class="dd">' + (gg.nTrend ? delta(gg.dFirst) : '') + '</span><b class="lv' + (gg.lv == null ? 0 : gg.lv) + '" style="color:var(--c)">' + num(gg.avg) + '</b></div>' + stack(gg) +
-          '<small>' + (c[0] === 'all' ? nLopAll : M.lopsOf[c[0]].length) + ' lớp · ' + (gg.ns ? gg.ns + '/' + gg.n + ' bé có điểm · ' + num(gg.pctOk) + '% đạt mục tiêu' : 'chưa có điểm') + '</small></button>';
-      }).join('') + '</div>';
+      var g = M.group(khoiList()), rows = lopRows(), kn = khoiName(st.khoi), D = hpl();
       var best = rows.filter(function (r) { return r.g.avg != null; }).sort(function (a, b) { return b.g.avg - a.g.avg; });
       var prog = rows.filter(function (r) { return r.g.dFirst != null; }).sort(function (a, b) { return b.g.dFirst - a.g.dFirst; });
-      o += kpi([['Học sinh có điểm', g.ns + '<em> / ' + g.n + '</em>'], ['Điểm TB ' + esc(scopeName.toLowerCase()), num(g.avg)], ['Tiến bộ so với tuần đầu', progKpi(g)],
-        ['Tham gia tuần gần nhất', M.nW ? num(g.partLast) + '%<em>' + g.wpart[M.nW - 1] + '/' + g.n + ' bé</em>' : '–'], ['Cần hỗ trợ (Mức 1–2)', (g.dist[0] + g.dist[1]) + '<em>' + num(g.pctLow) + '%</em>'],
-        ['Học phần yếu nhất', g.weak ? esc(g.weak) + '<em>' + Math.round(g.hp[g.weak].avg) + ' điểm</em>' : '–']]);
+      var play = rows.slice().sort(function (a, b) { return (b.g.perCap || 0) - (a.g.perCap || 0); });
+      var noneByLop = rows.filter(function (r) { return r.g.nNone > 0; }).sort(function (a, b) { return b.g.nNone - a.g.nNone; });
+      var o = khoiPicker() + kpi([['Đã chơi', g.ns + '<em> / ' + g.n + ' bé</em>'], ['Điểm TB ' + esc(kn.toLowerCase()), num(g.avg)], ['Tiến bộ so với tuần đầu', progKpi(g)],
+        ['Tham gia tuần gần nhất', M.nW ? num(g.partLast) + '%<em>' + g.wpart[M.nW - 1] + '/' + g.n + ' bé</em>' : '–'], ['Chưa chơi', g.nNone + '<em>' + g.nFew + ' chơi ít</em>'], ['Cần hỗ trợ (Mức 1–2)', (g.dist[0] + g.dist[1]) + '<em>' + num(g.pctLow) + '%</em>']]);
 
       var sub = '';
       if (st.cmp === 'bar') {
-        var ms = [['avg', 'Điểm TB'], ['pctOk', '% đạt mục tiêu'], ['pctLow', '% cần hỗ trợ']].concat(M.nW ? [['partLast', '% tham gia']] : []).concat(M.hpList.map(function (h) { return ['hp:' + h, h]; }));
+        var ms = [['avg', 'Điểm TB'], ['pctOk', '% đạt mục tiêu'], ['pctLow', '% cần hỗ trợ'], ['pctPlayed', '% đã chơi']].concat(M.nW ? [['partLast', '% chơi tuần gần nhất']] : []).concat(D.map(function (h) { return ['hp:' + h, h]; }));
         sub = '<div class="edx-sub"><small>Chỉ số:</small>' + chips(ms, st.metric, 'metric') + '<label class="edx-chk"><input type="checkbox" id="edx-sort" data-a="cmpsort"' + (st.cmpSort ? ' checked' : '') + '> xếp giảm dần</label></div>';
       }
-      var body = { bar: barChart, heat: heatView, dist: distView, box: boxChart, radar: radarMulti, xy: xyChart, trend: trendView, prog: progView, part: partView, table: tableView }[st.cmp](rows);
-      var hint = { bar: 'click cột để mở lớp', heat: 'màu = mức điểm', dist: 'số bé ở từng mức', box: 'hộp = 50% bé ở giữa, vạch = trung vị, chấm = từng bé', radar: 'hình dạng điểm mạnh/yếu theo học phần',
-        xy: 'góc trên bên phải = nhanh và chính xác', trend: 'điểm TB của lớp qua từng tuần', prog: 'lớp nào tiến bộ, lớp nào đi xuống', part: 'lớp nào chơi đều, lớp nào bỏ', table: 'click tiêu đề để sắp xếp' }[st.cmp];
+      var body = { bar: barChart, heat: heatView, dist: distView, box: boxChart, radar: radarMulti, xy: xyChart, trend: trendView, prog: progView, part: partView, act: actView, table: tableView }[st.cmp](rows);
+      var hint = { bar: 'click cột để mở lớp', heat: 'màu = mức điểm', dist: 'số bé ở từng mức', box: 'hộp = 50% bé ở giữa, vạch = trung vị, chấm = từng bé', radar: 'hình dạng điểm mạnh/yếu',
+        xy: 'góc trên bên phải = nhanh và chính xác', trend: 'điểm TB của lớp qua từng tuần', prog: 'lớp nào tiến bộ, lớp nào đi xuống', part: 'lớp nào chơi đều, lớp nào bỏ', act: 'lớp nào chơi nhiều / ít / chưa chơi', table: 'click tiêu đề để sắp xếp' }[st.cmp];
       var kinds = CMP.map(function (g2) {
-        var its = M.nW < 2 && g2[0] === 'Tiến bộ' ? [] : g2[1];
+        var its = g2[1].filter(function (x) { return (M.nW >= 2 || (x[0] !== 'trend' && x[0] !== 'prog')) && (M.nW || x[0] !== 'part'); });
         return its.length ? '<span class="grp"><small>' + g2[0] + ':</small>' + chips(its, st.cmp, 'cmp') + '</span>' : '';
       }).join('');
-      o += '<div class="edx-fill khoi"><section class="edx-panel"><h2>So sánh các lớp<small>' + esc(scopeName) + ' · ' + rows.length + ' lớp · ' + hint + '</small></h2>' +
+      o += '<div class="edx-fill khoi"><section class="edx-panel"><h2>So sánh các lớp<small>' + esc(kn) + ' · ' + rows.length + ' lớp · ' + esc(monLabel()) + ' · ' + hint + '</small></h2>' +
         '<div class="edx-sub kinds">' + kinds + '</div>' + sub + '<div class="edx-body">' + body + '</div></section>' +
-        '<aside class="edx-col edx-scroll"><section><h2>Phân bố mức<small>' + esc(scopeName) + '</small></h2>' + dist(g) + '</section>' +
-        '<section><h2>Điểm TB từng học phần<small>' + (st.scope === 'all' ? '' : 'vạch đen: toàn trường') + '</small></h2>' + hpBars(g, st.scope === 'all' ? null : all, 'TB toàn trường') + '</section>' +
+        '<aside class="edx-col edx-scroll"><section><h2>Phân bố mức<small>' + esc(kn) + '</small></h2>' + dist(g) + '</section>' +
+        '<section><h2>Điểm TB từng ' + dimWord() + '</h2>' + hpBars(g) + '</section>' +
         '<section><h2>Cần chú ý</h2><ul class="edx-attn">' +
-        '<li>Học phần yếu nhất: <b>' + (g.weak ? esc(g.weak) + '</b> (' + Math.round(g.hp[g.weak].avg) + ' điểm)' : '–</b>') + '</li>' +
+        '<li>Chơi nhiều nhất: <b>' + esc(play[0].l) + '</b> (' + num(play[0].g.perCap) + ' câu/bé) · ít nhất: <b>' + esc(play[play.length - 1].l) + '</b> (' + num(play[play.length - 1].g.perCap) + ')</li>' +
+        '<li>Bé chưa chơi: <b>' + g.nNone + '</b>' + (noneByLop.length ? ' — ' + noneByLop.slice(0, 4).map(function (r) { return '<a data-a="lop" data-khoi="' + esc(r.k) + '" data-lop="' + esc(r.l) + '">' + esc(r.l) + '</a> (' + r.g.nNone + ')'; }).join(', ') : '') + '</li>' +
         (best.length > 1 ? '<li>Điểm cao nhất: <b>' + esc(best[0].l) + '</b> (' + num(best[0].g.avg) + ') · thấp nhất: <b>' + esc(best[best.length - 1].l) + '</b> (' + num(best[best.length - 1].g.avg) + ')</li>' : '') +
         (prog.length > 1 ? '<li>Tiến bộ nhất: <b>' + esc(prog[0].l) + '</b> ' + delta(prog[0].g.dFirst) + ' · ít nhất: <b>' + esc(prog[prog.length - 1].l) + '</b> ' + delta(prog[prog.length - 1].g.dFirst) + '</li>' : '') +
         '<li>' + (g.dist[0] + g.dist[1]) + ' bé ở Mức 1–2 cần hỗ trợ thêm (' + num(g.pctLow) + '%).</li>' +
-        (M.nW >= 2 ? '<li>' + g.nDown + ' bé giảm ≥ ' + DOWN + ' điểm so với tuần trước · ' + g.nIdle + ' bé không chơi từ 2 tuần.</li>' : '') +
-        '<li>' + (g.n - g.ns) + ' bé chưa có điểm trong kỳ.</li></ul></section></aside></div>';
+        '<li>' + dimWord().replace(/^./, function (c) { return c.toUpperCase(); }) + ' yếu nhất: <b>' + (g.weak ? esc(g.weak) + '</b> (' + Math.round(g.hp[g.weak].avg) + ' điểm)' : '–</b>') + '</li>' +
+        (M.nW >= 2 ? '<li>' + g.nDown + ' bé giảm ≥ ' + DOWN + ' điểm so với tuần trước · ' + g.nIdle + ' bé không chơi từ 2 tuần.</li>' : '') + '</ul></section></aside></div>';
       return o;
     }
 
@@ -478,36 +581,43 @@
       return frame(o);
     }
     function viewLop() {
-      var list = M.inLop(st.khoi, st.lop), g = M.group(list), gk = M.group(M.inKhoi(st.khoi)), ga = M.group(M.students);
+      var list = M.inLop(st.khoi, st.lop), g = M.group(list), gk = M.group(M.inKhoi(st.khoi)), D = hpl();
       var order = g.sc.slice().sort(function (a, b) { return b.score - a.score; }), rankOf = {};
       order.forEach(function (x, i) { rankOf[x.code] = i + 1; });
       var G = { name: function (x) { return x.alias; }, score: function (x) { return x.score; }, n: function (x) { return x.m.n; }, flags: function (x) { return x.flags.length; }, d: function (x) { return x.dFirst; } };
-      M.hpList.forEach(function (h) { G['hp:' + h] = function (x) { return x.m.hp[h] ? x.m.hp[h].pt : null; }; });
+      D.forEach(function (h) { G['hp:' + h] = function (x) { return x.m.hp[h] ? x.m.hp[h].pt : null; }; });
       var rows = sortList(g.sc, 'rank', G), none = list.filter(function (x) { return !x.m; });
       var diff = g.avg != null && gk.avg != null ? g.avg - gk.avg : null;
-      var o = picker() + kpi([['Lớp', esc(st.lop) + '<em>' + esc(khoiName(st.khoi)) + '</em>'], ['Có điểm', g.ns + '<em> / ' + g.n + ' bé</em>'],
+      var lopAvgs = M.lopsOf[st.khoi].map(function (l) { return { l: l, a: M.group(M.inLop(st.khoi, l)).avg }; }).filter(function (r) { return r.a != null; }).sort(function (a, b) { return b.a - a.a; });
+      var rk = lopAvgs.map(function (r) { return r.l; }).indexOf(st.lop) + 1;
+      var o = picker() + kpi([['Lớp', esc(st.lop) + '<em>' + esc(khoiName(st.khoi)) + ' · ' + esc(monLabel()) + '</em>'], ['Đã chơi', g.ns + '<em> / ' + g.n + ' bé' + (g.nNone ? ' · chưa chơi ' + g.nNone : '') + '</em>'],
         ['Điểm TB lớp', num(g.avg) + (diff == null ? '' : '<em class="' + (diff >= 0 ? 'up' : 'dn') + '">' + (diff >= 0 ? '▲ +' : '▼ ') + num(diff, 1) + ' so với khối</em>')],
-        ['Tiến bộ so với tuần đầu', progKpi(g)], ['Tham gia tuần gần nhất', M.nW ? num(g.partLast) + '%<em>' + g.wpart[M.nW - 1] + '/' + g.n + ' bé</em>' : '–'],
-        ['Cần hỗ trợ (Mức 1–2)', (g.dist[0] + g.dist[1]) + '<em>' + num(g.pctLow) + '%</em>']]);
-      var chartBody = st.lchart === 'trend' ? lineChart([{ name: 'TB toàn trường', vals: ga.wavg, color: 'var(--muted)', dash: true }, { name: 'TB ' + khoiName(st.khoi), vals: gk.wavg, color: 'var(--ink)', dash: true }, { name: 'Lớp ' + st.lop, vals: g.wavg, color: 'var(--red)', bold: true }]) +
-          '<p class="edx-legend">Đỏ: lớp ' + esc(st.lop) + ' · đen đứt: TB ' + esc(khoiName(st.khoi)) + ' · xám đứt: toàn trường</p>'
+        ['Hạng trong khối', rk ? rk + '<em> / ' + lopAvgs.length + ' lớp</em>' : '–'], ['Tiến bộ so với tuần đầu', progKpi(g)], ['Tham gia tuần gần nhất', M.nW ? num(g.partLast) + '%<em>' + g.wpart[M.nW - 1] + '/' + g.n + ' bé</em>' : '–']]);
+      var chartBody = st.lchart === 'trend' ? lineChart([{ name: 'TB ' + khoiName(st.khoi), vals: gk.wavg, color: 'var(--ink)', dash: true }, { name: 'Lớp ' + st.lop, vals: g.wavg, color: 'var(--red)', bold: true }]) +
+          '<p class="edx-legend">Đỏ: lớp ' + esc(st.lop) + ' · đen đứt: TB ' + esc(khoiName(st.khoi)) + '</p>'
         : st.lchart === 'xy' ? scatter(list) : '<div class="edx-scroll">' + hpBars(g, gk, 'TB ' + khoiName(st.khoi)) + '</div>';
       var up = g.sc.filter(function (x) { return x.dFirst != null; }).sort(function (a, b) { return b.dFirst - a.dFirst; });
       var down = up.filter(function (x) { return x.dFirst < 0; }).slice(-3).reverse();
       var idle = list.filter(function (x) { return M.nW >= 2 && x.idle >= 2; });
-      var names = function (a, f) { return a.map(function (x) { return '<a data-a="code" data-code="' + esc(x.code) + '">' + esc(x.alias) + '</a>' + (f ? ' ' + f(x) : ''); }).join(', ') || '–'; };
-      var charts = (M.nW >= 2 ? [['trend', 'Xu hướng tuần']] : []).concat([['xy', 'Chính xác × tốc độ'], ['hp', 'Học phần']]);
+      var lowest = g.sc.filter(function (x) { return x.lv <= 1; }).sort(function (a, b) { return a.score - b.score; });
+      var few = g.sc.filter(function (x) { return x.play === 'few'; });
+      var charts = (M.nW >= 2 ? [['trend', 'Xu hướng tuần']] : []).concat([['xy', 'Chính xác × tốc độ'], ['hp', dimWord() === 'môn' ? 'Môn' : 'Học phần']]);
       o += '<div class="edx-fill lop"><section class="edx-panel"><h2>Bảng xếp hạng<small>click tiêu đề để sắp xếp · click hàng để xem hồ sơ · ô mờ = ít mẫu</small></h2><div class="edx-scroll"><table><thead><tr><th>#</th>' + th('Bé', 'rank', 'name', 'l') + th('Điểm', 'rank', 'score') + th('Tiến bộ', 'rank', 'd', '', 'Tuần gần nhất so với tuần đầu') + '<th>Xu hướng</th>' +
-        M.hpList.map(function (h) { return th(esc(h), 'rank', 'hp:' + h); }).join('') + th('Số câu', 'rank', 'n') + th('Cần chú ý', 'rank', 'flags', 'l') + '</tr></thead><tbody>' +
+        D.map(function (h) { return th(esc(h), 'rank', 'hp:' + h); }).join('') + th('Số câu', 'rank', 'n') + th('Cần chú ý', 'rank', 'flags', 'l') + '</tr></thead><tbody>' +
         rows.map(function (x) {
           return '<tr data-a="code" data-code="' + esc(x.code) + '"><td class="n">' + rankOf[x.code] + '</td><td class="nm">' + esc(x.alias) + '</td><td class="h lv' + x.lv + '">' + Math.round(x.score) + '</td><td>' + delta(x.dFirst) + '</td><td>' + spark(x.series, 64, 22) + '</td>' +
-            M.hpList.map(function (h) { return heat(x.m, h); }).join('') + '<td>' + x.m.n + (x.few ? '*' : '') + '</td><td class="wrap">' + flagText(x) + '</td></tr>';
+            D.map(function (h) { return heat(x.m, h); }).join('') + '<td>' + x.m.n + (x.few ? '*' : '') + '</td><td class="wrap">' + flagText(x) + '</td></tr>';
         }).join('') + '</tbody><tfoot><tr><td></td><td class="nm">TB lớp</td>' + (g.avg == null ? '<td class="n">–</td>' : '<td class="h lv' + g.lv + '">' + Math.round(g.avg) + '</td>') + '<td>' + delta(g.dFirst) + '</td><td>' + spark(g.wavg, 64, 22) + '</td>' +
-        M.hpList.map(function (h) { return heatAvg(g, h); }).join('') + '<td>' + g.ns + '</td><td class="wrap" style="color:var(--muted)">TB ' + esc(khoiName(st.khoi)) + ': ' + num(gk.avg) + '</td></tr></tfoot></table>' +
-        (none.length ? '<p class="edx-note">Chưa có điểm: ' + none.map(function (x) { return esc(x.alias); }).join(', ') + '</p>' : '') + '</div></section>' +
-        '<aside class="edx-col"><section class="edx-panel grow"><h2>' + chips(charts, st.lchart, 'lchart') + '</h2><div class="edx-body">' + chartBody + '</div></section>' +
+        D.map(function (h) { return heatAvg(g, h); }).join('') + '<td>' + g.ns + '</td><td class="wrap" style="color:var(--muted)">TB ' + esc(khoiName(st.khoi)) + ': ' + num(gk.avg) + '</td></tr></tfoot></table>' +
+        (none.length ? '<p class="edx-note edx-none"><b>Chưa chơi (' + none.length + '):</b> ' + nameLinks(none, null, 40) + '</p>' : '') + '</div></section>' +
+        '<aside class="edx-col edx-scroll"><section class="edx-panel grow"><h2>' + chips(charts, st.lchart, 'lchart') + '</h2><div class="edx-body">' + chartBody + '</div></section>' +
         '<section><h2>Phân bố mức<small>lớp ' + esc(st.lop) + '</small></h2>' + dist(g) + '</section>' +
-        (M.nW >= 2 ? '<section><h2>Cần chú ý</h2><ul class="edx-attn"><li>Tiến bộ nhất: ' + names(up.slice(0, 3), function (x) { return delta(x.dFirst); }) + '</li><li>Đi xuống: ' + names(down, function (x) { return delta(x.dFirst); }) + '</li><li>Không chơi từ 2 tuần: ' + (idle.length ? names(idle.slice(0, 4)) + (idle.length > 4 ? ' +' + (idle.length - 4) : '') : '–') + '</li></ul></section>' : '') + '</aside></div>';
+        '<section><h2>Cần chú ý</h2><ul class="edx-attn">' +
+        '<li>Chưa chơi (' + none.length + '): ' + nameLinks(none, null, 6) + '</li>' +
+        '<li>Chơi ít (' + few.length + '): ' + nameLinks(few, function (x) { return '<small class="mu">' + x.m.n + ' câu</small>'; }, 5) + '</li>' +
+        '<li>Điểm thấp (Mức 1–2): ' + nameLinks(lowest, function (x) { return '<small class="mu">' + Math.round(x.score) + '</small>'; }, 5) + '</li>' +
+        (M.nW >= 2 ? '<li>Tiến bộ nhất: ' + nameLinks(up.slice(0, 3), function (x) { return delta(x.dFirst); }) + '</li><li>Đi xuống: ' + nameLinks(down, function (x) { return delta(x.dFirst); }) + '</li><li>Không chơi từ 2 tuần: ' + nameLinks(idle, null, 4) + '</li>' : '') +
+        '</ul></section></aside></div>';
       return o;
     }
 
@@ -516,11 +626,12 @@
       var base;
       if (st.q) {
         var f = fold(st.q);
-        base = M.students.filter(function (x) { return fold(x.name + ' ' + x.alias + ' ' + x.code + ' ' + x.lop).indexOf(f) >= 0; }).slice(0, 150);
+        base = S().filter(function (x) { return fold(x.name + ' ' + x.alias + ' ' + x.code + ' ' + x.lop).indexOf(f) >= 0; }).slice(0, 150);
       } else base = M.inLop(st.khoi, st.lop).slice().sort(function (a, b) { return (b.m ? 1 : 0) - (a.m ? 1 : 0) || String(a.code).localeCompare(b.code); });
       if (st.filt === 'down') base = base.filter(function (x) { return x.dPrev != null && x.dPrev <= -DOWN; });
       else if (st.filt === 'idle') base = base.filter(function (x) { return M.nW >= 2 && x.idle >= 2; });
       else if (st.filt === 'low') base = base.filter(function (x) { return x.m && x.lv <= 1; });
+      else if (st.filt === 'none') base = base.filter(function (x) { return !x.m; });
       return base;
     }
     function rosterHtml(list) {
@@ -528,12 +639,12 @@
       return list.map(function (s) {
         var tr = s.dPrev == null ? '' : s.dPrev >= 1 ? '<i class="up">▲</i>' : s.dPrev <= -1 ? '<i class="dn">▼</i>' : '';
         return '<button type="button" data-a="code" data-code="' + esc(s.code) + '" class="' + (s.code === st.code ? 'on' : '') + '" title="' + esc(s.name + ' · ' + s.code) + '"><span class="n1">' + esc(s.alias) + (st.q ? '<small> ' + esc(s.lop) + '</small>' : '') + '</span>' +
-          (s.m ? '<span class="sc lv' + s.lv + '">' + tr + Math.round(s.score) + '</span>' : '<span class="sc none">–</span>') + '</button>';
+          (s.m ? '<span class="sc lv' + s.lv + '">' + tr + Math.round(s.score) + '</span>' : '<span class="sc none">chưa chơi</span>') + '</button>';
       }).join('');
     }
     function viewHs() {
       var list = rosterList(), x = M.byCode(st.code);
-      var filters = [['all', 'Tất cả']].concat(M.nW >= 2 ? [['down', 'Giảm điểm'], ['idle', 'Ít chơi']] : []).concat([['low', 'Mức 1–2']]);
+      var filters = [['all', 'Tất cả'], ['none', 'Chưa chơi']].concat(M.nW >= 2 ? [['down', 'Giảm điểm'], ['idle', 'Ít chơi']] : []).concat([['low', 'Mức 1–2']]);
       return picker() + '<div class="edx-fill hs"><aside class="edx-panel"><h2>' + (st.q ? 'Tìm kiếm' : 'Lớp ' + esc(st.lop)) + '<small>' + list.length + ' bé</small></h2>' +
         '<input type="search" id="edx-q" class="edx-search" placeholder="Tìm tên / mã toàn trường…" value="' + esc(st.q) + '" autocomplete="off"><div class="edx-sub">' + chips(filters, st.filt, 'filt') + '</div>' +
         '<div class="edx-scroll edx-roster" id="edx-roster">' + rosterHtml(list) + '</div></aside>' +
@@ -563,30 +674,34 @@
       return o + '</svg>';
     }
     function detail(x, list) {
-      var gl = M.group(M.inLop(x.khoi, x.lop)), gk = M.group(M.inKhoi(x.khoi)), m = x.m, idx = list.indexOf(x);
+      var gl = M.group(M.inLop(x.khoi, x.lop)), gk = M.group(M.inKhoi(x.khoi)), m = x.m, idx = list.indexOf(x), D = M.dimsOf(st.mon, x.khoi), dw = dimWord();
       var o = '<div class="edx-nav"><button type="button" class="edx-chip sm" data-a="code" data-code="' + esc(idx > 0 ? list[idx - 1].code : x.code) + '"' + (idx <= 0 ? ' disabled' : '') + '>◀ Bé trước</button>' +
         '<div class="edx-idbar"><div><small>Mã HS</small><b>' + esc(x.code) + '</b></div><div><small>Họ và tên</small><b>' + esc(x.name) + '</b></div><div><small>Tên gọi</small><b>' + esc(x.alias) + '</b></div><div><small>Lớp</small><b>' + esc(x.lop) + '</b></div><div><small>Kỳ báo cáo</small><b>' + esc(M.d.ky.label) + '</b></div></div>' +
         '<button type="button" class="edx-chip sm" data-a="code" data-code="' + esc(idx >= 0 && idx < list.length - 1 ? list[idx + 1].code : x.code) + '"' + (idx < 0 || idx >= list.length - 1 ? ' disabled' : '') + '>Bé sau ▶</button></div>';
-      if (!m) return o + '<p class="edx-empty">Bé chưa có kết quả môn ' + esc(st.mon) + ' trong kỳ này.</p>';
-      var played = M.hpList.filter(function (h) { return m.hp[h]; }), multi = x.wIdx.length >= 2;
+      if (!m) return o + '<p class="edx-empty">Bé chưa chơi — chưa có kết quả ' + (st.mon === 'all' ? 'môn nào' : 'môn ' + esc(st.mon)) + ' trong kỳ này.</p>';
+      var played = D.filter(function (h) { return m.hp[h]; }), multi = x.wIdx.length >= 2;
       var rank = gl.sc.slice().sort(function (a, b) { return b.score - a.score; }).indexOf(x) + 1;
       var below = gl.sc.filter(function (y) { return y.score < x.score; }).length, pctBeat = gl.ns > 1 ? Math.round(100 * below / (gl.ns - 1)) : null;
       var hpDelta = {};
       played.forEach(function (h) { var v = vals(hpSeries(x, h)); hpDelta[h] = v.length >= 2 ? v[v.length - 1] - v[0] : null; });
 
       // cột 1: phân tích kỹ năng + nhận định
-      var c1 = '<section><h2>Phân tích kỹ năng<small>điểm = ' + M.F.base + ' × tỉ lệ đúng × hệ số tốc độ</small></h2><div class="edx-tablewrap"><table><thead><tr><th class="l">Học phần</th><th>Điểm</th><th>So tuần đầu</th><th>Chính xác (%)</th><th>Giây/câu</th><th>Xu hướng</th><th>Mức</th></tr></thead><tbody>' +
+      var c1 = '<section><h2>' + (st.mon === 'all' ? 'Phân tích theo môn' : 'Phân tích kỹ năng') + '<small>' + (st.mon === 'all' ? 'điểm TB từng môn bé đã chơi' : 'điểm = ' + M.F.base + ' × tỉ lệ đúng × hệ số tốc độ') + '</small></h2><div class="edx-tablewrap"><table><thead><tr><th class="l">' + (st.mon === 'all' ? 'Môn' : 'Học phần') + '</th><th>Điểm</th><th>So tuần đầu</th><th>Chính xác (%)</th><th>Giây/câu</th><th>Xu hướng</th><th>Mức</th></tr></thead><tbody>' +
         played.map(function (h) {
           var v = m.hp[h], l = M.lv(v.pt);
           return '<tr><td class="nm">' + esc(h) + '</td><td class="h lv' + l + (v.low ? ' low' : '') + '">' + Math.round(v.pt) + (v.low ? '*' : '') + '</td><td>' + delta(hpDelta[h], 0) + '</td><td>' + num(v.acc, 1) + '</td><td>' + num(v.t, 1) + '</td><td>' + spark(hpSeries(x, h), 64, 22) + '</td><td>' + pill(l) + '</td></tr>';
-        }).join('') + '</tbody></table></div></section>' +
-        '<section><h2>Nhận định từng học phần<small>đánh giá riêng, không gộp</small></h2>' + played.map(function (h) {
+        }).join('') + '</tbody></table></div></section>';
+      if (st.mon === 'all') {
+        c1 += '<section><h2>Nhận định chi tiết<small>theo từng môn</small></h2><p class="edx-note">Nhận định (chậm-sai, nhanh-nhầm…) tính theo học phần của từng môn. Chọn môn để xem:</p><div class="edx-sub">' + chips(played.map(function (h) { return [h, h]; }), '', 'mon') + '</div></section>';
+      } else {
+        c1 += '<section><h2>Nhận định từng học phần<small>đánh giá riêng, không gộp</small></h2>' + played.map(function (h) {
           var v = m.hp[h], dg = M.d.diag[v.diag] || { label: v.diag, advice: '', color: '#888' };
           return '<div class="edx-dg"><b>' + esc(h) + '</b><div><span class="edx-pill pillc" style="--dc:' + esc(dg.color) + '">' + esc(dg.label) + '</span><span class="st">đúng ' + v.ok + '/' + v.n + (v.t != null ? ' · TB ' + num(v.t, 1) + 's/câu' : '') + (v.few ? ' · ít mẫu' : '') + '</span></div><div class="adv">' + esc(dg.advice) + '</div></div>';
         }).join('') + '</section>';
+      }
 
       // cột 2: so với lớp + lịch sử theo tuần
-      var c2 = '<section><h2>Điểm từng học phần<small>vạch đen: TB lớp</small></h2>' + M.hpList.map(function (h) {
+      var c2 = '<section><h2>Điểm từng ' + dw + '<small>vạch đen: TB lớp</small></h2>' + D.map(function (h) {
         var v = m.hp[h], r = gl.hp[h];
         if (!v) return '<div class="edx-hrow off"><span>' + esc(h) + '</span><span class="edx-track"></span><b>–</b></div>';
         return '<div class="edx-hrow"><span>' + esc(h) + '</span><span class="edx-track">' + ticks() + '<i class="lv' + M.lv(v.pt) + '" style="width:' + v.pt + '%"></i>' + (r ? '<u style="left:' + r.avg + '%" title="TB lớp: ' + Math.round(r.avg) + '"></u>' : '') + '</span><b>' + Math.round(v.pt) + '</b></div>';
@@ -602,20 +717,20 @@
       var target = M.cuts[2], gaps = played.filter(function (h) { return m.hp[h].pt < target; }).map(function (h) { return [h, Math.ceil(target - m.hp[h].pt)]; }).sort(function (a, b) { return b[1] - a[1]; });
       var strong = played.slice().sort(function (a, b) { return m.hp[b].pt - m.hp[a].pt; })[0], weak = played.slice().sort(function (a, b) { return m.hp[a].pt - m.hp[b].pt; })[0];
       var best = played.filter(function (h) { return hpDelta[h] != null; }).sort(function (a, b) { return hpDelta[b] - hpDelta[a]; })[0];
-      var c3 = '<section><h2>Điểm EduXplore</h2><div class="edx-bigscore"><div class="v lv' + x.lv + '" style="color:var(--c)">' + Math.round(x.score) + '<small>/ 100</small></div>' + pill(x.lv) +
+      var c3 = '<section><h2>Điểm EduXplore' + (st.mon === 'all' ? '<small>tất cả môn</small>' : '') + '</h2><div class="edx-bigscore"><div class="v lv' + x.lv + '" style="color:var(--c)">' + Math.round(x.score) + '<small>/ 100</small></div>' + pill(x.lv) +
         (multi ? '<p class="big-d">' + delta(x.dFirst, 0, ' điểm') + ' so với ' + esc(M.weeks[x.firstW].label) + ' · so với tuần trước ' + delta(x.dPrev, 0) + '</p>' : '') +
-        '<p>Trung bình ' + played.length + ' học phần · ' + m.n + ' câu' + (x.few ? ' (ít dữ liệu)' : '') + ' · TB lớp ' + num(gl.avg) + ' · TB khối ' + num(gk.avg) + '</p></div></section>' +
-        '<section><h2>Bản đồ kỹ năng<small>nét đứt: TB lớp</small></h2>' + (radar(m, gl) || '<p class="edx-note">Cần ít nhất 3 học phần để vẽ.</p>') + '</section>' +
+        '<p>Trung bình ' + played.length + ' ' + dw + ' · ' + m.n + ' câu' + (x.few ? ' (ít dữ liệu)' : '') + ' · TB lớp ' + num(gl.avg) + ' · TB khối ' + num(gk.avg) + '</p></div></section>' +
+        '<section><h2>Bản đồ ' + (st.mon === 'all' ? 'các môn' : 'kỹ năng') + '<small>nét đứt: TB lớp</small></h2>' + (radar(m, gl, D) || '<p class="edx-note">Cần ít nhất 3 ' + dw + ' để vẽ.</p>') + '</section>' +
         '<section><h2>Mục tiêu<small>mức "' + LV[3] + '" từ ' + target + ' điểm</small></h2><div class="edx-goal"><div><span>Điểm hiện tại</span><b>' + Math.round(x.score) + '</b></div><div><span>Điểm mục tiêu</span><b>' + target + '</b></div>' +
-        (gaps.length ? gaps.slice(0, 4).map(function (g2) { return '<div><span>Luyện thêm · ' + esc(g2[0]) + '</span><b class="dn">+' + g2[1] + '</b></div>'; }).join('') : '<div><span>Học phần đã chơi</span><b class="up">đều đạt</b></div>') + '</div></section>' +
+        (gaps.length ? gaps.slice(0, 4).map(function (g2) { return '<div><span>Luyện thêm · ' + esc(g2[0]) + '</span><b class="dn">+' + g2[1] + '</b></div>'; }).join('') : '<div><span>Đã chơi</span><b class="up">đều đạt</b></div>') + '</div></section>' +
         '<section><h2>Nhận xét</h2><div class="edx-cm"><p><b>Mạnh nhất:</b> ' + esc(strong) + ' (' + Math.round(m.hp[strong].pt) + ' điểm)</p>' +
         (best && hpDelta[best] >= 1 ? '<p><b>Tiến bộ nhất:</b> ' + esc(best) + ', ' + delta(hpDelta[best], 0, ' điểm') + '</p>' : '') +
         '<p><b>Cần luyện:</b> ' + esc(weak) + ' (' + Math.round(m.hp[weak].pt) + ' điểm' + (m.hp[weak].diag && SHORT[m.hp[weak].diag] ? ', ' + SHORT[m.hp[weak].diag] : '') + ')</p>' +
         '<p><b>Chăm chỉ:</b> chơi ' + x.wIdx.length + '/' + M.nW + ' tuần, ' + x.days + ' buổi' + (pctBeat != null ? ' · điểm cao hơn ' + pctBeat + '% bạn trong lớp (hạng ' + rank + '/' + gl.ns + ')' : '') + '</p></div></section>';
       return o + '<div class="edx-hsgrid"><div class="edx-col">' + c1 + '</div><div class="edx-col">' + c2 + '</div><div class="edx-col">' + c3 + '</div></div>';
     }
-    function radar(m, ref) {
-      var hs = M.hpList.filter(function (h) { return m.hp[h]; });
+    function radar(m, ref, D) {
+      var hs = D.filter(function (h) { return m.hp[h]; });
       if (hs.length < 3) return '';
       var cx = 200, cy = 165, R = 112, n = hs.length;
       function pt(i, v) { var a = -Math.PI / 2 + 2 * Math.PI * i / n; return [cx + R * v / 100 * Math.cos(a), cy + R * v / 100 * Math.sin(a)]; }
@@ -636,7 +751,7 @@
       if (!data) return;
       reconcile();
       var keep = el.querySelector('.edx-scroll'), top = keep ? keep.scrollTop : 0;
-      el.innerHTML = '<div class="edx-sheet">' + header() + '<main class="edx-main">' + (st.tab === 'khoi' ? viewKhoi() : st.tab === 'lop' ? viewLop() : viewHs()) + '</main>' + footer() + '</div>';
+      el.innerHTML = '<div class="edx-sheet">' + header() + '<main class="edx-main">' + (st.tab === 'tq' ? viewTq() : st.tab === 'khoi' ? viewKhoi() : st.tab === 'lop' ? viewLop() : viewHs()) + '</main>' + footer() + '</div>';
       // biểu đồ vẽ theo đúng kích thước khung (1 đơn vị = 1px) để không bị chừa trống: đo rồi vẽ lại 1 lần
       var box = el.querySelector('.edx-chartbox');
       if (box && !measuring) {
@@ -648,12 +763,13 @@
       if (opts.hash) syncHash();
     }
     function syncHash() {
-      var h = st.tab === 'khoi' ? 'khoi/' + encodeURIComponent(st.scope) : st.tab === 'lop' ? 'lop/' + encodeURIComponent(st.khoi) + '/' + encodeURIComponent(st.lop) : 'hs/' + encodeURIComponent(st.code || '');
+      var h = st.tab === 'tq' ? 'tq' : st.tab === 'khoi' ? 'khoi/' + encodeURIComponent(st.khoi) : st.tab === 'lop' ? 'lop/' + encodeURIComponent(st.khoi) + '/' + encodeURIComponent(st.lop) : 'hs/' + encodeURIComponent(st.code || '');
       if (global.location.hash !== '#' + h) { st.hashSelf = '#' + h; try { global.history.replaceState(null, '', '#' + h); } catch (e) { global.location.hash = h; } }
     }
     function readHash() {
       var p = global.location.hash.replace(/^#/, '').split('/').map(decodeURIComponent);
-      if (p[0] === 'khoi' && p[1]) { st.tab = 'khoi'; st.scope = p[1]; }
+      if (p[0] === 'tq') st.tab = 'tq';
+      else if (p[0] === 'khoi' && p[1]) { st.tab = 'khoi'; if (M.khois.indexOf(p[1]) >= 0) st.khoi = p[1]; }
       else if (p[0] === 'lop' && p[1] && p[2]) { st.tab = 'lop'; st.khoi = p[1]; st.lop = p[2]; }
       else if (p[0] === 'hs' && p[1]) { var s = M && M.byCode(p[1]); if (s) { st.tab = 'hs'; st.khoi = s.khoi; st.lop = s.lop; st.code = s.code; } }
     }
@@ -662,7 +778,7 @@
       if (t.khoi && !t.lop) st.lop = null;
       if ((t.khoi || t.lop) && !t.code) st.code = null;
       if (t.code) { var s = M.byCode(t.code); if (s) { st.khoi = s.khoi; st.lop = s.lop; } }
-      if (t.scope !== undefined) { st.rsel = null; st.tsel = null; }
+      if (t.khoi) { st.rsel = null; st.tsel = null; }
       render();
     }
     function onClick(e) {
@@ -670,7 +786,7 @@
       if (!n || !el.contains(n) || n.disabled) return;
       var a = n.getAttribute('data-a'), v = n.getAttribute('data-v');
       if (a === 'tab') go({ tab: v });
-      else if (a === 'scope') go({ scope: v });
+      else if (a === 'khoi') go({ tab: 'khoi', khoi: v });
       else if (a === 'cmp') { st.cmp = v; render(); }
       else if (a === 'metric') { st.metric = v; render(); }
       else if (a === 'prog') { st.prog = v; render(); }
@@ -678,7 +794,7 @@
       else if (a === 'filt') { st.filt = v; render(); }
       else if (a === 'cmpsort') { /* xử lý ở onChange */ }
       else if (a === 'sel') { var key = n.getAttribute('data-k'), arr = st[key], i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else if (arr.length < 6) arr.push(v); render(); }
-      else if (a === 'lop') go({ tab: st.tab === 'khoi' ? 'lop' : st.tab, khoi: n.getAttribute('data-khoi'), lop: n.getAttribute('data-lop'), q: '' });
+      else if (a === 'lop') go({ tab: (st.tab === 'khoi' || st.tab === 'tq') ? 'lop' : st.tab, khoi: n.getAttribute('data-khoi'), lop: n.getAttribute('data-lop'), q: '' });
       else if (a === 'code') {
         var c = n.getAttribute('data-code');
         go({ tab: 'hs', code: c });
@@ -689,7 +805,7 @@
         if (s.k === k2) s.d = -s.d; else { s.k = k2; s.d = k2 === 'name' ? 1 : -1; }
         render();
       }
-      else if (a === 'mon') { st.mon = v; M = build(data); st.rsel = null; st.tsel = null; render(); }
+      else if (a === 'mon') { st.mon = v; st.rsel = null; st.tsel = null; render(); }
       else if (a === 'theme') {
         st.theme = isDark() ? 'light' : 'dark'; applyTheme();
         try { global.localStorage.setItem('edux-report-theme', st.theme); } catch (er) { /* bỏ qua */ }

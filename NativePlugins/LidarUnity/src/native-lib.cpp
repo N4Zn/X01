@@ -46,6 +46,7 @@ const uint64_t MAX_TRAJECTORY_LIFE = 1000000000;
 
 std::atomic<bool> is_processing_thread_running{false};
 std::atomic<bool> g_touch_enabled{false};   // controlled by Lidar_SetTouchEnabled()
+std::atomic<int> g_lidar_model{0};          // 0 = D200/LD14P (mặc định), 1 = RPLIDAR C1 — Lidar_SetModel(), gọi TRƯỚC Lidar_Init()
 
 // Queue điểm touch cho Unity C# poll — xem PushTouchPoint()/Lidar_PollTouch() ở cuối file.
 struct TouchPointXY { int x; int y; };
@@ -134,10 +135,21 @@ void ld14p_parse_fnc(RingBuffer<uint8_t>& ld14p_data_queue, RingBuffer<DataPoint
 #endif
     /********************************** */
     // std::cout << "Enter ld14p_parse_fnc" << std::endl;
-    LOGI(TAG, "Enter ld14p_parse_fnc");
+    LOGI(TAG, "Enter ld14p_parse_fnc (model=%s)", g_lidar_model.load() == 1 ? "C1" : "D200");
     while (true) {
         uint8_t data;
          if (ld14p_data_queue.dequeue(data)) {
+            if (g_lidar_model.load() == 1) {  // RPLIDAR C1: node 5 byte → 1 điểm, vào cùng pipeline với D200
+                DataPoint dp;
+                if (rplidar_ParseByte(data, &dp) && ld14p_xypoint_is_valid(&dp)) {
+                    ld14p_point_queue.enqueue(dp);
+                    is_xypoint_data_ready = true;
+                    static int c1_log_counter = 0;
+                    if (++c1_log_counter % 5000 == 1)
+                        LOGI(TAG, "ld14p_parse_fnc C1 point #%d", c1_log_counter);
+                }
+                continue;
+            }
             if(lidar_AnalysisOne(data)){
                 static int parse_log_counter = 0;
                 if (++parse_log_counter % 100 == 1)
@@ -524,6 +536,12 @@ void Lidar_SendConfig(int half_x, int hight_floor, int ymax,
     G_XMIN = -G_HALF_X + G_SHIFT_X_FLOOR;
     LOGI(TAG, "Lidar_SendConfig: half_x=%d hight_floor=%d ymax=%d shift_x_floor=%d shift_y=%d shift_x=%d offset_angle=%f nums_point_report=%d",
          G_HALF_X, G_HIGHT_FLOOR, G_YMAX, G_SHIFT_X_FLOOR, G_SHIFT_Y, G_SHIFT_X, G_OFFSET_ANGLE, G_NUMS_POINT_REPORT);
+}
+
+// 0 = D200 (LD14P, 230400 baud), 1 = RPLIDAR C1 (Standard scan). Gọi trước Lidar_Init() — thread parse đọc cờ này.
+void Lidar_SetModel(int model) {
+    g_lidar_model.store(model == 1 ? 1 : 0);
+    LOGI(TAG, "Lidar_SetModel → %s", model == 1 ? "C1" : "D200");
 }
 
 void Lidar_SetTouchEnabled(int enabled) {

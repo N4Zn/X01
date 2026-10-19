@@ -63,6 +63,8 @@ typedef struct __attribute__((packed)) {
 uint8_t CalCRC8(const uint8_t *data, uint16_t data_len);
 bool lidar_AnalysisOne(uint8_t byte);
 size_t lidar_frame_Parse(DataPoint* dpoint);
+// RPLIDAR C1 (Standard scan, node 5 byte). Trả true khi ghép xong 1 node HỢP LỆ vào *out (distance>0).
+bool rplidar_ParseByte(uint8_t byte, DataPoint* out);
 /******
 Kiểm tra dữ liệu điểm đo có hợp hệ không:
 + x = y = distance = 0 > coi là không hợp lệ

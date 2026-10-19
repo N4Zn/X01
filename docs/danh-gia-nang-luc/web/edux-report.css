@@ -258,6 +258,40 @@
 .edx-heat td.pc b { position: relative; font-weight: 600; }
 .edx-heat th small { font-weight: 400; opacity: 0.85; }
 
+/* tab Toàn trường: mỗi khối 1 bảng xếp hạng riêng (không gộp / so sánh giữa các khối) */
+.edx-tq { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(30em, 1fr)); gap: 1.2em; align-items: stretch; }
+.edx-tq .edx-panel { min-height: 0; }
+.edx-tq .edx-scroll { flex: 0 1 auto; }
+.edx-tq h2 .lk { font: inherit; color: var(--red); cursor: pointer; text-decoration: underline dotted; }
+.edx-rank td { height: 3.5em; font-size: 1.05em; }
+.edx-rank tfoot td { height: 2.6em; }
+.edx-rank .edx-stack { height: 0.9em; }
+.edx-rank td.h sup { font-size: 0.62em; margin-left: 0.25em; font-weight: 400; opacity: 0.9; }
+.edx-rank td.h.top { box-shadow: inset 0 0 0 0.18em var(--ink); font-size: 1.08em; }
+.edx-rank td small.pp { display: block; font-size: 0.7em; color: var(--muted); line-height: 1.1; margin-top: 0.15em; }
+.edx-top3 { display: flex; flex-wrap: wrap; gap: 0.3em 1.1em; align-items: baseline; margin: 0.6em 0 0.3em; padding: 0.4em 0.7em; background: var(--tint); font-size: 0.92em; }
+.edx-top3 small { color: var(--muted); }
+.edx-top3 .tp em { font-style: normal; color: var(--muted); }
+.edx a[data-a] { cursor: pointer; }
+.edx-attn a, .edx-top3 a, .edx-note a { color: var(--slate-dark); font-weight: 600; text-decoration: underline dotted; }
+.edx-attn .mu { color: var(--muted); }
+
+/* mức độ chơi: đều / ít / chưa chơi */
+.edx-stack.play i.p2, .edx-dleg i.p2 { background: var(--s3); }
+.edx-stack.play i.p1, .edx-dleg i.p1 { background: var(--s1); }
+.edx-stack.play i.p0, .edx-dleg i.p0 { background: var(--slate); }
+.edx-stack.play { background: var(--tint); }
+.edx-ar { display: grid; grid-template-columns: 3.6em minmax(0, 1fr) 7em 6.5em; gap: 0.7em; align-items: center; padding: 0.22em 0.3em; cursor: pointer; border-bottom: 1px solid var(--line); }
+.edx-ar:hover { background: var(--tint); }
+.edx-ar .nm { font-weight: 600; }
+.edx-ar b { text-align: right; } .edx-ar b small, .edx-ar > small { color: var(--muted); font-size: 0.78em; font-weight: 400; }
+
+/* chọn khối / môn */
+.edx-hint { color: var(--muted); font-size: 0.82em; }
+.edx-monsel { display: inline-flex; gap: 0.3em; align-items: center; flex-wrap: wrap; }
+.edx-monsel small { color: var(--muted); font-size: 0.85em; }
+.edx-none a { font-weight: 500; }
+
 /* lịch sử theo tuần của học sinh */
 .edx-hist .hr { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 0.5em; align-items: center; border-bottom: 1px solid var(--line); padding: 0.15em 0; }
 .edx-hist .lab b { display: block; font-size: 0.92em; }

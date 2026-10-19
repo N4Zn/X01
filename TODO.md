@@ -140,3 +140,8 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Hòa Vũ / Minh Anh chưa có điểm: cho chơi Tổng hợp Toán rồi chạy lại; hoặc quyết định thêm `SoSanhSo` vào `scored_games` (cần xác nhận game độc lập) và có đưa log `2025-04-14` (đồng hồ K02 sai, thực tế trước 06/10) vào "ngày chưa rõ" không (2026-10-09)
 - [ ] Nhận định học phần nhiều bé chỉ 2–3 câu ("ít mẫu"): cần nhiều câu hơn mỗi học phần; ngưỡng `diag` (5s/9s/75%) do tôi tự chọn — user duyệt lại (2026-10-09)
 - [ ] **Giao diện game builder chưa ok — tối ưu sau** (2026-10-14): thống nhất cách hiển thị cài đặt kiểu PowerPoint cho mọi game (tab Hiệu ứng chung/riêng đối tượng, panel phải), còn popover lẻ (Định dạng chữ, Tuỳ biến cơ chế), ghi chú nút "?" chưa có phần riêng cho cơ chế, panel hiệu ứng riêng mới có hiệu ứng chờ. Xem `WebTools/GenericGameBuilder/CLAUDE.md` mục "Cài đặt hiển thị thống nhất".
+
+## LiDAR C1 option (2026-10-19) — cần build APK Unity rồi test K02
+- [ ] Build APK (đã build lại `liblidar_unity.so` + `lidarlib-release.aar`); cài K02, thêm `"lidar_model": "c1"` vào `/sdcard/EduXplore/lidar_config.json`, đóng hẳn app mở lại: chạm có ăn, hướng đúng; `adb logcat -s FloorGame_Main LidarUsbBridge` thấy `Lidar_SetModel → C1` + `startC1Scan` — (2026-10-19)
+- [ ] Cắm D200 vào laptop, chạy `Tools/lidar_bench` (README) đo thật, điền mục 4.2 `docs/lidar-touch-algorithm.md` — (2026-10-19)
+- [ ] Quyết: thêm ô chọn loại LiDAR trên ControlActivity (hiện chỉ sửa JSON)? Cần tuỳ chọn lật gương góc cho C1 không? — (2026-10-19)

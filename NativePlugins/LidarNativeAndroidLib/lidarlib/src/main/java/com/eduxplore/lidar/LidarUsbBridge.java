@@ -40,6 +40,13 @@ public class LidarUsbBridge {
     // GameObject Unity nhận callback — xem LidarTouchBridge.cs (phải trùng tên GameObject).
     private static final String UNITY_GAME_OBJECT = "LidarTouchBridge";
 
+    // Loại LiDAR: "d200" (mặc định, LD14P 230400 baud, tự phát dữ liệu) hoặc "c1" (Slamtec RPLIDAR C1,
+    // 460800 baud, phải gửi lệnh quét). Cả hai dùng chung cầu USB CP2102 (VID/PID giống nhau) nên chỉ
+    // phân biệt bằng cấu hình `lidar_model` trong lidar_config.json (xem LidarTouchBridge.cs).
+    private static volatile boolean sModelC1 = false;
+    private static final int C1_BAUD = 460800;
+    private static final int D200_BAUD = 230400;
+
     private static volatile boolean sStarted = false;
     private static volatile boolean sConnected = false;
     private static volatile boolean sUsbPermissionPending = false;
@@ -48,8 +55,14 @@ public class LidarUsbBridge {
     private static ParcelFileDescriptor sPipeWrite;
     private static Thread sReaderThread;
 
-    /** Gọi 1 lần từ Unity C# (LidarTouchBridge.Start()) — an toàn gọi lại nhiều lần. */
+    /** Giữ cho tương thích bản cũ: D200. */
     public static void start(Context context) {
+        start(context, "d200");
+    }
+
+    /** Gọi 1 lần từ Unity C# (LidarTouchBridge.Start()) — an toàn gọi lại nhiều lần. model: "d200" | "c1". */
+    public static void start(Context context, String model) {
+        sModelC1 = model != null && model.trim().equalsIgnoreCase("c1");
         Context appCtx = context.getApplicationContext();
 
         if (!sStarted) {
@@ -119,12 +132,14 @@ public class LidarUsbBridge {
         UsbInterface intf = cp2102.getInterface(0);
         conn.claimInterface(intf, true);
         UsbEndpoint bulkIn = null;
+        UsbEndpoint bulkOut = null;
         for (int i = 0; i < intf.getEndpointCount(); i++) {
             UsbEndpoint ep = intf.getEndpoint(i);
-            if (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && ep.getDirection() == UsbConstants.USB_DIR_IN) {
-                bulkIn = ep;
-                break;
+            if (ep.getType() != UsbConstants.USB_ENDPOINT_XFER_BULK) continue;
+            if (ep.getDirection() == UsbConstants.USB_DIR_IN) {
+                if (bulkIn == null) bulkIn = ep;
+            } else if (bulkOut == null) {
+                bulkOut = ep;
             }
         }
         if (bulkIn == null) {
@@ -133,7 +148,16 @@ public class LidarUsbBridge {
             return;
         }
 
-        initCp2102(conn, 230400);
+        final boolean c1 = sModelC1;
+        initCp2102(conn, c1 ? C1_BAUD : D200_BAUD);
+        if (c1) {
+            if (bulkOut == null) {
+                Log.e(TAG, "tryConnect: C1 cần bulk OUT endpoint để gửi lệnh quét nhưng không có");
+                conn.close();
+                return;
+            }
+            startC1Scan(conn, bulkIn, bulkOut);
+        }
 
         try {
             ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
@@ -144,10 +168,33 @@ public class LidarUsbBridge {
             final UsbEndpoint finalBulkIn = bulkIn;
             sReaderThread = new Thread(() -> {
                 byte[] buf = new byte[4096];
+                // C1: 7 byte đầu là response descriptor (A5 5A ...) — bỏ đi, chỉ chuyển dòng node cho native.
+                byte[] head = new byte[64];
+                int headLen = 0;
+                boolean skipDescriptor = c1;
                 try (FileOutputStream fos = new FileOutputStream(sPipeWrite.getFileDescriptor())) {
                     while (sConnected) {
                         int n = finalConn.bulkTransfer(finalBulkIn, buf, buf.length, 200);
-                        if (n > 0) fos.write(buf, 0, n);
+                        if (n <= 0) continue;
+                        if (skipDescriptor) {
+                            int take = Math.min(n, head.length - headLen);
+                            System.arraycopy(buf, 0, head, headLen, take);
+                            headLen += take;
+                            int idx = indexOfDescriptor(head, headLen);
+                            if (idx >= 0 && headLen >= idx + 7) {
+                                skipDescriptor = false;
+                                int rest = headLen - (idx + 7);
+                                if (rest > 0) fos.write(head, idx + 7, rest);
+                                if (take < n) fos.write(buf, take, n - take);
+                            } else if (headLen >= head.length) {
+                                // không thấy descriptor — chuyển nguyên, native tự đồng bộ theo bit hợp lệ
+                                skipDescriptor = false;
+                                fos.write(head, 0, headLen);
+                                if (take < n) fos.write(buf, take, n - take);
+                            }
+                            continue;
+                        }
+                        fos.write(buf, 0, n);
                     }
                 } catch (IOException e) {
                     Log.w(TAG, "USB reader kết thúc: " + e.getMessage());
@@ -165,6 +212,30 @@ public class LidarUsbBridge {
             Log.e(TAG, "tryConnect: tạo pipe lỗi: " + e.getMessage());
             conn.close();
         }
+    }
+
+    private static int indexOfDescriptor(byte[] b, int len) {
+        for (int i = 0; i + 1 < len; i++) {
+            if ((b[i] & 0xFF) == 0xA5 && (b[i + 1] & 0xFF) == 0x5A) return i;
+        }
+        return -1;
+    }
+
+    /**
+     * RPLIDAR C1: STOP → xả hết dữ liệu cũ → SCAN chuẩn (A5 20). Chế độ Standard là node 5 byte,
+     * native (rplidar_ParseByte trong liblidar.cpp) đồng bộ theo bit S/!S + C nên không cần checksum.
+     * Motor C1 tự quay, không cần DTR/PWM. Đã kiểm chứng trên COM6 laptop: FW 1.02, Standard 5 kS/s ~10 Hz.
+     */
+    private static void startC1Scan(UsbDeviceConnection conn, UsbEndpoint bulkIn, UsbEndpoint bulkOut) {
+        byte[] stop = { (byte) 0xA5, 0x25 };
+        byte[] scan = { (byte) 0xA5, 0x20 };
+        conn.bulkTransfer(bulkOut, stop, stop.length, 500);
+        try { Thread.sleep(100); } catch (InterruptedException ignored) { }
+        byte[] tmp = new byte[4096];
+        // xả dữ liệu còn sót của lần quét trước (nếu app khởi động lại khi C1 đang quay)
+        for (int i = 0; i < 20 && conn.bulkTransfer(bulkIn, tmp, tmp.length, 30) > 0; i++) { /* drain */ }
+        int w = conn.bulkTransfer(bulkOut, scan, scan.length, 500);
+        Log.i(TAG, "startC1Scan: gửi A5 20, bulkTransfer=" + w);
     }
 
     // Gọi UnityPlayer.UnitySendMessage() qua reflection — tránh phụ thuộc biên dịch trực

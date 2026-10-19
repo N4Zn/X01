@@ -39,6 +39,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     [DllImport(LibName)] private static extern void Lidar_SendConfig(
         int halfX, int hightFloor, int ymax, int shiftXFloor, int shiftY, int shiftX,
         int offsetAngle, int numsPointReport);
+    [DllImport(LibName)] private static extern void Lidar_SetModel(int model); // 0 = D200, 1 = RPLIDAR C1
     [DllImport(LibName)] private static extern void Lidar_SetTouchEnabled(int enabled);
     [DllImport(LibName)] private static extern int Lidar_PollTouch(out int x, out int y);
 
@@ -68,6 +69,10 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         public int shift_x = 0;
         public int offset_angle = 0;
         public int nums_point_report = 1;
+        // Loại LiDAR gắn trên máy: "d200" (mặc định, LD14P) hoặc "c1" (Slamtec RPLIDAR C1). Thiếu key trong
+        // file cũ → giữ "d200", máy hiện có không đổi hành vi. Đổi loại: sửa file rồi ĐÓNG HẲN app mở lại
+        // (baud + lệnh quét chỉ gửi lúc kết nối USB). Cả 2 dùng chung CP2102 nên không tự nhận ra được.
+        public string lidar_model = "d200";
     }
 
     private const string ConfigFileName = "lidar_config.json";
@@ -222,7 +227,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
             _config = JsonUtility.FromJson<LidarConfigJson>(json);
             Debug.Log($"[LidarTouchBridge] LoadConfig: đã đọc {path} — half_x={_config.half_x} hight_floor={_config.hight_floor} " +
                       $"ymax={_config.ymax} shift_x_floor={_config.shift_x_floor} shift_y={_config.shift_y} shift_x={_config.shift_x} " +
-                      $"offset_angle={_config.offset_angle} nums_point_report={_config.nums_point_report}");
+                      $"offset_angle={_config.offset_angle} nums_point_report={_config.nums_point_report} lidar_model={_config.lidar_model}");
         }
         catch (System.Exception e)
         {
@@ -251,6 +256,8 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
 
     private bool _uartReady;
 
+    private bool IsC1 => string.Equals(_config.lidar_model, "c1", StringComparison.OrdinalIgnoreCase);
+
     void Start()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -258,7 +265,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
         using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
         {
-            bridgeClass.CallStatic("start", activity);
+            bridgeClass.CallStatic("start", activity, IsC1 ? "c1" : "d200");
         }
 #endif
     }
@@ -276,6 +283,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         }
 
         Lidar_SetUartFd(fd);
+        Lidar_SetModel(IsC1 ? 1 : 0);
         ApplyConfigToNative();
         _uartReady = true;
         Lidar_SetTouchEnabled(_touchEnabled ? 1 : 0); // mặc định OFF — xem _touchEnabled ở trên

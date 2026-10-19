@@ -290,6 +290,46 @@ size_t lidar_frame_Parse(DataPoint* dpoint) {
     return size;
 }
 
+// ---------------------------------------------------------------------------
+// RPLIDAR C1 — Standard scan (A5 20), mỗi node 5 byte:
+//   b0: quality<<2 | (!S)<<1 | S      b1: angle_q6[6:0]<<1 | C(=1)     b2: angle_q6[14:7]
+//   b3,b4: distance_q2 (1/4 mm, little-endian)     angle = angle_q6/64 độ
+// Không có checksum: đồng bộ bằng 2 bit kiểm tra (S != !S và C == 1); sai thì trượt 1 byte.
+// Đã đối chiếu dữ liệu thật C1 (FW 1.02) bằng Tools/lidar_bench/lidar_io.py (_parse_standard).
+// Góc/toạ độ dùng CHUNG công thức với D200 (lidar_frame_Parse): G_OFFSET_ANGLE rồi x=-d·sin, y=d·cos.
+// ---------------------------------------------------------------------------
+bool rplidar_ParseByte(uint8_t byte, DataPoint* out) {
+    static uint8_t buf[5];
+    static int n = 0;
+    buf[n++] = byte;
+    if (n < 5) return false;
+
+    bool ok = ((buf[0] & 1) != ((buf[0] >> 1) & 1)) && (buf[1] & 1);
+    if (!ok) {  // lệch pha: bỏ byte đầu, giữ 4 byte sau chờ byte mới
+        memmove(buf, buf + 1, 4);
+        n = 4;
+        return false;
+    }
+    n = 0;
+
+    uint16_t dist_q2 = (uint16_t)(buf[3] | (buf[4] << 8));
+    if (dist_q2 == 0) return false;  // không có phản xạ
+
+    float angle_deg = (float)((buf[2] << 7) | (buf[1] >> 1)) / 64.0f;
+    float angle = angle_deg + G_OFFSET_ANGLE;
+    if (angle >= 360.0f) angle -= 360.0f; else if (angle < 0.0f) angle += 360.0f;
+
+    out->distance = (uint16_t)(dist_q2 / 4);
+    if (out->distance == 0) return false;
+    out->angle = angle;
+    out->intensity = (uint8_t)((buf[0] >> 2) * 4);  // quality 0..63 → thang 0..252 như D200
+    out->stamp = GetTimestamp();
+    float rad = angle * (float)M_PI / 180.0f;
+    out->y = out->distance * cos(rad);
+    out->x = -out->distance * sin(rad);
+    return true;
+}
+
 bool ld14p_xypoint_is_valid(DataPoint* dpoint){
     if(dpoint == nullptr){
         return 0;

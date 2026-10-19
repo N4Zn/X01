@@ -1,0 +1,3 @@
+captures/*.csv
+captures/*.png
+__pycache__/
