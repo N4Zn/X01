@@ -146,3 +146,5 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Cắm D200 vào laptop, chạy `Tools/lidar_bench` (README) đo thật, điền mục 4.2 `docs/lidar-touch-algorithm.md` — (2026-10-19)
 - [ ] Quyết: thêm ô chọn loại LiDAR trên ControlActivity (hiện chỉ sửa JSON)? Cần tuỳ chọn lật gương góc cho C1 không? — (2026-10-19)
 - [ ] C1 đảo trục (`c1_flip_x`, `c1_flip_y` mặc định bật, xem `docs/lidar-touch-algorithm.md` §3c): test hướng chạm trên sàn K02; sai thì tắt từng trục trong `lidar_config.json`, rồi chỉnh `offset_angle`/`shift_*` — (2026-10-19)
+- [x] Máy chiếu #2: bộ 2.1 (màn hình nhỏ) calib xong, đã ghi `docs/lidar-calib.md` + backup `lidar_config.json_20261020_2.1` — (2026-10-20)
+- [ ] Máy chiếu #2: calib bộ 2.2 (màn hình full) — làm sau; calib ở chế độ game (display 1), không calib theo hình mirror Launcher — (2026-10-20)

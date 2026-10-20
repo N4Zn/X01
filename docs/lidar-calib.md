@@ -30,6 +30,12 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
     riêng bên dưới)**: `{half_x:1190, hight_floor:1380, ymax:-800, shift_x_floor:-110,
     shift_y:-15, shift_x:-35, offset_angle:-5, nums_point_report:2}`. Khớp đúng backup mới nhất
     `lidar_config.json.new_20260918_v2` — không có gì mới hơn chưa ghi lại.
+  - **Máy chiếu #2 sẽ có 2 bộ thông số theo chế độ hiển thị (ghi 2026-10-20)**:
+    - **2.1 Màn hình nhỏ** — ✅ calib xong 2026-10-20, đang dùng trên K02: `{half_x:1300, hight_floor:1600, ymax:-600, shift_x_floor:-60, shift_y:-10, shift_x:0, offset_angle:-5, nums_point_report:1, lidar_model:"d200", touch_mode:"fast"}`. Backup: `NativePlugins/K02DeviceConfig/backups/lidar_config.json_20261020_2.1` (nạp: `adb push <file> /sdcard/EduXplore/lidar_config.json`, đóng hẳn app mở lại). Lưu ý `touch_mode:"fast"` = 1 điểm là chạm ngay; muốn gom cụm gốc đổi thành `"cluster"` (và `nums_point_report` thường là 2).
+    - **2.2 Màn hình full** — chưa calib, làm sau.
+    - Bộ `{half_x:1190, hight_floor:1380, ymax:-800, shift_x_floor:-110, shift_y:-15, shift_x:-35, offset_angle:-5, nums_point_report:2}` ở trên là bộ cũ, chưa gán rõ cho chế độ nào — coi là mốc tham chiếu, KHÔNG phải bộ 2.1 hay 2.2 cuối cùng.
+    - Hiện app chỉ đọc 1 file `lidar_config.json`; đổi chế độ màn hình thì phải nạp đúng bộ (adb push + đóng hẳn app mở lại). Chưa có cơ chế chọn bộ tự động — nếu cần, thêm sau.
+    - Bản test C1/D200 (`lidar_model`, `touch_mode`, `c1_flip_*`): `docs/lidar-touch-algorithm.md`. Khi nạp lại số liệu, GIỮ các khoá đó trong file (thiếu khoá → APK mới mặc định `c1` + `fast`).
   - Backup cả 2 bộ (+ mọi lần đổi khác, gồm cả 1 bộ nháp `new_20260917_projector_2340x1400`
     không dùng) lưu tại `NativePlugins/K02DeviceConfig/backups/`.
   - **Config nằm trên TỪNG THIẾT BỊ, không trong APK/project** — nạp bản Unity mới / máy K02 mới
