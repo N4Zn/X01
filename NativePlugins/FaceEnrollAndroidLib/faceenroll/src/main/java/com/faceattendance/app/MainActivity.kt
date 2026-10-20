@@ -150,6 +150,8 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // yawTolerance: quá lệch thì embedding của SFace kém tin cậy dù YuNet vẫn dò được mặt.
     private val matchThreshold: Float get() = FaceMatchConfig.get().matchThreshold
     private val marginThreshold: Float get() = FaceMatchConfig.get().marginThreshold
+    // lockThreshold: chỉ KHOÁ tên (và ghi điểm danh) khi sim >= mức này; giữa matchThreshold và lockThreshold = "yếu".
+    private val lockThreshold: Float get() = FaceMatchConfig.get().lockThreshold
     private val yawTolerance: Float get() = FaceMatchConfig.get().yawTolerance
     private val rollToleranceDeg: Float get() = FaceMatchConfig.get().rollToleranceDeg
     private val cooldownMs = 15_000L
@@ -178,7 +180,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     private val unlockedPresenceGraceMs = 500L
     // Verify nền sau khi đã có tên: cần chừng này lần khớp lại (mặt thẳng) thì hiện ✓ và thôi nhận diện.
     private val verifyFramesNeeded = 3
-    // Quá chừng này lần thử (mặt thẳng) mà chưa đủ lần khớp, cũng không có người khác => chấp nhận luôn, thôi nhận diện.
+    // Quá chừng này lần thử (mặt thẳng) mà chưa đủ lần khớp: chỉ chấp nhận nếu đã khớp ít nhất 1 lần (xem verifyLock).
     private val verifyMaxTries = 8
 
     private fun graceOf(t: FaceTrack) = if (t.lock != null) lockPresenceGraceMs else unlockedPresenceGraceMs
@@ -874,17 +876,23 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 // (vài lần khớp lại khi mặt thẳng, không ảnh hưởng hiển thị); xong là ✓ và không nhận diện nữa.
                 color = Color.GREEN
                 if (!track.verified) verifyLock(engine, bgr, face, track, lock)
-                if (!greetedActive.containsKey(lock.name)) {
-                    justLogged.add(lock.name to attendanceStore.genderOf(lock.name))
+                if (track.lock == null) {
+                    // verifyLock vừa gỡ lock (mặt không còn khớp người đã khoá): không chào/ghi điểm danh khung này.
+                    color = Color.GRAY
+                    label = "..."
+                } else {
+                    if (!greetedActive.containsKey(lock.name)) {
+                        justLogged.add(lock.name to attendanceStore.genderOf(lock.name))
+                    }
+                    greetedActive[lock.name] = nowMs
+                    if (attendanceStore.canLog(lock.name, cooldownMs)) {
+                        val crop = cropFace(bgr, face.rect)
+                        attendanceStore.logAttendance(lock.name, crop, lock.sim)
+                        crop.release()
+                        runOnUiThread { refreshRecentPeoplePanel() }
+                    }
+                    label = lockLabel(track)
                 }
-                greetedActive[lock.name] = nowMs
-                if (attendanceStore.canLog(lock.name, cooldownMs)) {
-                    val crop = cropFace(bgr, face.rect)
-                    attendanceStore.logAttendance(lock.name, crop, lock.sim)
-                    crop.release()
-                    runOnUiThread { refreshRecentPeoplePanel() }
-                }
-                label = lockLabel(track)
             } else {
                 // Unknown track: run full recognition.
                 val pose = engine.estimatePose(face)
@@ -922,10 +930,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 val margin = sim - runnerUpSim
                 val isAmbiguous = name != null && sim > matchThreshold && margin < marginThreshold
                 val confirmed = name != null && sim > matchThreshold && !isAmbiguous
+                val weak = confirmed && sim < lockThreshold
                 Log.e(
                     "FaceMatch",
-                    "slot=$slot best=$name sim=${"%.3f".format(sim)} runnerUp=${"%.3f".format(runnerUpSim)} " +
-                        "margin=${"%.3f".format(margin)} ambiguous=$isAmbiguous confirmed=$confirmed"
+                    "slot=$slot best=$name sim=${"%.3f".format(sim)} runnerUp=$runnerUpName ${"%.3f".format(runnerUpSim)} " +
+                        "margin=${"%.3f".format(margin)} ambiguous=$isAmbiguous weak=$weak confirmed=$confirmed " +
+                        "face=${face.rect.width().toInt()}px yaw=${"%+.2f".format(pose.yawOffset)}"
                 )
 
                 when {
@@ -938,8 +948,14 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                         color = Color.rgb(255, 165, 0)
                         label = "$name đã có người khác ${"%.2f".format(sim)}"
                     }
+                    weak -> {
+                        // Vượt matchThreshold nhưng chưa tới lockThreshold: KHÔNG khoá, KHÔNG ghi điểm danh.
+                        // Thà bỏ sót còn hơn gán nhầm tên (người lạ/giáo viên dễ rơi vào mức này).
+                        color = Color.rgb(255, 165, 0)
+                        label = "YẾU ${"%.2f".format(sim)} (cần ${"%.2f".format(lockThreshold)}) best=$name"
+                    }
                     confirmed -> {
-                        // Single-frame confirmation: set lock immediately, no voting needed.
+                        // Khoá ngay khi sim >= lockThreshold; sau đó verifyLock() kiểm tra lại, sai thì gỡ khoá.
                         track.lock = ResolvedLock(name!!, nowMs, sim)
                         track.unknownCount = 0
                         color = Color.GREEN
@@ -1020,8 +1036,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     }
 
     /** Verify nền cho track đã có tên: mặt thẳng thì tính lại embedding, khớp đúng tên [verifyFramesNeeded] lần
-     * => verified (hiện ✓, không nhận diện nữa). Mặt nghiêng/điểm thấp: bỏ qua, KHÔNG làm mất khung xanh.
-     * Chỉ khi 2 lần liên tiếp ra NGƯỜI KHÁC chắc chắn mới bỏ lock (lock ban đầu sai) để nhận diện lại. */
+     * => verified (hiện ✓, không nhận diện nữa). Mặt nghiêng: bỏ qua, KHÔNG làm mất khung xanh.
+     * Mặt thẳng mà KHÔNG còn khớp người đã khoá (ra người khác, hoặc không ra ai: vd giáo viên/người lạ bước vào
+     * đúng chỗ) 2 lần liên tiếp => gỡ lock để nhận diện lại. Không còn tự coi là "đã xác nhận" khi hết lượt thử:
+     * phải khớp ít nhất 1 lần mới được verified. */
     private fun verifyLock(engine: FaceEngine, bgr: Mat, face: DetectedFace, track: FaceTrack, lock: ResolvedLock) {
         if (!engine.estimatePose(face).isFrontal(yawTolerance, rollToleranceDeg)) return
         track.verifyTries++
@@ -1030,18 +1048,14 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         aligned.release()
         val m = attendanceStore.bestMatch(emb, engine)
         val sameName = m.name == lock.name && m.sim > matchThreshold
-        val otherPerson = m.name != null && m.name != lock.name && m.sim > matchThreshold &&
-            (m.sim - m.runnerUpSim) >= marginThreshold
-        Log.e("FaceMatch", "verify ${lock.name}: best=${m.name} sim=${"%.3f".format(m.sim)} ok=${track.verifyOk} bad=${track.verifyBad} tries=${track.verifyTries}")
-        when {
-            sameName -> { track.verifyOk++; track.verifyBad = 0 }
-            otherPerson -> track.verifyBad++
-        }
+        Log.e("FaceMatch", "verify ${lock.name}: best=${m.name} sim=${"%.3f".format(m.sim)} runnerUp=${m.runnerUpName} ${"%.3f".format(m.runnerUpSim)} " +
+            "ok=${track.verifyOk} bad=${track.verifyBad} tries=${track.verifyTries} same=$sameName")
+        if (sameName) { track.verifyOk++; track.verifyBad = 0 } else track.verifyBad++
         if (track.verifyBad >= 2) {
-            Log.e("FaceAttendance", "verify mismatch (${lock.name} vs ${m.name}) — lock dropped, recognize again")
+            Log.e("FaceAttendance", "verify mismatch (${lock.name} vs ${m.name} ${"%.3f".format(m.sim)}) — lock dropped, recognize again")
             greetedActive.remove(lock.name)
             track.lock = null; track.verifyOk = 0; track.verifyBad = 0; track.verifyTries = 0
-        } else if (track.verifyOk >= verifyFramesNeeded || track.verifyTries >= verifyMaxTries) {
+        } else if (track.verifyOk >= verifyFramesNeeded || (track.verifyTries >= verifyMaxTries && track.verifyOk >= 1)) {
             track.verified = true
         }
     }

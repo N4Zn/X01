@@ -17,6 +17,11 @@ using UnityEngine;
 /// </summary>
 public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
 {
+    // Chỉ chấp nhận tên khi native đã KHOÁ (đủ phiếu) VÀ cosine sim >= mức này; ngược lại coi như không nhận ra ai
+    // (tên mặc định Player_n, round không tính điểm). Thà bỏ sót còn hơn gán nhầm người (vd giáo viên thành học sinh).
+    // Nên >= lockThreshold trong face_match.json (0.45).
+    const float MinAcceptConfidence = 0.45f;
+
     int _activeRequests;
     string _currentGameName;
     string _sessionFileName;
@@ -160,6 +165,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         // (có thể ra người khác → hiện lại tên đúng) và kết thúc sớm. Hết timeout mà chưa khoá thì dùng
         // người nhận được đầu tiên; không nhận được ai → khoá tên mặc định.
         string shown = null;
+        float tentativeSim = -1f;
         while (t < timeout && _gen[slot] == myGen)
         {
             var (left, right, leftSim, rightSim, leftLocked, rightLocked) =
@@ -169,13 +175,26 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             bool   isLocked  = slot == 0 ? leftLocked : rightLocked;
             if (candidate != null)
             {
-                if (isLocked) { result = candidate; confidence = sim; break; }
-                if (shown == null) { shown = candidate; confidence = sim; ShowTentative(slot, shown, onDone); }
+                if (isLocked)
+                {
+                    if (sim >= MinAcceptConfidence) { result = candidate; confidence = sim; }
+                    else
+                    {
+                        // Đã khoá nhưng độ giống quá thấp: native dừng nhận diện slot này rồi, không chờ thêm.
+                        Debug.LogWarning($"[PlayerRecognition] slot={slot} bỏ '{candidate}' (khoá nhưng sim {sim:F3} < {MinAcceptConfidence:F2})");
+                        confidence = -1f;
+                    }
+                    break;
+                }
+                if (shown == null) { shown = candidate; tentativeSim = sim; ShowTentative(slot, shown, onDone); }
             }
             yield return null;
             t += Time.deltaTime;
         }
-        if (result == null) result = shown;   // chưa khoá: giữ người đầu tiên
+        // Hết giờ mà chưa khoá (chưa đủ phiếu): KHÔNG dùng tên tạm của frame đầu tiên nữa — 1 frame thoáng qua
+        // (vd mặt giáo viên) đủ để ghi nhầm tên học sinh. Không nhận ra ai => tên mặc định, round không tính điểm.
+        if (result == null && shown != null)
+            Debug.LogWarning($"[PlayerRecognition] slot={slot} bỏ tên tạm '{shown}' (sim {tentativeSim:F3}): hết {timeout:F1}s chưa khoá");
 
         // _gen đổi = có RecognizeSlot() mới cho cùng slot (hoặc ván mới) thay thế request này → không ghi đè kết quả của nó.
         if (_gen[slot] == myGen)

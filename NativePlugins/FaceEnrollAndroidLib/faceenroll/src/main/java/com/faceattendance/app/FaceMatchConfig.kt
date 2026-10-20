@@ -13,6 +13,8 @@ import java.io.File
  *
  *  matchThreshold   cosine sim tối thiểu để coi là cùng người (SFace)
  *  marginThreshold  người xếp 1 phải hơn người xếp 2 ít nhất chừng này
+ *  lockThreshold   cosine sim tối thiểu để KHOÁ tên / ghi điểm (cao hơn matchThreshold: vượt matchThreshold mà chưa tới
+ *                   lockThreshold chỉ hiện "yếu", không khoá, không ghi). Ưu tiên bỏ sót hơn nhận nhầm.
  *  yawTolerance     độ lệch ngang tối đa của mặt (0 = nhìn thẳng)
  *  voteWindow / votesNeeded  (chỉ game) trong voteWindow frame gần nhất, có votesNeeded frame
  *                   cùng ra 1 người thì mới khoá tên
@@ -22,6 +24,7 @@ object FaceMatchConfig {
     data class Values(
         val matchThreshold: Float = 0.38f,
         val marginThreshold: Float = 0.10f,
+        val lockThreshold: Float = 0.45f,
         val yawTolerance: Float = 0.40f,
         val rollToleranceDeg: Float = 45f,
         val voteWindow: Int = 5,
@@ -62,6 +65,7 @@ object FaceMatchConfig {
             cached = Values(
                 matchThreshold   = o.optDouble("matchThreshold", d.matchThreshold.toDouble()).toFloat(),
                 marginThreshold  = o.optDouble("marginThreshold", d.marginThreshold.toDouble()).toFloat(),
+                lockThreshold    = o.optDouble("lockThreshold", d.lockThreshold.toDouble()).toFloat(),
                 yawTolerance     = o.optDouble("yawTolerance", d.yawTolerance.toDouble()).toFloat(),
                 rollToleranceDeg = o.optDouble("rollToleranceDeg", d.rollToleranceDeg.toDouble()).toFloat(),
                 voteWindow       = window,
@@ -79,6 +83,7 @@ object FaceMatchConfig {
             val o = JSONObject()
             o.put("matchThreshold", d.matchThreshold.toDouble())
             o.put("marginThreshold", d.marginThreshold.toDouble())
+            o.put("lockThreshold", d.lockThreshold.toDouble())
             o.put("yawTolerance", d.yawTolerance.toDouble())
             o.put("rollToleranceDeg", d.rollToleranceDeg.toDouble())
             o.put("voteWindow", d.voteWindow)
