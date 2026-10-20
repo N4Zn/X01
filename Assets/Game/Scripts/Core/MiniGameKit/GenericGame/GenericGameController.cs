@@ -50,6 +50,13 @@ public class GenericGameController : MiniGameControllerBase
     [Header("GenericGame — scene riêng (tuỳ chọn; bỏ trống = dùng scene chung GenericGamePlayer đọc Resources)")]
     [SerializeField] GenericGameBaked baked;
 
+    [Header("GenericGame — hướng dẫn (chỉ game SumToTarget / tên lửa, vd Tách số)")]
+    [Tooltip("Bật: trước \"Start in 3,2,1\" chạy màn mô phỏng có lời đọc (bàn chân nhảy lên số → nạp nhiên liệu → tên lửa bay), " +
+             "dựng từ chính ảnh của game. Tắt: vào thẳng game như cũ. Game không phải SumToTarget luôn bỏ qua.")]
+    [SerializeField] bool showSumTutorial = true;
+    [Tooltip("0 = lặp mãi tới khi cô bấm \"VÀO CHƠI\" trên máy điều khiển (Editor: Space/Enter). >0 = lặp đủ số lần rồi tự vào game.")]
+    [SerializeField, Min(0)] int sumTutorialLoops = 0;
+
     [Header("GenericGame — debug")]
     [Tooltip("Dùng khi bấm Play thẳng trong Editor (không qua MenuScene) để test 1 gameId cụ thể — " +
              "bỏ trống khi build thật, lúc đó luôn ưu tiên GameSessionManager.SelectedGameName.")]
@@ -1872,8 +1879,127 @@ public class GenericGameController : MiniGameControllerBase
     /// thẳng "Start in 3,2,1" cho gọn, đúng yêu cầu "mặc định bỏ tutorial".</summary>
     protected override void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opts)
     {
+        if (showSumTutorial && TryPlaySumTutorial()) return;
         StartGame();
     }
+
+    // ── Hướng dẫn mô phỏng cho SumToTarget (GenericSumTutorial) ───────────────
+
+    /// <summary>Game SumToTarget (không spawn flow): dựng dữ liệu từ 1 round thật rồi chạy GenericSumTutorial; xong mới
+    /// StartGame(). Trả false (vào thẳng game) nếu không đủ dữ liệu để làm mẫu.</summary>
+    bool TryPlaySumTutorial()
+    {
+        if (!SumMode || UsesSpawnFlow || leftButtonsRoot == null || rightButtonsRoot == null) return false;
+        var leftHalf = leftButtonsRoot.parent as RectTransform;
+        var rightHalf = rightButtonsRoot.parent as RectTransform;
+        if (leftHalf == null || rightHalf == null) return false;
+        var data = BuildSumTutorialData();
+        if (data == null) return false;
+        GenericSumTutorial.Play(leftHalf, rightHalf, data, sumTutorialLoops, OnSumTutorialDone);
+        return true;
+    }
+
+    void OnSumTutorialDone()
+    {
+        if (this == null) return;
+        StartGame();
+        // StartGame() vừa bật lại nhạc nền mặc định (giống lúc Start) → bật lại nhạc riêng của game nếu có.
+        BuildBackgroundAudio();
+    }
+
+    /// <summary>Chọn round làm mẫu + 2 thẻ cộng vừa đủ mục tiêu (cả 2 nhỏ hơn mục tiêu, khác giá trị — để thấy rõ phép CỘNG;
+    /// ưu tiên mục tiêu gần 5). Không có cặp nào thì lấy 1 thẻ bằng đúng mục tiêu. Nội dung/vị trí lấy NGUYÊN từ game.json.</summary>
+    GenericSumTutorial.Data BuildSumTutorialData()
+    {
+        RoundSpecV2 best = null;
+        int bestTarget = 0, bestScore = int.MinValue;
+        int[] bestTaps = null;
+        foreach (var r in _package.rounds)
+        {
+            var slots = r?.answers?.slots;
+            if (slots == null || slots.Length == 0) continue;
+            var fuel = TutorialFuelSlots(r);
+            int t = r.target > 0 ? r.target : DefaultSumTarget(r);
+            if (fuel.Length == 0 || t > fuel.Length) continue;
+            var v = new int[slots.Length];
+            for (int i = 0; i < slots.Length; i++) v[i] = int.TryParse((slots[i].text ?? "").Trim(), out var n) && n > 0 ? n : 1;
+            for (int i = 0; i < v.Length; i++)
+            {
+                for (int j = 0; j < v.Length; j++)
+                {
+                    if (i == j || v[i] + v[j] != t || v[i] >= t || v[j] >= t || v[i] == v[j]) continue;
+                    int score = 100 - Mathf.Abs(t - 5) * 10 + (v[i] > v[j] ? 1 : 0); // thẻ lớn trước
+                    if (score > bestScore) { bestScore = score; best = r; bestTarget = t; bestTaps = new[] { i, j }; }
+                }
+                if (v[i] == t && bestTaps == null) { best = r; bestTarget = t; bestTaps = new[] { i }; } // dự phòng: 1 thẻ = đủ mục tiêu
+            }
+        }
+        if (best == null) return null;
+
+        var data = new GenericSumTutorial.Data
+        {
+            background = SpriteOf(_package.layout.background),
+            questionFrame = _qFrameSliced,
+            questionColor = ParseTextColor(_package.settings.questionTextColor, Color.white),
+            questionFontSize = Mathf.RoundToInt(_package.settings.questionFontSize),
+            mirrorAnswers = best.answers.mirror,
+            fuelSlots = TutorialFuelSlots(best),
+            mirrorFuel = best.collect == null || best.collect.mirror,
+            target = bestTarget,
+            taps = bestTaps,
+        };
+        // Bàn chân (trò chơi chiếu sàn — bé chạm bằng chân). Đọc dạng Texture2D rồi tự tạo Sprite để chạy được dù ảnh
+        // import kiểu Default hay Sprite. Thiếu ảnh thì quay về bàn tay có sẵn.
+        var foot = Resources.Load<Texture2D>("ui/common_ui/icon_foot");
+        data.pointerIsFoot = foot != null;
+        data.pointer = foot != null
+            ? Sprite.Create(foot, new Rect(0f, 0f, foot.width, foot.height), new Vector2(0.5f, 0.5f))
+            : Resources.Load<Sprite>("ui/common_ui/icon_hand");
+
+        // Câu hỏi: slot có chữ đầu tiên của round. Combined thì toạ độ câu hỏi theo CẢ màn hình → đặt tạm ở đầu mỗi nửa.
+        var qSlot = best.question?.slots != null ? Array.Find(best.question.slots, s => !string.IsNullOrEmpty(s.text)) : null;
+        data.questionText = qSlot != null ? qSlot.text : $"Cần {bestTarget}";
+        bool perHalf = qSlot != null && !SharedQuestion;
+        data.questionRect = perHalf
+            ? new RectPct { xPct = qSlot.xPct, yPct = qSlot.yPct, wPct = qSlot.wPct, hPct = qSlot.hPct }
+            : new RectPct { xPct = 30f, yPct = 4f, wPct = 60f, hPct = 16f };
+        data.mirrorQuestion = perHalf && best.question.mirror;
+
+        foreach (var d in _package.layout.decorations)
+        {
+            if (string.IsNullOrEmpty(d.image)) continue;
+            data.decos.Add(new GenericSumTutorial.Deco
+            {
+                sprite = SpriteOf(d.image),
+                rect = new RectPct { xPct = d.xPct, yPct = d.yPct, wPct = d.wPct, hPct = d.hPct },
+                mirrorImage = d.mirrorImage,
+                isRocket = d.launchOnComplete,
+            });
+        }
+
+        foreach (var s in best.answers.slots)
+        {
+            data.cards.Add(new GenericSumTutorial.Card
+            {
+                sprite = SpriteOf(ResolveSlotImageFile(s, best.answers)),
+                text = s.text,
+                value = int.TryParse((s.text ?? "").Trim(), out var n) && n > 0 ? n : 1,
+                rect = new RectPct { xPct = s.xPct, yPct = s.yPct, wPct = s.wPct, hPct = s.hPct },
+            });
+        }
+        return data;
+    }
+
+    /// <summary>Ô thanh nhiên liệu của round (collect.slots; trống thì layout.collectSlots) — giống BuildEffectiveCollectSlots ở chế độ SumToTarget.</summary>
+    RectPct[] TutorialFuelSlots(RoundSpecV2 r)
+    {
+        var g = r.collect;
+        if (g != null && g.slots != null && g.slots.Length > 0)
+            return Array.ConvertAll(g.slots, s => new RectPct { xPct = s.xPct, yPct = s.yPct, wPct = s.wPct, hPct = s.hPct });
+        return _package.layout.collectSlots ?? Array.Empty<RectPct>();
+    }
+
+    Sprite SpriteOf(string file) => string.IsNullOrEmpty(file) ? null : AssetOverrideLoader.GetSprite(ResolveImagePath(file));
 
     /// <summary>Combined/Solo mode: base class tự gọi display.Setup() ở đây (KHÔNG có hook riêng
     /// nào khác chạy SAU khi Setup xong) — chèn ApplyRoundContent() ngay sau base để đặt ảnh nền/icon/chữ thật lên
@@ -1959,7 +2085,7 @@ public class GenericGameController : MiniGameControllerBase
         if (SumMode && !UsesSpawnFlow && q != null) BuildSumBarOverlays(team, q);
     }
 
-    static RectPct InsetSlot(RectPct r) => new RectPct
+    internal static RectPct InsetSlot(RectPct r) => new RectPct
     {
         xPct = r.xPct + r.wPct * 0.02f, yPct = r.yPct + r.hPct * 0.043f,
         wPct = r.wPct * 0.96f, hPct = r.hPct * 0.914f,
@@ -2130,7 +2256,7 @@ public class GenericGameController : MiniGameControllerBase
         (1f,    new Color32(255, 82, 70, 255)),
     };
 
-    static Color FuelColorAt(float t)
+    internal static Color FuelColorAt(float t)
     {
         t = Mathf.Clamp01(t);
         for (int i = 1; i < FuelStops.Length; i++)

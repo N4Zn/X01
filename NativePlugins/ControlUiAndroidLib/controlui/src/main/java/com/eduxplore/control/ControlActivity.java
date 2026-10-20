@@ -140,6 +140,8 @@ public class ControlActivity extends Activity {
     private final java.util.concurrent.ExecutorService scoreExec = java.util.concurrent.Executors.newSingleThreadExecutor();
     private int rosterSortDir = -1;
     private boolean paused = false;
+    /** Unity đang chạy màn hướng dẫn lặp (GameControlBridge.PushTutorialRunning) → nút dưới cùng là "VÀO CHƠI". */
+    private boolean tutorialRunning = false;
     /** Thời lượng ván cho màn Tổng kết: từ lúc bấm Start đến lúc kết thúc, trừ thời gian Pause. 0 = chưa có. */
     private long gameStartMs = 0, gameEndMs = 0, pausedAtMs = 0, pausedAccumMs = 0;
     private boolean unityStarted = false;
@@ -631,6 +633,18 @@ public class ControlActivity extends Activity {
             startBtn.setAlpha(canStart ? 1f : 0.4f);
             startBtn.setOnClickListener(v -> { if (canStart) onStartClicked(); });
             bottomBar.addView(startBtn);
+        } else if ("playing".equals(scene) && tutorialRunning) {
+            // Màn hướng dẫn đang lặp trên máy chiếu → cô bấm để bắt đầu chơi thật.
+            TextView playBtn = bigButton("VÀO CHƠI", R.color.good, 0xFF0B1710, 288, 20f, 20);
+            playBtn.setOnClickListener(v -> {
+                tutorialRunning = false;
+                sendToUnity("OnStartPlayRequested", "");
+                renderBottomBar();
+            });
+            TextView stopBtn = bigButton("DỪNG HẲN", R.color.bad, 0xFFFFFFFF, 240, 18f, 20);
+            stopBtn.setOnClickListener(v -> onStopClicked());
+            bottomBar.addView(playBtn);
+            bottomBar.addView(stopBtn);
         } else if ("playing".equals(scene)) {
             TextView pauseBtn = paused
                     ? bigButton("TIẾP TỤC CHƠI", R.color.good, 0xFF0B1710, 240, 18f, 20)
@@ -1342,6 +1356,7 @@ public class ControlActivity extends Activity {
         }
 
         paused = false;
+        tutorialRunning = false;
         // Ván mới: bỏ số liệu người chơi của ván trước (không để lẫn vào bản ghi của ván này).
         liveLeftPlayers = new ArrayList<>();
         liveRightPlayers = new ArrayList<>();
@@ -1778,6 +1793,16 @@ public class ControlActivity extends Activity {
         } catch (Exception e) {
             Log.e(TAG, "OnRound lỗi: " + e);
         }
+    }
+
+    /** Gọi từ Unity (GameControlBridge.PushTutorialRunning) khi màn hướng dẫn bắt đầu/kết thúc. */
+    public static void SetTutorialRunning(boolean running) {
+        ControlActivity activity = sInstance;
+        if (activity == null) return;
+        activity.runOnUiThread(() -> {
+            activity.tutorialRunning = running;
+            if ("playing".equals(activity.scene)) activity.renderBottomBar();
+        });
     }
 
     /** Gọi từ Unity (GameControlBridge.PushGameEnded) lúc hết giờ/hết vòng tự nhiên. */

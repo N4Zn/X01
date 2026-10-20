@@ -16,6 +16,10 @@ public class SubNumberGameController : MonoBehaviour
     [SerializeField] private TutorialPanel tutorialPanel;
     [SerializeField] private UnityEngine.Video.VideoClip tutorialClip;
     [SerializeField] private bool forceResolution1024x600 = true;
+#if UNITY_EDITOR
+    [Tooltip("Chỉ trong Editor, khi chạy thẳng scene: biến thể game, vd SubNumber5, SubNumber5Digit, SubNumber5Easy")]
+    [SerializeField] private string editorGameName = "SubNumber5";
+#endif
 
     private CustomFSMManager _customFSMManager;
     private SubNumberGameModel _gameModel;
@@ -60,6 +64,10 @@ public class SubNumberGameController : MonoBehaviour
 
         // Biến thể theo tên game (GameRegistry): SubNumber5 / SubNumber (hình) · SubNumber5Digit / SubNumberDigit (chữ số); thêm đuôi Easy = bản Dễ (SubNumber5Easy, SubNumberDigitEasy...).
         string gameName = GameSessionManager.Instance?.SelectedGameName ?? "";
+#if UNITY_EDITOR
+        if (string.IsNullOrEmpty(gameName)) gameName = editorGameName; // chạy thẳng scene trong Editor (không qua máy điều khiển)
+        TutorialPlayer.EditorGameId = gameName;
+#endif
         int maxSum = gameName.Contains("5") ? 5 : 10;
         bool digitMode = gameName.Contains("Digit");
         bool easy = gameName.EndsWith("Easy"); // bản (Dễ): chỉ ẩn ô c

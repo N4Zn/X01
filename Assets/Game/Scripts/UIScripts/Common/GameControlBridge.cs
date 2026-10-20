@@ -110,6 +110,15 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Debug.Log("[GameControlBridge] OnResumeRequested");
     }
 
+    /// <summary>Gọi từ ControlActivity khi cô bấm "VÀO CHƠI" (nút chỉ hiện lúc màn hướng dẫn đang lặp — xem
+    /// PushTutorialRunning): dừng hướng dẫn, vào game ("Start in 3,2,1").</summary>
+    public void OnStartPlayRequested(string unused)
+    {
+        Debug.Log("[GameControlBridge] OnStartPlayRequested");
+        GenericSumTutorial.RequestStart();
+        TutorialPlayer.RequestStart();
+    }
+
     /// <summary>Gọi từ ControlActivity khi bấm Stop — KHÔNG destroy/finish UnityPlayerActivity
     /// (khác finishUnityTask() cũ). Unity tự kill() cả process (dùng chung với ControlActivity)
     /// khi Activity của nó bị destroy — hành vi engine, không sửa được từ code app (xem lịch sử
@@ -241,6 +250,25 @@ public class GameControlBridge : Singleton<GameControlBridge>
         catch (System.Exception e)
         {
             Debug.LogWarning($"[GameControlBridge] PushGameEnded lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
+        }
+#endif
+    }
+
+    /// <summary>Báo ControlActivity màn hướng dẫn đang lặp (true) / đã xong (false) — để đổi nút dưới cùng thành
+    /// "VÀO CHƠI" trong lúc hướng dẫn chạy. Gọi từ GenericSumTutorial.</summary>
+    public static void PushTutorialRunning(bool running)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var controlActivityClass = new AndroidJavaClass(ControlActivityClass))
+            {
+                controlActivityClass.CallStatic("SetTutorialRunning", running);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GameControlBridge] PushTutorialRunning lỗi (ControlActivity có thể chưa chạy/khác display): {e.Message}");
         }
 #endif
     }
