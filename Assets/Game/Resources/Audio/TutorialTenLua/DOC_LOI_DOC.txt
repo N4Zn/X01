@@ -1,0 +1,29 @@
+LỜI ĐỌC CHO TUTORIAL TÊN LỬA (Tách số)
+
+Thu âm (hoặc tạo bằng công cụ đọc giọng nói) từng câu dưới đây, lưu thành file .mp3 (hoặc .wav/.ogg)
+đặt ĐÚNG TÊN vào thư mục này:  Assets/Game/Resources/Audio/TutorialTenLua/
+Số (0..10) dùng sẵn file có trong Assets/Game/Resources/Audio/Numbers/, không cần thu.
+Thiếu file nào thì tutorial chỉ hiện chữ và chờ khoảng 1 giây ở chỗ đó.
+
+Tên file          Câu cần đọc
+tl_cung_xem       Các con cùng xem nhé!
+tl_ten_lua_can    Tên lửa cần
+tl_o_nhien_lieu   ô nhiên liệu.
+tl_buoc_len_so    Bước lên số
+tl_buoc_tiep      Bước tiếp lên số
+tl_cong           cộng
+tl_bang           bằng
+tl_nhieu_qua      Ôi, nhiều quá rồi!
+tl_chon_lai       Chọn sai thì bước lên thanh nhiên liệu để chọn lại nhé.
+tl_thanh_trong    Thanh trống rồi, mình chọn lại nào!
+tl_bay_len        Đủ rồi! Tên lửa bay lên nào!
+tl_den_luot       Bây giờ đến lượt các con!
+
+Ví dụ khi ghép (mục tiêu 5, chọn 3 rồi nhầm 4):
+"Các con cùng xem nhé! Tên lửa cần [5] ô nhiên liệu."
+"Bước lên số [3]."  "Bước tiếp lên số [4]."  "[3] cộng [4] bằng [7]. Ôi, nhiều quá rồi!"
+"Chọn sai thì bước lên thanh nhiên liệu để chọn lại nhé."  "Thanh trống rồi, mình chọn lại nào!"
+"Bước lên số [3]."  "Bước tiếp lên số [2]."  "[3] cộng [2] bằng [5]."
+"Đủ rồi! Tên lửa bay lên nào!"  "Bây giờ đến lượt các con!"
+
+Mẹo: đọc chậm, rõ, giọng vui; cắt sát đầu và cuối file (không để khoảng lặng dài) để ghép câu nghe liền.
