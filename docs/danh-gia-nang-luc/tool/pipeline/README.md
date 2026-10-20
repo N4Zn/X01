@@ -9,6 +9,15 @@ python -I -X utf8 run.py --local C:/.../GameLogs --from 2026-10-08 --to 2026-10-
 ```
 Ra `<out>/<từ>_<đến>/` (báo cáo gộp cả kỳ, Excel có thêm sheet "Theo ngày") và `<out>/<ngày>/` cho từng ngày có dữ liệu. Mỗi thư mục: Excel + `BaoCao_TatCa_*.pdf` + `pdf/<mã>_<tên>.pdf`. Chỉ đọc file `YYYY-MM-DD_HHMMSS_<Game>.json` (bỏ file 0 byte, file `skip_files`, ô `slot_override` trong `config.json`; bé của ô = tên nhận diện nhiều nhất trong phiên). Chạy lại 08/10 từ log local cho đúng số lần chấm đầu tiên (ví dụ Quốc An 99,8).
 
+## Từ Drive (cơ chế mới từ 2026-10-20 — mỗi phiên 1 file)
+
+K02 gửi từng file `GameLogs/<phiên>.json` lên Drive (`EduXplore_Logs/<máy>/<ngày>/…`) qua `docs/apps-script/DriveUpload.gs`. Điền `drive_url` (URL `/exec`) và `drive_key` (nếu script đặt SECRET) vào `config.json`, rồi:
+
+```bash
+python -I -X utf8 run.py --drive --from 2026-10-20 --to 2026-10-20
+```
+Tool tải file mới/đổi về `drive_logs/` rồi tính y như `--local` (đọc đệ quy; cùng tên phiên ở 2 nơi chỉ tính 1 lần). Có thể thay bằng Drive for Desktop: `--local <thư mục EduXplore_Logs>`. Đường Sheet CSV cũ chỉ còn để đọc dữ liệu đến ~09/10.
+
 ## Nhận định theo từng học phần (không gộp) + trang tổng hợp lớp
 
 - Mỗi (bé, học phần) được nhận định riêng (`edux_lib.diagnose`, ngưỡng ở `config.json` mục `diag`): trung vị thời gian mọi câu + % đúng → *Thành thạo / Khá chắc / Biết nhưng chậm / **Nhanh nhưng hay nhầm** (vội, đoán) / **Chậm và sai: chưa nắm** (chưa học) / Chưa vững / Chưa đủ dữ liệu*. Nhanh-sai và chậm-sai là hai chuyện khác nhau, không được gộp thành "kém và chậm". Phiếu từng bé có mục "Nhận định từng học phần".

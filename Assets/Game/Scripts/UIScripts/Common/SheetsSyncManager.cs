@@ -1,46 +1,85 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
 
 /// <summary>
-/// Đồng bộ liên tục (mặc định 3s/lần) dữ liệu chi tiết (từng câu, từng slot, thời gian trả
-/// lời) lên Google Sheet qua 1 Google Apps Script Web App (doPost) — không cần OAuth/service
-/// account phía app, vì Apps Script chạy với quyền của người deploy nó (chủ sheet).
+/// Đồng bộ log chơi lên Google Drive, MỖI PHIÊN CHƠI MỘT FILE (thay cơ chế cũ "mỗi round một dòng Sheet").
 ///
-/// Nguồn dữ liệu: bất kỳ đâu trong code gọi SheetsSyncManager.Enqueue(dict) — đã nối sẵn ở
-/// MiniGameControllerBase.LogRoundResult() (mọi game MiniGameKit) và GameLogger (TestTongHop,
-/// per-click). Hàng đợi im lặng gom lại, POST theo batch mỗi chu kỳ — mất mạng không mất dữ
-/// liệu, batch gửi lỗi được đưa lại vào hàng đợi để thử lại chu kỳ sau.
+/// Nguồn duy nhất = các file log local /sdcard/EduXplore/GameLogs/yyyy-MM-dd_HHmmss_Game.json
+/// (PlayerRecognitionService ghi lại TOÀN BỘ file sau mỗi sự kiện; GameLogger.Export ghi file chi tiết click).
+/// Định kỳ (intervalSeconds, tối thiểu 15s) quét thư mục, file nào mới/đã đổi so với lần gửi thành công trước thì
+/// POST nguyên nội dung lên Apps Script (docs/apps-script/DriveUpload.gs) → lưu Drive
+/// EduXplore_Logs/&lt;deviceId&gt;/&lt;ngày&gt;/&lt;tên file&gt;. Cùng tên = ghi đè, nên gửi lại bao nhiêu lần cũng không trùng.
 ///
-/// Config KHÔNG cần rebuild — sửa trực tiếp trên máy:
-///   Application.persistentDataPath/sheets_sync_config.json
-///   { "webAppUrl": "https://script.google.com/macros/s/XXX/exec", "enabled": true, "intervalSeconds": 3 }
-/// File tự sinh mặc định (enabled=true, webAppUrl rỗng) nếu chưa có — điền URL thật rồi
-/// restart app (hoặc gọi ReloadConfig()).
+/// Độ bền:
+///  - Chỉ coi là xong khi script trả {"ok":true,"bytes":N} và N đúng bằng số byte đã gửi (HTTP 200 một mình không đủ).
+///  - Trạng thái đã gửi lưu ở sheets_sync_state.tsv; mất file này chỉ khiến gửi lại (an toàn).
+///  - Mỗi file lỗi tự lùi nhịp (30s, 60s, … tối đa 15 phút); lỗi liên tiếp quá MaxFails lần thì bỏ qua cho tới khi file đổi/khởi động lại,
+///    không chặn các file khác.
+///  - Dùng thời gian thực (không bị Time.timeScale=0 khi Stop/Pause đóng băng).
+///  - Lần chạy đầu sau khi nâng cấp tự gửi bù toàn bộ GameLogs chưa gửi.
+///
+/// Config KHÔNG cần rebuild: /sdcard/EduXplore/sheets_sync_config.json
+///   { "webAppUrl": "https://script.google.com/macros/s/XXX/exec", "enabled": true, "intervalSeconds": 30,
+///     "deviceId": "K02-01", "secret": "" }
+/// (tên class/file giữ nguyên "SheetsSyncManager" để khỏi đổi tham chiếu; đích giờ là Drive.)
 /// </summary>
 public class SheetsSyncManager : Singleton<SheetsSyncManager>
 {
-    [System.Serializable]
+    [Serializable]
     private class SyncConfig
     {
         public string webAppUrl = "";
         public bool enabled = true;
-        public float intervalSeconds = 3f;
-        // Tên máy hiển thị trên Sheet (vd "K02-01"). Rỗng = lấy mã thiết bị Android rút gọn.
+        public float intervalSeconds = 30f;
+        // Tên máy (vd "K02-01") = tên thư mục trên Drive. Rỗng = 8 ký tự mã thiết bị Android.
         public string deviceId = "";
+        // Khớp Script property SECRET của Apps Script. Rỗng = script không đòi.
+        public string secret = "";
     }
 
-    // Mỗi POST tối đa bấy nhiêu dòng: gửi bù hàng nghìn dòng trong 1 request làm Apps Script chạy quá
-    // timeout, app tưởng lỗi và gửi lại → Sheet bị trùng dòng (từng gặp: ~80% dòng trùng).
-    private const int MaxRowsPerPost = 200;
-    private const int PostTimeoutSec = 30;
+    [Serializable]
+    private class Ack
+    {
+        public bool ok;
+        public string error;
+        public string path;
+        public int bytes;
+    }
 
-    /// <summary>Mã phiên (= tên file log local, do PlayerRecognitionService.BeginGameSession đặt).</summary>
-    public static string CurrentSessionId = "";
+    private struct Retry
+    {
+        public int fails;
+        public float nextTry;   // Time.realtimeSinceStartup
+        public string sig;
+    }
+
+    private const string ConfigFileName = "sheets_sync_config.json";
+    private const string StateFileName = "sheets_sync_state.tsv";
+    private const string LegacyPendingFileName = "sheets_pending.jsonl";
+
+    private const float MinIntervalSec = 15f;
+    private const float StartDelaySec = 10f;
+    private const int PostTimeoutSec = 60;
+    private const int MaxFilesPerCycle = 25;
+    private const int MaxFails = 6;
+    private const long MaxFileBytes = 10 * 1024 * 1024;
+    // File vừa ghi trong N giây chưa gửi (tránh đọc giữa lúc đang ghi); lần quét sau gửi.
+    private const double QuietSec = 3.0;
+
+    // yyyy-MM-dd_HHmmss_<Game>.json — chỉ file phiên chơi, bỏ qua file lạ trong thư mục.
+    private static readonly Regex SessionFileRx = new Regex(@"^\d{4}-\d{2}-\d{2}_\d{6}_.+\.json$", RegexOptions.Compiled);
+
+    private SyncConfig _config = new SyncConfig();
+    // tên file → chữ ký "độ dài|mtimeTicks" của bản đã gửi thành công.
+    private readonly Dictionary<string, string> _synced = new Dictionary<string, string>();
+    private readonly Dictionary<string, Retry> _retry = new Dictionary<string, Retry>();
+    private bool _stateDirty;
 
     static string _deviceId;
     static string DeviceId
@@ -54,71 +93,15 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
         }
     }
 
-    private const string ConfigFileName = "sheets_sync_config.json";
-    private SyncConfig _config = new SyncConfig();
-
-    private static readonly List<string> PendingRowsJson = new List<string>();
-    private static readonly object Lock = new object();
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void WarmUp() => _ = Instance;
-
-    // Hàng đợi được lưu xuống đĩa (1 dòng JSON/hàng) để mất mạng + tắt máy thì lần mở sau vẫn gửi bù.
-    // Ghi nối đuôi ở Enqueue, ghi lại toàn bộ (phần còn lại) sau mỗi lần POST thành công.
-    private const string PendingFileName = "sheets_pending.jsonl";
-    private const int MaxPersistedRows = 20000;
-    private static string PendingFilePath => SharedStorage.PathFor(PendingFileName);
 
     protected override void OnCreated()
     {
         gameObject.name = "SheetsSyncManager";
         LoadConfig();
-        LoadPending();
-    }
-
-    void LoadPending()
-    {
-        try
-        {
-            string path = PendingFilePath;
-            if (!File.Exists(path)) return;
-            var lines = File.ReadAllLines(path, Encoding.UTF8);
-            int start = Mathf.Max(0, lines.Length - MaxPersistedRows);
-            int loaded = 0;
-            lock (Lock)
-            {
-                // Chèn ĐẦU hàng đợi: hàng cũ (phiên trước) gửi trước hàng mới của phiên này.
-                var old = new List<string>();
-                for (int i = start; i < lines.Length; i++)
-                    if (!string.IsNullOrWhiteSpace(lines[i])) { old.Add(lines[i]); loaded++; }
-                PendingRowsJson.InsertRange(0, old);
-            }
-            if (loaded > 0) Debug.Log($"[SheetsSyncManager] Khôi phục {loaded} dòng chưa gửi từ phiên trước ({path}).");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning($"[SheetsSyncManager] LoadPending lỗi: {e.Message}");
-        }
-    }
-
-    static void AppendPending(string json)
-    {
-        try { File.AppendAllText(PendingFilePath, json + "\n", Encoding.UTF8); }
-        catch (System.Exception e) { Debug.LogWarning($"[SheetsSyncManager] Lưu hàng đợi lỗi: {e.Message}"); }
-    }
-
-    /// <summary>Ghi lại file = đúng những gì còn trong hàng đợi (gọi sau khi 1 batch gửi xong).</summary>
-    static void RewritePending()
-    {
-        try
-        {
-            string path = PendingFilePath;
-            string[] remaining;
-            lock (Lock) { remaining = PendingRowsJson.ToArray(); }
-            if (remaining.Length == 0) { if (File.Exists(path)) File.Delete(path); }
-            else File.WriteAllLines(path, remaining, Encoding.UTF8);
-        }
-        catch (System.Exception e) { Debug.LogWarning($"[SheetsSyncManager] Ghi lại hàng đợi lỗi: {e.Message}"); }
+        LoadState();
+        RetireLegacyQueue();
     }
 
     void Start()
@@ -127,6 +110,7 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
     }
 
     private string ConfigFilePath => SharedStorage.PathFor(ConfigFileName);
+    private static string StateFilePath => SharedStorage.PathFor(StateFileName);
 
     void LoadConfig()
     {
@@ -139,141 +123,217 @@ public class SheetsSyncManager : Singleton<SheetsSyncManager>
                 Debug.Log($"[SheetsSyncManager] Chưa có config, tạo mặc định tại {path} — điền webAppUrl rồi restart app.");
                 return;
             }
-            _config = JsonUtility.FromJson<SyncConfig>(File.ReadAllText(path));
+            var cfg = JsonUtility.FromJson<SyncConfig>(File.ReadAllText(path));
+            if (cfg != null) _config = cfg;
             if (!string.IsNullOrEmpty(_config.deviceId)) _deviceId = _config.deviceId;
             Debug.Log($"[SheetsSyncManager] LoadConfig: enabled={_config.enabled} interval={_config.intervalSeconds}s "
-                + $"url={(string.IsNullOrEmpty(_config.webAppUrl) ? "(CHƯA SET)" : "đã set")}");
+                + $"url={(string.IsNullOrEmpty(_config.webAppUrl) ? "(CHƯA SET)" : "đã set")} device={DeviceId}");
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Debug.LogError($"[SheetsSyncManager] LoadConfig lỗi ({path}): {e.Message}");
         }
     }
 
-    /// <summary>Đọc lại config từ đĩa không cần restart app — gọi sau khi sửa file JSON
-    /// trên máy (vd điền webAppUrl lần đầu).</summary>
+    /// <summary>Đọc lại config từ đĩa không cần restart app — gọi sau khi sửa file JSON trên máy.</summary>
     public void ReloadConfig() => LoadConfig();
 
-    /// <summary>Thêm 1 dòng dữ liệu (field → value) vào hàng đợi, gửi lên Sheet ở chu kỳ
-    /// đồng bộ tiếp theo. An toàn gọi từ bất kỳ đâu (main thread — Unity API only main
-    /// thread-safe, các call site hiện tại đều gọi từ Update()/game logic, không phải
-    /// background thread).</summary>
-    public static void Enqueue(Dictionary<string, object> row)
+    // Hàng đợi từng dòng của cơ chế cũ: mọi dòng trong đó đều suy ra được từ GameLogs nên bỏ, không nạp lại.
+    // Đổi tên (không xoá) để còn đối chiếu nếu cần.
+    void RetireLegacyQueue()
     {
-        // Gắn chung cho MỌI dòng: máy, phiên, và rid (mã duy nhất của dòng — dòng gửi lại do mạng chập chờn
-        // vẫn mang cùng rid nên Apps Script / tool có thể loại trùng).
-        if (!row.ContainsKey("deviceId")) row["deviceId"] = DeviceId;
-        if (!row.ContainsKey("sessionId")) row["sessionId"] = CurrentSessionId ?? "";
-        if (!row.ContainsKey("rid")) row["rid"] = System.Guid.NewGuid().ToString("N").Substring(0, 12);
-        string json = EncodeJsonObject(row);
-        lock (Lock) { PendingRowsJson.Add(json); }
-        AppendPending(json);
+        try
+        {
+            string path = SharedStorage.PathFor(LegacyPendingFileName);
+            if (!File.Exists(path)) return;
+            string dst = path + ".legacy";
+            if (File.Exists(dst)) File.Delete(dst);
+            File.Move(path, dst);
+            Debug.Log($"[SheetsSyncManager] Bỏ hàng đợi dòng cũ → {dst}; dữ liệu được gửi lại theo từng file GameLogs.");
+        }
+        catch (Exception e) { Debug.LogWarning($"[SheetsSyncManager] Không đổi tên hàng đợi cũ: {e.Message}"); }
+    }
+
+    void LoadState()
+    {
+        try
+        {
+            string path = StateFilePath;
+            if (!File.Exists(path)) return;
+            foreach (var line in File.ReadAllLines(path, Encoding.UTF8))
+            {
+                int tab = line.IndexOf('\t');
+                if (tab <= 0 || tab >= line.Length - 1) continue;
+                _synced[line.Substring(0, tab)] = line.Substring(tab + 1);
+            }
+        }
+        catch (Exception e) { Debug.LogWarning($"[SheetsSyncManager] LoadState lỗi: {e.Message}"); }
+    }
+
+    void SaveState()
+    {
+        if (!_stateDirty) return;
+        try
+        {
+            var sb = new StringBuilder();
+            foreach (var kv in _synced) sb.Append(kv.Key).Append('\t').Append(kv.Value).Append('\n');
+            string path = StateFilePath;
+            string tmp = path + ".tmp";
+            File.WriteAllText(tmp, sb.ToString(), new UTF8Encoding(false));
+            if (File.Exists(path)) File.Delete(path);
+            File.Move(tmp, path);
+            _stateDirty = false;
+        }
+        catch (Exception e) { Debug.LogWarning($"[SheetsSyncManager] SaveState lỗi: {e.Message}"); }
     }
 
     IEnumerator SyncLoop()
     {
+        yield return new WaitForSecondsRealtime(StartDelaySec);
         while (true)
         {
-            yield return new WaitForSeconds(Mathf.Max(1f, _config.intervalSeconds));
-            if (!_config.enabled || string.IsNullOrEmpty(_config.webAppUrl)) continue;
-
-            List<string> batch;
-            lock (Lock)
-            {
-                if (PendingRowsJson.Count == 0) continue;
-                int take = Mathf.Min(MaxRowsPerPost, PendingRowsJson.Count);
-                batch = PendingRowsJson.GetRange(0, take);
-                PendingRowsJson.RemoveRange(0, take);
-            }
-
-            string payload = "{\"rows\":[" + string.Join(",", batch) + "]}";
-            yield return PostAsync(payload, batch);
+            if (_config.enabled && !string.IsNullOrEmpty(_config.webAppUrl))
+                yield return SyncOnce();
+            yield return new WaitForSecondsRealtime(Mathf.Max(MinIntervalSec, _config.intervalSeconds));
         }
     }
 
-    IEnumerator PostAsync(string payload, List<string> batchToRestoreOnFailure)
+    IEnumerator SyncOnce()
     {
-        using (var req = new UnityWebRequest(_config.webAppUrl, "POST"))
-        {
-            byte[] body = Encoding.UTF8.GetBytes(payload);
-            req.uploadHandler = new UploadHandlerRaw(body);
-            req.downloadHandler = new DownloadHandlerBuffer();
-            req.SetRequestHeader("Content-Type", "application/json");
-            req.timeout = PostTimeoutSec;
-            yield return req.SendWebRequest();
+        List<FileInfo> todo = FindChanged();
+        if (todo == null || todo.Count == 0) yield break;
 
-#if UNITY_2020_1_OR_NEWER
-            bool failed = req.result != UnityWebRequest.Result.Success;
-#else
-            bool failed = req.isNetworkError || req.isHttpError;
-#endif
-            if (failed)
-            {
-                Debug.LogWarning($"[SheetsSyncManager] POST lỗi: {req.error} — đưa lại {batchToRestoreOnFailure.Count} dòng vào hàng đợi, thử lại chu kỳ sau");
-                lock (Lock) { PendingRowsJson.InsertRange(0, batchToRestoreOnFailure); }
-            }
-            else
-            {
-                // Log luôn response body — HTTP 200 KHÔNG đảm bảo Apps Script thực sự ghi được
-                // hàng vào Sheet (vd deploy /exec đang trỏ bản code cũ, hoặc lỗi bị nuốt trong
-                // doPost). Body mong đợi: {"ok":true,"count":N} — nếu khác, xem ngay ở log này
-                // thay vì phải suy đoán qua việc mở Sheet kiểm tra thủ công.
-                string respBody = req.downloadHandler != null ? req.downloadHandler.text : "(no body)";
-                Debug.Log($"[SheetsSyncManager] Đã gửi {batchToRestoreOnFailure.Count} dòng lên Sheet — response: {respBody}");
-                RewritePending();
-            }
+        int sent = 0, ok = 0;
+        foreach (var fi in todo)
+        {
+            if (sent >= MaxFilesPerCycle || !_config.enabled) break;
+            sent++;
+            bool success = false;
+            yield return Upload(fi, r => success = r);
+            if (success) ok++;
+            yield return null;
         }
+        SaveState();
+        Debug.Log($"[SheetsSyncManager] Chu kỳ: gửi {ok}/{sent} file (còn {Mathf.Max(0, todo.Count - sent)} file chờ chu kỳ sau).");
     }
 
-    // JsonUtility không serialize được Dictionary<string,object> trực tiếp (cần kiểu cố định
-    // lúc compile) — tự encode JSON tối giản, đủ cho string/number/bool, không cần thư viện
-    // ngoài. Không cần parse ngược (chỉ gửi đi), nên không cần decode.
-    static string EncodeJsonObject(Dictionary<string, object> row)
+    // File phiên chơi mới hoặc đã đổi so với lần gửi thành công, cũ nhất trước (phiên đang chơi — mới nhất — gửi sau cùng).
+    List<FileInfo> FindChanged()
     {
-        var sb = new StringBuilder();
-        sb.Append('{');
-        bool first = true;
-        foreach (var kv in row)
+        var list = new List<FileInfo>();
+        try
         {
-            if (!first) sb.Append(',');
-            first = false;
-            sb.Append('"').Append(EscapeJson(kv.Key)).Append("\":");
-            AppendValue(sb, kv.Value);
+            DateTime now = DateTime.UtcNow;
+            float rt = Time.realtimeSinceStartup;
+            foreach (string path in Directory.GetFiles(SharedStorage.LogsDir, "*.json"))
+            {
+                string name = Path.GetFileName(path);
+                if (!SessionFileRx.IsMatch(name)) continue;
+                var fi = new FileInfo(path);
+                if (fi.Length == 0) continue;
+                double age = (now - fi.LastWriteTimeUtc).TotalSeconds;
+                if (age >= 0 && age < QuietSec) continue;
+                string sig = Signature(fi);
+                if (_synced.TryGetValue(name, out var done) && done == sig) continue;
+                if (_retry.TryGetValue(name, out var r) && r.sig == sig && (r.fails >= MaxFails || rt < r.nextTry)) continue;
+                list.Add(fi);
+            }
+            list.Sort((a, b) => a.LastWriteTimeUtc.CompareTo(b.LastWriteTimeUtc));
         }
-        sb.Append('}');
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SheetsSyncManager] Quét GameLogs lỗi: {e.Message}");
+            return null;
+        }
+        return list;
+    }
+
+    static string Signature(FileInfo fi) => fi.Length + "|" + fi.LastWriteTimeUtc.Ticks;
+
+    string BuildUrl(string name)
+    {
+        var sb = new StringBuilder(_config.webAppUrl);
+        sb.Append(_config.webAppUrl.Contains("?") ? '&' : '?');
+        sb.Append("device=").Append(UnityWebRequest.EscapeURL(DeviceId));
+        sb.Append("&name=").Append(UnityWebRequest.EscapeURL(name));
+        if (!string.IsNullOrEmpty(_config.secret)) sb.Append("&key=").Append(UnityWebRequest.EscapeURL(_config.secret));
         return sb.ToString();
     }
 
-    static void AppendValue(StringBuilder sb, object value)
+    IEnumerator Upload(FileInfo fi, Action<bool> done)
     {
-        switch (value)
+        string name = fi.Name;
+        string sig = Signature(fi);   // chữ ký chụp TRƯỚC khi đọc: file đổi giữa chừng thì chu kỳ sau gửi lại
+
+        byte[] body;
+        try
         {
-            case null:
-                sb.Append("null");
-                break;
-            case string s:
-                sb.Append('"').Append(EscapeJson(s)).Append('"');
-                break;
-            case bool b:
-                sb.Append(b ? "true" : "false");
-                break;
-            case int i:
-                sb.Append(i);
-                break;
-            case float f:
-                sb.Append(f.ToString(CultureInfo.InvariantCulture));
-                break;
-            case double d:
-                sb.Append(d.ToString(CultureInfo.InvariantCulture));
-                break;
-            default:
-                sb.Append('"').Append(EscapeJson(value.ToString())).Append('"');
-                break;
+            if (fi.Length > MaxFileBytes) throw new IOException($"file quá lớn ({fi.Length} byte)");
+            body = File.ReadAllBytes(fi.FullName);
+            // Bỏ BOM nếu có: Apps Script không đưa BOM vào body → số byte ack sẽ lệch.
+            if (body.Length >= 3 && body[0] == 0xEF && body[1] == 0xBB && body[2] == 0xBF)
+            {
+                var trimmed = new byte[body.Length - 3];
+                Buffer.BlockCopy(body, 3, trimmed, 0, trimmed.Length);
+                body = trimmed;
+            }
+            if (body.Length == 0) throw new IOException("file rỗng");
+        }
+        catch (Exception e)
+        {
+            body = null;
+            Fail(name, sig, "đọc file: " + e.Message);
+        }
+        if (body == null) { done(false); yield break; }
+
+        using (var req = new UnityWebRequest(BuildUrl(name), "POST"))
+        {
+            req.uploadHandler = new UploadHandlerRaw(body);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "text/plain; charset=utf-8");
+            req.timeout = PostTimeoutSec;
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Fail(name, sig, req.error);
+                done(false);
+                yield break;
+            }
+
+            string txt = req.downloadHandler != null ? req.downloadHandler.text : "";
+            Ack ack = null;
+            try { ack = JsonUtility.FromJson<Ack>(txt); } catch { }
+
+            if (ack == null || !ack.ok)
+            {
+                Fail(name, sig, "script không xác nhận: " + Trunc(ack != null && !string.IsNullOrEmpty(ack.error) ? ack.error : txt, 160));
+                done(false);
+                yield break;
+            }
+            if (ack.bytes != body.Length)
+            {
+                Fail(name, sig, $"lệch byte (gửi {body.Length}, script nhận {ack.bytes})");
+                done(false);
+                yield break;
+            }
+
+            _synced[name] = sig;
+            _stateDirty = true;
+            _retry.Remove(name);
+            done(true);
         }
     }
 
-    static string EscapeJson(string s)
+    void Fail(string name, string sig, string why)
     {
-        return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
+        _retry.TryGetValue(name, out var r);
+        r.fails = r.sig == sig ? r.fails + 1 : 1;   // file đã đổi → đếm lại từ đầu
+        r.sig = sig;
+        r.nextTry = Time.realtimeSinceStartup + Mathf.Min(30f * (1 << Mathf.Min(r.fails - 1, 5)), 900f);
+        _retry[name] = r;
+        Debug.LogWarning($"[SheetsSyncManager] Gửi {name} lỗi (lần {r.fails}/{MaxFails}): {why}");
     }
+
+    static string Trunc(string s, int n) => string.IsNullOrEmpty(s) ? "" : (s.Length <= n ? s : s.Substring(0, n));
 }

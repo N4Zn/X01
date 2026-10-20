@@ -1,8 +1,8 @@
 # Report realtime và đồng bộ Google Sheets (Track E)
 
-> **TL;DR**: GameControlBridge.PushReport đẩy điểm lên ControlActivity; SheetsSyncManager gửi log lên Apps Script. Tên game khi log PHẢI qua GameSessionManager.ResolveActiveGameName; Independent play dùng LogIndependentRound.
+> **TL;DR**: GameControlBridge.PushReport đẩy điểm lên ControlActivity; SheetsSyncManager gửi MỖI PHIÊN 1 FILE log lên Drive qua Apps Script (từ 2026-10-20; cơ chế dòng-vào-Sheet đã bỏ). Tên game khi log PHẢI qua GameSessionManager.ResolveActiveGameName; Independent play dùng LogIndependentRound.
 > **Đọc khi**: sửa log/report/Sheets, thêm controller mới cần ghi log.
-> **Cập nhật**: 2026-10-09 (thêm mục "Khớp log online – local"; phần còn lại tách nguyên văn từ CLAUDE.md gốc 2026-10-04)
+> **Cập nhật**: 2026-10-20 (mục cuối: đồng bộ theo file lên Drive; trước đó 2026-10-09: thêm mục "Khớp log online – local"; phần còn lại tách nguyên văn từ CLAUDE.md gốc 2026-10-04)
 
 ### Report + Google Sheets sync (Track E)
 
@@ -10,13 +10,8 @@
   đẩy report throttle 1 lần/giây từ `MiniGameControllerBase.Update()`/
   `TestTongHopController.Update()` sang `ControlActivity.UpdateReport()` (hiện tên + điểm TỪNG
   BÊN riêng, không gộp tổng).
-- `SheetsSyncManager.cs` — gom log (`GameLogger`, `MiniGameControllerBase.LogRoundResult`,
-  `PlayerRecognitionService`) gửi lên Google Sheet qua Apps Script Web App (không cần OAuth phía
-  app), batch mỗi ~3s. Config: `/sdcard/EduXplore/sheets_sync_config.json` (SharedStorage)
-  (`webAppUrl`, `enabled`, `intervalSeconds`).
-  Hàng đợi được lưu ở `/sdcard/EduXplore/sheets_pending.jsonl` (ghi nối ở `Enqueue`, ghi lại phần
-  còn lại sau mỗi POST thành công) → mất mạng + tắt máy, lần mở sau tự gửi bù. Mọi dòng `round_end`
-  có `questionId` (cột mới trên Sheet — Apps Script cần map thêm cột này nếu map theo tên cố định).
+- `SheetsSyncManager.cs` — **từ 2026-10-20: mỗi phiên chơi 1 file lên Google Drive** (xem mục "Đồng bộ theo file" cuối trang). Phần dưới về hàng đợi từng dòng/Sheet là CƠ CHẾ CŨ, chỉ để tra dữ liệu lịch sử.
+  Config: `/sdcard/EduXplore/sheets_sync_config.json` (`webAppUrl`, `enabled`, `intervalSeconds`, `deviceId`, `secret`).
   > **Gotcha round**: số round log PHẢI lấy từ bộ đếm đúng chế độ — TestTongHop chế độ chung dùng
   > `gameModel.RoundsPlayed`, Independent dùng `_xxxRoundsCompleted+1` (xem `LogRoundNumber`);
   > MiniGameKit Independent luôn tăng `_left/_rightRoundIndex` kể cả `totalRounds<=0`.
@@ -47,3 +42,17 @@ Mục tiêu: dòng `round_end` trên Sheet = đúng dòng `round` trong file log
 - Đối chiếu 08/10/2026 (code cũ): TongHopToan khớp 300/300 dòng cả tên; Counting/Counting5 khớp số dòng nhưng tên sai (GameLogger); AddNumber5Digit, ChuCaiThuong chưa lên Sheet. Kiểm tra lại bằng `docs/danh-gia-nang-luc/tool/pipeline/compare_local.py`.
 - **Chưa compile Unity / chưa test trên K02** các sửa này.
 
+
+### Đồng bộ theo file lên Drive (2026-10-20) — THAY cơ chế từng dòng
+
+**Vì sao đổi**: cơ chế cũ ghi mọi round/click thành 1 dòng vào 1 Sheet → đầy giới hạn 10M ô (~144k dòng × 30 cột), Apps Script chậm dần > timeout 30s → app gửi lại → Sheet nhận lặp vô hạn cùng 1 lô 200 dòng, từ 09/10 không có dữ liệu mới. Hàng đợi từng dòng cũng dễ kẹt (1 dòng hỏng chặn cả lô), `WaitForSeconds` bị đóng băng khi Stop (`timeScale=0`).
+
+**Cơ chế mới**
+- Nguồn = chính file log local `GameLogs/yyyy-MM-dd_HHmmss_<Game>.json` (`PlayerRecognitionService` ghi lại cả file sau mỗi sự kiện; `GameLogger.Export` ghi file click chi tiết). Không còn `Enqueue`/`rid`/`sessionId`/`sheets_pending.jsonl`; `LogRound(pushSheets, topic)` giữ tham số nhưng không tác dụng.
+- `SheetsSyncManager` quét `GameLogs` mỗi `intervalSeconds` (tối thiểu 15s; mặc định 30s; thời gian thực), file mới/đã đổi (so `độ dài|mtime` ở `sheets_sync_state.tsv`) → `POST <webAppUrl>?device=<id>&name=<file>[&key=<secret>]`, body = nguyên file. Cùng tên = ghi đè → idempotent. Lần chạy đầu tự gửi bù toàn bộ `GameLogs`; hàng đợi cũ được đổi tên `sheets_pending.jsonl.legacy` (mọi dòng đều suy ra được từ GameLogs).
+- Chỉ tính xong khi script trả `{"ok":true,"bytes":N}` và N = số byte đã gửi. Lỗi: lùi nhịp 30s→15 phút theo từng file, quá 6 lần bỏ qua tới khi file đổi/khởi động lại; không chặn file khác. Tối đa 25 file/chu kỳ, file ghi trong 3s gần nhất để chu kỳ sau.
+- Drive: `EduXplore_Logs/<deviceId>/<yyyy-MM-dd>/<file>.json` (`docs/apps-script/DriveUpload.gs`, cài đặt ở đầu file). Có `doGet?action=list|get` cho pipeline (`run.py --drive`). Thư mục để Riêng tư (có tên trẻ em).
+- Báo cáo: `docs/danh-gia-nang-luc/tool/pipeline` (`run.py --drive` hoặc `--local <thư mục Drive>`), dùng lại `ingest_local`.
+
+**Triển khai (thứ tự quan trọng)**: (1) dán `DriveUpload.gs`, Deploy (dự án cũ: New version để giữ URL); (2) mở URL `/exec` thấy "EduXplore Drive upload — OK"; (3) mới cài bản app này lên K02 (script cũ nhận body kiểu file sẽ báo lỗi, app tự lùi nhịp, không ghi rác); (4) xem `adb logcat -s Unity | grep SheetsSyncManager` → "Chu kỳ: gửi n/m file".
+**Chưa compile Unity / chưa test trên K02 / chưa chạy Apps Script thật.** Sheet cũ (143k dòng) giữ nguyên để tra; không còn ghi vào.

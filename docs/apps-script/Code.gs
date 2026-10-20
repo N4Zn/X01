@@ -1,4 +1,7 @@
 /**
+ * [LỖI THỜI từ 2026-10-20] App không còn gửi từng dòng; dùng DriveUpload.gs (mỗi phiên 1 file lên Drive).
+ * Giữ lại chỉ để tham khảo cơ chế cũ.
+ *
  * Apps Script nhận log từ SheetsSyncManager (Unity). Bản tham chiếu — dán vào editor của Sheet rồi
  * Deploy → Manage deployments → Edit → New version → Deploy (sửa code KHÔNG tự cập nhật URL /exec).
  *

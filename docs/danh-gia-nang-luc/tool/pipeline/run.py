@@ -121,6 +121,8 @@ def report(cfg, db_rows, st, not_roster, dfrom, dto, outdir, a, by_day=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--local', help='thư mục log local (GameLogs)')
+    ap.add_argument('--drive', action='store_true',
+                    help='tải log phiên từ Drive (drive_url / drive_key trong config.json) về ./drive_logs rồi tính như --local')
     ap.add_argument('--csv', help='URL export CSV hoặc file .csv (mặc định: sheet_csv_url trong config.json)')
     ap.add_argument('--from', dest='dfrom')
     ap.add_argument('--to', dest='dto')
@@ -135,6 +137,13 @@ def main():
     if not a.dfrom and not a.dto:
         a.dfrom = a.dto = date.today().isoformat()   # mặc định: hôm nay
     cfg = L.load_config()
+
+    if a.drive:
+        if not cfg.get('drive_url'):
+            sys.exit('Thiếu "drive_url" (URL /exec của DriveUpload.gs) trong config.json')
+        a.local = os.path.join(L.HERE, 'drive_logs')
+        n, new = L.fetch_drive(cfg['drive_url'], a.local, cfg.get('drive_key', ''), since=a.dfrom or '')
+        print('Drive: %d file phiên (tải mới/đổi %d) -> %s' % (n, new, a.local))
 
     if a.local:
         rounds, st, not_roster = L.ingest_local(cfg, a.local)

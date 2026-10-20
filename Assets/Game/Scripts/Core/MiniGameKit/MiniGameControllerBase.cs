@@ -745,29 +745,9 @@ public abstract class MiniGameControllerBase : MonoBehaviour
         string questionDesc = DescribeQuestionForLog(q);
         string answerDesc = DescribeAnswerForLog(q, playerAnswer);
         string correctDesc = DescribeCorrectForLog(q);
-        // LogRound trả về tên đã gán cho round (cùng tên trong log local) → dòng Sheet dùng đúng tên đó.
-        string playerName = PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec, correctDesc, q != null ? q.id : "", pushSheets: false);
-
-        // Track E: đồng bộ Google Sheet liên tục — điểm chèn DUY NHẤT này phủ được mọi game
-        // dựng trên MiniGameKit (không cần sửa từng subclass). Xem SheetsSyncManager.
-        // eventType + playerName: thiếu ở bản trước — mọi log khác (GameLogger, PlayerRecognitionService)
-        // đều có 2 field này, thiếu khiến cột eventType trống, không lọc/nhận biết được ai trả lời.
-        SheetsSyncManager.Enqueue(new Dictionary<string, object>
-        {
-            {"timestamp", System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
-            {"eventType", "round_end"},
-            {"gameName", string.IsNullOrEmpty(sceneNameForRegistry) ? GetType().Name : sceneNameForRegistry},
-            {"gameVariant", GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : ""},
-            {"slot", slot},
-            {"team", team.ToString()},
-            {"playerName", playerName},
-            {"round", round},
-            {"questionId", q != null ? q.id : ""},
-            {"question", questionDesc},
-            {"answer", answerDesc},
-            {"correct", correct},
-            {"responseTimeSec", System.Math.Round(answerTimeSec, 2)},
-        });
+        // Ghi vào file log phiên (GameLogs); SheetsSyncManager tự gửi nguyên file lên Drive — mọi game MiniGameKit
+        // đi qua điểm này nên không cần đẩy từng dòng.
+        PlayerRecognitionService.Instance.LogRound(slot, round, questionDesc, answerDesc, correct, answerTimeSec, correctDesc, q != null ? q.id : "");
     }
 
     // Mô tả để ghi log + hiện ở Lịch sử trên ControlActivity. Game có nội dung câu hỏi riêng (vd GenericGame:

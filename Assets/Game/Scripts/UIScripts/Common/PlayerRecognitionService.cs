@@ -99,9 +99,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         // cho tới khi nhận diện xong.
         _gen[0]++; _gen[1]++;
         for (int s = 0; s < 2; s++) SetSessionName(s, DefaultName(s));
+        // File này tự được SheetsSyncManager gửi nguyên văn lên Drive (mỗi phiên 1 file, cùng tên).
         _sessionFileName = $"{DateTime.Now:yyyy-MM-dd_HHmmss}_{gameName}.json";
-        // Mọi dòng Sheet sau đây mang sessionId = tên file log local → ghép 1-1 với file trên máy.
-        SheetsSyncManager.CurrentSessionId = Path.GetFileNameWithoutExtension(_sessionFileName);
     }
 
     /// <summary>
@@ -245,21 +244,6 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
             answerTimeSec       = -1f,
         });
         WriteLogNow();
-
-        // Track E: đồng bộ Google Sheet liên tục — log nhận diện khuôn mặt (ai, mất bao lâu),
-        // cùng format với log local ở trên (round=-1 cố định để phân biệt với dòng "round").
-        SheetsSyncManager.Enqueue(new Dictionary<string, object>
-        {
-            {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
-            {"eventType", "recognition"},
-            {"gameName", _currentGameName ?? "Unknown"},
-            {"slot", slot == 0 ? "left" : "right"},
-            {"round", -1},
-            {"playerName", name},
-            {"recognized", recognized},
-            {"recognizeElapsedSec", roundedElapsed},
-            {"recognizeConfidence", roundedConfidence},
-        });
     }
 
     /// <summary>
@@ -267,9 +251,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     /// question text, given answer, correct/wrong, and time taken — merged with whoever was last
     /// recognized for that slot. Safe to call even if RecognizeSlot was never called for this slot
     /// (falls back to the current GameSessionManager display name).
-    /// Trả về tên đã gán cho round (cùng tên ghi vào log local). pushSheets=false khi nơi gọi tự đẩy dòng
-    /// round_end lên Sheet (MiniGameControllerBase, GameLogger) — topic: môn/chủ đề của câu (nếu có). Mặc định true để game cũ chỉ gọi LogRound
-    /// cũng có log online khớp log local.
+    /// Trả về tên đã gán cho round (cùng tên ghi vào log local). `pushSheets`, `topic`: GIỮ CHỮ KÝ cho nơi gọi cũ,
+    /// không còn tác dụng — log lên Drive đi theo nguyên file phiên (SheetsSyncManager), không đẩy từng dòng.
     /// </summary>
     public string LogRound(int slot, int round, string question, string answer, bool correct, float answerTimeSec, string correctAnswer = "", string questionId = "", bool pushSheets = true, string topic = "")
     {
@@ -312,30 +295,7 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
         // Đẩy từng round sang ControlActivity (tính điểm 50 round gần nhất + lịch sử chi tiết từng câu).
         GameControlBridge.Instance?.PushRound(name, recognized, _currentGameName ?? "Unknown", slot == 0 ? "left" : "right",
             round, questionId ?? "", question ?? "", answer ?? "", correctAnswer ?? "", correct, (float)Math.Round(answerTimeSec, 2));
-
-        // Log online khớp log local: dòng round_end đẩy từ ĐÚNG dữ liệu vừa ghi vào file (cùng tên, slot, round).
-        if (pushSheets)
-        {
-            var row = new Dictionary<string, object>
-            {
-                {"timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")},
-                {"eventType", "round_end"},
-                {"gameName", _currentGameName ?? "Unknown"},
-                {"gameVariant", GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : ""},
-                {"slot", slot},
-                {"team", slot == 0 ? "Left" : "Right"},
-                {"playerName", name},
-                {"recognized", recognized},
-                {"round", round},
-                {"questionId", questionId ?? ""},
-                {"question", question ?? ""},
-                {"answer", answer ?? ""},
-                {"correct", correct},
-                {"responseTimeSec", Math.Round(answerTimeSec, 2)},
-            };
-            if (!string.IsNullOrEmpty(topic)) row["topic"] = topic;
-            SheetsSyncManager.Enqueue(row);
-        }
+        // Lên Drive: SheetsSyncManager gửi nguyên file log vừa ghi ở trên (WriteLogNow), không đẩy từng dòng nữa.
         return name;
     }
 

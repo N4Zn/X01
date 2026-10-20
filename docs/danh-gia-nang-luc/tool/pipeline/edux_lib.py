@@ -190,6 +190,34 @@ def ingest(cfg, rows):
     return rounds, st, not_roster
 
 
+def fetch_drive(url, dest, key='', since='', device=''):
+    """Tải các file phiên từ Apps Script DriveUpload.gs (action=list/get) về `dest/<thiết bị>/<ngày>/<file>.json`.
+
+    Chỉ tải file chưa có hoặc đã đổi kích thước (phiên đang chơi bị ghi đè nhiều lần). Trả (số file, số tải mới)."""
+    import urllib.parse
+
+    def call(**q):
+        if key:
+            q['key'] = key
+        u = url + ('&' if '?' in url else '?') + urllib.parse.urlencode(q)
+        with urllib.request.urlopen(u, timeout=120) as r:
+            return r.read().decode('utf-8')
+
+    res = json.loads(call(action='list', since=since, device=device))
+    if not res.get('ok'):
+        raise RuntimeError('Drive list lỗi: %s' % res.get('error'))
+    files, new = res['files'], 0
+    for f in files:
+        p = os.path.join(dest, *f['path'].split('/'))
+        if os.path.exists(p) and os.path.getsize(p) == f['bytes']:
+            continue
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, 'w', encoding='utf-8', newline='') as fh:
+            fh.write(call(action='get', path=f['path']))
+        new += 1
+    return len(files), new
+
+
 def ingest_local(cfg, folder):
     """Thư mục log local (GameLogs/YYYY-MM-DD_HHMMSS_<Game>.json của PlayerRecognitionService) → rounds.
 
@@ -204,10 +232,16 @@ def ingest_local(cfg, folder):
     skip = set(cfg.get('skip_files', []))
     ov = cfg.get('slot_override', {})
     rounds, not_roster = [], collections.Counter()
-    for f in sorted(glob.glob(os.path.join(folder, '*.json'))):
+    seen = set()
+    # recursive: đọc được cả GameLogs phẳng lẫn thư mục Drive <thiết bị>/<ngày>/<file>.json
+    for f in sorted(glob.glob(os.path.join(folder, '**', '*.json'), recursive=True), key=os.path.basename):
         base = os.path.basename(f)
         if not re.match(r'^\d{4}-\d\d-\d\d_\d{6}_', base):
             continue                      # file session kiểu cũ của GameLogger (Counting5_2026-...json)
+        if base in seen:
+            st['files_dup'] += 1          # cùng 1 phiên có ở 2 nơi (vd GameLogs + bản Drive tải về)
+            continue
+        seen.add(base)
         st['files'] += 1
         if base in skip:
             st['files_skipped'] += 1
