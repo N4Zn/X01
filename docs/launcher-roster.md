@@ -101,3 +101,8 @@ chuyển key qua mọi map: `enrolled`/`genders`/`classNames`/`lastLogged`/`pers
 - Xoá hết ảnh KHÔNG xoá học sinh (chỉ thành "Cần ảnh"); chỉ nút "Xóa học sinh" (hỏi xác nhận) mới xoá, kèm ảnh + embedding + lớp/alias/ngày sinh.
 - Sau xoá ảnh/học sinh, `AttendanceStore.verifyOnDisk` đọc lại `enrolled.json` để chắc embedding và ảnh đã mất cùng nhau (lệch → toast cảnh báo).
 - Panel là `Dialog` cao cố định 92% màn, footer (Xóa/Chụp ảnh/Thêm ảnh/Đóng/Lưu) luôn hiện; Enter ở tên thường gọi → tên thật → mở chọn ngày sinh.
+
+## Màn chụp camera (FaceEnroll MainActivity) — cập nhật 2026-10-21
+- Nguồn hình: `/sdcard/EduXplore/ipcamera.json` có `"source":"ip"` → camera IP (xem `docs/k02-device.md`), ngược lại webcam UVC. `ColorOrder.trueBgr` bật ở chế độ IP để `ColorOrder.matToBitmap` đổi BGR→RGB khi hiển thị/lưu ảnh (webcam UVC: giải NV21 làm đảo kênh nên giữ nguyên — đừng "sửa" cả hai).
+- Chụp bổ sung (`MODE_ADD_SAMPLES_CAMERA`, `targetStudentName != null`): lấy 1 mặt to nhất chưa có tên hoặc đang mang đúng tên đó; chụp mới (`targetStudentName == null`) chỉ lấy mặt chưa khoá tên.
+- Nút "KHUNG CHỤP" (`toggleEnrollFrameEditor`): chỉnh vùng `enroll` trong `face_zones.json` ngay màn chụp; chỉ mặt có tâm trong khung được dò/chụp.

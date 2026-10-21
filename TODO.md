@@ -149,3 +149,11 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] C1 đảo trục (`c1_flip_x`, `c1_flip_y` mặc định bật, xem `docs/lidar-touch-algorithm.md` §3c): test hướng chạm trên sàn K02; sai thì tắt từng trục trong `lidar_config.json`, rồi chỉnh `offset_angle`/`shift_*` — (2026-10-19)
 - [x] Máy chiếu #2: bộ 2.1 (màn hình nhỏ) calib xong, đã ghi `docs/lidar-calib.md` + backup `lidar_config.json_20261020_2.1` — (2026-10-20)
 - [x] Máy chiếu #2: bộ 2.2 (màn hình full, sàn 2,2 m × 3,87 m) calib xong, ghi `docs/lidar-calib.md` + backup `lidar_config.json_20261020_2.2` — (2026-10-20)
+
+## Camera IP / FaceEnroll (2026-10-21) — cần build APK Unity rồi test K02
+- [ ] Build APK; test màn chụp: nút KHUNG CHỤP và CẬP NHẬT KHUÔN MẶT hiện đồng thời, bảng chỉnh không che nút, chỉnh khung → chụp được ngay, người ngoài khung không bị nhận — (2026-10-21)
+- [ ] Chụp bổ sung cho học sinh đã có (từ Quản lý lớp) không còn báo "Không có người mới"; đủ 3 ảnh vẫn báo "đã đủ" — (2026-10-21)
+- [ ] Màu preview/ảnh mẫu camera IP đúng (không xanh); enroll lại học sinh bằng camera IP (mẫu cũ từ webcam) — (2026-10-21)
+- [ ] Kiểm tra lệch thứ tự màu enroll (NV21) vs game (NV12) nếu `sim` vẫn thấp sau khi enroll lại bằng camera IP — (2026-10-21)
+- [ ] Đổi mật khẩu camera Hikvision (từng lộ trong chat); chọn khung sắc nét nhất / RTSP nếu cần preview mượt hơn — (2026-10-21)
+- [ ] Quyết: có tăng trần 3 mẫu/người (`AttendanceStore.MAX_SAMPLES_PER_PERSON`) không — (2026-10-21)
