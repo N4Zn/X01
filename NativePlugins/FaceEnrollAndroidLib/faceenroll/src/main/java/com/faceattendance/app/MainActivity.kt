@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     }
 
     // Vùng nhận diện: màn camera bình thường chỉ xử lý mặt có tâm trong vùng chữ nhật enroll.
-    private var zones: FaceZones = FaceZones.DEFAULT
+    @Volatile private var zones: FaceZones = FaceZones.DEFAULT
     private var zoneSetupMode = false
     @Volatile private var activityReleased = false
 
@@ -350,6 +350,15 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             }
         }
         btnManage.setOnClickListener { showManageStudentsDialog() }
+        // Nút chỉnh khung chụp ngay trên màn chụp (người đứng sau ngoài khung sẽ không bị dò mặt/chụp vào).
+        (btnEnroll.parent as LinearLayout).addView(Button(this).apply {
+            text = "KHUNG CHỤP"
+            setTextColor(Color.WHITE)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#FF9800"))
+            setOnClickListener { toggleEnrollFrameEditor() }
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            marginStart = dpi(8)
+        })
         btnExport.setOnClickListener { exportAttendanceCsv() }
 
         attendanceStore = AttendanceStore(this)
@@ -474,6 +483,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             startIpCamera(ipCfg)
             return
         }
+        ColorOrder.trueBgr = false
         if (!usbMonitorRegistered) {
             usbMonitorRegistered = true
             usbMonitor.register()
@@ -750,6 +760,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
     private fun startIpCamera(cfg: IpCameraConfig) {
         stopIpCamera()
+        ColorOrder.trueBgr = true
         ipRunning = true
         val t = Thread({ ipCameraLoop(cfg) }, "ip-camera-snapshot")
         t.isDaemon = true
@@ -828,7 +839,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
     private fun matToBitmap(mat: Mat): Bitmap {
         val bmp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(mat, bmp)
+        ColorOrder.matToBitmap(mat, bmp)
         return bmp
     }
 
@@ -932,16 +943,27 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         if (enrollSnapshotRequested) {
             enrollSnapshotRequested = false
             val toEnroll = mutableListOf<Pair<FloatArray, Mat>>()
-            for ((i, face) in faces.withIndex()) {
-                if (faceTracks[i].lock == null) {
-                    val aligned = engine.alignFace(bgr, face)
-                    val emb = engine.getEmbedding(aligned)
-                    aligned.release()
-                    toEnroll.add(emb to cropFace(bgr, face.rect))
-                }
+            val target = targetStudentName
+            // Chụp bổ sung cho 1 học sinh đã có: người đó đã được nhận diện (khoá tên) nên KHÔNG được loại vì "đã nhận ra";
+            // lấy đúng 1 mặt — mặt to nhất (gần camera nhất) trong số mặt chưa có tên hoặc đang mang đúng tên đó.
+            val picks: List<Int> = if (target != null) {
+                faces.indices.filter { val n = faceTracks[it].lock?.name; n == null || n == target }
+                    .maxByOrNull { faces[it].rect.width() * faces[it].rect.height() }?.let { listOf(it) } ?: emptyList()
+            } else {
+                faces.indices.filter { faceTracks[it].lock == null }
+            }
+            for (i in picks) {
+                val face = faces[i]
+                val aligned = engine.alignFace(bgr, face)
+                val emb = engine.getEmbedding(aligned)
+                aligned.release()
+                toEnroll.add(emb to cropFace(bgr, face.rect))
             }
             if (toEnroll.isEmpty()) {
-                runOnUiThread { toastStatus("Không có người mới — tất cả đã được nhận diện") }
+                runOnUiThread {
+                    toastStatus(if (target != null) "Không thấy mặt của $target (các mặt trong khung đang được nhận là người khác)"
+                                else "Không có người mới — tất cả đã được nhận diện")
+                }
             } else {
                 runOnUiThread { enrollNextFace(toEnroll, 0) }
             }
@@ -1175,7 +1197,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // MỚI (Bitmap.createBitmap) rồi post qua runOnUiThread KHÔNG có cơ chế chặn dồn — nếu main
     // thread xử lý chậm hơn 1 nhịp, các Runnable setImageBitmap() xếp hàng lại và hiển thị chậm
     // dần theo, đúng cảm giác "trễ". Sửa 2 chỗ: (1) tái dùng 1 Bitmap cố định qua
-    // Utils.matToBitmap(mat, bitmap) — bản OpenCV ghi thẳng vào bitmap có sẵn, không alloc mới
+    // ColorOrder.matToBitmap(mat, bitmap) — bản OpenCV ghi thẳng vào bitmap có sẵn, không alloc mới
     // mỗi frame (đỡ áp lực GC); (2) previewUpdatePending chặn dồn — frame mới tới khi main
     // thread còn đang xử lý frame trước thì bỏ qua luôn (ưu tiên hình mới nhất, không xếp hàng
     // hình cũ) thay vì hiển thị "đuổi kịp" một loạt frame trễ.
@@ -1195,7 +1217,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             bmp = Bitmap.createBitmap(bgr.cols(), bgr.rows(), Bitmap.Config.ARGB_8888)
             previewBitmaps[idx] = bmp
         }
-        Utils.matToBitmap(bgr, bmp)
+        ColorOrder.matToBitmap(bgr, bmp)
         previewBitmapIndex = 1 - idx
         val t1 = System.nanoTime()
         previewUpdatePending = true
@@ -1592,6 +1614,83 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             }
             true
         }
+    }
+
+    // ---- Chỉnh khung chụp ngay trên màn chụp (chỉ vùng ENROLL; đổi là có hiệu lực ngay cho dò mặt) ----
+    private var enrollFramePanel: LinearLayout? = null
+
+    private fun toggleEnrollFrameEditor() {
+        enrollFramePanel?.let {
+            (it.parent as? android.view.ViewGroup)?.removeView(it)
+            enrollFramePanel = null
+            return
+        }
+        val labels = ArrayList<TextView>(); val values = ArrayList<TextView>()
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#D9000000"))
+            setPadding(dpi(12), dpi(10), dpi(12), dpi(10))
+        }
+        panel.addView(TextView(this).apply {
+            text = "KHUNG CHỤP"; setTextColor(Color.WHITE); textSize = 16f; typeface = android.graphics.Typeface.DEFAULT_BOLD
+        })
+        panel.addView(TextView(this).apply {
+            text = "Chỉ mặt có tâm trong khung sáng mới được chụp/nhận diện."; setTextColor(Color.parseColor("#BBBBBB")); textSize = 12f
+        })
+        fun refresh() {
+            val e = zones.enroll
+            val v = listOf(e.x, e.y, e.w, e.h)
+            for (i in 0 until 4) values[i].text = "${Math.round(v[i] * 100)}%"
+            overlayView.setZones(zones, false)
+        }
+        fun adjust(param: Int, delta: Float) {
+            val r = zones.enroll
+            var x = r.x; var y = r.y; var w = r.w; var h = r.h
+            when (param) { 0 -> x += delta; 1 -> y += delta; 2 -> w += delta; 3 -> h += delta }
+            w = round2(w.coerceIn(0.05f, 1f)); h = round2(h.coerceIn(0.05f, 1f))
+            x = round2(x.coerceIn(0f, 1f - w)); y = round2(y.coerceIn(0f, 1f - h))
+            zones = zones.copy(enroll = ZoneRect(x, y, w, h))
+            refresh()
+        }
+        for ((p, name) in listOf("X (trái → phải)", "Y (trên → dưới)", "Rộng", "Cao").withIndex()) {
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val label = TextView(this).apply { text = name; setTextColor(Color.parseColor("#DDDDDD")); textSize = 13f }
+            val value = TextView(this).apply {
+                setTextColor(Color.WHITE); textSize = 15f; gravity = Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD
+            }
+            row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(stepButton("−") { adjust(p, -0.01f) })
+            row.addView(value, LinearLayout.LayoutParams(dpi(52), LinearLayout.LayoutParams.WRAP_CONTENT))
+            row.addView(stepButton("+") { adjust(p, 0.01f) })
+            panel.addView(row)
+            labels.add(label); values.add(value)
+        }
+        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        actions.addView(Button(this).apply {
+            text = "MẶC ĐỊNH"; textSize = 12f
+            setOnClickListener { zones = zones.copy(enroll = FaceZones.DEFAULT.enroll); refresh() }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        actions.addView(Button(this).apply {
+            text = "LƯU"; textSize = 12f; setTextColor(Color.WHITE)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))
+            setOnClickListener {
+                toastStatus(if (zones.save()) "Đã lưu khung chụp" else "LƯU THẤT BẠI (kiểm tra quyền bộ nhớ)")
+            }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        actions.addView(Button(this).apply {
+            text = "ĐÓNG"; textSize = 12f
+            setOnClickListener { toggleEnrollFrameEditor() }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        panel.addView(actions)
+
+        (findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0) as android.widget.FrameLayout).addView(
+            panel,
+            android.widget.FrameLayout.LayoutParams(dpi(300), android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.END or Gravity.CENTER_VERTICAL).apply {
+                rightMargin = dpi(12)
+            }
+        )
+        enrollFramePanel = panel
+        refresh()
     }
 
     private fun setupZoneEditor() {

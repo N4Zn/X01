@@ -480,7 +480,7 @@ class AttendanceStore(private val context: Context) {
         if (faceCrop == null || faceCrop.empty()) return null
         val file = newPhotoFile(name)
         val bmp = Bitmap.createBitmap(faceCrop.cols(), faceCrop.rows(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(faceCrop, bmp)
+        ColorOrder.matToBitmap(faceCrop, bmp)
         FileOutputStream(file).use { out -> bmp.compress(Bitmap.CompressFormat.JPEG, 90, out) }
         return file.absolutePath
     }
@@ -742,7 +742,7 @@ class AttendanceStore(private val context: Context) {
         entry.count++
         if (faceCrop != null && !faceCrop.empty()) {
             val bmp = Bitmap.createBitmap(faceCrop.cols(), faceCrop.rows(), Bitmap.Config.ARGB_8888)
-            Utils.matToBitmap(faceCrop, bmp)
+            ColorOrder.matToBitmap(faceCrop, bmp)
             entry.snapshot = Bitmap.createScaledBitmap(bmp, 90, 90, true)
             val snapFile = File(snapshotDir, "${name}_${ts.replace(Regex("[ :]"), "")}.jpg")
             FileOutputStream(snapFile).use { out -> bmp.compress(Bitmap.CompressFormat.JPEG, 90, out) }
