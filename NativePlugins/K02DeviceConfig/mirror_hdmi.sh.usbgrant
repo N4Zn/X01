@@ -25,17 +25,26 @@ echo "shade: $SHADE" >> $LOG
 [ "$SHADE" = "block" ] && cmd statusbar disable-for-setup true >> $LOG 2>&1
 
 i=0
+DONE=0
 while [ $i -lt 40 ]; do
   AUID=$(pm list packages -U $PKG 2>/dev/null | sed -n 's/.*uid:\([0-9]*\).*/\1/p')
   if [ -n "$AUID" ]; then
     OUT=$(CLASSPATH=$DEX app_process /system/bin UsbGrant $AUID 2>&1)
     echo "try $i uid=$AUID: $OUT" >> $LOG
-    case "$OUT" in *4292:60000*) echo "done" >> $LOG; exit 0;; esac
+    case "$OUT" in *4292:60000*) echo "done" >> $LOG; DONE=1; break;; esac
   else
     echo "try $i: chưa thấy package $PKG" >> $LOG
   fi
   i=$((i+1))
   sleep 2
 done
-echo "gave up" >> $LOG
+[ $DONE = 1 ] || echo "gave up" >> $LOG
+
+# [CAMERA IP] 2026-10-21: giữ IP eth0 + luật định tuyến tới camera IP (vòng lặp vĩnh viễn, nên đặt CUỐI script;
+# service oneshot kết thúc là init giết mọi tiến trình con). Không có ipcam_net.sh thì bỏ qua như cũ.
+# Xem ipcam_net.sh + docs/k02-device.md. Log: /data/local/tmp/ipcam_net_log.txt
+if [ -f /data/local/tmp/ipcam_net.sh ]; then
+  echo "start ipcam_net watcher" >> $LOG
+  exec sh /data/local/tmp/ipcam_net.sh
+fi
 exit 0

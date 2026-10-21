@@ -1,0 +1,11 @@
+{
+  "source": "ip",
+  "host": "192.168.2.64",
+  "port": 80,
+  "user": "admin",
+  "password": "ĐIỀN_MẬT_KHẨU_CAMERA_Ở_ĐÂY",
+  "snapshotPath": "/ISAPI/Streaming/channels/101/picture",
+  "localIp": "192.168.2.20",
+  "mirror": true,
+  "timeoutMs": 5000
+}

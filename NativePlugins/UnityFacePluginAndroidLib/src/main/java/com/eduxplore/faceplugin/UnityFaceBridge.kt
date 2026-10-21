@@ -107,6 +107,10 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
 
     @Volatile private var initialized = false
 
+    // Camera IP (xem startIpCamera): thread chụp ảnh thay cho UVC khi ipcamera.json có "source":"ip".
+    @Volatile private var ipRunning = false
+    private var ipThread: Thread? = null
+
     // ── Init / shutdown ──────────────────────────────────────────────────────
 
     @JvmStatic
@@ -124,6 +128,15 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
             Log.i(TAG, "DB loaded: ${db.load()} persons")
         }
         config = FRConfig.load(appContext)
+
+        // Camera IP (ipcamera.json "source":"ip"): chụp ảnh qua mạng, không đụng USB/UVC.
+        val ipCfg = IpCameraConfig.loadOrNull()?.takeIf { it.isIp }
+        if (ipCfg != null) {
+            startIpCamera(ipCfg)
+            initialized = true
+            Log.i(TAG, "initialized (IP camera)")
+            return
+        }
 
         // USB monitor MUST be registered on Android's main thread.
         // Unity's game thread has no Looper — sticky ACTION_USB_DEVICE_ATTACHED broadcast
@@ -163,6 +176,7 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
         initialized = false
         slotEnabled[0].set(false)
         slotEnabled[1].set(false)
+        stopIpCamera()
         uvcCamera?.setFrameCallback(null, 0)
         uvcCamera?.stopPreview()
         uvcCamera?.close()
@@ -403,46 +417,7 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
             Core.flip(bgrRaw, bgr, 1)
             bgrRaw.release()
 
-            // Building the display frame (clone, draw boxes, flip, BGR→RGBA, 3.6MB copy) is real
-            // native CPU work that ran unconditionally on EVERY camera frame regardless of scene
-            // — headless games (no camera preview UI at all) were paying this cost the whole
-            // time the camera ran, not just during active recognition. Only FRTest actually
-            // shows this texture, so gate the whole block behind the same flag it already uses
-            // to opt into bounding-box display.
-            if (bboxEnabled.get()) {
-                val bgrDisplay = bgr.clone()
-                val rects = latestFaceRects.get()
-                for (r in rects) {
-                    Imgproc.rectangle(bgrDisplay,
-                        org.opencv.core.Point(r.left.toDouble(), r.top.toDouble()),
-                        org.opencv.core.Point(r.right.toDouble(), r.bottom.toDouble()),
-                        org.opencv.core.Scalar(0.0, 255.0, 0.0), 4)
-                }
-                // Flip vertically: Unity's LoadRawTextureData reads bottom-to-top (GL convention)
-                val bgrFlipped = Mat()
-                Core.flip(bgrDisplay, bgrFlipped, 0)
-                bgrDisplay.release()
-
-                // BGR → RGBA for Unity texture
-                val rgba = Mat()
-                Imgproc.cvtColor(bgrFlipped, rgba, Imgproc.COLOR_BGR2RGBA)
-                bgrFlipped.release()
-                val rgbaBytes = ByteArray(w * h * 4)
-                rgba.get(0, 0, rgbaBytes)
-                rgba.release()
-                latestRgba.set(rgbaBytes)
-                if (frameCallbackCount <= 3) Log.i(TAG, "latestRgba set: ${rgbaBytes.size} bytes")
-
-                frameRgbaCount++
-                if (frameRgbaCount <= 5 || frameRgbaCount % 30 == 0) {
-                    val px0 = if (rgbaBytes.size >= 4) "${rgbaBytes[0].toInt() and 0xFF},${rgbaBytes[1].toInt() and 0xFF},${rgbaBytes[2].toInt() and 0xFF},${rgbaBytes[3].toInt() and 0xFF}" else "?"
-                    val dbg = "recog=[${slotEnabled[0].get()},${slotEnabled[1].get()}] proc=$isProcessing eng=${engine!=null} dbEmpty=${database?.isEmpty()}"
-                    Log.i(TAG, "rgbaReady #$frameRgbaCount ${w}x${h} firstPx=[$px0] $dbg")
-                }
-            } else {
-                latestRgba.set(null)
-            }
-
+            publishDisplay(bgr, w, h)
             bgrForRecog = bgr
         } catch (e: Exception) {
             Log.e(TAG, "frameCallback error: ${e.message}", e)
@@ -450,6 +425,58 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
             return@IFrameCallback
         }
 
+        dispatchBgr(bgrForRecog ?: return@IFrameCallback)
+    }
+
+    /**
+     * Khung hình BGR đã lật gương (từ UVC hoặc từ ảnh chụp camera IP) → ảnh hiển thị cho Unity
+     * (chỉ khi game bật bounding box).
+     *
+     * Building the display frame (clone, draw boxes, flip, BGR→RGBA, 3.6MB copy) is real
+     * native CPU work that ran unconditionally on EVERY camera frame regardless of scene
+     * — headless games (no camera preview UI at all) were paying this cost the whole
+     * time the camera ran, not just during active recognition. Only FRTest actually
+     * shows this texture, so gate the whole block behind the same flag it already uses
+     * to opt into bounding-box display.
+     */
+    private fun publishDisplay(bgr: Mat, w: Int, h: Int) {
+        if (!bboxEnabled.get()) { latestRgba.set(null); return }
+        val bgrDisplay = bgr.clone()
+        val rects = latestFaceRects.get()
+        for (r in rects) {
+            Imgproc.rectangle(bgrDisplay,
+                org.opencv.core.Point(r.left.toDouble(), r.top.toDouble()),
+                org.opencv.core.Point(r.right.toDouble(), r.bottom.toDouble()),
+                org.opencv.core.Scalar(0.0, 255.0, 0.0), 4)
+        }
+        // Flip vertically: Unity's LoadRawTextureData reads bottom-to-top (GL convention)
+        val bgrFlipped = Mat()
+        Core.flip(bgrDisplay, bgrFlipped, 0)
+        bgrDisplay.release()
+
+        // BGR → RGBA for Unity texture
+        val rgba = Mat()
+        Imgproc.cvtColor(bgrFlipped, rgba, Imgproc.COLOR_BGR2RGBA)
+        bgrFlipped.release()
+        val rgbaBytes = ByteArray(w * h * 4)
+        rgba.get(0, 0, rgbaBytes)
+        rgba.release()
+        latestRgba.set(rgbaBytes)
+        if (frameCallbackCount <= 3) Log.i(TAG, "latestRgba set: ${rgbaBytes.size} bytes")
+
+        frameRgbaCount++
+        if (frameRgbaCount <= 5 || frameRgbaCount % 30 == 0) {
+            val px0 = if (rgbaBytes.size >= 4) "${rgbaBytes[0].toInt() and 0xFF},${rgbaBytes[1].toInt() and 0xFF},${rgbaBytes[2].toInt() and 0xFF},${rgbaBytes[3].toInt() and 0xFF}" else "?"
+            val dbg = "recog=[${slotEnabled[0].get()},${slotEnabled[1].get()}] proc=$isProcessing eng=${engine!=null} dbEmpty=${database?.isEmpty()}"
+            Log.i(TAG, "rgbaReady #$frameRgbaCount ${w}x${h} firstPx=[$px0] $dbg")
+        }
+    }
+
+    /** Có việc cần dò mặt không (nhận diện, hoặc game xin vẽ bbox)? Dùng chung cho UVC và camera IP. */
+    private fun needsDetection(): Boolean = slotEnabled[0].get() || slotEnabled[1].get() || bboxEnabled.get()
+
+    /** Nhận [bgr] (sở hữu: hàm này release) → chuyển sang thread nhận diện nếu đang rảnh và có việc, ngược lại bỏ khung. */
+    private fun dispatchBgr(bgr: Mat) {
         // Detection only runs when something actually needs it: recognition itself (either
         // slot), or a game (FRTest) that opted into bounding-box display via
         // setBoundingBoxEnabled(). Headless games never set that flag, so once their
@@ -463,24 +490,90 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
             isProcessing = true
             try {
                 detectionExecutor.execute {
-                    try { processFrame(bgrForRecog!!, anySlotEnabled) }
-                    finally { isProcessing = false; bgrForRecog.release() }
+                    try { processFrame(bgr, anySlotEnabled) }
+                    finally { isProcessing = false; bgr.release() }
                 }
             } catch (e: java.util.concurrent.RejectedExecutionException) {
                 // Narrow window: executor was mid-shutdown (see shutdownInternal()) right as this
                 // frame arrived. isProcessing was already flipped true above but the lambda that
                 // resets it never got scheduled — without this catch, isProcessing would stay
                 // stuck true forever and detection would silently stop for the rest of the
-                // process's life (the outer if() above would never pass again), plus bgrForRecog
+                // process's life (the outer if() above would never pass again), plus bgr
                 // would leak. Reset both here instead.
                 Log.w(TAG, "detectionExecutor rejected frame (shutting down) — dropping")
                 isProcessing = false
-                bgrForRecog.release()
+                bgr.release()
             }
         } else {
             if (!needsDetection) latestFaceRects.set(emptyList())
-            bgrForRecog.release()
+            bgr.release()
         }
+    }
+
+    // ── Camera IP (ảnh chụp HTTP) ─────────────────────────────────────────────
+    // Chọn bằng /sdcard/EduXplore/ipcamera.json có "source":"ip" (không có file / "uvc" = webcam USB như cũ).
+    // Không chạy luồng video: chỉ chụp 1 ảnh JPEG (1080p) khi CÓ VIỆC cần dò mặt và thread nhận diện đang rảnh,
+    // nên game không phải giải mã video liên tục và mỗi lần nhận diện dùng ảnh mới đúng lúc, không bị trễ bộ đệm.
+    // Đường mạng tới camera (IP eth0 + luật định tuyến) do script boot K02 lo, xem docs/k02-device.md.
+
+    private fun startIpCamera(cfg: IpCameraConfig) {
+        stopIpCamera()
+        ipRunning = true
+        val t = Thread({ ipCameraLoop(cfg) }, "ip-camera-snapshot")
+        t.isDaemon = true
+        ipThread = t
+        t.start()
+        Log.i(TAG, "IP camera mode: ${cfg.host}:${cfg.port} path=${cfg.snapshotPath} mirror=${cfg.mirror}")
+    }
+
+    private fun stopIpCamera() {
+        ipRunning = false
+        val t = ipThread ?: return
+        ipThread = null
+        t.interrupt()
+        try { t.join(1500) } catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+    }
+
+    private fun ipCameraLoop(cfg: IpCameraConfig) {
+        val sockets = if (cfg.localIp.isEmpty()) null else SnapshotClient.bindTo(cfg.localIp)
+        val client = SnapshotClient(cfg.host, cfg.port, cfg.user, cfg.password, sockets, cfg.timeoutMs)
+        var failures = 0
+        var lastFailLog = 0L
+        while (ipRunning) {
+            try {
+                if (!needsDetection() || isProcessing) { Thread.sleep(25); continue }
+                val t0 = System.nanoTime()
+                val jpeg = client.fetch(cfg.snapshotPath)
+                val t1 = System.nanoTime()
+                val jpegMat = org.opencv.core.MatOfByte(*jpeg)
+                val raw = try { org.opencv.imgcodecs.Imgcodecs.imdecode(jpegMat, org.opencv.imgcodecs.Imgcodecs.IMREAD_COLOR) } finally { jpegMat.release() }
+                if (raw.empty()) { raw.release(); throw java.io.IOException("Không giải mã được ảnh JPEG (${jpeg.size} byte)") }
+                val bgr: Mat
+                if (cfg.mirror) { bgr = Mat(); Core.flip(raw, bgr, 1); raw.release() } else bgr = raw
+                val t2 = System.nanoTime()
+                frameWidth = bgr.cols(); frameHeight = bgr.rows()
+                frameCallbackCount++
+                if (frameCallbackCount <= 3 || frameCallbackCount % 50 == 0) {
+                    Log.i(TAG, "ip snapshot #$frameCallbackCount ${frameWidth}x$frameHeight fetch=${(t1 - t0) / 1_000_000}ms decode=${(t2 - t1) / 1_000_000}ms ${jpeg.size}B")
+                }
+                failures = 0
+                publishDisplay(bgr, frameWidth, frameHeight)
+                dispatchBgr(bgr)
+            } catch (e: InterruptedException) {
+                break
+            } catch (e: Exception) {
+                failures++
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (now - lastFailLog > 5000L) { lastFailLog = now; Log.w(TAG, "ip snapshot lỗi (#$failures): $e") }
+                // Sai mật khẩu: dừng hẳn, đừng gửi tiếp (Hikvision khoá IP sau vài lần sai).
+                if (e.message?.startsWith("HTTP 401") == true || e.message?.startsWith("Cần mật khẩu") == true) {
+                    Log.e(TAG, "ip camera: xác thực thất bại, dừng vòng chụp. Kiểm tra /sdcard/EduXplore/ipcamera.json")
+                    break
+                }
+                try { Thread.sleep(minOf(2000L, 200L * failures)) } catch (_: InterruptedException) { break }
+            }
+        }
+        Log.i(TAG, "ip camera loop ended")
     }
 
     // face_zones.json: kiểm tra mtime tối đa 2s/lần, chỉ trên thread nhận diện (không đụng main thread

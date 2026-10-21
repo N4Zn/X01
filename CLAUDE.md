@@ -88,7 +88,7 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 |---|---|
 | ControlActivity, tab Cài đặt, Start/Pause/Stop, GameControlBridge, registry | `docs/control-activity.md` |
 | LiDAR không nhận/lệch, LidarTouchBridge, native, Calib, tune config | `docs/lidar-calib.md` |
-| Cài/khôi phục máy K02 (HDMI, quyền USB, audio) | `docs/k02-device.md` |
+| Cài/khôi phục máy K02 (HDMI, quyền USB, audio), camera IP Hikvision + mạng Ethernet | `docs/k02-device.md` |
 | Launcher, Quản lý lớp, FaceEnroll | `docs/launcher-roster.md` |
 | Thuật toán chạm D200 (cụm/cửa sổ/tick), độ trễ, option cảm biến C1 (`lidar_model`), tool đo trên laptop | `docs/lidar-touch-algorithm.md`, `Tools/lidar_bench/README.md` |
 | Log/report/Google Sheets | `docs/sheets-report.md` |

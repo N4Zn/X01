@@ -129,3 +129,31 @@ Yêu cầu: mọi đường audio (HDMI, loa, USB, BT...) đều max, tắt cả
   i32 0 s16 com.android.shell` (setStreamVolume; `10` đúng cho Android 10 — mã `7` thì không ra gì).
   Đã verify sau reboot: mọi stream × mọi device = 15/15, `SAFE_MEDIA_VOLUME_INACTIVE`.
 - HDMI không có gain riêng ở mixer phần cứng (`tinymix`) — âm lượng HDMI chỉ chỉnh bằng phần mềm.
+
+### Camera IP Hikvision (DS-2CD1T27G2H-LIUF) qua cổng Ethernet — nhận diện mặt (2026-10-21)
+
+Thay webcam UVC bằng camera IP: **chụp ảnh JPEG 1080p qua HTTP** (`GET /ISAPI/Streaming/channels/101/picture`, Digest), KHÔNG dùng RTSP/video.
+Đo thật trên K02: ~77 ms/ảnh, 1920×1080, ~110 KB. Lý do bỏ video: game chỉ cần ảnh nét khi slot yêu cầu nhận diện (không cần xem),
+không giải mã liên tục tốn CPU MT8168, và ảnh không bị trễ bộ đệm phát (VLC đệm ~1 s).
+
+- **Cấu hình** (nguồn duy nhất, trên thiết bị, KHÔNG commit vì có mật khẩu): `/sdcard/EduXplore/ipcamera.json` —
+  mẫu `Tools/ip_camera_test/ipcamera.json.example`. `"source":"ip"` bật camera IP; thiếu file / `"uvc"` = webcam USB như cũ.
+  `localIp` (IP eth0), `host` (camera), `mirror` (lật gương như webcam; vùng `face_zones.json` căn theo hình lật).
+- **Code**: `SnapshotClient.java` + `IpCameraConfig.java` (HTTP/Digest bằng Socket thuần, không phụ thuộc thư viện) — bản trong
+  `NativePlugins/UnityFacePluginAndroidLib/` (package `com.eduxplore.faceplugin`) và bản sao trong `FaceEnroll` (package
+  `com.faceattendance.app`; **sửa cả hai**, cùng aar vào 1 APK nên không dùng chung package).
+  `UnityFaceBridge`: chụp CHỈ khi có slot đang nhận diện/bbox và thread nhận diện rảnh. `FaceEnroll.MainActivity`: chụp ~8 fps lúc màn hình mở
+  (preview + nhận diện + nút chụp mẫu, mẫu enroll là khung 1080p đang hiện).
+- **Mạng** (cổng Ethernet K02 = adapter USB-LAN chip ASIX AX88772B, `eth0`, kernel có driver `asix`, `ax88179_178a`, `r8152`, `cdc_*`;
+  **SR9700 `0fe6:9702` KHÔNG có driver** trên kernel K02): camera `192.168.2.64/24` (gateway `192.168.2.1`), K02 `eth0` `192.168.2.20/24`.
+  Hai bẫy đã gặp:
+  1. Android coi Wi-Fi là mạng mặc định → gói tới `192.168.2.x` đi qua `wlan0` (ping `-I eth0` vẫn chạy nên tưởng mạng ổn). Phải có
+     `ip rule add to 192.168.2.0/24 lookup main pref 5000`.
+  2. Link `eth0` rớt (rút cáp, camera/PoE mất nguồn) thì Android XOÁ IP → app báo `EADDRNOTAVAIL`. Phải gán lại mỗi khi link lên.
+  Cả hai do `NativePlugins/K02DeviceConfig/ipcam_net.sh` lo (vòng lặp 3 s, đọc `host`/`localIp` từ `ipcamera.json`), được
+  `mirror_hdmi.sh.usbgrant` gọi cuối script boot (`exec`). Log `/data/local/tmp/ipcam_net_log.txt`.
+  Cài: push `ipcam_net.sh` + `mirror_hdmi.sh.usbgrant` (→ `/data/local/tmp/mirror_hdmi.sh`) rồi reboot (cùng cách phần USB ở trên).
+  Chạy tay không cần reboot: `adb shell "su 0 sh /data/local/tmp/ipcam_net.sh"` (nền).
+- **Camera**: Hikvision khoá IP sau vài lần sai mật khẩu → code dừng ngay khi 401, không thử lại. Nên đặt giờ camera, tắt OSD thời gian
+  nếu đè lên mặt; chỉnh Exposure (Max Shutter ~1/100, tắt Slow Shutter) để giảm nhoè khi người chuyển động.
+- **Thử nhanh không cần build aar**: `Tools/ip_camera_test/README.md` (`app_process` chạy `SnapshotClient`, lưu ảnh, in thời gian).

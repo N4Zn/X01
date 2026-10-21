@@ -43,6 +43,7 @@ import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Rect
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
@@ -467,6 +468,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // granted the very first time this camera connected (persists across app restarts),
         // so requestPermission() below just re-confirms it silently and onConnect() fires
         // immediately — no dialog, no delay.
+        val ipCfg = IpCameraConfig.loadOrNull()?.takeIf { it.isIp }
+        if (ipCfg != null) {
+            tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | đang kết nối camera IP..."
+            startIpCamera(ipCfg)
+            return
+        }
         if (!usbMonitorRegistered) {
             usbMonitorRegistered = true
             usbMonitor.register()
@@ -477,6 +484,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Release the USB camera so X01 (Unity FRTest) can open it when FA goes to background.
         // The VID whitelist in looksLikeUvcCamera() ensures reconnect in onStart() is fast
         // (permission already granted → onConnect fires without a dialog).
+        stopIpCamera()
         releaseCamera()
         usbMonitor.unregister()
         usbMonitorRegistered = false
@@ -640,7 +648,6 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // process (không có chỗ nào bắt). Vì vậy bọc toàn bộ, kể cả Error (OOM, UnsatisfiedLink...).
         var bgrPreview: Mat? = null
         var handedOff = false
-        var claimed = false // đã đặt isProcessing=true ở frame NÀY (không thì không được đụng vào cờ)
         try {
             if (activityReleased) return@IFrameCallback
             val now = System.nanoTime()
@@ -670,59 +677,142 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             Core.flip(bgrRaw, flipped, 1)  // 1 = horizontal mirror
             val t1 = System.nanoTime()
 
-            // The preview always refreshes here, on every frame the camera delivers - kept on this
-            // thread since it's cheap (a color convert + bitmap copy), unlike detection below.
-            updatePreviewBitmap(flipped)
-
-            // Push the last known overlay result on every frame so the bounding box moves at
-            // camera FPS rather than at detection FPS. Dropped frames still get this refresh.
-            val snap = cachedOverlayItems; val sw = cachedOverlayW; val sh = cachedOverlayH
-            runOnUiThread { overlayView.update(snap, sw, sh) }
-
-            if (isProcessing) {
-                droppedWhileBusy++
-                Log.e("FacePerf", "DROPPED frame (busy) - arrival gap=${"%.1f".format(sinceLastMs)}ms, dropped_total=$droppedWhileBusy")
-                return@IFrameCallback
-            }
-            isProcessing = true
-            claimed = true
-            // flipped is handed off here - released by the detection thread once it's done with
-            // it, not by this (capture) thread, since this callback must return immediately.
-            try {
-                detectionExecutor.execute {
-                    try {
-                        processFrame(flipped)
-                        val t2 = System.nanoTime()
-                        val totalMs = (t2 - t0) / 1_000_000.0
-                        if (totalMs > 0) {
-                            val instFps = 1000.0 / totalMs
-                            fpsEma = if (fpsEma == null) instFps else 0.9 * fpsEma!! + 0.1 * instFps
-                        }
-                        Log.e(
-                            "FacePerf",
-                            "arrival_gap=${"%.1f".format(sinceLastMs)}ms  nv21_to_bgr=${"%.1f".format((t1 - t0) / 1_000_000.0)}ms  " +
-                                "processFrame=${"%.1f".format((t2 - t1) / 1_000_000.0)}ms  TOTAL=${"%.1f".format(totalMs)}ms  " +
-                                "fps_if_sustained=${"%.1f".format(1000.0 / totalMs)}"
-                        )
-                    } catch (e: Throwable) {
-                        // Throwable (không chỉ Exception): OOM/Error trên thread executor cũng làm chết process.
-                        Log.e("FaceAttendance", "frame processing error", e)
-                    } finally {
-                        isProcessing = false
-                        flipped.release()
-                    }
-                }
-                handedOff = true
-            } catch (e: java.util.concurrent.RejectedExecutionException) {
-                // Executor đã shutdown (activity đang đóng) đúng lúc frame cuối tới.
-                isProcessing = false
-            }
+            handedOff = submitFrame(flipped, t0, t1, sinceLastMs)
         } catch (e: Throwable) {
             Log.e("FaceAttendance", "frameCallback error", e)
-            if (claimed && !handedOff) isProcessing = false
         } finally {
             if (!handedOff) bgrPreview?.release()
         }
+    }
+
+    /**
+     * Phần dùng chung cho khung hình từ UVC và từ camera IP: làm mới preview + overlay, rồi giao [flipped]
+     * (BGR đã lật gương) cho thread nhận diện nếu đang rảnh. Trả true = đã giao, thread nhận diện sẽ release Mat;
+     * false = người gọi tự release. Ngoại lệ (nếu có) thoát ra cho người gọi bắt, isProcessing chỉ bật ngay trước execute().
+     */
+    private fun submitFrame(flipped: Mat, t0: Long, t1: Long, sinceLastMs: Double): Boolean {
+        // The preview always refreshes here, on every frame the camera delivers - kept on this
+        // thread since it's cheap (a color convert + bitmap copy), unlike detection below.
+        updatePreviewBitmap(flipped)
+
+        // Push the last known overlay result on every frame so the bounding box moves at
+        // camera FPS rather than at detection FPS. Dropped frames still get this refresh.
+        val snap = cachedOverlayItems; val sw = cachedOverlayW; val sh = cachedOverlayH
+        runOnUiThread { overlayView.update(snap, sw, sh) }
+
+        if (isProcessing) {
+            droppedWhileBusy++
+            Log.e("FacePerf", "DROPPED frame (busy) - arrival gap=${"%.1f".format(sinceLastMs)}ms, dropped_total=$droppedWhileBusy")
+            return false
+        }
+        isProcessing = true
+        // flipped is handed off here - released by the detection thread once it's done with
+        // it, not by this (capture) thread, since this callback must return immediately.
+        try {
+            detectionExecutor.execute {
+                try {
+                    processFrame(flipped)
+                    val t2 = System.nanoTime()
+                    val totalMs = (t2 - t0) / 1_000_000.0
+                    if (totalMs > 0) {
+                        val instFps = 1000.0 / totalMs
+                        fpsEma = if (fpsEma == null) instFps else 0.9 * fpsEma!! + 0.1 * instFps
+                    }
+                    Log.e(
+                        "FacePerf",
+                        "arrival_gap=${"%.1f".format(sinceLastMs)}ms  nv21_to_bgr=${"%.1f".format((t1 - t0) / 1_000_000.0)}ms  " +
+                            "processFrame=${"%.1f".format((t2 - t1) / 1_000_000.0)}ms  TOTAL=${"%.1f".format(totalMs)}ms  " +
+                            "fps_if_sustained=${"%.1f".format(1000.0 / totalMs)}"
+                    )
+                } catch (e: Throwable) {
+                    // Throwable (không chỉ Exception): OOM/Error trên thread executor cũng làm chết process.
+                    Log.e("FaceAttendance", "frame processing error", e)
+                } finally {
+                    isProcessing = false
+                    flipped.release()
+                }
+            }
+            return true
+        } catch (e: java.util.concurrent.RejectedExecutionException) {
+            // Executor đã shutdown (activity đang đóng) đúng lúc frame cuối tới.
+            isProcessing = false
+            return false
+        }
+    }
+
+    // ── Camera IP (ảnh chụp HTTP) ─────────────────────────────────────────────
+    // Bật bằng /sdcard/EduXplore/ipcamera.json có "source":"ip" (thiếu file / "uvc" = webcam USB như cũ).
+    // Chụp ảnh JPEG 1080p liên tục (~8 fps) khi màn hình đang mở: vừa làm preview, vừa là khung hình cho nhận diện
+    // và cho nút "chụp mẫu" (enroll lấy đúng khung hình đang hiện, nên mẫu là ảnh 1080p). Không dùng RTSP/giải mã
+    // video. Đường mạng (IP eth0 + luật định tuyến) do script boot K02 giữ — xem docs/k02-device.md.
+    private var ipThread: Thread? = null
+    @Volatile private var ipRunning = false
+
+    private fun startIpCamera(cfg: IpCameraConfig) {
+        stopIpCamera()
+        ipRunning = true
+        val t = Thread({ ipCameraLoop(cfg) }, "ip-camera-snapshot")
+        t.isDaemon = true
+        ipThread = t
+        t.start()
+        Log.e("FaceAttendance", "IP camera mode: ${cfg.host}:${cfg.port} mirror=${cfg.mirror}")
+    }
+
+    private fun stopIpCamera() {
+        ipRunning = false
+        val t = ipThread ?: return
+        ipThread = null
+        t.interrupt()
+        try { t.join(1500) } catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+    }
+
+    private fun ipCameraLoop(cfg: IpCameraConfig) {
+        val sockets = if (cfg.localIp.isEmpty()) null else SnapshotClient.bindTo(cfg.localIp)
+        val client = SnapshotClient(cfg.host, cfg.port, cfg.user, cfg.password, sockets, cfg.timeoutMs)
+        val minPeriodNs = 120_000_000L // ~8 fps: đủ cho preview, đỡ tốn CPU giải mã JPEG 1080p
+        var failures = 0
+        var statusShown = false
+        var lastStart = 0L
+        while (ipRunning && !activityReleased) {
+            var flipped: Mat? = null
+            try {
+                val t0 = System.nanoTime()
+                val sinceLastMs = if (lastStart == 0L) 0.0 else (t0 - lastStart) / 1_000_000.0
+                lastStart = t0
+                val jpeg = client.fetch(cfg.snapshotPath)
+                val jpegMat = org.opencv.core.MatOfByte(*jpeg)
+                val raw = try { Imgcodecs.imdecode(jpegMat, Imgcodecs.IMREAD_COLOR) } finally { jpegMat.release() }
+                if (raw.empty()) { raw.release(); throw java.io.IOException("Không giải mã được ảnh JPEG (${jpeg.size} byte)") }
+                val frame: Mat
+                if (cfg.mirror) { frame = Mat(); Core.flip(raw, frame, 1); raw.release() } else frame = raw
+                flipped = frame
+                frameWidth = frame.cols(); frameHeight = frame.rows()
+                val t1 = System.nanoTime()
+                val handed = submitFrame(frame, t0, t1, sinceLastMs)
+                if (!handed) frame.release()
+                flipped = null
+                if (failures > 0 || !statusShown) {
+                    statusShown = true
+                    runOnUiThread { tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | camera IP ${frameWidth}x${frameHeight}" }
+                }
+                failures = 0
+                val spare = minPeriodNs - (System.nanoTime() - t0)
+                if (spare > 0) Thread.sleep(spare / 1_000_000L)
+            } catch (e: InterruptedException) {
+                flipped?.release()
+                break
+            } catch (e: Throwable) {
+                flipped?.release()
+                failures++
+                Log.e("FaceAttendance", "IP camera snapshot lỗi (#$failures): $e")
+                val msg = e.message ?: e.toString()
+                runOnUiThread { tvStatus.text = "Camera IP lỗi: $msg" }
+                // Sai mật khẩu: dừng hẳn, gửi tiếp sẽ bị Hikvision khoá IP.
+                if (msg.startsWith("HTTP 401") || msg.startsWith("Cần mật khẩu")) break
+                try { Thread.sleep(minOf(2000L, 200L * failures)) } catch (_: InterruptedException) { break }
+            }
+        }
+        Log.e("FaceAttendance", "IP camera loop ended")
     }
 
     /** Crops a padded region around a face box out of a BGR Mat - caller owns/releases the result. */
