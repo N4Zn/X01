@@ -2,7 +2,7 @@
 
 > **TL;DR**: Launcher là project Kotlin riêng ngoài repo, 2 hero card trỏ ComponentName vào ControlActivity/ClassManagementActivity. Quản lý lớp nằm ở NativePlugins/FaceEnrollAndroidLib.
 > **Đọc khi**: sửa Launcher (D:\X_projects\Launcher), ClassManagementActivity, enrolled.json/classes.json, hoặc đổi Activity entry point.
-> **Cập nhật**: 2026-10-04 (2026-10-05: hết mock, lớp Dev/5 tuổi, roster.json, điểm/lịch sử thật; trước đó tách nguyên văn từ CLAUDE.md gốc)
+> **Cập nhật**: 2026-10-21 @ 2fc78e26 (màn chụp camera IP; 2026-10-04: 2026-10-05: hết mock, lớp Dev/5 tuổi, roster.json, điểm/lịch sử thật; trước đó tách nguyên văn từ CLAUDE.md gốc)
 
 ### Launcher — Home launcher thật của K02 (`D:\X_projects\Launcher`, 2026-09-16/17)
 
