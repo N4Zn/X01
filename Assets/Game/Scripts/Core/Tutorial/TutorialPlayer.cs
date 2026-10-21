@@ -379,7 +379,10 @@ public class TutorialPlayer : MonoBehaviour
             yield return null;
         }
         Destroy(ring.gameObject);
-        if (icon != null) Destroy(icon.gameObject, 0.25f);
+        if (icon == null) yield break;
+        // timeScale = 0 trong tutorial → Destroy(obj, delay) không bao giờ chạy; chờ theo giờ thật.
+        yield return new WaitForSecondsRealtime(0.25f);
+        if (icon != null) Destroy(icon.gameObject);
     }
 
     /// <summary>Đặt hình tròn đường kính `dPct` (% chiều cao màn) tâm tại `c` (% màn hình), giữ tròn theo tỉ lệ màn.</summary>

@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "kind": "tutorial",
+  "gameId": "SubNumberDigit",
+  "frame": {
+    "xPct": 11,
+    "yPct": 5,
+    "wPct": 78,
+    "hPct": 78
+  },
+  "dim": 0.62,
+  "musicVolume": 0.35,
+  "startButton": {
+    "xPct": 89.5,
+    "yPct": 86,
+    "wPct": 9,
+    "hPct": 11,
+    "text": "BẮT ĐẦU"
+  },
+  "foot": {
+    "image": "",
+    "wPct": 3.9,
+    "hPct": 10.53,
+    "tipFromTop": 0.4,
+    "homeLeft": {
+      "xPct": 30.5,
+      "yPct": 91.58
+    },
+    "homeRight": {
+      "xPct": 69.5,
+      "yPct": 91.58
+    }
+  },
+  "firstImage": "tutorial/scene_1.png",
+  "mirrorDefault": false,
+  "steps": [
+    {
+      "type": "say",
+      "audio": "tutorial/say_1.mp3",
+      "text": "Tìm đáp án cho ô dấu hỏi.",
+      "wait": true
+    },
+    {
+      "type": "tap",
+      "left": {
+        "xPct": 18.5,
+        "yPct": 75.8
+      },
+      "right": {
+        "xPct": 91.4,
+        "yPct": 75.8
+      },
+      "mark": "correct",
+      "after": "tutorial/scene_2.png",
+      "mirror": false
+    },
+    {
+      "type": "wait",
+      "sec": 1.2
+    },
+    {
+      "type": "home"
+    },
+    {
+      "type": "scene",
+      "image": "tutorial/scene_3.png"
+    },
+    {
+      "type": "say",
+      "audio": "tutorial/say_1.mp3",
+      "text": "Tìm đáp án cho ô dấu hỏi.",
+      "wait": true
+    },
+    {
+      "type": "tap",
+      "left": {
+        "xPct": 7.4,
+        "yPct": 75.8
+      },
+      "right": {
+        "xPct": 80.4,
+        "yPct": 75.8
+      },
+      "mark": "correct",
+      "after": "tutorial/scene_4.png",
+      "mirror": false
+    },
+    {
+      "type": "wait",
+      "sec": 1.2
+    },
+    {
+      "type": "home"
+    }
+  ]
+}

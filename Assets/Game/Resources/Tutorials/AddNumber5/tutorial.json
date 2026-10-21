@@ -36,28 +36,8 @@
   "steps": [
     {
       "type": "say",
-      "audio": "",
-      "text": "Đếm xem có tất cả bao nhiêu con vật, rồi dẫm vào ô có đúng số con vật đó nhé.",
-      "wait": true
-    },
-    {
-      "type": "tap",
-      "left": {
-        "xPct": 18.6,
-        "yPct": 75.8
-      },
-      "right": {
-        "xPct": 91.4,
-        "yPct": 75.8
-      },
-      "mark": "wrong",
-      "after": "",
-      "mirror": false
-    },
-    {
-      "type": "say",
-      "audio": "",
-      "text": "Sai rồi, đếm lại nhé.",
+      "audio": "tutorial/say_1.mp3",
+      "text": "Tìm đáp án cho ô dấu hỏi.",
       "wait": true
     },
     {
@@ -72,6 +52,37 @@
       },
       "mark": "correct",
       "after": "tutorial/scene_2.png",
+      "mirror": false
+    },
+    {
+      "type": "wait",
+      "sec": 1.2
+    },
+    {
+      "type": "home"
+    },
+    {
+      "type": "scene",
+      "image": "tutorial/scene_3.png"
+    },
+    {
+      "type": "say",
+      "audio": "tutorial/say_1.mp3",
+      "text": "Tìm đáp án cho ô dấu hỏi.",
+      "wait": true
+    },
+    {
+      "type": "tap",
+      "left": {
+        "xPct": 40.6,
+        "yPct": 75.8
+      },
+      "right": {
+        "xPct": 58.3,
+        "yPct": 75.8
+      },
+      "mark": "correct",
+      "after": "tutorial/scene_4.png",
       "mirror": false
     },
     {
