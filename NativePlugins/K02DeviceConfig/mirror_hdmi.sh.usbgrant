@@ -40,11 +40,11 @@ while [ $i -lt 40 ]; do
 done
 [ $DONE = 1 ] || echo "gave up" >> $LOG
 
-# [CAMERA IP] 2026-10-21: giữ IP eth0 + luật định tuyến tới camera IP (vòng lặp vĩnh viễn, nên đặt CUỐI script;
-# service oneshot kết thúc là init giết mọi tiến trình con). Không có ipcam_net.sh thì bỏ qua như cũ.
-# Xem ipcam_net.sh + docs/k02-device.md. Log: /data/local/tmp/ipcam_net_log.txt
-if [ -f /data/local/tmp/ipcam_net.sh ]; then
-  echo "start ipcam_net watcher" >> $LOG
-  exec sh /data/local/tmp/ipcam_net.sh
+# [CAMERA IP] 2026-10-21: ipcam_net_watch.sh = chạy ipcam_net.sh (chờ camera boot -> gán IP eth0 + luật -> kiểm tra), rồi chờ sự kiện
+# link của eth0 (`ip monitor`, không poll) để gán lại khi link rớt. Đặt CUỐI script vì chặn mãi (exec: thành tiến trình chính của
+# service oneshot, init mới không giết). Không có file thì bỏ qua như cũ. Xem docs/k02-device.md. Log: /data/local/tmp/ipcam_net_log.txt
+if [ -f /data/local/tmp/ipcam_net_watch.sh ] && [ -f /data/local/tmp/ipcam_net.sh ]; then
+  echo "start ipcam_net_watch" >> $LOG
+  exec sh /data/local/tmp/ipcam_net_watch.sh
 fi
 exit 0

@@ -150,10 +150,14 @@ không giải mã liên tục tốn CPU MT8168, và ảnh không bị trễ bộ
   1. Android coi Wi-Fi là mạng mặc định → gói tới `192.168.2.x` đi qua `wlan0` (ping `-I eth0` vẫn chạy nên tưởng mạng ổn). Phải có
      `ip rule add to 192.168.2.0/24 lookup main pref 5000`.
   2. Link `eth0` rớt (rút cáp, camera/PoE mất nguồn) thì Android XOÁ IP → app báo `EADDRNOTAVAIL`. Phải gán lại mỗi khi link lên.
-  Cả hai do `NativePlugins/K02DeviceConfig/ipcam_net.sh` lo (vòng lặp 3 s, đọc `host`/`localIp` từ `ipcamera.json`), được
-  `mirror_hdmi.sh.usbgrant` gọi cuối script boot (`exec`). Log `/data/local/tmp/ipcam_net_log.txt`.
-  Cài: push `ipcam_net.sh` + `mirror_hdmi.sh.usbgrant` (→ `/data/local/tmp/mirror_hdmi.sh`) rồi reboot (cùng cách phần USB ở trên).
-  Chạy tay không cần reboot: `adb shell "su 0 sh /data/local/tmp/ipcam_net.sh"` (nền).
+  Cả hai do 2 script trong `NativePlugins/K02DeviceConfig/` lo, **không poll**:
+  - `ipcam_net.sh` (chạy 1 lần rồi thoát): chờ eth0 có link, chờ camera ping được (tối đa 240 s, camera boot ~30–90 s), gán IP + `ip rule`,
+    kiểm tra lại, OK thì thoát. Đọc `host`/`localIp` từ `ipcamera.json`.
+  - `ipcam_net_watch.sh`: lúc boot chạy `ipcam_net.sh`, rồi ngồi chờ sự kiện `ip monitor link address` của eth0 (không tốn CPU); mỗi sự kiện
+    nếu IP/luật thiếu thì chạy lại `ipcam_net.sh`. Nhờ vậy cáp lỏng / camera mất nguồn rồi bật lại tự hồi phục trong vài giây.
+  `mirror_hdmi.sh.usbgrant` `exec` watcher ở cuối script boot. Log `/data/local/tmp/ipcam_net_log.txt` (`OK sau Ns` / `HẾT HẠN`).
+  Cài: push `ipcam_net.sh`, `ipcam_net_watch.sh` và `mirror_hdmi.sh.usbgrant` (→ `/data/local/tmp/mirror_hdmi.sh`), chmod 755, rồi reboot (cùng cách phần USB ở trên).
+  Chạy tay không cần reboot: `adb shell "su 0 sh /data/local/tmp/ipcam_net.sh"`.
 - **Camera**: Hikvision khoá IP sau vài lần sai mật khẩu → code dừng ngay khi 401, không thử lại. Nên đặt giờ camera, tắt OSD thời gian
   nếu đè lên mặt; chỉnh Exposure (Max Shutter ~1/100, tắt Slow Shutter) để giảm nhoè khi người chuyển động.
 - **Thử nhanh không cần build aar**: `Tools/ip_camera_test/README.md` (`app_process` chạy `SnapshotClient`, lưu ảnh, in thời gian).

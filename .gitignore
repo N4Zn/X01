@@ -111,3 +111,6 @@ libdecor-*
 # Cấu hình riêng từng máy của Claude Code
 .claude/settings.local.json
 build-aar.log
+
+# Tool thử camera IP: sản phẩm build (dex/jar), sinh lại bằng build.sh
+Tools/ip_camera_test/out/
