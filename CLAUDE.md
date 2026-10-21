@@ -131,4 +131,4 @@ Dự án web riêng, ghi chú đầy đủ tại `WebTools/GenericGameBuilder/CL
 - 2026-10-03: GenericGame import zip → scene riêng; lớp/điểm thật (hết mock); USB/audio K02 cấu hình bằng root.
 - 2026-10-04: settings chuyển sang ControlActivity (JSON contract); wait-clear dùng chung; đóng băng 7 game; chuẩn hoá docs (tách CLAUDE.md), LFS, workflow agent (`AGENTS.md`, `handoff/`).
 - 2026-10-10: FloorStory "flow" — 16 game thành dữ liệu zip, web builder dựng/chơi thử/xuất, Unity có engine C# + importer (chưa chạy Editor); ADR 0007.
-- 2026-10-13: cơ chế chung của minigame gom về `MiniGameControllerBase` (Next in, chờ vùng sạch, dọn câu, đồng bộ 2 đội, âm lặp 4s); ADR 0008. Web builder bản cuối: v4.16 (`game_builder_v4.16.html`).
+- 2026-10-13: cơ chế chung của minigame gom về `MiniGameControllerBase` (Next in, chờ vùng sạch, dọn câu, đồng bộ 2 đội, âm lặp 4s); ADR 0008. Web builder bản cuối: v4.17 (`game_builder_v4.17.html`).

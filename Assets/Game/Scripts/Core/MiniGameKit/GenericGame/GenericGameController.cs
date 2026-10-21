@@ -412,6 +412,7 @@ public class GenericGameController : MiniGameControllerBase
             buttonDisplay.ConfigureSlots(left, right);
             buttonDisplay.onAnswerTapped += HandleAnswerTapped;
             buttonDisplay.WaitBothTeams = WaitBothActive;
+            buttonDisplay.KeepAnswerOrder = _package.settings.keepAnswerOrder;
         }
         BuildQuestionSlotUis();
     }
@@ -442,19 +443,21 @@ public class GenericGameController : MiniGameControllerBase
 
     /// <summary>Vị trí các slot của 1 nhóm cho 1 bên: manual/matrix = toạ độ đã soạn (bên phải mirror), random = xáo MỚI trong `area`
     /// mỗi lần gọi (mỗi bên random ĐỘC LẬP, không mirror cho nhau) với cỡ ô random.itemWPct×itemHPct, tránh đè nhau.</summary>
-    RectPct[] ComputePositions(GroupSpec g, Team team)
+    RectPct[] ComputePositions(GroupSpec g, Team team, bool answers = false)
     {
         int n = g.slots.Length;
+        // Nhóm đáp án: lật hay không do settings.mirrorAnswers (chung cả game); nhóm khác dùng g.mirror của chính nó.
+        bool flip = team == Team.Right && (answers ? _package.settings.mirrorAnswers : g.mirror);
         if (g.arrangement == "random")
         {
-            var area = (team == Team.Right && g.mirror) ? MirrorRect(g.area) : g.area;
+            var area = flip ? MirrorRect(g.area) : g.area;
             return GenericGameMigration.PickNonOverlapping(area, n, g.random.itemWPct, g.random.itemHPct, g.random.gapPct);
         }
         var res = new RectPct[n];
         for (int i = 0; i < n; i++)
         {
             var r = new RectPct { xPct = g.slots[i].xPct, yPct = g.slots[i].yPct, wPct = g.slots[i].wPct, hPct = g.slots[i].hPct };
-            res[i] = (team == Team.Right && g.mirror) ? MirrorRect(r) : r;
+            res[i] = flip ? MirrorRect(r) : r;
         }
         return res;
     }
@@ -467,12 +470,12 @@ public class GenericGameController : MiniGameControllerBase
         var g = rr.spec.answers;
         if (UsesSpawnFlow)
         {
-            spawnFlowDisplay.SetArea(team, team == Team.Left ? g.area : MirrorRect(g.area));
+            spawnFlowDisplay.SetArea(team, team == Team.Left || !_package.settings.mirrorAnswers ? g.area : MirrorRect(g.area));
             return;
         }
         var items = team == Team.Left ? _leftSlotItems : _rightSlotItems;
         if (items == null) return;
-        var pos = ComputePositions(g, team);
+        var pos = ComputePositions(g, team, answers: true);
         for (int i = 0; i < items.Length && i < pos.Length; i++)
         {
             if (items[i] == null) continue;
@@ -1942,7 +1945,7 @@ public class GenericGameController : MiniGameControllerBase
             questionFrame = _qFrameSliced,
             questionColor = ParseTextColor(_package.settings.questionTextColor, Color.white),
             questionFontSize = Mathf.RoundToInt(_package.settings.questionFontSize),
-            mirrorAnswers = best.answers.mirror,
+            mirrorAnswers = _package.settings.mirrorAnswers,
             fuelSlots = TutorialFuelSlots(best),
             mirrorFuel = best.collect == null || best.collect.mirror,
             target = bestTarget,

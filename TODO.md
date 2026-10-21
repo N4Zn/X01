@@ -107,9 +107,9 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] TongHopToan: mỗi bên câu riêng (đếm/cộng/trừ/dấu), chỉ ẩn kết quả C, đếm 6-10 ở đoạn 3; thử trên K02 — `ButtonDisplay.SetupPerTeam` + hook `QuestionForTeam` ở MiniGameControllerBase — (2026-10-09)
 - [ ] Thứ trong tuần + chữ cái: chờ user chọn phương án (đã bỏ Tàu 7 toa và Đi nét chữ) — (2026-10-09)
 
-## Game Builder (bản cuối v4.16) — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
+## Game Builder (bản cuối v4.17) — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
 - [ ] Đợt 1 đã xong (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh file). **User dùng thử rồi chỉnh tiếp** — (2026-10-10)
-- [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.16.html` (bản cuối; mọi bản cũ đã xoá) 2026-10-13
+- [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.17.html` (bản cuối; mọi bản cũ đã xoá) 2026-10-13
 - [ ] Định dạng chữ cho game kéo-thả v2 (câu hỏi/đáp án/item/slot): đổi schema + `GenericGameController`/`ButtonItem` + web preview — (2026-10-10)
 - [x] Game cơ chế: sân khấu kéo-thả (chọn/kéo/đổi cỡ, Chèn hình-chữ-ảnh-vật, ghi đè vị trí `p.ov`, kéo cả nhóm, Đổi cơ chế từ mẫu) — web xong 2026-10-13; **Unity cần thử**: `FlowViews.OvPos` + `cards.x` (parity chưa chạy Editor)
 - [x] Game cơ chế dùng khung chung (rail câu hỏi, tab phải, ribbon), round Tự động / Viết tay, cơ chế = chữ ký gen|views|judge, "Chỉ lấy cơ chế" khi tạo mới — web xong 2026-10-13; **Unity cần thử**: `FlowGens.FromRound`/`FlowWorld.NextRound` (khớp JS bằng test Roslyn, chưa chạy Editor)
@@ -125,6 +125,7 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Thân/ổ/hoa/nền vẽ bằng hình tô màu ở các mẫu chưa thay được ảnh; chờ user chỉ game cần rà — (2026-10-13)
 - [ ] Flow chưa có giọng đọc; khác world cũ: HinhHoc (khung nét đứt), TrungMauSac (nở nốt trứng còn lại), VoBongBay (bóng bay lên) — (2026-10-10)
 - [ ] Thay world code tay bằng flow hẳn (xoá `Worlds/*` + `FloorStorySceneBuilder.Games`) sau khi flow ổn trên K02 — (2026-10-10)
+- [ ] Unity: compile + test `settings.keepAnswerOrder` / `settings.mirrorAnswers` (v4.17) với 1 game GenericGame Combined + 1 Independent; web preview đã khớp logic — (2026-10-20)
 - [ ] Unity: compile + test cơ chế chung mới ở base (`SyncIndependentRounds` barrier, `PlayQuestionAudioOnce` lặp 4s, `CleanupIndependentDisplay`) với `ConNaoNangHon` (sync) + `NhoChuoiHinh` + 1 game GenericGame Combined/wait-both (không hồi quy) — (2026-10-13)
 - [ ] `NhoChuoiHinh2` (id trong zip user import lúc 16:52) trùng nội dung `NhoChuoiHinh` (tên hiển thị cùng "Nhớ chuỗi hình"): chọn giữ 1, xoá cái kia (scene, StoryData, registry, Build Settings, aar) — (2026-10-13)
 - [ ] `NhoChuoiHinh` không thấy "Next in …": xem lại sau khi dọn câu; nếu vẫn không hiện thì kiểm `GameSettings.RoundEndDelay`/chờ vùng sạch và thêm log — (2026-10-13)
@@ -147,4 +148,4 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Quyết: thêm ô chọn loại LiDAR trên ControlActivity (hiện chỉ sửa JSON)? Cần tuỳ chọn lật gương góc cho C1 không? — (2026-10-19)
 - [ ] C1 đảo trục (`c1_flip_x`, `c1_flip_y` mặc định bật, xem `docs/lidar-touch-algorithm.md` §3c): test hướng chạm trên sàn K02; sai thì tắt từng trục trong `lidar_config.json`, rồi chỉnh `offset_angle`/`shift_*` — (2026-10-19)
 - [x] Máy chiếu #2: bộ 2.1 (màn hình nhỏ) calib xong, đã ghi `docs/lidar-calib.md` + backup `lidar_config.json_20261020_2.1` — (2026-10-20)
-- [ ] Máy chiếu #2: calib bộ 2.2 (màn hình full) — làm sau; calib ở chế độ game (display 1), không calib theo hình mirror Launcher — (2026-10-20)
+- [x] Máy chiếu #2: bộ 2.2 (màn hình full, sàn 2,2 m × 3,87 m) calib xong, ghi `docs/lidar-calib.md` + backup `lidar_config.json_20261020_2.2` — (2026-10-20)

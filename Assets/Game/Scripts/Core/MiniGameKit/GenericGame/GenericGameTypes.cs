@@ -64,6 +64,12 @@ public class GenericGameSettings
     public string answerTextColor = "";
     /// <summary>Số cột icon trong 1 slot (câu hỏi lẫn đáp án) — mặc định 2.</summary>
     public int iconColumns = 2;
+    /// <summary>false (mặc định, hành vi gốc) = mỗi round xáo ngẫu nhiên đáp án nào nằm ô nào. true = KHÔNG xáo: đáp án i hiện đúng ô i như người soạn
+    /// đặt trong round (chung cho mọi round). Chỉ đổi thứ tự gán đáp án↔ô; kiểu bố trí "random" vẫn chọn vị trí ô ngẫu nhiên theo ý người soạn.</summary>
+    public bool keepAnswerOrder = false;
+    /// <summary>true (mặc định, hành vi gốc) = nửa phải (đội phải) lật đối xứng vị trí/vùng các ô đáp án. false = 2 bên đặt ô đáp án GIỐNG HỆT nhau
+    /// (không lật). Chung cho mọi round; thay cho `answers.mirror` từng round (field đó chỉ còn ý nghĩa với nhóm câu hỏi/thu thập).</summary>
+    public bool mirrorAnswers = true;
 }
 
 /// <summary>Toạ độ/kích thước tính theo % — dùng CHUNG cho cả 2 nửa màn hình (bên phải tự mirror

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>EduXplore Game Builder v4.16</title>
+<title>EduXplore Game Builder v4.17</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -519,7 +519,7 @@ body.rt-fx #decoHost:not(:has(.deco-card.sel)) .sec{display:none;}
     <nav id="ribTabs" role="tablist" aria-label="Thanh công cụ"></nav>
     <span class="spacer"></span>
     <input id="gameDisplayName" placeholder="Tên hiển thị game…">
-    <span class="ver" title="Phiên bản Game Builder — v4.10: thêm tuỳ chọn &quot;Phát tiếng của vật khi chạm SAI&quot; (tab Luật chơi); v4.11: chuỗi hình không có 2 hình giống nhau đứng liền nhau; v4.12: thẻ không còn bị to ra sau khi chạm; v4.13: Lưới thẻ có ảnh mặt úp, vật có khung riêng thì bỏ thẻ trắng; v4.14: chạm sai liên tục không làm vật trôi khỏi chỗ; v4.15: dải hình — hình lật ra cùng cỡ ô ?, chọn đúng thì sáng lên; v4.16: Lưới thẻ có kiểu xếp chữ U (hàng trên + 2 bên)">v4.16</span>
+    <span class="ver" title="Phiên bản Game Builder — v4.10: thêm tuỳ chọn &quot;Phát tiếng của vật khi chạm SAI&quot; (tab Luật chơi); v4.11: chuỗi hình không có 2 hình giống nhau đứng liền nhau; v4.12: thẻ không còn bị to ra sau khi chạm; v4.13: Lưới thẻ có ảnh mặt úp, vật có khung riêng thì bỏ thẻ trắng; v4.14: chạm sai liên tục không làm vật trôi khỏi chỗ; v4.15: dải hình — hình lật ra cùng cỡ ô ?, chọn đúng thì sáng lên; v4.16: Lưới thẻ có kiểu xếp chữ U (hàng trên + 2 bên); v4.17: Cài đặt chung thêm &quot;Giữ nguyên thứ tự đáp án (không xáo)&quot; và &quot;Đáp án nửa phải lật đối xứng&quot; (bỏ tick = 2 bên giống nhau); chế độ Tự đặt từng ô có ô nhập Rộng/Cao % của ô đang chọn + &quot;Áp cho tất cả ô&quot;">v4.17</span>
     <input type="file" id="openGameInput" accept=".zip" style="display:none">
     <button class="btn" id="btnPlaytest" title="Chơi thử toàn màn hình">▶ Chơi thử</button>
   </header>
@@ -575,6 +575,8 @@ body.rt-fx #decoHost:not(:has(.deco-card.sel)) .sec{display:none;}
         <div class="srow"><button type="button" class="btn cyc" id="cycWrong"></button></div>
         <div class="srow"><label class="chk"><input type="checkbox" id="hasTargetScore"> Hiện điểm mục tiêu</label><input type="number" id="targetScore" min="0" value="10" style="width:56px; display:none"></div>
         <div class="srow"><label class="chk"><input type="checkbox" id="showTint" checked> Tô xanh/đỏ khi đúng/sai</label></div>
+        <div class="srow"><label class="chk" title="Đáp án i luôn nằm đúng ô i như bạn đặt trong từng round, không bị xáo ngẫu nhiên mỗi lượt. (Kiểu sắp xếp Random vùng vẫn chọn vị trí ô ngẫu nhiên.)"><input type="checkbox" id="keepAnswerOrder"> Giữ nguyên thứ tự đáp án (không xáo)</label></div>
+        <div class="srow"><label class="chk" title="Bỏ tick = vị trí/vùng các ô đáp án của 2 đội GIỐNG HỆT nhau (không lật đối xứng nửa phải). Câu hỏi và vùng thu thập vẫn có tuỳ chọn riêng."><input type="checkbox" id="mirrorAnswers" checked> Đáp án nửa phải lật đối xứng</label></div>
         </div>
       </details>
 
@@ -668,6 +670,9 @@ body.rt-fx #decoHost:not(:has(.deco-card.sel)) .sec{display:none;}
         <div class="canvas-toolbar" id="arrangeToolsManual">
           <button class="btn sm" id="btnAddSlot">+ Thêm ô đáp án</button>
           <button class="btn sm danger" id="btnDeleteSelected" disabled>Xoá ô đang chọn</button>
+          <label style="margin:0" title="Kích thước ô đang chọn (% nửa màn hình) — hoặc kéo góc dưới-phải của ô">Rộng ô%</label><input type="number" id="manualItemW" min="2" max="100" step="0.5" style="width:56px" disabled>
+          <label style="margin:0" id="manualItemHLabel">Cao ô%</label><input type="number" id="manualItemH" min="2" max="100" step="0.5" style="width:56px" disabled>
+          <button class="btn sm" id="btnApplySizeAll" disabled title="Đặt mọi ô của nhóm này bằng kích thước ô đang chọn (giữ vị trí, tự dịch vào trong nếu tràn mép)">Áp cho tất cả ô</button>
         </div>
         <div class="canvas-toolbar" id="arrangeToolsCollect" style="display:none">
           <label style="margin:0; display:flex; align-items:center; gap:4px"><input type="checkbox" id="collectAutoStretch"> Tự co giãn theo số đáp án đúng</label>
@@ -2978,7 +2983,7 @@ function newItemFxSet(){ const o = {}; ITEM_TRIGGERS.forEach(t=> o[t.id] = { eff
 let game = {
   schemaVersion: 2,
   meta: { gameId:"ThuNghiem1", displayName:"Thử nghiệm 1", category:"Đếm" },
-  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, waitBothTeams:false, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 },
+  settings: { playMode:"Independent", answerMode:"Single", scoringMode:"perCorrectCount", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, waitBothTeams:false, showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2, keepAnswerOrder:false, mirrorAnswers:true },
   layout: {
     spawnFlow: { enabled:false, direction:"BottomToTop", itemWPct:15, itemHPct:15, speedPct:25, spawnIntervalSec:1, maxConcurrent:4 },
     background: null,     // tên file trong assets/ (vd "bg.png"), null = không có nền
@@ -3238,6 +3243,13 @@ function initSettingsPanel(){
   tintEl.checked = game.settings.showCorrectWrongTint;
   tintEl.addEventListener('change', ()=> game.settings.showCorrectWrongTint = tintEl.checked);
 
+  const keepOrdEl = document.getElementById('keepAnswerOrder');
+  keepOrdEl.checked = !!game.settings.keepAnswerOrder;
+  keepOrdEl.addEventListener('change', ()=> game.settings.keepAnswerOrder = keepOrdEl.checked);
+  const mirAnsEl = document.getElementById('mirrorAnswers');
+  mirAnsEl.checked = game.settings.mirrorAnswers !== false;
+  mirAnsEl.addEventListener('change', ()=>{ game.settings.mirrorAnswers = mirAnsEl.checked; renderStage(); });
+
   document.getElementById('flatPoints').value = game.settings.flatPoints;
   document.getElementById('flatPoints').addEventListener('input', e=>{
     game.settings.flatPoints = Math.max(1, parseInt(e.target.value||'1',10));
@@ -3363,7 +3375,9 @@ function syncArrangementUi(){
   document.getElementById('segSpawnDir').querySelectorAll('button').forEach(b=> b.classList.toggle('active', b.dataset.v===sf.direction));
   document.getElementById('segShape').querySelectorAll('button').forEach(b=> b.classList.toggle('active', b.dataset.v===g.shape));
   const locked = isShapeLocked();
-  ['matrixItemHLabel','matrixItemH','randItemHLabel','randItemH','spawnItemHLabel','spawnItemH'].forEach(id=> document.getElementById(id).style.display = locked ? 'none' : '');
+  // Vuông/Tròn chỉ có 1 kích thước: ẩn "Cao", đổi nhãn "Rộng" thành "Cạnh"/"Đường kính"
+  ['manualItemW','matrixItemW','randItemW','spawnItemW'].forEach(id=>{ const l = document.getElementById(id).previousElementSibling; if (l) l.textContent = !locked ? 'Rộng ô%' : (G().shape==='circle' ? 'Đường kính ô%' : 'Cạnh ô%'); });
+  ['manualItemHLabel','manualItemH','matrixItemHLabel','matrixItemH','randItemHLabel','randItemH','spawnItemHLabel','spawnItemH'].forEach(id=> document.getElementById(id).style.display = locked ? 'none' : '');
   document.getElementById('btnAddSlot').textContent = editGroup==='question' ? '+ Thêm ô câu hỏi' : (editGroup==='collect' ? '+ Thêm ô thu thập' : '+ Thêm ô đáp án');
 }
 
@@ -3479,7 +3493,7 @@ function renderStage(){
     if (key==='collect' && !cur && !usesFlyToStay()) return;
     const spawnAns = key==='answers' && game.layout.spawnFlow.enabled;
     const sharedQ = key==='question' && shared;
-    const flipRight = !((key==='question' || key==='collect') && g.mirror===false);
+    const flipRight = key==='answers' ? game.settings.mirrorAnswers !== false : !((key==='question' || key==='collect') && g.mirror===false);
     if (cur && (mode==='random' || mode==='matrix' || mode==='spawn')){
       if (sharedQ) qLayer.appendChild(makeRAreaEl(g.area, QW, QH, false));
       else {
@@ -3504,6 +3518,7 @@ function renderStage(){
   }, true);
 
   document.getElementById('btnDeleteSelected').disabled = selectedSlot < 0;
+  syncManualSizeUi();
   document.getElementById('canvasHint').textContent = placingTarget
     ? 'Bấm vào vị trí bất kỳ trong nửa TRÁI để đặt điểm đến cho hiệu ứng bay'
     : (editGroup==='question' && shared ? 'Chế độ Gộp: câu hỏi là 1 vùng CHUNG — kéo tự do trên cả 2 nửa màn hình · ' : '') + 'Kéo để di chuyển · kéo góc dưới-phải để đổi kích thước · nhóm mờ = nhóm kia (đổi nhóm ở thanh trên)';
@@ -3712,6 +3727,31 @@ function relayoutActiveGroup(){
 document.getElementById('btnAddSlot').addEventListener('click', ()=> addSlot(activeRoundIdx, editGroup));
 document.getElementById('btnDeleteSelected').addEventListener('click', ()=>{
   if (selectedSlot>=0) removeSlot(activeRoundIdx, editGroup, selectedSlot);
+});
+/// "Tự đặt từng ô": ô nhập Rộng/Cao % của ô đang chọn (ngoài việc kéo góc) + "Áp cho tất cả ô". Vuông/Tròn: cao tự khoá theo rộng.
+function syncManualSizeUi(){
+  const s = selectedSlot >= 0 ? G().slots[selectedSlot] : null, wEl = document.getElementById('manualItemW'), hEl = document.getElementById('manualItemH');
+  wEl.disabled = !s; hEl.disabled = !s || isShapeLocked(); document.getElementById('btnApplySizeAll').disabled = !s;
+  if (!s) return;
+  const r1v = v=> String(Math.round(v*10)/10);
+  if (document.activeElement !== wEl) wEl.value = r1v(s.wPct);
+  if (document.activeElement !== hEl) hEl.value = r1v(s.hPct);
+}
+['manualItemW','manualItemH'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    const s = selectedSlot >= 0 ? G().slots[selectedSlot] : null; if (!s) return;
+    const w = parseFloat(document.getElementById('manualItemW').value), h = parseFloat(document.getElementById('manualItemH').value);
+    if (!(w >= 2) && id==='manualItemW') return; if (!(h >= 2) && id==='manualItemH' && !isShapeLocked()) return;
+    if (id==='manualItemW' || isShapeLocked()) s.wPct = clamp(w, 2, 100);
+    s.hPct = isShapeLocked() ? clamp(lockedHeightFor(s.wPct), 2, 100) : (id==='manualItemH' ? clamp(h, 2, 100) : s.hPct);
+    s.xPct = clamp(s.xPct, 0, 100 - s.wPct); s.yPct = clamp(s.yPct, 0, 100 - s.hPct);
+    renderStage();
+  });
+});
+document.getElementById('btnApplySizeAll').addEventListener('click', ()=>{
+  const g = G(), s = selectedSlot >= 0 ? g.slots[selectedSlot] : null; if (!s) return;
+  g.slots.forEach(o=>{ o.wPct = s.wPct; o.hPct = s.hPct; o.xPct = clamp(o.xPct, 0, 100 - o.wPct); o.yPct = clamp(o.yPct, 0, 100 - o.hPct); });
+  renderStage(); renderRounds();
 });
 function recomputeMatrixSlots(){
   const g = G();
@@ -4424,7 +4464,7 @@ document.getElementById('btnExport').addEventListener('click', doExport);
 // không có chỗ lưu nào khác ngoài Export, đây là cách nhanh nhất để tạo 1 BIẾN THỂ mới mà không
 // phải chỉnh lại từ đầu.
 // ─────────────────────────────────────────────────────────────────
-const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, waitBothTeams:true,showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2 };
+const DEFAULT_SETTINGS = { playMode:"Combined", answerMode:"Single", scoringMode:"flat", flatPoints:1, countdownMode:"nextInN", countdownSeconds:3, hasTargetScore:false, targetScore:10, wrongEndsRound:true, waitBothTeams:true,showCorrectWrongTint:true, questionAudioOnly:false, questionFontSize:50, answerFontSize:50, questionTextColor:"", answerTextColor:"", iconColumns:2, keepAnswerOrder:false, mirrorAnswers:true };
 const DEFAULT_LAYOUT = { spawnFlow:{enabled:false,direction:"BottomToTop",itemWPct:15,itemHPct:15,speedPct:25,spawnIntervalSec:1,maxConcurrent:4}, background:null, backgroundAudio:null, qFrame:null, slotFrames:[], layerOrder:[], decorations:[] };
 const DEFAULT_EFFECTS = { onIdle:newActionFx(), onCorrectTap:newActionFx(), onWrongTap:newActionFx(), onCorrectRemove:newActionFx() };
 
@@ -4532,6 +4572,8 @@ function syncUiFromGame(keepSel){
   document.getElementById('selAnswerMode').value = game.settings.answerMode;
   document.getElementById('flatPoints').value = game.settings.flatPoints;
   document.getElementById('showTint').checked = game.settings.showCorrectWrongTint;
+  document.getElementById('keepAnswerOrder').checked = !!game.settings.keepAnswerOrder;
+  document.getElementById('mirrorAnswers').checked = game.settings.mirrorAnswers !== false;
   document.getElementById('waitBothTeams').checked = !!game.settings.waitBothTeams;
   updateWaitBothVisibility();
   fontColorSync.forEach(f=> f());
@@ -5999,8 +6041,9 @@ function overlapAreaWithGap(a,b,gap){
   return ox*oy;
 }
 /// Vị trí các slot của 1 nhóm cho 1 bên màn hình: Random vùng = xáo mới trong vùng (mỗi lần gọi), còn lại = toạ độ đã soạn (bên phải mirror).
-function positionsFor(g, side){
-  const flip = side==='right' && g.mirror !== false;
+function positionsFor(g, side, isAnswers){
+  // Nhóm đáp án: lật hay không do game.settings.mirrorAnswers (chung cả game); nhóm khác theo g.mirror (khớp Unity ComputePositions).
+  const flip = side==='right' && (isAnswers ? game.settings.mirrorAnswers !== false : g.mirror !== false);
   if (g.arrangement === 'random'){
     const area = flip ? mirror(g.area) : g.area;
     return pickNonOverlapping(area, g.slots.length, g.random.itemWPct, g.random.itemHPct, g.random.gapPct||0);
@@ -6278,11 +6321,12 @@ function renderQuestion(side, round){
 function renderAnswers(side, round, onPick){
   const s = pt.sides[side];
   Array.from(s.half.querySelectorAll('.pt-slot')).forEach(n=>{ stopIdleOnElement(n); n.remove(); });
-  const pos = positionsFor(round.aGroup, side);
+  const pos = positionsFor(round.aGroup, side, true);
   const W = s.half.clientWidth, H = s.half.clientHeight;
   const n = Math.min(round.answers.length, pos.length);
   const order = Array.from({length:round.answers.length}, (_,i)=>i);
-  for (let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  // settings.keepAnswerOrder: không xáo — đáp án i đúng ô i (khớp Unity ButtonDisplay.KeepAnswerOrder)
+  if (!game.settings.keepAnswerOrder) for (let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
   const frames = slotFrameList();
   const fs = game.settings.answerFontSize;
 
@@ -6450,7 +6494,7 @@ function spawnOneItem(side, onPick){
   const idx = candidates[Math.floor(Math.random()*candidates.length)];
   const a = round.answers[idx];
   const ga = round.aGroup.area;
-  const area = side==='left' ? ga : mirror(ga);
+  const area = (side==='left' || game.settings.mirrorAnswers === false) ? ga : mirror(ga);
   const obstacles = [];
   st.items.forEach(o=>{ if (o.el && o.el.isConnected) obstacles.push({x:o.x, y:o.y}); });
   const path = spawnPathFor(area, sf, obstacles);
@@ -7639,6 +7683,7 @@ function initShell(){
       group('Game', [rowOf('gameId'), rowOf('cycPlayMode'), rowOf('selAnswerMode')], 'col'),
       group('Chữ & ô', [rowOf('questionFontSize'), rowOf('iconColumns')], 'col'),
       group('Điểm & lượt', [rowOf('cycScoring'), rowOf('cycCountdown'), rowOf('cycWrong'), rowOf('hasTargetScore'), rowOf('showTint'), $e('rowWaitBoth')], 'colflow'),
+      group('Đáp án', [rowOf('keepAnswerOrder'), rowOf('mirrorAnswers')], 'col'),
       group('Nền chung', [rowOf('bgThumb'), rowOf('qFrameThumb'), rowOf('slotFramesThumbs')], 'grid2'),
       group('Nhân vật / Item', [btn('Thêm nhân vật', 'c', click('btnAddDeco'), 'Thêm đồ vật/con vật trang trí cho cả game', 'Trang trí cả game'), layBtn]),
       group('Thể loại', [autoLbl, poolBtn], 'col')],

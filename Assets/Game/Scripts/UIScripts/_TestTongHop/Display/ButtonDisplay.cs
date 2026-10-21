@@ -22,6 +22,10 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
     /// kết thúc round — controller (MiniGameControllerBase) tự đếm số đội đã xong qua onResult/onPlayerFailed.</summary>
     public bool WaitBothTeams { get; set; }
 
+    /// <summary>true = KHÔNG xáo: đáp án hiện đúng thứ tự trong <c>QuestionData.answers</c> (ô i = đáp án thứ i). Mặc định false (xáo mỗi round như cũ) —
+    /// chỉ game nào đặt true (vd GenericGame qua settings.keepAnswerOrder) mới đổi, các game dùng chung ButtonDisplay không bị ảnh hưởng.</summary>
+    public bool KeepAnswerOrder { get; set; }
+
     Action<bool, Team, int[]> _onResult;
     Action<Team>              _onPlayerFailed;
     Action<Team>              _onPartialCorrect;
@@ -481,6 +485,17 @@ public class ButtonDisplay : MonoBehaviour, IAnswerDisplay, IRevealable
         // 2. Shuffle toàn bộ valid indices rồi lấy các phần tử chưa được chọn
         var idx = new int[n];
         for (int i = 0; i < n; i++) idx[i] = i;
+        if (KeepAnswerOrder)
+        {
+            // Không xáo: lấp chỗ còn lại theo thứ tự gốc, rồi trả về theo thứ tự gốc (đáp án i ở ô i khi đủ chỗ).
+            foreach (int i in idx)
+            {
+                if (result.Count >= take) break;
+                if (included.Add(i)) result.Add(i);
+            }
+            result.Sort();
+            return result.ToArray();
+        }
         for (int i = n - 1; i > 0; i--)
         {
             int j = UnityEngine.Random.Range(0, i + 1);

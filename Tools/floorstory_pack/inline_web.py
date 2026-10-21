@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Nhúng WebTools/GenericGameBuilder/fs/*.js + MẪU GAME vào game_builder_v4.16.html (giữa <!--FS-JS-BEGIN--> và <!--FS-JS-END-->)
+"""Nhúng WebTools/GenericGameBuilder/fs/*.js + MẪU GAME vào game_builder_v4.17.html (giữa <!--FS-JS-BEGIN--> và <!--FS-JS-END-->)
 để builder vẫn là 1 file. Mẫu game đọc THẲNG từ WebTools/FloorStoryFlows/*.zip (meta.fsData) — zip là nguồn duy nhất, không có bản sao khác.
 Chạy sau mỗi lần sửa fs/*.js hoặc zip:  python Tools/floorstory_pack/inline_web.py"""
 import glob, json, os, sys, zipfile
 here = os.path.dirname(os.path.abspath(__file__))
 web = os.path.join(here, '..', '..', 'WebTools', 'GenericGameBuilder')
 flows = os.path.join(here, '..', '..', 'WebTools', 'FloorStoryFlows')
-html = os.path.join(web, sys.argv[1] if len(sys.argv) > 1 else 'game_builder_v4.16.html')
+html = os.path.join(web, sys.argv[1] if len(sys.argv) > 1 else 'game_builder_v4.17.html')
 order = ['fs_sfx.js', 'fs_core.js', 'fs_expr.js', 'fs_game.js', 'fs_act.js', 'fs_flow.js', 'fs_edit.js']
 s = open(html, encoding='utf-8').read()
 a, b = '<!--FS-JS-BEGIN-->', '<!--FS-JS-END-->'

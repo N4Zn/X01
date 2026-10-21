@@ -277,7 +277,7 @@ L0  Platform      Viewport 2 đội · HUD · Input tap · Audio · Log · Score
 8. **Chơi thử hai nửa → Xuất zip → Import Unity** (đã có).
 Mẫu (template) = một combination đặt sẵn cho 6 chỗ cắm; người dùng mở lên là có game chạy được rồi mới sửa — đây là chỗ 16 game FloorStory + 10 game GenericGame trở thành **thư viện mẫu**, không còn là engine riêng.
 
-### 10.5 Khoảng trống so với builder (v4.1 lúc khảo sát; bản cuối nay v4.16) (xếp theo tầng phủ game)
+### 10.5 Khoảng trống so với builder (v4.1 lúc khảo sát; bản cuối nay v4.17) (xếp theo tầng phủ game)
 | Khoảng trống | Tầng | Game được mở khoá | Ghi chú |
 |---|---|---|---|
 | Judge `tập-đủ`, `cặp`, `thứ-tự` chọn được ở UI cho Generator `chọn` | L5 | DemQua, SentenceBuilder, PlanetOrder, F4 | engine đã có `order/pairs`, UI chưa phơi hết |

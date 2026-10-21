@@ -17,7 +17,7 @@
 - **Game mới = chọn từ thư viện game mẫu** (các game điển hình đã làm), rồi sửa.
 - **Mở/Lưu/Xuất gom vào menu File** (như PowerPoint); nút **▶ Chơi thử luôn hiện, ngoài cùng bên phải, cùng hàng với thanh công cụ** → bỏ hàng tiêu đề riêng.
 - **Âm thanh: chỉ cần thêm file**, không dùng giọng đọc của trình duyệt; tối ưu sau.
-- Tool đặt tên **Game Builder** (đợt 1 là v4.0; bản cuối hiện tại **v4.16** — `game_builder_v4.16.html`).
+- Tool đặt tên **Game Builder** (đợt 1 là v4.0; bản cuối hiện tại **v4.17** — `game_builder_v4.17.html`).
 
 **Giả định, cần xác nhận** (user chưa trả lời): (a) mỗi round chạy bằng engine hợp với loại của nó, chưa gộp 1 engine; (b) công cụ buổi học (chia đội/đồng hồ/vòng quay) ngoài phạm vi; (c) "phản ứng nền ở điểm chạm" và "chế độ giác quan" ưu tiên cao; (d) ưu tiên nhóm **pad** (vận động) hay **va chạm/bắn** trước.
 
@@ -195,7 +195,7 @@ Bỏ qua: Order Out, Pattern Puzzle (chưa rõ luật). Ghost Clash, xu/avatar: 
 5. **Chuyển 16 game FloorStory sang cấu trúc mới**, đồng bộ importer Unity.
 6. **Lõi Sim** (rào chắn cho mọi game động): đồng hồ + `$t`, thân/hành vi, spawner, va chạm, `rules`, hàm biểu thức mới, lớp gỡ lỗi, **JS và C# kèm test parity**. Thử bằng "chạy tại chỗ" nhỏ + một cảnh thử pad trên K02.
 7. **Mô-đun theo ưu tiên**: (a) pad + `alternate/rate/chord` + `track` → game vận động; (b) `pick-place/cycle/hotspot` + `board/palette/clock` + `match-key/expr` → phủ nhiều BBA nhất; (c) `lanes` + `timed-tap` + bản nhịp → magic tile; (d) `shoot` + `line` + `scatter` → đào vàng, bắn trứng quiz; (e) hiệu ứng tri giác; (f) `voxel`, `sim`, `bubbles`; (g) buzz/avoid/tile.
-Phần engine đã tách: `WebTools/GenericGameBuilder/fs/*.js` nhúng vào `game_builder_v4.16.html` bằng `Tools/floorstory_pack/inline_web.py`; phần glue UI vẫn nằm trong HTML.
+Phần engine đã tách: `WebTools/GenericGameBuilder/fs/*.js` nhúng vào `game_builder_v4.17.html` bằng `Tools/floorstory_pack/inline_web.py`; phần glue UI vẫn nằm trong HTML.
 
 ## 11. Rủi ro / câu hỏi mở
 - **Lệch web ↔ Unity** của Sim: bước cố định, `double`, cùng thứ tự cập nhật; test bằng kịch bản input cố định. Phải chốt thứ tự: input → hành vi → di chuyển → va chạm → sự kiện.
@@ -208,8 +208,8 @@ Phần engine đã tách: `WebTools/GenericGameBuilder/fs/*.js` nhúng vào `gam
 - Nguồn khảo sát: trang hãng (EyeClick, LUMOplay, Lü) chỉ có tên game; luật BBA lấy từ Wikipedia/wiki fan, chưa chơi thử.
 
 ## 12. Trạng thái triển khai (đợt 1, Builder v4.0, 2026-10-10)
-Làm lúc đó trên `game_builder_v4.0.html` (nay đã gộp vào `game_builder_v4.16.html`, bản cuối):
-- ✅ **Khung kiểu PowerPoint cho editor kéo-thả** (`game_builder_v4.16.html`): hàng tab File | Cài đặt chung | Trang chủ | Chèn | Hiệu ứng | Xem (+ tên game, nhãn phiên bản, ▶ Chơi thử) → ribbon → [danh sách round | sân khấu | thuộc tính]. Cài đặt chung hiện thẳng trên ribbon (không còn cột/menu kéo ra); hiệu ứng gán theo đối tượng đang chọn (không chọn = hiệu ứng chung); Ctrl+D nhân bản round, Delete xoá đối tượng/round; thư viện ảnh đáp án sai chỉ hiện ở thể loại tự sinh câu hỏi.
+Làm lúc đó trên `game_builder_v4.0.html` (nay đã gộp vào `game_builder_v4.17.html`, bản cuối):
+- ✅ **Khung kiểu PowerPoint cho editor kéo-thả** (`game_builder_v4.17.html`): hàng tab File | Cài đặt chung | Trang chủ | Chèn | Hiệu ứng | Xem (+ tên game, nhãn phiên bản, ▶ Chơi thử) → ribbon → [danh sách round | sân khấu | thuộc tính]. Cài đặt chung hiện thẳng trên ribbon (không còn cột/menu kéo ra); hiệu ứng gán theo đối tượng đang chọn (không chọn = hiệu ứng chung); Ctrl+D nhân bản round, Delete xoá đối tượng/round; thư viện ảnh đáp án sai chỉ hiện ở thể loại tự sinh câu hỏi.
 - ✅ Thanh trên 1 hàng: menu **File** (Game mới / Mở / Lưu thành / Xuất zip) + tên game + nhãn phiên bản + **▶ Chơi thử** ngoài cùng bên phải, luôn hiện.
 - ✅ **File → Game mới** = thư viện mẫu (Trang trống kéo-thả + 16 game FloorStory) → đặt mã game → sửa tiếp.
 - ✅ Game cơ chế chơi thử **toàn màn hình** (`#playtest`, dùng chung với game kéo-thả); bỏ khung chơi thử nhỏ.

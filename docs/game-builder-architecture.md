@@ -186,7 +186,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 ## 11. Ví dụ dựng từ đầu: **Đếm khối hộp**
 **Game gốc** (FloorStory `DemKhoiHop`, zip `WebTools/FloorStoryFlows/DemKhoiHop.zip` + view `stack` trong `fs_flow.js`): hiện một cụm N khối (N tăng dần: 5 câu đầu ≤ 3, rồi tối đa 5 → 10, mỗi mức 2 câu — tham số `easyCount/easyMax/rampFrom/growEvery` của generator `number`), bé chạm số đúng trong 3 số; sai thì thử lại; **sai từ lần thứ 2 → các khối được đếm lần lượt 1, 2, 3… (số nằm ngoài hình, có gạch chỉ vào từng khối) và số đúng nhấp nháy**; khi đúng cũng đếm lại rồi pháo giấy.
 
-### 11.1 Thao tác của cô giáo (tên tab/nút thật của builder v4.16)
+### 11.1 Thao tác của cô giáo (tên tab/nút thật của builder v4.17)
 | # | Tab / nút | Thao tác | Đối tượng · ổ cắm | Lần | Có sẵn |
 |---|---|---|---|---|---|
 | 0 | File → **Game mới** | chọn game mẫu quiz gần nhất rồi sửa | — | 1 | ✔ |
@@ -220,7 +220,7 @@ Ký hiệu: ✔ = v2 đủ · ✘ = cần thêm mục ổ cắm / thuộc tính.
 → +6–8 thao tác. *Lần lượt trên nhóm* cũng là hiệu ứng dùng cho **Nhớ chuỗi** (hiện lần lượt rồi úp): cùng một mục thư viện, khác tham số (việc làm với mỗi phần tử: hiện / nháy / đánh số; kết thúc: giữ / úp / ẩn).
 
 ## 12. Chưa kiểm chứng
-- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.16.html` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
+- Cách gõ tay 10 round ở bước 7 và các nhãn nút ở §11.1 lấy từ `game_builder_v4.17.html` (ribbon: File · Cài đặt chung · Trang chủ · Chèn · Hiệu ứng · Xem); chưa chạy thử trên trình duyệt.
 - Thời lượng/độ chặn (blocking) chính xác của từng bước trong `on.right/on.wrong` của `CauBacQua` (bảng §6.3 là minh hoạ).
 - Mức độ tái dùng `ButtonDisplay` cho "thẻ úp + ghép cặp" ở Unity (cần đọc `AnswerValidator.cs`, `ButtonDisplay.cs`).
 - Các họ game viết tay (Tổng hợp CSV, Nghe-tìm, Phép tính, Quiz Kit) mới đọc ở mức field/ghi chú đầu class (xem generalization §9).

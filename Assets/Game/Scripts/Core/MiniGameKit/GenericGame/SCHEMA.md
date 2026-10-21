@@ -52,6 +52,8 @@ lúc nạp (`GenericGameMigration.FromV1`, cùng quy tắc với `migrateV1` tro
     "wrongEndsRound": true,          // false = "cho thử lại" — xem mục riêng bên dưới
     "waitBothTeams": false,          // true (chỉ Combined) = 2 đội cùng câu, mỗi đội chơi hết câu của mình, CẢ 2 xong mới sang câu — xem mục "Chờ cả 2 đội"
     "showCorrectWrongTint": true,    // false = tắt tô xanh/đỏ/xám mặc định của Kit
+    "keepAnswerOrder": false,        // true = KHÔNG xáo: đáp án i hiện đúng ô i như người soạn đặt (chung mọi round, ButtonDisplay.KeepAnswerOrder). Mặc định xáo mỗi round
+    "mirrorAnswers": true,           // false = ô đáp án 2 bên đặt GIỐNG HỆT nhau (không lật nửa phải); thay cho answers.mirror từng round (chung cả game)
     "questionAudioOnly": false,      // true = ẩn hẳn chữ/ảnh/icon câu hỏi, chỉ phát âm thanh slot câu hỏi (chỉ Combined) — xem mục riêng
     "questionFontSize": 0, "answerFontSize": 0, "questionTextColor": "", "answerTextColor": ""
   },
