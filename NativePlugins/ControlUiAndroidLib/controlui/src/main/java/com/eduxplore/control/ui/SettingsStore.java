@@ -20,6 +20,7 @@ public final class SettingsStore {
     public float roundEndDelay = 2.0f;
     public float flowSpeed = 1.0f;
     public int waitForClear = 1; // 1: bật, 0: tắt, -1: không đổi
+    public int showTutorial = 1; // 1: chạy hướng dẫn trước khi chơi (mặc định), 0: vào thẳng game
     public int showRealName = 0; // 0: tên thường gọi (mặc định), 1: tên thật (cả 2 chỉ hiện 2 tiếng cuối)
     public int teamPlay = 1;     // 1: chơi theo đội (mặc định), 0: 1 vs 1 (mỗi bên 1 người cả ván, tên theo số lần nhận diện)
 
@@ -47,6 +48,7 @@ public final class SettingsStore {
             roundEndDelay = (float) o.optDouble("roundEndDelay", roundEndDelay);
             flowSpeed = (float) o.optDouble("flowSpeed", flowSpeed);
             waitForClear = o.optInt("waitForClear", waitForClear);
+            showTutorial = o.optInt("showTutorial", showTutorial);
             showRealName = o.optInt("showRealName", showRealName);
             teamPlay = o.optInt("teamPlay", teamPlay);
         } catch (Exception e) {
@@ -74,6 +76,7 @@ public final class SettingsStore {
         o.put("roundEndDelay", roundEndDelay);
         o.put("flowSpeed", flowSpeed);
         o.put("waitForClear", waitForClear);
+        o.put("showTutorial", showTutorial);
         o.put("showRealName", showRealName);
         o.put("teamPlay", teamPlay);
         return o;

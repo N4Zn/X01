@@ -41,9 +41,10 @@ public class GameSettings : Singleton<GameSettings>
     /// OR với cờ riêng từng scene (MiniGameControllerBase.waitForZoneClearBeforeCountdown).</summary>
     public bool WaitForClear { get; set; } = true;
 
-    /// <summary>Bật = hiện màn hướng dẫn (tutorial) trước khi chơi. Mặc định TẮT (2026-10-05): mọi game
-    /// vào thẳng "Start in…". Controller gọi qua <see cref="TutorialPanel.Enabled"/>.</summary>
-    public bool ShowTutorial { get; set; } = false;
+    /// <summary>Bật (mặc định, từ 2026-10-22) = chạy hướng dẫn cho game có tutorial: <see cref="TutorialPlayer"/>
+    /// (Resources/Tutorials/{game}) và GenericSumTutorial; tắt = mọi game vào thẳng "Start in…". Ô tick ở tab Cài đặt
+    /// của ControlActivity. KHÔNG áp cho <see cref="TutorialPanel"/> (panel video cũ, đã ngừng dùng).</summary>
+    public bool ShowTutorial { get; set; } = true;
 
     /// <summary>Tên người chơi hiện trên màn chiếu: false (mặc định) = tên thường gọi, true = tên thật.
     /// Cả 2 chế độ chỉ hiện 2 tiếng cuối — xem <see cref="PlayerNameDisplay"/>.</summary>
@@ -67,7 +68,7 @@ public class GameSettings : Singleton<GameSettings>
         RoundEndDelay = Mathf.Clamp(PlayerPrefs.GetFloat(KeyRoundEndDelay, 2f), RoundEndDelayMin, RoundEndDelayMax);
         FlowSpeed = Mathf.Max(FlowSpeedMin, PlayerPrefs.GetFloat(KeyFlowSpeed, 1f));
         WaitForClear = PlayerPrefs.GetInt(KeyWaitForClear, 1) != 0;
-        ShowTutorial = PlayerPrefs.GetInt(KeyShowTutorial, 0) != 0;
+        ShowTutorial = PlayerPrefs.GetInt(KeyShowTutorial, 1) != 0;
         ShowRealName = PlayerPrefs.GetInt(KeyShowRealName, 0) != 0;
         TeamPlay = PlayerPrefs.GetInt(KeyTeamPlay, 1) != 0;
     }
@@ -79,7 +80,7 @@ public class GameSettings : Singleton<GameSettings>
         public float musicVolume = -1f, sfxVolume = -1f, roundEndDelay = -1f, flowSpeed = -1f;
         public int gameTime = -1;
         public int waitForClear = -1; // -1 = không đổi, 0/1 = tắt/bật
-        public int showTutorial = -1; // -1 = không đổi, 0/1 = tắt/bật (mặc định tắt)
+        public int showTutorial = -1; // -1 = không đổi, 0/1 = tắt/bật (mặc định bật)
         public int showRealName = -1; // -1 = không đổi, 0/1 = tên thường gọi/tên thật (mặc định 0)
         public int teamPlay = -1;     // -1 = không đổi, 1 = chơi đội (mặc định), 0 = 1 vs 1
     }

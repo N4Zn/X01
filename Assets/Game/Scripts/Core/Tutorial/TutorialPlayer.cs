@@ -85,6 +85,8 @@ public class TutorialPlayer : MonoBehaviour
 #if UNITY_EDITOR
         if (string.IsNullOrEmpty(id)) id = EditorGameId;
 #endif
+        // Cô tắt "Hiện hướng dẫn" ở tab Cài đặt của máy điều khiển → vào thẳng game.
+        if (GameSettings.Instance != null && !GameSettings.Instance.ShowTutorial) { Destroy(self.gameObject); yield break; }
         var ta = string.IsNullOrEmpty(id) ? null : Resources.Load<TextAsset>($"{ResourcesRoot}/{id}/tutorial");
         if (ta == null) { Destroy(self.gameObject); yield break; }
         Data data = null;

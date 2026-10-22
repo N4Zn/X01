@@ -1882,7 +1882,7 @@ public class GenericGameController : MiniGameControllerBase
     /// thẳng "Start in 3,2,1" cho gọn, đúng yêu cầu "mặc định bỏ tutorial".</summary>
     protected override void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opts)
     {
-        if (showSumTutorial && TryPlaySumTutorial()) return;
+        if (showSumTutorial && (GameSettings.Instance == null || GameSettings.Instance.ShowTutorial) && TryPlaySumTutorial()) return;
         StartGame();
     }
 

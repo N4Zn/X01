@@ -1446,6 +1446,13 @@ public class ControlActivity extends Activity {
             syncSettingsToUnity();
         }));
 
+        // 6b. Hướng dẫn (tutorial) trước khi chơi: mặc định bật; bỏ tick = mọi game vào thẳng "Start in…".
+        settingsBody.addView(buildCheckboxSetting("Hiện hướng dẫn (tutorial) trước khi chơi", settingsStore.showTutorial == 1, checked -> {
+            settingsStore.showTutorial = checked ? 1 : 0;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
         // 7. Tên hiển thị trong game: tên thường gọi (mặc định) hay tên thật; cả 2 chỉ hiện 2 tiếng cuối.
         settingsBody.addView(buildCheckboxSetting("Hiện tên thật trong game (bỏ chọn = tên thường gọi)", settingsStore.showRealName == 1, checked -> {
             settingsStore.showRealName = checked ? 1 : 0;
