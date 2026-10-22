@@ -351,17 +351,47 @@ public class TutorialPlayer : MonoBehaviour
         return c;
     }
 
+    /// <summary>Bản sao trong bộ nhớ của giọng đọc, thêm [LeadSilence] giây im lặng ở đầu. Clip import (preloadAudioData=false) có thể
+    /// bị Unity giải phóng dữ liệu giữa các lần lặp → lần Play sau phải nạp lại và mất đoạn đầu; clip tạo bằng AudioClip.Create nằm hẳn trong
+    /// RAM nên phát lần nào cũng như lần nào, và đoạn im lặng đầu hấp thụ độ trễ khởi động luồng âm thanh nếu có.</summary>
+    const float LeadSilence = 0.25f;
+    readonly Dictionary<string, AudioClip> _padded = new Dictionary<string, AudioClip>();
+
+    AudioClip Playable(string path, AudioClip src)
+    {
+        if (_padded.TryGetValue(path, out var cached) && cached != null) return cached;
+        if (src.loadState != AudioDataLoadState.Loaded) return src;
+        try
+        {
+            int ch = src.channels, n = src.samples, pad = Mathf.RoundToInt(LeadSilence * src.frequency);
+            var buf = new float[n * ch];
+            if (!src.GetData(buf, 0)) return src;
+            var dst = new float[(pad + n) * ch];
+            Array.Copy(buf, 0, dst, pad * ch, buf.Length);
+            var c = AudioClip.Create(src.name + "_pad", pad + n, ch, src.frequency, false);
+            c.SetData(dst, 0);
+            _padded[path] = c;
+            return c;
+        }
+        catch (Exception e) { Debug.LogWarning($"[TutorialPlayer] Không đệm được giọng đọc {path}: {e.Message}"); return src; }
+    }
+
     IEnumerator Say(string path)
     {
         var clip = string.IsNullOrEmpty(path) ? null : Voice(path);
         if (clip == null) { yield return WaitRT(1.4f); yield break; }
-        // Chờ dữ liệu sẵn sàng (tối đa ~1s) rồi mới phát; phát hẹn giờ theo DSP để đầu câu không bị cắt khi luồng âm thanh còn đang nạp.
-        for (float w = 0f; clip.loadState == AudioDataLoadState.Loading && w < 1f; w += Dt) yield return null;
-        const double lead = 0.15;
+        // Dữ liệu có thể đã bị giải phóng sau lần phát trước (Unloaded) → nạp lại và chờ xong (tối đa ~1,5s) rồi mới phát.
+        if (!_padded.ContainsKey(path))
+        {
+            if (clip.loadState == AudioDataLoadState.Unloaded) clip.LoadAudioData();
+            for (float w = 0f; clip.loadState != AudioDataLoadState.Loaded && clip.loadState != AudioDataLoadState.Failed && w < 1.5f; w += Dt) yield return null;
+        }
+        var play = Playable(path, clip);
+        const double lead = 0.1;
         _voice.Stop();
-        _voice.clip = clip;
+        _voice.clip = play;
         _voice.PlayScheduled(AudioSettings.dspTime + lead);
-        yield return WaitRT(clip.length + (float)lead + 0.03f);
+        yield return WaitRT(play.length + (float)lead + 0.03f);
     }
 
     Vector2 Home(int side)
