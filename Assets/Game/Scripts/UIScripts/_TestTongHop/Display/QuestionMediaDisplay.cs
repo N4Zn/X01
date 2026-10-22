@@ -128,8 +128,33 @@ public class QuestionMediaDisplay : MonoBehaviour
                     totalIcons += data.count;
                 }
                 Debug.Log($"[C5:Display] q={q.id} | TỔNG hiển thị: {totalIcons} icons");
+
+                // Giọng đọc đề (tuỳ chọn) cho câu hỏi hình, vd "Có bao nhiêu con vật trong hình?": cùng cơ chế lặp như câu hỏi Audio
+                // (play → nghỉ repeatPauseSeconds → play lại tới khi trả lời). Không có file thì im như cũ.
+                var promptClip = FindPromptClip(q);
+                if (promptClip != null && audioSource != null)
+                {
+                    if (_audioLoopCoroutine != null) StopCoroutine(_audioLoopCoroutine);
+                    _audioLoopCoroutine = StartCoroutine(AudioLoopRoutine(promptClip));
+                }
                 break;
         }
+    }
+
+    static readonly System.Collections.Generic.Dictionary<string, AudioClip> _promptClips = new();
+
+    /// <summary>Resources/TongHop/{tên game}/question, không có thì Resources/TongHop/{topic}/question (vd Counting5 → Counting).</summary>
+    static AudioClip FindPromptClip(QuestionData q)
+    {
+        string game = GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : null;
+        foreach (var folder in new[] { game, q.topic })
+        {
+            if (string.IsNullOrEmpty(folder)) continue;
+            string path = $"TongHop/{folder}/question";
+            if (!_promptClips.TryGetValue(path, out var clip)) _promptClips[path] = clip = Resources.Load<AudioClip>(path);
+            if (clip != null) return clip;
+        }
+        return null;
     }
 
     /// <summary>Ẩn nội dung câu hỏi — gọi từ Controller trước countdown.</summary>
