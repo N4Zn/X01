@@ -97,8 +97,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Time.timeScale = 0f;
         LidarTouchBridge.Instance.SetTouchEnabled(false);
         MusicManager.Instance?.PauseBgm();
-        // Tắt hẳn âm thanh: mọi AudioSource (giọng câu hỏi, SFX...) + giọng đọc tutorial (nguồn riêng, bỏ qua AudioListener.pause).
-        AudioListener.pause = true;
+        FreezeAudio(true);
         TutorialPlayer.SetPaused(true);
         Debug.Log("[GameControlBridge] OnPauseRequested");
     }
@@ -107,7 +106,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
     {
         MiniGameControllerBase.Current?.Resume();
         TestTongHopController.Current?.Resume();
-        AudioListener.pause = false;
+        FreezeAudio(false);
         TutorialPlayer.SetPaused(false);
         // Đang chạy tutorial thì game phía sau vẫn phải đứng (TutorialPlayer tự trả timeScale khi kết thúc).
         Time.timeScale = TutorialPlayer.Current != null ? 0f : 1f;
@@ -141,7 +140,10 @@ public class GameControlBridge : Singleton<GameControlBridge>
         TestTongHopController.Current?.Pause();
         LidarTouchBridge.Instance.SetTouchEnabled(false);
         MusicManager.Instance?.PauseBgm();
-        AudioListener.pause = true;   // tắt hẳn âm thanh còn đang chạy (SFX, giọng câu hỏi...)
+        // Stop = dừng TOÀN BỘ như Pause (chỉ khác là không chơi tiếp được): đóng băng game + tắt mọi âm thanh rồi che màn chiếu.
+        // Trước đây Stop không đặt timeScale=0 nên game không có controller (AddNumber, ChuCai...) vẫn chạy ngầm sau lớp che.
+        Time.timeScale = 0f;
+        FreezeAudio(true);
         TutorialPlayer.Abort();       // tutorial (nếu đang chạy) tắt luôn cả giọng đọc, không vào game
         ShowBlankOverlay(true);
         Debug.Log("[GameControlBridge] OnStopRequested");
@@ -169,13 +171,33 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Debug.Log($"[GameControlBridge][DEBUG] Parsed sceneName='{sceneName}' gameName='{gameName}'");
 
         Time.timeScale = 1f; // phòng khi ván trước kết thúc lúc đang Pause chung
-        AudioListener.pause = false; // Pause/Stop trước đó đã tắt hẳn âm thanh
+        FreezeAudio(false); // Pause/Stop trước đó đã tắt hẳn âm thanh
         ShowBlankOverlay(false);
         Debug.Log("[GameControlBridge][DEBUG] ShowBlankOverlay(false) xong.");
         LidarTouchBridge.Instance.SetTouchEnabled(true);
         Debug.Log("[GameControlBridge][DEBUG] SetTouchEnabled(true) xong. Gọi ControlBridge.LoadGame()...");
         ControlBridge.LoadGame(sceneName, gameName);
         Debug.Log("[GameControlBridge][DEBUG] ControlBridge.LoadGame() ĐÃ RETURN (không có nghĩa là scene đã load xong, chỉ là lệnh gọi không bị treo/exception ở tầng này).");
+    }
+
+    // Nguồn âm bỏ qua AudioListener.pause (ignoreListenerPause) và đang phát lúc đóng băng → pause riêng, resume lại đúng các nguồn đó.
+    readonly System.Collections.Generic.List<AudioSource> _frozenSources = new System.Collections.Generic.List<AudioSource>();
+
+    /// <summary>Tắt/bật TOÀN BỘ âm thanh: AudioListener.pause (mọi AudioSource thường: giọng câu hỏi, SFX, nhạc...) + quét các
+    /// nguồn đặt ignoreListenerPause (giọng tutorial, hay nguồn nào sau này) để pause riêng. Dùng chung cho Pause/Resume/Stop/nạp game mới.</summary>
+    void FreezeAudio(bool freeze)
+    {
+        AudioListener.pause = freeze;
+        if (freeze)
+        {
+            foreach (var a in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
+                if (a != null && a.ignoreListenerPause && a.isPlaying) { a.Pause(); _frozenSources.Add(a); }
+        }
+        else
+        {
+            foreach (var a in _frozenSources) if (a != null) a.UnPause();
+            _frozenSources.Clear();
+        }
     }
 
     // ── Blank overlay — che display máy chiếu lúc Stop, thay cho việc destroy Activity ──────
