@@ -56,3 +56,21 @@ Mục tiêu: dòng `round_end` trên Sheet = đúng dòng `round` trong file log
 
 **Triển khai (thứ tự quan trọng)**: (1) dán `DriveUpload.gs`, Deploy (dự án cũ: New version để giữ URL); (2) mở URL `/exec` thấy "EduXplore Drive upload — OK"; (3) mới cài bản app này lên K02 (script cũ nhận body kiểu file sẽ báo lỗi, app tự lùi nhịp, không ghi rác); (4) xem `adb logcat -s Unity | grep SheetsSyncManager` → "Chu kỳ: gửi n/m file".
 **Chưa compile Unity / chưa test trên K02 / chưa chạy Apps Script thật.** Sheet cũ (143k dòng) giữ nguyên để tra; không còn ghi vào.
+
+### Báo cáo tự động cho giáo viên (2026-10-22)
+
+`GameLogs` trên Drive → **`Aggregate.gs`** (trigger 10 phút, chạy trên máy chủ Google) → `EduXplore_Logs/_report/report.json` → **`ReportGateway.gs`** (dự án Apps Script RIÊNG, chỉ đọc) → trang dashboard (`web/`) nhúng Google Sites. Không còn "link vào script gốc": link công khai chỉ đọc được `_report/report.json` + `dashboard.html`.
+
+- `Aggregate.gs` là bản chuyển JS của `edux_lib.ingest_local/score/diagnose` + `build_report_json.py`; Python vẫn là bản chuẩn. Test đối chiếu: `node docs/danh-gia-nang-luc/tool/tests/test_aggregate_parity.js <GameLogs> <từ> <đến>` (đã khớp 100% trên 342 file K02: 792 số, 3 khoảng ngày; đổi công thức ở 1 bên thì test báo lệch). Sửa công thức → sửa cả 2 + chạy lại test.
+- Tính tăng dần: chỉ đọc file mới/đổi (Drive `modifiedDate`), kết quả từng phiên ở `_state/agg_state.json`; mỗi lượt ≤ ~4,5 phút (giới hạn 6 phút), chưa xong thì lượt sau làm tiếp. Lần đầu (hàng trăm file) có thể mất vài lượt. Config đổi → tự tính lại từ đầu. `aggregateReset()` xoá tích luỹ.
+- Cấu hình `_report/config.json` = bản **sinh** từ `tool/pipeline/config.json` (nguồn duy nhất, trong repo): `web/tools/push_to_drive.py` (cần `EDUX_DRIVE_KEY`). Có thể thêm khoá `lop_map` {mã: lớp} và `report_from` (ngày bắt đầu kỳ) vào config.json. Trang dashboard: `push_to_drive.py --only dashboard` (đóng gói bằng `bundle.py --template`, chừa chỗ `/*EDUX_DATA*/null`).
+- Hiển thị tên: danh sách/bảng "Họ tên (tên gọi)"; danh sách lớp: tên gọi đậm + họ tên mờ; biểu đồ chấm dùng tên gọi.
+- Bảo mật: Drive `_report`/log để Riêng tư; cổng cần `?t=<VIEW_TOKEN>` (Script property, ≥ 20 ký tự, khác SECRET); đổi token = thu hồi link. Ai xem được trang Sites vẫn thấy được link trong mã nguồn → coi link là bí mật nhóm giáo viên.
+- Hạn mức miễn phí Apps Script (tài khoản thường, theo trí nhớ, chưa kiểm): 6 phút/lượt, ~90 phút trigger/ngày; trigger 10 phút × vài chục giây nằm trong mức này. Quy mô: `agg_state.json` ~ vài chục byte/round → hàng trăm nghìn round mới thành vấn đề.
+
+**Cài đặt (1 lần, theo thứ tự)**
+1. Dự án cũ (X01_GameLog): dán lại `DriveUpload.gs` (có `put`) + thêm `Aggregate.gs`; `appsscript.json` → `oauthScopes`: `drive` **và** `https://www.googleapis.com/auth/script.scriptapp`; chạy `installTrigger()` (cấp quyền) ; Deploy → New version.
+2. Máy tính: `set EDUX_DRIVE_KEY=<SECRET>` rồi `python -I -X utf8 docs/danh-gia-nang-luc/web/tools/push_to_drive.py`.
+3. Chạy tay `aggregateRun()` trong editor vài lần tới khi nhật ký báo "xong" → có `_report/report.json`.
+4. Dự án MỚI: dán `ReportGateway.gs`, đặt `VIEW_TOKEN`, manifest `drive.readonly`, `authorize()`, Deploy Web app (Execute as: Me; Anyone). Link `…/exec?t=<VIEW_TOKEN>` → nhúng Google Sites (Nhúng → Theo URL).
+**Chưa chạy trên Apps Script thật** (chỉ test phần tính bằng Node + Python). Phần Drive (`searchFiles`, trigger, cổng) cần kiểm khi cài.

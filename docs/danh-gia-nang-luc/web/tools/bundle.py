@@ -1,6 +1,7 @@
 """Gói web thành 1 file HTML tự chứa (CSS + JS + dữ liệu + logo nhúng), mở được bằng file:// hoặc gửi qua mail.
   python -I -X utf8 tools/bundle.py [--data data/report.json] [--out dist/bao-cao-standalone.html]
-Mặc định dùng data/sample.json."""
+Mặc định dùng data/sample.json.
+  --template: KHÔNG nhúng dữ liệu, chừa chỗ /*EDUX_DATA*/null để ReportGateway.gs (Apps Script) điền report.json lúc phục vụ."""
 import argparse
 import base64
 import json
@@ -11,6 +12,7 @@ WEB = os.path.normpath(os.path.join(HERE, '..'))
 ap = argparse.ArgumentParser()
 ap.add_argument('--data', default=os.path.join(WEB, 'data', 'sample.json'))
 ap.add_argument('--out', default=os.path.join(WEB, 'dist', 'bao-cao-standalone.html'))
+ap.add_argument('--template', action='store_true')
 a = ap.parse_args()
 
 
@@ -20,7 +22,7 @@ def rd(p, mode='r'):
 
 css = rd(os.path.join(WEB, 'edux-report.css'))
 js = rd(os.path.join(WEB, 'edux-report.js'))
-data = json.dumps(json.load(open(a.data, encoding='utf-8')), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+data = '/*EDUX_DATA*/null' if a.template else json.dumps(json.load(open(a.data, encoding='utf-8')), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
 logo = 'data:image/png;base64,' + base64.b64encode(rd(os.path.join(WEB, 'logo.png'), 'rb')).decode()
 
 html = """<!doctype html>

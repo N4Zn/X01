@@ -63,7 +63,7 @@
       function dimsOf(sel, khoi) { return sel === 'all' ? monIds.filter(function (id) { return hpOf(id, khoi).length; }) : hpOf(sel, khoi); }
 
       function mk(s, m, sel) {
-        var o = { s: s, code: s.code, name: s.name, alias: s.alias || s.name, khoi: s.khoi, lop: s.lop, sel: sel, m: m, hist: [], series: [], wIdx: [], idle: 0, days: 0, flags: [], play: 'none' };
+        var o = { s: s, code: s.code, name: s.name, alias: s.alias || s.name, full: s.alias && s.alias !== s.name ? s.name + ' (' + s.alias + ')' : s.name, khoi: s.khoi, lop: s.lop, sel: sel, m: m, hist: [], series: [], wIdx: [], idle: 0, days: 0, flags: [], play: 'none' };
         if (!m) return o;
         var n = 0, ok = 0, tw = 0, tn = 0;
         Object.keys(m.hp).forEach(function (h) {
@@ -237,7 +237,7 @@
     }
     function nameLinks(a, f, max) {
       var shown = a.slice(0, max || 6);
-      return shown.map(function (x) { return '<a data-a="code" data-code="' + esc(x.code) + '">' + esc(x.alias) + '</a>' + (f ? ' ' + f(x) : ''); }).join(', ') + (a.length > shown.length ? ' +' + (a.length - shown.length) : '') || '–';
+      return shown.map(function (x) { return '<a data-a="code" data-code="' + esc(x.code) + '">' + esc(x.full) + '</a>' + (f ? ' ' + f(x) : ''); }).join(', ') + (a.length > shown.length ? ' +' + (a.length - shown.length) : '') || '–';
     }
 
     // ---------- biểu đồ so sánh lớp (chỉ trong 1 khối) ----------
@@ -574,7 +574,7 @@
       var nlab = 0;
       pts.slice().sort(function (a, b) { return a.score - b.score; }).forEach(function (p) {
         var lab = (p.lv <= 1 || p.acc < 70) && nlab < 10; if (lab) nlab++;
-        o += '<g data-a="code" data-code="' + esc(p.code) + '" class="clk"><title>' + esc(p.alias) + ': ' + Math.round(p.score) + ' điểm · ' + num(p.acc) + '% đúng · ' + num(p.t, 1) + 's</title><circle class="hit" cx="' + X(p.t) + '" cy="' + Y(p.acc) + '" r="13"/><circle class="dot' + (p.few ? ' hollow' : '') + '" cx="' + X(p.t) + '" cy="' + Y(p.acc) + '" r="6" style="--c:var(--lv' + p.lv + ')"/>' +
+        o += '<g data-a="code" data-code="' + esc(p.code) + '" class="clk"><title>' + esc(p.full) + ': ' + Math.round(p.score) + ' điểm · ' + num(p.acc) + '% đúng · ' + num(p.t, 1) + 's</title><circle class="hit" cx="' + X(p.t) + '" cy="' + Y(p.acc) + '" r="13"/><circle class="dot' + (p.few ? ' hollow' : '') + '" cx="' + X(p.t) + '" cy="' + Y(p.acc) + '" r="6" style="--c:var(--lv' + p.lv + ')"/>' +
           (lab ? '<text class="xl" x="' + (X(p.t) + 9) + '" y="' + (Y(p.acc) + 4) + '">' + esc(p.alias) + '</text>' : '') + '</g>';
       });
       o += '<text class="ttl" x="' + (ml + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">Tốc độ: giây/câu đúng (nhanh ở bên phải →)</text><text class="ttl" transform="translate(13 ' + (mt + ph / 2) + ') rotate(-90)" text-anchor="middle">Chính xác: % câu đúng</text>';
@@ -605,7 +605,7 @@
       o += '<div class="edx-fill lop"><section class="edx-panel"><h2>Bảng xếp hạng<small>click tiêu đề để sắp xếp · click hàng để xem hồ sơ · ô mờ = ít mẫu</small></h2><div class="edx-scroll"><table><thead><tr><th>#</th>' + th('Bé', 'rank', 'name', 'l') + th('Điểm', 'rank', 'score') + th('Tiến bộ', 'rank', 'd', '', 'Tuần gần nhất so với tuần đầu') + '<th>Xu hướng</th>' +
         D.map(function (h) { return th(esc(h), 'rank', 'hp:' + h); }).join('') + th('Số câu', 'rank', 'n') + th('Cần chú ý', 'rank', 'flags', 'l') + '</tr></thead><tbody>' +
         rows.map(function (x) {
-          return '<tr data-a="code" data-code="' + esc(x.code) + '"><td class="n">' + rankOf[x.code] + '</td><td class="nm">' + esc(x.alias) + '</td><td class="h lv' + x.lv + '">' + Math.round(x.score) + '</td><td>' + delta(x.dFirst) + '</td><td>' + spark(x.series, 64, 22) + '</td>' +
+          return '<tr data-a="code" data-code="' + esc(x.code) + '"><td class="n">' + rankOf[x.code] + '</td><td class="nm">' + esc(x.full) + '</td><td class="h lv' + x.lv + '">' + Math.round(x.score) + '</td><td>' + delta(x.dFirst) + '</td><td>' + spark(x.series, 64, 22) + '</td>' +
             D.map(function (h) { return heat(x.m, h); }).join('') + '<td>' + x.m.n + (x.few ? '*' : '') + '</td><td class="wrap">' + flagText(x) + '</td></tr>';
         }).join('') + '</tbody><tfoot><tr><td></td><td class="nm">TB lớp</td>' + (g.avg == null ? '<td class="n">–</td>' : '<td class="h lv' + g.lv + '">' + Math.round(g.avg) + '</td>') + '<td>' + delta(g.dFirst) + '</td><td>' + spark(g.wavg, 64, 22) + '</td>' +
         D.map(function (h) { return heatAvg(g, h); }).join('') + '<td>' + g.ns + '</td><td class="wrap" style="color:var(--muted)">TB ' + esc(khoiName(st.khoi)) + ': ' + num(gk.avg) + '</td></tr></tfoot></table>' +
@@ -638,7 +638,7 @@
       if (!list.length) return '<p class="edx-empty">Không có bé nào.</p>';
       return list.map(function (s) {
         var tr = s.dPrev == null ? '' : s.dPrev >= 1 ? '<i class="up">▲</i>' : s.dPrev <= -1 ? '<i class="dn">▼</i>' : '';
-        return '<button type="button" data-a="code" data-code="' + esc(s.code) + '" class="' + (s.code === st.code ? 'on' : '') + '" title="' + esc(s.name + ' · ' + s.code) + '"><span class="n1">' + esc(s.alias) + (st.q ? '<small> ' + esc(s.lop) + '</small>' : '') + '</span>' +
+        return '<button type="button" data-a="code" data-code="' + esc(s.code) + '" class="' + (s.code === st.code ? 'on' : '') + '" title="' + esc(s.name + ' · ' + s.code) + '"><span class="n1">' + esc(s.alias) + (s.alias !== s.name ? '<small class="fn"> ' + esc(s.name) + '</small>' : '') + (st.q ? '<small> ' + esc(s.lop) + '</small>' : '') + '</span>' +
           (s.m ? '<span class="sc lv' + s.lv + '">' + tr + Math.round(s.score) + '</span>' : '<span class="sc none">chưa chơi</span>') + '</button>';
       }).join('');
     }

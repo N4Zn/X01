@@ -127,6 +127,8 @@ Hoặc không viết JS: `<div data-edux-report data-src="/api/bao-cao" data-log
 
 Giống B nhưng đặt vào 1 route (`/bao-cao`), để widget chiếm toàn màn hình (`height` mặc định 100vh), `hash:true`. Menu chính của trang chỉ cần link tới route đó.
 
+> **Từ 2026-10-22**: báo cáo cho giáo viên chạy tự động trên Google (Drive → `Aggregate.gs` → `report.json` → `ReportGateway.gs` → Google Sites), xem `docs/sheets-report.md` mục "Báo cáo tự động cho giáo viên". Các cách dưới đây vẫn dùng được cho web khác.
+
 ## Cấp dữ liệu cho web (chọn 1)
 
 1. **File tĩnh** (đơn giản): job chạy pipeline → `build_report_json.py` → ghi vào `data/report.json` trên máy chủ. Hiện `tool/pipeline/chay.bat` chạy tay; có thể đặt Task Scheduler chạy cuối buổi. `fetch` đã tắt cache (`no-store`) nên cập nhật là thấy ngay khi tải lại.

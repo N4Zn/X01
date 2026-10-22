@@ -14,6 +14,8 @@
  *   GET <webAppUrl>?action=list[&since=yyyy-MM-dd][&device=ID][&key=…]  → {"ok":true,"files":[{"path","bytes","updated"}…]}
  *   GET <webAppUrl>?action=get&path=<device/day/name.json>[&key=…]      → nội dung file (text)
  *
+ *   POST <webAppUrl>?action=put&name=config.json|dashboard.html&key=… (body = nội dung) → _report/<name>  (xem Aggregate.gs, ReportGateway.gs)
+ *
  * Cấu trúc Drive:  <ROOT_NAME>/<deviceId>/<yyyy-MM-dd>/<name>.json   (ngày lấy từ tên file)
  *
  * CÀI ĐẶT (làm 1 lần):
@@ -52,11 +54,20 @@ function doPost(e) {
     if (!authorized_(p)) return json_({ ok: false, error: 'unauthorized' });
     var name = safe_(p.name || '');
     var device = safe_(p.device || 'unknown');
-    if (!/\.json$/i.test(name)) return json_({ ok: false, error: 'bad name' });
     var body = (e && e.postData && e.postData.contents) || '';
     if (!body) return json_({ ok: false, error: 'empty body' });
     var bytes = Utilities.newBlob(body).getBytes().length;
     if (bytes > MAX_BODY) return json_({ ok: false, error: 'too large' });
+
+    // ?action=put: đẩy file cấu hình/trang báo cáo vào _report (chỉ 2 tên cho phép; xem Aggregate.gs, ReportGateway.gs)
+    if (p.action === 'put') {
+      if (name !== 'config.json' && name !== 'dashboard.html') return json_({ ok: false, error: 'name not allowed' });
+      lock.waitLock(20000);
+      writeText_(sub_(root_(), '_report'), name, body);
+      return json_({ ok: true, path: '_report/' + name, bytes: bytes });
+    }
+
+    if (!/\.json$/i.test(name)) return json_({ ok: false, error: 'bad name' });
 
     var m = /^(\d{4}-\d{2}-\d{2})_/.exec(name);
     var day = m ? m[1] : 'unknown';
