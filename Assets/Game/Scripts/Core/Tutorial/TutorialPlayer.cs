@@ -254,14 +254,33 @@ public class TutorialPlayer : MonoBehaviour
         BuildKeepAlive();
     }
 
-    /// <summary>Giữ luồng âm thanh ra loa/HDMI của máy luôn "thức" suốt tutorial. Giữa các câu đọc có quãng im vài giây; luồng âm thanh
-    /// (HAL/HDMI của K02) vào chế độ chờ khi im, và câu đọc kế tiếp mất đoạn đầu cho tới khi luồng thức dậy. Phát liên tục 1 tín hiệu
-    /// sin 25 Hz biên độ rất nhỏ (dưới ngưỡng nghe, loa không phát được; số 0 tuyệt đối thì có thiết bị vẫn coi là im) để không bao giờ im.</summary>
+    /// <summary>Giữ đường âm thanh ra loa luôn có tín hiệu suốt tutorial. Giữa các câu đọc có quãng im vài giây; loa Bluetooth (A2DP) /
+    /// HDMI có cổng nhiễu (noise gate) tự tắt tiếng khi im và chỉ mở lại sau vài trăm ms khi có tín hiệu → câu đọc mất đầu, dù Unity/HAL
+    /// đã phát đúng từ mẫu 0 (đã kiểm: logcat TutorialAudio + dumpsys media.audio_flinger). Phát liên tục 1 sin tần số rất thấp (loa nhỏ
+    /// không tái tạo được). Mức tín hiệu đi qua nhiều tầng giảm âm (ở K02 thử nghiệm ~-43 dB) nên biên độ phải đủ lớn mới qua được cổng.
+    /// Chỉnh không cần build lại: đẩy file "tutorial_keep.txt" (nội dung "biên_độ tần_số", vd "0.1 30") vào thư mục persistentDataPath.</summary>
+    const float KeepAmp = 0.1f, KeepHz = 30f;
+
     void BuildKeepAlive()
     {
+        float amp = KeepAmp, hz = KeepHz;
+        try
+        {
+            var f = System.IO.Path.Combine(Application.persistentDataPath, "tutorial_keep.txt");
+            if (System.IO.File.Exists(f))
+            {
+                var parts = System.IO.File.ReadAllText(f).Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                var inv = System.Globalization.CultureInfo.InvariantCulture;
+                if (parts.Length > 0) amp = float.Parse(parts[0], inv);
+                if (parts.Length > 1) hz = float.Parse(parts[1], inv);
+            }
+        }
+        catch (Exception e) { Diag("tutorial_keep.txt lỗi: " + e.Message); }
+        Diag($"keep-alive amp={amp} hz={hz}");
+        hz = Mathf.Max(1f, Mathf.Round(hz)); // số nguyên chu kỳ trong 1 giây → lặp không gãy
         const int rate = 44100;
         var data = new float[rate];
-        for (int i = 0; i < rate; i++) data[i] = 0.004f * Mathf.Sin(2f * Mathf.PI * 25f * i / rate); // đúng 25 chu kỳ/giây → lặp không gãy
+        for (int i = 0; i < rate; i++) data[i] = amp * Mathf.Sin(2f * Mathf.PI * hz * i / rate);
         var clip = AudioClip.Create("tutorial_keepalive", rate, 1, rate, false);
         clip.SetData(data, 0);
         _keep = gameObject.AddComponent<AudioSource>();
