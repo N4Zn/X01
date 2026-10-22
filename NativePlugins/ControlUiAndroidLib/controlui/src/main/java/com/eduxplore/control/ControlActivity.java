@@ -635,15 +635,23 @@ public class ControlActivity extends Activity {
             bottomBar.addView(startBtn);
         } else if ("playing".equals(scene) && tutorialRunning) {
             // Màn hướng dẫn đang lặp trên máy chiếu → cô bấm để bắt đầu chơi thật.
-            TextView playBtn = bigButton("VÀO CHƠI", R.color.good, 0xFF0B1710, 288, 20f, 20);
+            // 3 nút: VÀO CHƠI (bỏ qua tutorial như chạm nút BẮT ĐẦU trên sàn), TẠM DỪNG/TIẾP TỤC (đứng hình + tắt âm để cô hướng dẫn),
+            // DỪNG HẲN (tắt mini game, về màn chọn game).
+            TextView playBtn = bigButton("VÀO CHƠI", R.color.good, 0xFF0B1710, 240, 18f, 20);
             playBtn.setOnClickListener(v -> {
+                if (paused) { paused = false; sendToUnity("OnResumeRequested", ""); } // gỡ tạm dừng trước, để game vào chơi có tiếng
                 tutorialRunning = false;
                 sendToUnity("OnStartPlayRequested", "");
                 renderBottomBar();
             });
-            TextView stopBtn = bigButton("DỪNG HẲN", R.color.bad, 0xFFFFFFFF, 240, 18f, 20);
+            TextView pauseBtn = paused
+                    ? bigButton("TIẾP TỤC", R.color.good, 0xFF0B1710, 220, 18f, 20)
+                    : bigButton("TẠM DỪNG", R.color.accent, 0xFFFFFFFF, 220, 18f, 20);
+            pauseBtn.setOnClickListener(v -> onPauseClicked());
+            TextView stopBtn = bigButton("DỪNG HẲN", R.color.bad, 0xFFFFFFFF, 220, 18f, 20);
             stopBtn.setOnClickListener(v -> onStopClicked());
             bottomBar.addView(playBtn);
+            bottomBar.addView(pauseBtn);
             bottomBar.addView(stopBtn);
         } else if ("playing".equals(scene)) {
             TextView pauseBtn = paused
@@ -1807,6 +1815,7 @@ public class ControlActivity extends Activity {
         ControlActivity activity = sInstance;
         if (activity == null) return;
         activity.runOnUiThread(() -> {
+            if (activity.tutorialRunning == running) return; // Unity đẩy lại định kỳ: không vẽ lại thanh nút nếu không đổi
             activity.tutorialRunning = running;
             if ("playing".equals(activity.scene)) activity.renderBottomBar();
         });

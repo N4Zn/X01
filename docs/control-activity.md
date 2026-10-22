@@ -94,3 +94,9 @@ Không sửa được từ code app. Vì vậy:
 ### Tab "Lớp học": hiện cả lớp, chưa có điểm = "-" (2026-10-05)
 
 Bảng liệt kê TẤT CẢ học sinh của lớp (kể cả bạn chưa chơi gì). Điểm theo phạm vi đang chọn (Tất cả/Môn/Phần): chưa có điểm hiện **"-"** (thanh rỗng), KHÔNG phải 0 và không đưa vào trung bình (điểm tổng = trung bình các môn ĐÃ có điểm). Sort theo điểm thì bạn chưa có điểm luôn nằm cuối. Bạn chưa chơi chưa bấm vào tab Năng lực được. Dải "Chưa chơi (n): ..." cũ đã bỏ.
+
+## Tutorial đang chạy — 3 nút điều khiển (2026-10-22)
+Khi Unity chạy tutorial (`TutorialPlayer`/`GenericSumTutorial`) nó gọi `ControlActivity.SetTutorialRunning(true)` (`TutorialPlayer` đẩy lại mỗi 2s để không lỡ), thanh nút dưới cùng thành:
+- **VÀO CHƠI** → `OnStartPlayRequested` (nếu đang tạm dừng thì gửi `OnResumeRequested` trước) = bỏ qua tutorial như chạm nút BẮT ĐẦU trên sàn.
+- **TẠM DỪNG / TIẾP TỤC** → `OnPauseRequested`/`OnResumeRequested`: `Time.timeScale=0`, BGM pause, `AudioListener.pause=true` (tắt mọi AudioSource) và `TutorialPlayer.SetPaused` (đứng hình + dừng giọng đọc — giọng đọc có `ignoreListenerPause`). Tiếp tục không bật timeScale khi tutorial còn chạy.
+- **DỪNG HẲN** → `OnStopRequested`: `AudioListener.pause=true` + `TutorialPlayer.Abort()` (tắt tutorial + giọng đọc, không vào game) + che màn chiếu; `OnLoadGameRequested` trả `AudioListener.pause=false`.

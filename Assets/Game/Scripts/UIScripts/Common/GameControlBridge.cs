@@ -97,6 +97,9 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Time.timeScale = 0f;
         LidarTouchBridge.Instance.SetTouchEnabled(false);
         MusicManager.Instance?.PauseBgm();
+        // Tắt hẳn âm thanh: mọi AudioSource (giọng câu hỏi, SFX...) + giọng đọc tutorial (nguồn riêng, bỏ qua AudioListener.pause).
+        AudioListener.pause = true;
+        TutorialPlayer.SetPaused(true);
         Debug.Log("[GameControlBridge] OnPauseRequested");
     }
 
@@ -104,7 +107,10 @@ public class GameControlBridge : Singleton<GameControlBridge>
     {
         MiniGameControllerBase.Current?.Resume();
         TestTongHopController.Current?.Resume();
-        Time.timeScale = 1f;
+        AudioListener.pause = false;
+        TutorialPlayer.SetPaused(false);
+        // Đang chạy tutorial thì game phía sau vẫn phải đứng (TutorialPlayer tự trả timeScale khi kết thúc).
+        Time.timeScale = TutorialPlayer.Current != null ? 0f : 1f;
         LidarTouchBridge.Instance.SetTouchEnabled(true);
         MusicManager.Instance?.ResumeBgm();
         Debug.Log("[GameControlBridge] OnResumeRequested");
@@ -135,6 +141,8 @@ public class GameControlBridge : Singleton<GameControlBridge>
         TestTongHopController.Current?.Pause();
         LidarTouchBridge.Instance.SetTouchEnabled(false);
         MusicManager.Instance?.PauseBgm();
+        AudioListener.pause = true;   // tắt hẳn âm thanh còn đang chạy (SFX, giọng câu hỏi...)
+        TutorialPlayer.Abort();       // tutorial (nếu đang chạy) tắt luôn cả giọng đọc, không vào game
         ShowBlankOverlay(true);
         Debug.Log("[GameControlBridge] OnStopRequested");
     }
@@ -161,6 +169,7 @@ public class GameControlBridge : Singleton<GameControlBridge>
         Debug.Log($"[GameControlBridge][DEBUG] Parsed sceneName='{sceneName}' gameName='{gameName}'");
 
         Time.timeScale = 1f; // phòng khi ván trước kết thúc lúc đang Pause chung
+        AudioListener.pause = false; // Pause/Stop trước đó đã tắt hẳn âm thanh
         ShowBlankOverlay(false);
         Debug.Log("[GameControlBridge][DEBUG] ShowBlankOverlay(false) xong.");
         LidarTouchBridge.Instance.SetTouchEnabled(true);

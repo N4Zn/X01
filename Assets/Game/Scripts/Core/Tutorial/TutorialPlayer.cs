@@ -54,6 +54,12 @@ public class TutorialPlayer : MonoBehaviour
     /// <summary>Cô bấm "VÀO CHƠI" trên máy điều khiển (GameControlBridge.OnStartPlayRequested).</summary>
     public static void RequestStart() { if (Current != null) Current.Finish(); }
 
+    /// <summary>Tạm dừng/tiếp tục (nút TẠM DỪNG trên máy điều khiển): đóng băng hình + giọng đọc để cô hướng dẫn các bé.</summary>
+    public static void SetPaused(bool paused) { if (Current != null) Current.ApplyPause(paused); }
+
+    /// <summary>Dừng hẳn (nút DỪNG HẲN): tắt tutorial + giọng đọc, KHÔNG vào game, không đụng timeScale (game đang bị dừng/che).</summary>
+    public static void Abort() { if (Current != null) Current.AbortNow(); }
+
     public static bool Has(string gameId) =>
         !string.IsNullOrEmpty(gameId) && Resources.Load<TextAsset>($"{ResourcesRoot}/{gameId}/tutorial") != null;
 
@@ -109,6 +115,9 @@ public class TutorialPlayer : MonoBehaviour
     string _curImage;
     float _oldTimeScale = 1f;
     float _beginTime;
+    bool _paused;
+    float Dt => _paused ? 0f : Time.unscaledDeltaTime; // mọi animation/chờ của tutorial đứng yên khi tạm dừng
+    IEnumerator WaitRT(float sec) { for (float t = 0f; t < sec; t += Dt) yield return null; }
     Image _startImg;
     /// <summary>Nút BẮT ĐẦU bị khoá chừng này giây đầu: chạm sàn lúc vừa chọn game (hoặc chạm nhanh) trúng nút ở góc làm bỏ qua cả tutorial.</summary>
     const float StartGraceSec = 2f;
@@ -133,6 +142,25 @@ public class TutorialPlayer : MonoBehaviour
         Debug.Log($"[TutorialPlayer] Chạy tutorial {id} ({d.steps?.Length ?? 0} bước)");
     }
 
+    void ApplyPause(bool paused)
+    {
+        if (_finished || _paused == paused) return;
+        _paused = paused;
+        if (_voice != null) { if (paused) _voice.Pause(); else _voice.UnPause(); } // _voice bỏ qua AudioListener.pause nên phải tự dừng
+    }
+
+    void AbortNow()
+    {
+        if (_finished) return;
+        _finished = true;
+        if (Current == this) Current = null;
+        StopAllCoroutines();
+        if (_voice != null) _voice.Stop();
+        MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
+        GameControlBridge.PushTutorialRunning(false);
+        Destroy(gameObject);
+    }
+
     void Finish()
     {
         if (_finished) return;
@@ -153,9 +181,12 @@ public class TutorialPlayer : MonoBehaviour
         if (Current == this) Current = null;
     }
 
+    float _nextPush;
+
     void Update()
     {
         if (_finished || _root == null) return;
+        if (Time.unscaledTime >= _nextPush) { _nextPush = Time.unscaledTime + 2f; GameControlBridge.PushTutorialRunning(true); }
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) { Finish(); return; }
 #endif
@@ -263,11 +294,11 @@ public class TutorialPlayer : MonoBehaviour
                         if (st.wait) yield return c; else pending.Add(c);
                         break;
                     case "wait":
-                        yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, st.sec));
+                        yield return WaitRT(Mathf.Max(0.05f, st.sec));
                         break;
                     case "scene":
                         ShowImage(st.image, false);
-                        yield return new WaitForSecondsRealtime(0.25f);
+                        yield return WaitRT(0.25f);
                         break;
                     case "home":
                         yield return Both(Home(0), Home(1));
@@ -290,7 +321,7 @@ public class TutorialPlayer : MonoBehaviour
             }
             foreach (var co in pending) yield return co;
             yield return Both(Home(0), Home(1));
-            yield return new WaitForSecondsRealtime(0.6f);
+            yield return WaitRT(0.6f);
         }
     }
 
@@ -323,14 +354,14 @@ public class TutorialPlayer : MonoBehaviour
     IEnumerator Say(string path)
     {
         var clip = string.IsNullOrEmpty(path) ? null : Voice(path);
-        if (clip == null) { yield return new WaitForSecondsRealtime(1.4f); yield break; }
+        if (clip == null) { yield return WaitRT(1.4f); yield break; }
         // Chờ dữ liệu sẵn sàng (tối đa ~1s) rồi mới phát; phát hẹn giờ theo DSP để đầu câu không bị cắt khi luồng âm thanh còn đang nạp.
-        for (float w = 0f; clip.loadState == AudioDataLoadState.Loading && w < 1f; w += Time.unscaledDeltaTime) yield return null;
+        for (float w = 0f; clip.loadState == AudioDataLoadState.Loading && w < 1f; w += Dt) yield return null;
         const double lead = 0.15;
         _voice.Stop();
         _voice.clip = clip;
         _voice.PlayScheduled(AudioSettings.dspTime + lead);
-        yield return new WaitForSecondsRealtime(clip.length + (float)lead + 0.03f);
+        yield return WaitRT(clip.length + (float)lead + 0.03f);
     }
 
     Vector2 Home(int side)
@@ -364,7 +395,7 @@ public class TutorialPlayer : MonoBehaviour
     {
         var from = _tips[side];
         float arc = Mathf.Clamp(Mathf.Abs(to.y - from.y) * 0.25f + 4f, 4f, 14f) * _d.frame.hPct / 100f;
-        for (float t = 0f; t < dur; t += Time.unscaledDeltaTime)
+        for (float t = 0f; t < dur; t += Dt)
         {
             float u = t / dur, k = Mathf.Sin(u * Mathf.PI), e = Mathf.SmoothStep(0f, 1f, u);
             var p = Vector2.LerpUnclamped(from, to, e);
@@ -379,7 +410,7 @@ public class TutorialPlayer : MonoBehaviour
     IEnumerator Press(int side)
     {
         var tip = _tips[side];
-        for (float t = 0f; t < 0.3f; t += Time.unscaledDeltaTime)
+        for (float t = 0f; t < 0.3f; t += Dt)
         {
             PlaceFoot(side, tip, 1f - 0.08f * Mathf.Sin(t / 0.3f * Mathf.PI));
             yield return null;
@@ -401,7 +432,7 @@ public class TutorialPlayer : MonoBehaviour
             Stretch(sym.rectTransform);
         }
         float dur = mark == "wrong" ? 0.7f : 0.55f;
-        for (float t = 0f; t < dur; t += Time.unscaledDeltaTime)
+        for (float t = 0f; t < dur; t += Dt)
         {
             float u = t / dur, d = (2f + 9f * u) * 1.6f; // đường kính theo % chiều cao
             SetCircle(ring.rectTransform, tip, d);
@@ -417,7 +448,7 @@ public class TutorialPlayer : MonoBehaviour
         Destroy(ring.gameObject);
         if (icon == null) yield break;
         // timeScale = 0 trong tutorial → Destroy(obj, delay) không bao giờ chạy; chờ theo giờ thật.
-        yield return new WaitForSecondsRealtime(0.25f);
+        yield return WaitRT(0.25f);
         if (icon != null) Destroy(icon.gameObject);
     }
 
@@ -445,7 +476,7 @@ public class TutorialPlayer : MonoBehaviour
 
     IEnumerator Fade(RawImage show, RawImage hide)
     {
-        for (float t = 0f; t < 0.25f; t += Time.unscaledDeltaTime)
+        for (float t = 0f; t < 0.25f; t += Dt)
         {
             show.color = new Color(1f, 1f, 1f, t / 0.25f);
             yield return null;
