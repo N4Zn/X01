@@ -416,7 +416,32 @@ public class TutorialPlayer : MonoBehaviour
         _voice.clip = play;
         _voice.time = 0f;
         _voice.Play();
+        Diag($"say {path} clip={clip.length:F2}s({clip.loadState}) play={play.length:F2}s padded={_padded.ContainsKey(path)} timeScale={Time.timeScale} listenerPause={AudioListener.pause} dsp={AudioSettings.dspTime:F3} keep={(_keep != null && _keep.isPlaying)}");
+        StartCoroutine(DiagVoice(path));
+        yield return null;
+        if (!_voice.isPlaying && !_paused) { Diag($"say {path}: isPlaying=false sau 1 frame -> Play lai"); _voice.Play(); }
         yield return WaitRT(play.length + 0.03f);
+    }
+
+    /// <summary>Chỉ để chẩn đoán trên thiết bị: mẫu đang phát có tiến đều không (đối chiếu với tai nghe thấy).</summary>
+    IEnumerator DiagVoice(string path)
+    {
+        foreach (var at in new[] { 0.1f, 0.4f, 0.9f, 1.3f })
+        {
+            for (float t = 0f; t < at; t += Time.unscaledDeltaTime) yield return null;
+            if (_voice == null) yield break;
+            Diag($"  {path} +{at:F1}s isPlaying={_voice.isPlaying} timeSamples={_voice.timeSamples} dsp={AudioSettings.dspTime:F3} vol={_voice.volume:F2} mute={_voice.mute}");
+        }
+    }
+
+    /// <summary>Ghi thẳng vào logcat (tag TutorialAudio), không phụ thuộc BuildLogSilencer.</summary>
+    static void Diag(string msg)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try { using (var log = new AndroidJavaClass("android.util.Log")) log.CallStatic<int>("i", "TutorialAudio", msg); } catch { }
+#else
+        Debug.Log("[TutorialAudio] " + msg);
+#endif
     }
 
     Vector2 Home(int side)
