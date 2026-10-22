@@ -374,7 +374,7 @@ public class TutorialPlayer : MonoBehaviour
             {
                 float s = u < 0.2f ? u / 0.2f * 1.15f : 1.15f - 0.15f * Mathf.Min(1f, (u - 0.2f) / 0.2f);
                 float shake = mark == "wrong" ? Mathf.Sin(u * 40f) * (1f - u) * 0.8f : 0f;
-                SetCircle(icon.rectTransform, new Vector2(tip.x + shake * 9f / 16f, tip.y - 6f), 7f * s);
+                SetCircle(icon.rectTransform, new Vector2(tip.x + shake * 9f / 16f, tip.y - 9f), 13f * s);
             }
             yield return null;
         }
