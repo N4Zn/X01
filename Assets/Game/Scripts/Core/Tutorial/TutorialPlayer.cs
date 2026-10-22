@@ -111,7 +111,7 @@ public class TutorialPlayer : MonoBehaviour
     readonly Vector2[] _tips = new Vector2[2];
     readonly Coroutine[] _footMove = new Coroutine[2];
     RectTransform _fx, _startBtn;
-    AudioSource _voice, _keep;
+    AudioSource _voice;
     string _curImage;
     float _oldTimeScale = 1f;
     float _beginTime;
@@ -135,10 +135,13 @@ public class TutorialPlayer : MonoBehaviour
         _oldTimeScale = Time.timeScale;
         Time.timeScale = 0f; // dừng game phía sau tới khi bấm bắt đầu
         GameControlBridge.PushTutorialRunning(true);
-        MusicManager.Instance?.SetMusicVolumeMultiplier(Mathf.Clamp01(d.musicVolume));
+        // Nhạc nền chạy suốt tutorial như lúc đang chơi: giữ đường âm thanh (loa BT/HDMI có cổng nhiễu tự tắt khi im → câu đọc mất đầu)
+        // và cho bé nghe đúng không khí của game. Controller thường đã bật BGM lúc Initialize; chưa có thì bật đúng bản của game này.
+        var mm = MusicManager.Instance;
+        if (mm != null && !mm.IsBgmPlaying) mm.PlayBgm((GameSessionManager.Instance?.SelectedEntry ?? default).bgmTrack);
+        mm?.SetMusicVolumeMultiplier(Mathf.Clamp01(d.musicVolume));
         Build();
         PreloadVoices();
-        if (_keep != null) _keep.Play();
         StartCoroutine(Run());
         Debug.Log($"[TutorialPlayer] Chạy tutorial {id} ({d.steps?.Length ?? 0} bước)");
     }
@@ -157,7 +160,6 @@ public class TutorialPlayer : MonoBehaviour
         if (Current == this) Current = null;
         StopAllCoroutines();
         if (_voice != null) _voice.Stop();
-        if (_keep != null) _keep.Stop();
         MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
         GameControlBridge.PushTutorialRunning(false);
         Destroy(gameObject);
@@ -170,7 +172,6 @@ public class TutorialPlayer : MonoBehaviour
         if (Current == this) Current = null;
         StopAllCoroutines();
         if (_voice != null) _voice.Stop();
-        if (_keep != null) _keep.Stop();
         Time.timeScale = _oldTimeScale <= 0f ? 1f : _oldTimeScale;
         GameControlBridge.PushTutorialRunning(false);
         MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
@@ -251,44 +252,6 @@ public class TutorialPlayer : MonoBehaviour
         _voice.playOnAwake = false;
         _voice.ignoreListenerPause = true;
         _voice.volume = GameSettings.Instance != null ? GameSettings.Instance.SfxVolume : 1f;
-        BuildKeepAlive();
-    }
-
-    /// <summary>Giữ đường âm thanh ra loa luôn có tín hiệu suốt tutorial. Giữa các câu đọc có quãng im vài giây; loa Bluetooth (A2DP) /
-    /// HDMI có cổng nhiễu (noise gate) tự tắt tiếng khi im và chỉ mở lại sau vài trăm ms khi có tín hiệu → câu đọc mất đầu, dù Unity/HAL
-    /// đã phát đúng từ mẫu 0 (đã kiểm: logcat TutorialAudio + dumpsys media.audio_flinger). Phát liên tục 1 sin tần số rất thấp (loa nhỏ
-    /// không tái tạo được). Mức tín hiệu đi qua nhiều tầng giảm âm (ở K02 thử nghiệm ~-43 dB) nên biên độ phải đủ lớn mới qua được cổng.
-    /// Chỉnh không cần build lại: đẩy file "tutorial_keep.txt" (nội dung "biên_độ tần_số", vd "0.1 30") vào thư mục persistentDataPath.</summary>
-    const float KeepAmp = 0.1f, KeepHz = 30f;
-
-    void BuildKeepAlive()
-    {
-        float amp = KeepAmp, hz = KeepHz;
-        try
-        {
-            var f = System.IO.Path.Combine(Application.persistentDataPath, "tutorial_keep.txt");
-            if (System.IO.File.Exists(f))
-            {
-                var parts = System.IO.File.ReadAllText(f).Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-                var inv = System.Globalization.CultureInfo.InvariantCulture;
-                if (parts.Length > 0) amp = float.Parse(parts[0], inv);
-                if (parts.Length > 1) hz = float.Parse(parts[1], inv);
-            }
-        }
-        catch (Exception e) { Diag("tutorial_keep.txt lỗi: " + e.Message); }
-        Diag($"keep-alive amp={amp} hz={hz}");
-        hz = Mathf.Max(1f, Mathf.Round(hz)); // số nguyên chu kỳ trong 1 giây → lặp không gãy
-        const int rate = 44100;
-        var data = new float[rate];
-        for (int i = 0; i < rate; i++) data[i] = amp * Mathf.Sin(2f * Mathf.PI * hz * i / rate);
-        var clip = AudioClip.Create("tutorial_keepalive", rate, 1, rate, false);
-        clip.SetData(data, 0);
-        _keep = gameObject.AddComponent<AudioSource>();
-        _keep.playOnAwake = false;
-        _keep.loop = true;
-        _keep.spatialBlend = 0f;
-        _keep.volume = 1f;
-        _keep.clip = clip;
     }
 
     void BuildStartButton()
@@ -321,7 +284,6 @@ public class TutorialPlayer : MonoBehaviour
     IEnumerator Run()
     {
         var steps = _d.steps ?? new Step[0];
-        yield return WaitRT(1.0f); // cho luồng âm thanh thức hẳn (keep-alive vừa bật) rồi mới đọc câu đầu
         while (!_finished)
         {
             ShowImage(_d.firstImage, true);
@@ -396,7 +358,7 @@ public class TutorialPlayer : MonoBehaviour
     /// <summary>Bản sao trong bộ nhớ của giọng đọc, thêm [LeadSilence] giây im lặng ở đầu. Clip import (preloadAudioData=false) có thể
     /// bị Unity giải phóng dữ liệu giữa các lần lặp → lần Play sau phải nạp lại và mất đoạn đầu; clip tạo bằng AudioClip.Create nằm hẳn trong
     /// RAM nên phát lần nào cũng như lần nào, và đoạn im lặng đầu hấp thụ độ trễ khởi động luồng âm thanh nếu có.</summary>
-    const float LeadSilence = 0.8f;
+    const float LeadSilence = 0.3f;
     readonly Dictionary<string, AudioClip> _padded = new Dictionary<string, AudioClip>();
 
     AudioClip Playable(string path, AudioClip src)
@@ -435,7 +397,7 @@ public class TutorialPlayer : MonoBehaviour
         _voice.clip = play;
         _voice.time = 0f;
         _voice.Play();
-        Diag($"say {path} clip={clip.length:F2}s({clip.loadState}) play={play.length:F2}s padded={_padded.ContainsKey(path)} timeScale={Time.timeScale} listenerPause={AudioListener.pause} dsp={AudioSettings.dspTime:F3} keep={(_keep != null && _keep.isPlaying)}");
+        Diag($"say {path} clip={clip.length:F2}s({clip.loadState}) play={play.length:F2}s padded={_padded.ContainsKey(path)} timeScale={Time.timeScale} listenerPause={AudioListener.pause} dsp={AudioSettings.dspTime:F3} bgm={(MusicManager.Instance != null && MusicManager.Instance.IsBgmPlaying)} bgmVol={(MusicManager.Instance != null ? MusicManager.Instance.BgmVolume : -1f):F2}");
         StartCoroutine(DiagVoice(path));
         yield return null;
         if (!_voice.isPlaying && !_paused) { Diag($"say {path}: isPlaying=false sau 1 frame -> Play lai"); _voice.Play(); }

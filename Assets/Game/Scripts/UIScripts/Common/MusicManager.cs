@@ -25,6 +25,9 @@ public class MusicManager : Singleton<MusicManager>
 
     protected MusicManager() { }
 
+    public bool IsBgmPlaying => _bgmSource != null && _bgmSource.isPlaying;
+    public float BgmVolume => _bgmSource != null ? _bgmSource.volume : 0f;
+
     protected override void OnCreated()
     {
         // Create AudioSources
