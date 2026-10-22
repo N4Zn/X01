@@ -19,12 +19,15 @@ import java.io.InputStream;
  * source: "ip" = dùng camera IP (chụp ảnh HTTP); thiếu/"uvc" = webcam USB như cũ (không có file cũng là UVC).
  * localIp: bind socket vào IP của eth0 (eth0 do K02 cấu hình tay, Android không coi là Network nên không có Network.getSocketFactory()).
  * mirror: lật gương ngang như webcam cũ (vùng nhận diện trong face_zones.json căn theo hình lật); đổi thì phải căn lại vùng.
+ * rotate180: camera lắp ngược (xoay vật lý 180°) -> xoay ảnh lại 180° NGAY sau khi giải mã, trước khi lật gương/dò mặt/hiển thị;
+ *   mọi thứ phía sau (preview, nhận diện, ảnh mẫu, face_zones.json) coi như camera lắp xuôi. Mặc định false.
  */
 public final class IpCameraConfig {
     public static final String DEFAULT_FILE = "/sdcard/EduXplore/ipcamera.json";
 
     public final String source;
     public final boolean mirror;
+    public final boolean rotate180;
     public final String host;
     public final int port;
     public final String user;
@@ -36,6 +39,7 @@ public final class IpCameraConfig {
     private IpCameraConfig(JSONObject o) {
         source = o.optString("source", "uvc");
         mirror = o.optBoolean("mirror", true);
+        rotate180 = o.optBoolean("rotate180", false);
         host = o.optString("host", "192.168.2.64");
         port = o.optInt("port", 80);
         user = o.optString("user", "admin");
@@ -46,6 +50,13 @@ public final class IpCameraConfig {
     }
 
     public boolean isIp() { return "ip".equalsIgnoreCase(source); }
+
+    /** Mã cho Core.flip để đạt (xoay 180° nếu rotate180) rồi (lật gương ngang nếu mirror); null = giữ nguyên ảnh.
+     * Xoay 180° = flip(-1); cộng thêm lật ngang thì ra lật dọc = flip(0). */
+    public Integer flipCode() {
+        if (rotate180) return mirror ? 0 : -1;
+        return mirror ? 1 : null;
+    }
 
     /** Không có file / file hỏng → null (coi như dùng webcam UVC). */
     public static IpCameraConfig loadOrNull() {

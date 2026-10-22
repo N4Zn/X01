@@ -766,7 +766,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         t.isDaemon = true
         ipThread = t
         t.start()
-        Log.e("FaceAttendance", "IP camera mode: ${cfg.host}:${cfg.port} mirror=${cfg.mirror}")
+        Log.e("FaceAttendance", "IP camera mode: ${cfg.host}:${cfg.port} mirror=${cfg.mirror} rotate180=${cfg.rotate180}")
     }
 
     private fun stopIpCamera() {
@@ -795,7 +795,8 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 val raw = try { Imgcodecs.imdecode(jpegMat, Imgcodecs.IMREAD_COLOR) } finally { jpegMat.release() }
                 if (raw.empty()) { raw.release(); throw java.io.IOException("Không giải mã được ảnh JPEG (${jpeg.size} byte)") }
                 val frame: Mat
-                if (cfg.mirror) { frame = Mat(); Core.flip(raw, frame, 1); raw.release() } else frame = raw
+                val flipCode = cfg.flipCode()
+                if (flipCode != null) { frame = Mat(); Core.flip(raw, frame, flipCode); raw.release() } else frame = raw
                 flipped = frame
                 frameWidth = frame.cols(); frameHeight = frame.rows()
                 val t1 = System.nanoTime()

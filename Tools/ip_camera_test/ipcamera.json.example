@@ -7,5 +7,6 @@
   "snapshotPath": "/ISAPI/Streaming/channels/101/picture",
   "localIp": "192.168.2.20",
   "mirror": true,
+  "rotate180": false,
   "timeoutMs": 5000
 }

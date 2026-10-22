@@ -138,7 +138,8 @@ không giải mã liên tục tốn CPU MT8168, và ảnh không bị trễ bộ
 
 - **Cấu hình** (nguồn duy nhất, trên thiết bị, KHÔNG commit vì có mật khẩu): `/sdcard/EduXplore/ipcamera.json` —
   mẫu `Tools/ip_camera_test/ipcamera.json.example`. `"source":"ip"` bật camera IP; thiếu file / `"uvc"` = webcam USB như cũ.
-  `localIp` (IP eth0), `host` (camera), `mirror` (lật gương như webcam; vùng `face_zones.json` căn theo hình lật).
+  `localIp` (IP eth0), `host` (camera), `mirror` (lật gương như webcam; vùng `face_zones.json` căn theo hình lật),
+  `rotate180` (camera lắp ngược: xoay ảnh 180° ngay sau giải mã, trước lật gương/dò mặt/preview — game FRTest và Quản lý lớp đều nhận; mặc định false).
 - **Code**: `SnapshotClient.java` + `IpCameraConfig.java` (HTTP/Digest bằng Socket thuần, không phụ thuộc thư viện) — bản trong
   `NativePlugins/UnityFacePluginAndroidLib/` (package `com.eduxplore.faceplugin`) và bản sao trong `FaceEnroll` (package
   `com.faceattendance.app`; **sửa cả hai**, cùng aar vào 1 APK nên không dùng chung package).

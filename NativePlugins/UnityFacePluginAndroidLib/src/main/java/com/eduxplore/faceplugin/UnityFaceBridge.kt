@@ -523,7 +523,7 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
         t.isDaemon = true
         ipThread = t
         t.start()
-        Log.i(TAG, "IP camera mode: ${cfg.host}:${cfg.port} path=${cfg.snapshotPath} mirror=${cfg.mirror}")
+        Log.i(TAG, "IP camera mode: ${cfg.host}:${cfg.port} path=${cfg.snapshotPath} mirror=${cfg.mirror} rotate180=${cfg.rotate180}")
     }
 
     private fun stopIpCamera() {
@@ -549,7 +549,8 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
                 val raw = try { org.opencv.imgcodecs.Imgcodecs.imdecode(jpegMat, org.opencv.imgcodecs.Imgcodecs.IMREAD_COLOR) } finally { jpegMat.release() }
                 if (raw.empty()) { raw.release(); throw java.io.IOException("Không giải mã được ảnh JPEG (${jpeg.size} byte)") }
                 val bgr: Mat
-                if (cfg.mirror) { bgr = Mat(); Core.flip(raw, bgr, 1); raw.release() } else bgr = raw
+                val flipCode = cfg.flipCode()
+                if (flipCode != null) { bgr = Mat(); Core.flip(raw, bgr, flipCode); raw.release() } else bgr = raw
                 val t2 = System.nanoTime()
                 frameWidth = bgr.cols(); frameHeight = bgr.rows()
                 frameCallbackCount++
