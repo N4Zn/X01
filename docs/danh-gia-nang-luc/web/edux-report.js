@@ -450,12 +450,45 @@
 
     // ---------- khung chung ----------
     function isDark() { return st.theme === 'dark' || (st.theme === 'auto' && global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches); }
+    // ── Chọn khoảng thời gian (chỉ khi host truyền opts.onRange và dữ liệu có `bounds`) ──
+    function isoAdd(iso, n) { var p = iso.split('-'); var t = Date.UTC(+p[0], +p[1] - 1, +p[2]) + n * 86400000; return new Date(t).toISOString().slice(0, 10); }
+    function isoMon(iso) { var p = iso.split('-'); var w = (new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay() + 6) % 7; return isoAdd(iso, -w); }
+    function rangePresets(b) {
+      var mx = b.max, first = function (a) { return a < b.min ? b.min : a; };
+      return [['Toàn bộ', b.min, mx], ['4 tuần gần nhất', first(isoAdd(isoMon(mx), -21)), mx], ['2 tuần gần nhất', first(isoAdd(isoMon(mx), -7)), mx],
+        ['Tuần gần nhất', first(isoMon(mx)), mx], ['Tháng gần nhất', first(mx.slice(0, 8) + '01'), mx]];
+    }
+    function dmy(iso) { return iso.slice(8) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4); }
+    function kyHtml(d) {
+      return opts.onRange && d.bounds ? '<button type="button" class="edx-kybtn" data-a="rangeopen" aria-expanded="' + (!!st.rangeOpen) + '">' + esc(d.ky.label) + ' ▾</button>' : esc(d.ky.label);
+    }
+    function rangePop(d) {
+      if (!st.rangeOpen || !opts.onRange || !d.bounds) return '';
+      var b = d.bounds, rf = st.rf || d.ky.from, rt = st.rt || d.ky.to;
+      return '<div class="edx-pop" role="dialog" aria-label="Chọn khoảng thời gian"><div class="edx-pop-t">Chọn khoảng thời gian</div><div class="edx-pop-p">' +
+        rangePresets(b).map(function (r) { return '<button type="button" class="edx-chip sm' + (r[1] === d.ky.from && r[2] === d.ky.to ? ' on' : '') + '" data-a="rangepreset" data-from="' + r[1] + '" data-to="' + r[2] + '">' + esc(r[0]) + '</button>'; }).join('') +
+        '</div><div class="edx-pop-r"><label>Từ <input type="date" id="edx-rf" min="' + b.min + '" max="' + b.max + '" value="' + esc(rf) + '"></label><label>Đến <input type="date" id="edx-rt" min="' + b.min + '" max="' + b.max + '" value="' + esc(rt) + '"></label>' +
+        '<button type="button" class="edx-chip sm on" data-a="rangeapply"' + (st.rangeBusy ? ' disabled' : '') + '>' + (st.rangeBusy ? 'Đang tính…' : 'Xem') + '</button></div>' +
+        '<div class="edx-pop-s">Có dữ liệu từ ' + esc(dmy(b.min)) + ' đến ' + esc(dmy(b.max)) + '</div>' +
+        (st.rangeErr ? '<div class="edx-pop-e">' + esc(st.rangeErr) + '</div>' : '') + '</div>';
+    }
+    function applyRange(from, to) {
+      if (!opts.onRange || st.rangeBusy) return;
+      if (!from || !to || from > to) { st.rangeErr = 'Khoảng ngày không hợp lệ (Từ phải trước hoặc bằng Đến).'; render(); return; }
+      st.rangeBusy = true; st.rangeErr = ''; render();
+      var fail = function (err) { st.rangeBusy = false; st.rangeErr = 'Không tải được: ' + ((err && err.message) || err || 'lỗi'); render(); };
+      var run; try { run = Promise.resolve(opts.onRange({ from: from, to: to })); } catch (e1) { fail(e1); return; }
+      run.then(function (nd) {
+        st.rangeBusy = false; st.rangeOpen = false; st.rf = st.rt = null;
+        try { setData(typeof nd === 'string' ? JSON.parse(nd) : nd); } catch (e2) { fail(e2); }
+      }, fail);
+    }
     function header() {
       var d = M.d, logo = opts.logo ? '<img class="edx-logo" src="' + esc(opts.logo) + '" alt="EduXplore">' : '<div class="edx-wordmark">Edu<i>X</i>plore</div>';
       var mons = M.monIds.length > 1 && st.tab !== 'tq' ? '<span class="edx-monsel"><small>Môn:</small>' + chips([['all', 'Tất cả môn']].concat(M.monIds.map(function (id) { return [id, id]; })), st.mon, 'mon') + '</span>' : '';
       var T = [['tq', 'Toàn trường'], ['khoi', 'Theo khối'], ['lop', 'Theo lớp'], ['hs', 'Từng học sinh']];
       var sub = st.tab === 'tq' ? 'Xếp hạng lớp trong từng khối' : monLabel();
-      return '<header class="edx-top"><div class="edx-brand">' + logo + '<div><h1>Báo cáo kết quả học tập</h1><p>' + esc(sub) + ' · Kỳ ' + esc(d.ky.label) + (M.nW ? ' · ' + M.nW + ' tuần' : '') + '</p></div></div>' +
+      return '<header class="edx-top"><div class="edx-brand">' + logo + '<div><h1>Báo cáo kết quả học tập</h1><p>' + esc(sub) + ' · Kỳ ' + kyHtml(d) + (M.nW ? ' · ' + M.nW + ' tuần' : '') + '</p></div></div>' + rangePop(d) +
         '<nav class="edx-tabs" role="tablist">' + T.map(function (t) { return '<button type="button" role="tab" class="edx-tab' + (st.tab === t[0] ? ' on' : '') + '" aria-selected="' + (st.tab === t[0]) + '" data-a="tab" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</nav>' +
         '<div class="edx-tools">' + (d.sample ? '<span class="edx-sample">Dữ liệu minh hoạ</span>' : '') + mons + '<button type="button" class="edx-chip sm" data-a="theme">' + (isDark() ? 'Nền sáng' : 'Nền tối') + '</button></div></header>';
     }
@@ -749,6 +782,7 @@
     // ---------- vẽ + sự kiện ----------
     function render() {
       if (!data) return;
+      el.classList.toggle('edx-busy', !!st.rangeBusy);
       reconcile();
       var keep = el.querySelector('.edx-scroll'), top = keep ? keep.scrollTop : 0;
       el.innerHTML = '<div class="edx-sheet">' + header() + '<main class="edx-main">' + (st.tab === 'tq' ? viewTq() : st.tab === 'khoi' ? viewKhoi() : st.tab === 'lop' ? viewLop() : viewHs()) + '</main>' + footer() + '</div>';
@@ -782,10 +816,18 @@
       render();
     }
     function onClick(e) {
+      var outside = st.rangeOpen && !(e.target.closest && e.target.closest('.edx-pop, .edx-kybtn'));
+      handleClick(e);
+      if (outside && st.rangeOpen) { st.rangeOpen = false; st.rangeErr = ''; render(); }
+    }
+    function handleClick(e) {
       var n = e.target.closest ? e.target.closest('[data-a]') : null;
       if (!n || !el.contains(n) || n.disabled) return;
       var a = n.getAttribute('data-a'), v = n.getAttribute('data-v');
-      if (a === 'tab') go({ tab: v });
+      if (a === 'rangeopen') { st.rangeOpen = !st.rangeOpen; st.rangeErr = ''; render(); }
+      else if (a === 'rangepreset') applyRange(n.getAttribute('data-from'), n.getAttribute('data-to'));
+      else if (a === 'rangeapply') { var f1 = el.querySelector('#edx-rf'), t1 = el.querySelector('#edx-rt'); applyRange(f1 && f1.value, t1 && t1.value); }
+      else if (a === 'tab') go({ tab: v });
       else if (a === 'khoi') go({ tab: 'khoi', khoi: v });
       else if (a === 'cmp') { st.cmp = v; render(); }
       else if (a === 'metric') { st.metric = v; render(); }
@@ -812,7 +854,11 @@
         render();
       }
     }
-    function onChange(e) { if (e.target && e.target.id === 'edx-sort') { st.cmpSort = e.target.checked; render(); } }
+    function onChange(e) {
+      if (e.target && e.target.id === 'edx-sort') { st.cmpSort = e.target.checked; render(); }
+      else if (e.target && e.target.id === 'edx-rf') st.rf = e.target.value;
+      else if (e.target && e.target.id === 'edx-rt') st.rt = e.target.value;
+    }
     function onInput(e) {
       if (!e.target || e.target.id !== 'edx-q') return;
       st.q = e.target.value;

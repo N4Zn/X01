@@ -107,7 +107,8 @@ Mở thẳng 1 màn hình: `/baocao/index.html#lop/5%20tuổi/Lá%201`, `#hs/CAS
     hash: false,                      // true: đồng bộ tab/lớp/bé lên #hash (trang chỉ có 1 báo cáo)
     height: null,                     // mặc định cao đúng 1 màn hình (100vh); đặt '720px' nếu khung nhúng nhỏ hơn
     mon: 'Toán',                      // môn mở đầu
-    onSelectStudent: function (s) { console.log('chọn', s.code); }
+    onSelectStudent: function (s) { console.log('chọn', s.code); },
+    onRange: function (r) { return fetch('/api/bao-cao?from=' + r.from + '&to=' + r.to).then(function (x) { return x.json(); }); }   // tuỳ chọn: bật ô chọn khoảng thời gian (cần report.bounds {min,max}); trả dữ liệu mới
   });
   // rp.update(newData)  rp.go({tab:'hs', code:'CASA-21001'})  rp.destroy()
 </script>

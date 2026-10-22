@@ -25,6 +25,12 @@ js = rd(os.path.join(WEB, 'edux-report.js'))
 data = '/*EDUX_DATA*/null' if a.template else json.dumps(json.load(open(a.data, encoding='utf-8')), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
 logo = 'data:image/png;base64,' + base64.b64encode(rd(os.path.join(WEB, 'logo.png'), 'rb')).decode()
 
+# Bản template (ReportGateway.gs): chọn khoảng thời gian qua google.script.run.getRange(token, from, to). Token do cổng điền vào chỗ /*EDUX_TOKEN*/.
+RANGE = ("function(r){return new Promise(function(ok,no){google.script.run.withSuccessHandler(ok).withFailureHandler(function(e){no(e)})"
+         ".getRange(window.EDUX_TOKEN,r.from,r.to)})}")
+mount = ("window.EDUX_TOKEN=/*EDUX_TOKEN*/\"\";EduxReport.mount('#edux-report',{data:window.EDUX_DATA,logo:%s,theme:'auto',onRange:(window.google&&google.script&&google.script.run&&window.EDUX_TOKEN)?%s:null});" % (json.dumps(logo), RANGE)
+         if a.template else "EduxReport.mount('#edux-report',{data:window.EDUX_DATA,logo:%s,theme:'auto'});" % json.dumps(logo))
+
 html = """<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Báo cáo kết quả học tập · EduXplore</title>
@@ -40,9 +46,9 @@ body{margin:0;background:var(--page-bg)}
 <div id="edux-report"></div>
 <script>window.EDUX_DATA=%s;</script>
 <script>%s</script>
-<script>EduxReport.mount('#edux-report',{data:window.EDUX_DATA,logo:%s,theme:'auto'});</script>
+<script>%s</script>
 </body></html>
-""" % (css, data, js, json.dumps(logo))
+""" % (css, data, js, mount)
 os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
 open(a.out, 'w', encoding='utf-8', newline='\n').write(html)
 print('Ghi', a.out, '%d KB' % (len(html.encode('utf-8')) // 1024))

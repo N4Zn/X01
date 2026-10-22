@@ -14,6 +14,7 @@
  *   GET <webAppUrl>?action=list[&since=yyyy-MM-dd][&device=ID][&key=…]  → {"ok":true,"files":[{"path","bytes","updated"}…]}
  *   GET <webAppUrl>?action=get&path=<device/day/name.json>[&key=…]      → nội dung file (text)
  *
+ *   GET <webAppUrl>?action=report[&from=yyyy-MM-dd][&to=yyyy-MM-dd]&key=…  → report.json cho khoảng ngày (Aggregate.gs)
  *   POST <webAppUrl>?action=put&name=config.json|dashboard.html&key=… (body = nội dung) → _report/<name>  (xem Aggregate.gs, ReportGateway.gs)
  *
  * Cấu trúc Drive:  <ROOT_NAME>/<deviceId>/<yyyy-MM-dd>/<name>.json   (ngày lấy từ tên file)
@@ -41,6 +42,7 @@ function doGet(e) {
   try {
     if (p.action === 'list') return json_({ ok: true, files: listFiles_(p.device || '', p.since || '') });
     if (p.action === 'get') return text_(readFile_(p.path || ''));
+    if (p.action === 'report') return text_(reportForRange_(p.from || '', p.to || ''));   // Aggregate.gs
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, error: String(err) });

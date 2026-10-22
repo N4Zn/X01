@@ -258,13 +258,22 @@ function edxFlatten_(bases) {
   return db;
 }
 
-/** Kỳ báo cáo: từ cfg.report_from (nếu có) hoặc ngày có dữ liệu sớm nhất, đến ngày có dữ liệu mới nhất. */
-function edxReportFromBases_(cfg, bases) {
+/** Kỳ báo cáo. Mặc định: từ cfg.report_from (nếu có) hoặc ngày có dữ liệu sớm nhất, đến ngày có dữ liệu mới nhất.
+ *  from/to (tuỳ chọn, yyyy-MM-dd): chọn khoảng khác — được kẹp vào [ngày sớm nhất, ngày mới nhất] có dữ liệu.
+ *  Thêm `bounds` {min,max} để trang đặt giới hạn ô chọn ngày. */
+function edxReportFromBases_(cfg, bases, from, to) {
   var db = edxFlatten_(bases);
   var days = db.filter(function (x) { return cfg.scored_games.indexOf(x.game) >= 0; }).map(function (x) { return x.ts.slice(0, 10); }).sort();
   if (!days.length) return null;
-  var dfrom = cfg.report_from && cfg.report_from > days[0] ? cfg.report_from : days[0];
-  return edxBuildReport_(cfg, db, dfrom, days[days.length - 1]);
+  var min = days[0], max = days[days.length - 1];
+  var dfrom = from || (cfg.report_from && cfg.report_from > min ? cfg.report_from : min);
+  var dto = to || max;
+  if (dfrom < min) dfrom = min;
+  if (dto > max) dto = max;
+  if (dfrom > dto) dfrom = dto;
+  var rep = edxBuildReport_(cfg, db, dfrom, dto);
+  rep.bounds = { min: min, max: max };
+  return rep;
 }
 
 // ══ PHẦN DRIVE ═══════════════════════════════════════════════════════════════════════════════════════════════════
@@ -343,6 +352,24 @@ function folderIsLog_(day) {
   if (!dev.hasNext()) return false;
   var root = dev.next().getParents();
   return root.hasNext() && root.next().getName() === ROOT_NAME;
+}
+
+/** Báo cáo cho khoảng ngày tuỳ chọn (gọi từ doGet ?action=report&from&to — DriveUpload.gs; cổng xem gọi qua UrlFetch).
+ *  Đọc kết quả tích luỹ của aggregateRun, tính ngay (vài trăm ms), không đụng log thô. Trả chuỗi JSON. */
+function reportForRange_(from, to) {
+  var ok = /^\d{4}-\d{2}-\d{2}$/;
+  if ((from && !ok.test(from)) || (to && !ok.test(to))) throw new Error('bad date');
+  var root = root_();
+  var cfgFile = findFile_(sub_(root, REPORT_DIR), 'config.json');
+  var stFile = findFile_(sub_(root, STATE_DIR), 'agg_state.json');
+  if (!cfgFile || !stFile) throw new Error('chưa có dữ liệu tích luỹ (chạy aggregateRun)');
+  var cfg = JSON.parse(cfgFile.getBlob().getDataAsString('UTF-8'));
+  var state = JSON.parse(stFile.getBlob().getDataAsString('UTF-8'));
+  var rep = edxReportFromBases_(cfg, state.bases, from, to);
+  if (!rep) throw new Error('chưa có dữ liệu');
+  rep.generatedAt = Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', "yyyy-MM-dd'T'HH:mm:ssXXX");
+  rep.sessions = Object.keys(state.bases).length;
+  return JSON.stringify(rep);
 }
 
 /** Chạy MỘT LẦN để đặt trigger 10 phút. */
