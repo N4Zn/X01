@@ -111,7 +111,7 @@ public class TutorialPlayer : MonoBehaviour
     readonly Vector2[] _tips = new Vector2[2];
     readonly Coroutine[] _footMove = new Coroutine[2];
     RectTransform _fx, _startBtn;
-    AudioSource _voice;
+    AudioSource _voice, _keep;
     string _curImage;
     float _oldTimeScale = 1f;
     float _beginTime;
@@ -138,6 +138,7 @@ public class TutorialPlayer : MonoBehaviour
         MusicManager.Instance?.SetMusicVolumeMultiplier(Mathf.Clamp01(d.musicVolume));
         Build();
         PreloadVoices();
+        if (_keep != null) _keep.Play();
         StartCoroutine(Run());
         Debug.Log($"[TutorialPlayer] Chạy tutorial {id} ({d.steps?.Length ?? 0} bước)");
     }
@@ -156,6 +157,7 @@ public class TutorialPlayer : MonoBehaviour
         if (Current == this) Current = null;
         StopAllCoroutines();
         if (_voice != null) _voice.Stop();
+        if (_keep != null) _keep.Stop();
         MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
         GameControlBridge.PushTutorialRunning(false);
         Destroy(gameObject);
@@ -168,6 +170,7 @@ public class TutorialPlayer : MonoBehaviour
         if (Current == this) Current = null;
         StopAllCoroutines();
         if (_voice != null) _voice.Stop();
+        if (_keep != null) _keep.Stop();
         Time.timeScale = _oldTimeScale <= 0f ? 1f : _oldTimeScale;
         GameControlBridge.PushTutorialRunning(false);
         MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
@@ -248,6 +251,25 @@ public class TutorialPlayer : MonoBehaviour
         _voice.playOnAwake = false;
         _voice.ignoreListenerPause = true;
         _voice.volume = GameSettings.Instance != null ? GameSettings.Instance.SfxVolume : 1f;
+        BuildKeepAlive();
+    }
+
+    /// <summary>Giữ luồng âm thanh ra loa/HDMI của máy luôn "thức" suốt tutorial. Giữa các câu đọc có quãng im vài giây; luồng âm thanh
+    /// (HAL/HDMI của K02) vào chế độ chờ khi im, và câu đọc kế tiếp mất đoạn đầu cho tới khi luồng thức dậy. Phát liên tục 1 tín hiệu
+    /// sin 25 Hz biên độ rất nhỏ (dưới ngưỡng nghe, loa không phát được; số 0 tuyệt đối thì có thiết bị vẫn coi là im) để không bao giờ im.</summary>
+    void BuildKeepAlive()
+    {
+        const int rate = 44100;
+        var data = new float[rate];
+        for (int i = 0; i < rate; i++) data[i] = 0.004f * Mathf.Sin(2f * Mathf.PI * 25f * i / rate); // đúng 25 chu kỳ/giây → lặp không gãy
+        var clip = AudioClip.Create("tutorial_keepalive", rate, 1, rate, false);
+        clip.SetData(data, 0);
+        _keep = gameObject.AddComponent<AudioSource>();
+        _keep.playOnAwake = false;
+        _keep.loop = true;
+        _keep.spatialBlend = 0f;
+        _keep.volume = 1f;
+        _keep.clip = clip;
     }
 
     void BuildStartButton()
@@ -280,6 +302,7 @@ public class TutorialPlayer : MonoBehaviour
     IEnumerator Run()
     {
         var steps = _d.steps ?? new Step[0];
+        yield return WaitRT(1.0f); // cho luồng âm thanh thức hẳn (keep-alive vừa bật) rồi mới đọc câu đầu
         while (!_finished)
         {
             ShowImage(_d.firstImage, true);
@@ -354,7 +377,7 @@ public class TutorialPlayer : MonoBehaviour
     /// <summary>Bản sao trong bộ nhớ của giọng đọc, thêm [LeadSilence] giây im lặng ở đầu. Clip import (preloadAudioData=false) có thể
     /// bị Unity giải phóng dữ liệu giữa các lần lặp → lần Play sau phải nạp lại và mất đoạn đầu; clip tạo bằng AudioClip.Create nằm hẳn trong
     /// RAM nên phát lần nào cũng như lần nào, và đoạn im lặng đầu hấp thụ độ trễ khởi động luồng âm thanh nếu có.</summary>
-    const float LeadSilence = 0.25f;
+    const float LeadSilence = 0.8f;
     readonly Dictionary<string, AudioClip> _padded = new Dictionary<string, AudioClip>();
 
     AudioClip Playable(string path, AudioClip src)
