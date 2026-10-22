@@ -11,7 +11,7 @@ Ra `<out>/<từ>_<đến>/` (báo cáo gộp cả kỳ, Excel có thêm sheet "T
 
 ## Từ Drive (cơ chế mới từ 2026-10-20 — mỗi phiên 1 file)
 
-K02 gửi từng file `GameLogs/<phiên>.json` lên Drive (`EduXplore_Logs/<máy>/<ngày>/…`) qua `docs/apps-script/DriveUpload.gs`. Điền `drive_url` (URL `/exec`) và `drive_key` (nếu script đặt SECRET) vào `config.json`, rồi:
+K02 gửi từng file `GameLogs/<phiên>.json` lên Drive (`EduXplore_Logs/<máy>/<ngày>/…`) qua `docs/apps-script/DriveUpload.gs`. `drive_url` (URL `/exec`) đã có trong `config.json`; mã SECRET đặt ở biến môi trường `EDUX_DRIVE_KEY` (không commit vào repo), rồi:
 
 ```bash
 python -I -X utf8 run.py --drive --from 2026-10-20 --to 2026-10-20

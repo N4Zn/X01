@@ -142,7 +142,7 @@ def main():
         if not cfg.get('drive_url'):
             sys.exit('Thiếu "drive_url" (URL /exec của DriveUpload.gs) trong config.json')
         a.local = os.path.join(L.HERE, 'drive_logs')
-        n, new = L.fetch_drive(cfg['drive_url'], a.local, cfg.get('drive_key', ''), since=a.dfrom or '')
+        n, new = L.fetch_drive(cfg['drive_url'], a.local, os.environ.get('EDUX_DRIVE_KEY') or cfg.get('drive_key', ''), since=a.dfrom or '')
         print('Drive: %d file phiên (tải mới/đổi %d) -> %s' % (n, new, a.local))
 
     if a.local:

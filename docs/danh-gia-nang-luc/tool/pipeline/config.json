@@ -1,5 +1,6 @@
 {
  "_doc": "Cấu hình pipeline đánh giá năng lực. Sửa file này, không sửa code. Xem README.md cùng thư mục.",
+ "drive_url": "https://script.google.com/macros/s/AKfycbydkNe4EsxIUcrpgVn-y6t3py1DSCqxuY-x0Jxz3EPQfleQVyYXbZ2B-Q4Gm-SBm4iIlg/exec",
  "sheet_csv_url": "https://docs.google.com/spreadsheets/d/13ywPIzwh_C0H4O5FAe9jMb9ubtx0ivDx4lL7wTwvGVs/export?format=csv&gid=0",
  "mon": "Toán",
  "roster": [
