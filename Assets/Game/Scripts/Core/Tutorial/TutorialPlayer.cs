@@ -110,6 +110,7 @@ public class TutorialPlayer : MonoBehaviour
     float _oldTimeScale = 1f;
     bool _finished;
     readonly Dictionary<string, Texture2D> _tex = new Dictionary<string, Texture2D>();
+    readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
     static Texture2D _ring, _disc, _check, _cross;
 
     void Begin(string id, Data d)
@@ -122,6 +123,7 @@ public class TutorialPlayer : MonoBehaviour
         GameControlBridge.PushTutorialRunning(true);
         MusicManager.Instance?.SetMusicVolumeMultiplier(Mathf.Clamp01(d.musicVolume));
         Build();
+        PreloadVoices();
         StartCoroutine(Run());
         Debug.Log($"[TutorialPlayer] Chạy tutorial {id} ({d.steps?.Length ?? 0} bước)");
     }
@@ -289,14 +291,35 @@ public class TutorialPlayer : MonoBehaviour
         foreach (var c in cs) yield return c;
     }
 
+    /// <summary>Nạp trước mọi giọng đọc của kịch bản (import mặc định preloadAudioData = false: clip chỉ giải nén ở lần Play đầu
+    /// → mất đoạn đầu). Gọi ngay khi bắt đầu để tới lúc đọc thì đã sẵn sàng.</summary>
+    void PreloadVoices()
+    {
+        if (_d.steps == null) return;
+        foreach (var st in _d.steps)
+            if (st != null && st.type == "say" && !string.IsNullOrEmpty(st.audio)) Voice(st.audio);
+    }
+
+    AudioClip Voice(string path)
+    {
+        if (_clips.TryGetValue(path, out var c)) return c;
+        c = Resources.Load<AudioClip>(ResPath(path));
+        if (c != null && c.loadState == AudioDataLoadState.Unloaded) c.LoadAudioData();
+        _clips[path] = c;
+        return c;
+    }
+
     IEnumerator Say(string path)
     {
-        var clip = string.IsNullOrEmpty(path) ? null : Resources.Load<AudioClip>(ResPath(path));
+        var clip = string.IsNullOrEmpty(path) ? null : Voice(path);
         if (clip == null) { yield return new WaitForSecondsRealtime(1.4f); yield break; }
+        // Chờ dữ liệu sẵn sàng (tối đa ~1s) rồi mới phát; phát hẹn giờ theo DSP để đầu câu không bị cắt khi luồng âm thanh còn đang nạp.
+        for (float w = 0f; clip.loadState == AudioDataLoadState.Loading && w < 1f; w += Time.unscaledDeltaTime) yield return null;
+        const double lead = 0.15;
         _voice.Stop();
         _voice.clip = clip;
-        _voice.Play();
-        yield return new WaitForSecondsRealtime(clip.length + 0.03f);
+        _voice.PlayScheduled(AudioSettings.dspTime + lead);
+        yield return new WaitForSecondsRealtime(clip.length + (float)lead + 0.03f);
     }
 
     Vector2 Home(int side)
