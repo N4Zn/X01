@@ -143,14 +143,14 @@ public class QuestionMediaDisplay : MonoBehaviour
 
     static readonly System.Collections.Generic.Dictionary<string, AudioClip> _promptClips = new();
 
-    /// <summary>Resources/TongHop/{tên game}/question, không có thì Resources/TongHop/{topic}/question (vd Counting5 → Counting).</summary>
+    /// <summary>Resources/TongHop/{tên game}/{tên game}.mp3, không có thì Resources/TongHop/{topic}/{topic}.mp3 (vd Counting5 → Counting/Counting.mp3).</summary>
     static AudioClip FindPromptClip(QuestionData q)
     {
         string game = GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : null;
         foreach (var folder in new[] { game, q.topic })
         {
             if (string.IsNullOrEmpty(folder)) continue;
-            string path = $"TongHop/{folder}/question";
+            string path = $"TongHop/{folder}/{folder}";
             if (!_promptClips.TryGetValue(path, out var clip)) _promptClips[path] = clip = Resources.Load<AudioClip>(path);
             if (clip != null) return clip;
         }
