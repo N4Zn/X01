@@ -108,6 +108,10 @@ public class TutorialPlayer : MonoBehaviour
     AudioSource _voice;
     string _curImage;
     float _oldTimeScale = 1f;
+    float _beginTime;
+    Image _startImg;
+    /// <summary>Nút BẮT ĐẦU bị khoá chừng này giây đầu: chạm sàn lúc vừa chọn game (hoặc chạm nhanh) trúng nút ở góc làm bỏ qua cả tutorial.</summary>
+    const float StartGraceSec = 2f;
     bool _finished;
     readonly Dictionary<string, Texture2D> _tex = new Dictionary<string, Texture2D>();
     readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
@@ -118,6 +122,7 @@ public class TutorialPlayer : MonoBehaviour
         _d = d;
         _dir = $"{ResourcesRoot}/{id}/";
         Current = this;
+        _beginTime = Time.unscaledTime;
         _oldTimeScale = Time.timeScale;
         Time.timeScale = 0f; // dừng game phía sau tới khi bấm bắt đầu
         GameControlBridge.PushTutorialRunning(true);
@@ -154,7 +159,12 @@ public class TutorialPlayer : MonoBehaviour
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) { Finish(); return; }
 #endif
-        if (_startBtn != null) _startBtn.localScale = Vector3.one * (1f + 0.05f * Mathf.Sin(Time.unscaledTime * 4f));
+        if (_startBtn != null)
+        {
+            bool ready = Time.unscaledTime - _beginTime >= StartGraceSec;
+            _startBtn.localScale = ready ? Vector3.one * (1f + 0.05f * Mathf.Sin(Time.unscaledTime * 4f)) : Vector3.one;
+            if (_startImg != null) _startImg.color = new Color(0.16f, 0.72f, 0.33f, ready ? 1f : 0.35f); // mờ = chưa bấm được
+        }
     }
 
     // ── Dựng giao diện ──────────────────────────────────────────────────────
@@ -217,12 +227,13 @@ public class TutorialPlayer : MonoBehaviour
         _startBtn.SetParent(_root, false);
         Place(_startBtn, b.xPct, b.yPct, b.wPct, b.hPct);
         var img = go.GetComponent<Image>();
-        img.color = new Color(0.16f, 0.72f, 0.33f, 1f);
+        _startImg = img;
+        img.color = new Color(0.16f, 0.72f, 0.33f, 0.35f);
         var o = go.AddComponent<Outline>(); o.effectColor = Color.white; o.effectDistance = new Vector2(4f, -4f);
         var s = go.AddComponent<Shadow>(); s.effectColor = new Color(0f, 0f, 0f, 0.6f); s.effectDistance = new Vector2(4f, -8f);
         var btn = go.GetComponent<Button>();
         btn.targetGraphic = img;
-        btn.onClick.AddListener(Finish);
+        btn.onClick.AddListener(() => { if (Time.unscaledTime - _beginTime >= StartGraceSec) Finish(); });
         var tgo = new GameObject("Text", typeof(RectTransform), typeof(Text));
         var trt = (RectTransform)tgo.transform; trt.SetParent(_startBtn, false);
         trt.anchorMin = new Vector2(0.06f, 0.08f); trt.anchorMax = new Vector2(0.94f, 0.92f); trt.offsetMin = trt.offsetMax = Vector2.zero;
