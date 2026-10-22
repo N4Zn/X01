@@ -387,11 +387,13 @@ public class TutorialPlayer : MonoBehaviour
             for (float w = 0f; clip.loadState != AudioDataLoadState.Loaded && clip.loadState != AudioDataLoadState.Failed && w < 1.5f; w += Dt) yield return null;
         }
         var play = Playable(path, clip);
-        const double lead = 0.1;
+        // KHÔNG dùng PlayScheduled: nếu mốc hẹn đã "lỡ" so với đồng hồ DSP (luồng âm thanh K02 có độ trễ tăng dần), Unity phát clip
+        // từ vị trí bù thời gian đã trôi → mỗi lần lặp mất thêm một đoạn đầu ("Tìm đáp án…" → "đáp án…" → "án…"). Play() luôn bắt đầu từ mẫu 0.
         _voice.Stop();
         _voice.clip = play;
-        _voice.PlayScheduled(AudioSettings.dspTime + lead);
-        yield return WaitRT(play.length + (float)lead + 0.03f);
+        _voice.time = 0f;
+        _voice.Play();
+        yield return WaitRT(play.length + 0.03f);
     }
 
     Vector2 Home(int side)
