@@ -6,8 +6,8 @@ using UnityEngine;
 ///
 ///   • Có ít nhất 1 bên đang hiện câu hỏi → phát (đầu ván / sau khi nghỉ xong).
 ///   • Phát TRỌN clip, kể cả khi round đổi giữa lúc đang đọc. Đọc xong → nghỉ <see cref="GameSettings.QuestionAudioRepeat"/> giây → đọc lại.
-///   • Trong lúc nghỉ mà CẢ 2 bên đều không còn câu hỏi (đang icon đúng/sai, chờ vùng sạch, đếm "Next in") → dừng đếm, chờ tới khi có bên
-///     hiện câu mới thì đọc NGAY (round mới).
+///   • Thời gian nghỉ là TỐI THIỂU: round mới bắt đầu giữa lúc nghỉ thì vẫn nghỉ cho đủ. Hết nghỉ mà CẢ 2 bên đều không còn câu hỏi
+///     (đang icon đúng/sai, chờ vùng sạch, đếm "Next in") → chờ tới khi có bên hiện câu mới thì đọc NGAY (round mới).
 ///   • Một bên trả lời xong nhưng bên kia còn câu → vẫn đọc/lặp bình thường.
 /// Timer dùng Time.deltaTime (có scale) nên Pause (timeScale 0) đứng yên theo.
 /// </summary>
@@ -69,12 +69,10 @@ public class SharedPromptAudio : MonoBehaviour
             for (float t = 0f; t < clip.length; t += Time.deltaTime) yield return null; // đọc trọn, không bị round đổi cắt ngang
             MusicManager.Instance?.SetMusicVolumeMultiplier(1f);
 
+            // Nghỉ TỐI THIỂU N giây tính từ lúc đọc xong, bất kể round đổi hay không (round mới bắt đầu sớm hơn thì vẫn phải nghỉ đủ).
+            // Hết nghỉ mà cả 2 bên đang chuyển round → vòng ngoài chờ tới khi có bên hiện câu mới rồi đọc ngay.
             float rest = GameSettings.Instance != null ? GameSettings.Instance.QuestionAudioRepeat : 4f;
-            for (float t = 0f; t < rest; t += Time.deltaTime)
-            {
-                if (!AnyActive) break; // cả 2 bên đang chuyển round → thôi nghỉ, vòng ngoài chờ round mới rồi đọc ngay
-                yield return null;
-            }
+            for (float t = 0f; t < rest; t += Time.deltaTime) yield return null;
         }
     }
 }

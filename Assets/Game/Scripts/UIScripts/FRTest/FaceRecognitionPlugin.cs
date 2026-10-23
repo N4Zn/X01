@@ -157,6 +157,7 @@ public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
         if (!_initialized) return;
         _bridge.CallStatic("clearRoundVotes");
         _bridge.CallStatic("reloadConfig");
+        _bridge.CallStatic("reloadDatabase"); // lớp đang dùng / học sinh mới enroll: DB của plugin chỉ nạp lúc initialize nên phải nạp lại
         _bridge.CallStatic("setRecognitionEnabled", true);
 #endif
     }
