@@ -157,3 +157,9 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Kiểm tra lệch thứ tự màu enroll (NV21) vs game (NV12) nếu `sim` vẫn thấp sau khi enroll lại bằng camera IP — (2026-10-21)
 - [ ] Đổi mật khẩu camera Hikvision (từng lộ trong chat); chọn khung sắc nét nhất / RTSP nếu cần preview mượt hơn — (2026-10-21)
 - [ ] Quyết: có tăng trần 3 mẫu/người (`AttendanceStore.MAX_SAMPLES_PER_PERSON`) không — (2026-10-21)
+
+## Tutorial / giọng đọc (2026-10-22) — cần build APK Unity rồi test K02
+- [ ] Build, chạy tutorial nhiều vòng: `adb logcat -s TutorialAudio` xem `bgm=True bgmVol>0`; giọng đọc hết mất đầu câu chưa (nếu `bgm=False` tìm chỗ nhạc nền bị tắt) — (2026-10-22)
+- [ ] Xong chẩn đoán: đặt lại `BuildLogSilencer.SilenceInBuild = true` — (2026-10-22)
+- [ ] Đặt `Resources/TongHop/Counting/Counting.mp3` (đã có) và thử Counting + Counting5: lặp 4s mỗi câu, dừng khi trả lời — (2026-10-22)
+- [ ] Xác nhận đầu ra audio thật của K02 khi triển khai (HDMI/loa trong hay BT A2DP) — máy test đang ra BT — (2026-10-22)

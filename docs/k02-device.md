@@ -2,7 +2,7 @@
 
 > **TL;DR**: Ba fix cấp firmware, làm riêng cho từng máy K02 (mất khi flash ROM): neutralize mirror_hdmi.sh, cấp quyền USB bằng root lúc boot, max volume + tắt Safe Media Volume. File nằm ở NativePlugins/K02DeviceConfig/.
 > **Đọc khi**: cài/khôi phục máy K02 mới, lỗi HDMI méo/dialog USB/âm lượng.
-> **Cập nhật**: 2026-10-04 (tách nguyên văn từ CLAUDE.md gốc, chưa sửa nội dung)
+> **Cập nhật**: 2026-10-22 @ d1419eb0 (thêm mục chẩn đoán audio mất đầu câu)
 
 ### HDMI mirror lúc boot/launcher/FA — bug OEM, đã fix (2026-09-16)
 
@@ -129,6 +129,11 @@ Yêu cầu: mọi đường audio (HDMI, loa, USB, BT...) đều max, tắt cả
   i32 0 s16 com.android.shell` (setStreamVolume; `10` đúng cho Android 10 — mã `7` thì không ra gì).
   Đã verify sau reboot: mọi stream × mọi device = 15/15, `SAFE_MEDIA_VOLUME_INACTIVE`.
 - HDMI không có gain riêng ở mixer phần cứng (`tinymix`) — âm lượng HDMI chỉ chỉnh bằng phần mềm.
+
+### Audio mất đầu câu (giọng đọc tutorial) — cách chẩn đoán (2026-10-22)
+Câu đọc sau quãng im bị mất đầu dù Unity phát đúng: kiểm 2 tầng trước khi sửa code.
+- Unity: `TutorialPlayer` ghi `android.util.Log` tag `TutorialAudio` (không bị `BuildLogSilencer`): `adb logcat -s TutorialAudio` — `timeSamples` tăng đều từ 0 = Unity ổn.
+- Hệ thống: `adb shell dumpsys media.audio_flinger` — `Output device` của luồng chính (máy test: `BLUETOOTH_A2DP`, có luồng DUPLICATING sang 48 kHz) và `Signal power history` (mức tín hiệu thật tại HAL, ~−46 dB cho giọng đọc vì còn nhiều tầng giảm âm). HAL nhận đúng mà vẫn mất tiếng ⇒ lỗi ở loa/đường ngoài (cổng nhiễu loa BT/HDMI tắt khi im). Cách xử lý: giữ nhạc nền chạy suốt (tutorial bật BGM); tín hiệu keep-alive biên độ nhỏ (≤0.01) KHÔNG qua nổi các tầng giảm âm.
 
 ### Camera IP Hikvision (DS-2CD1T27G2H-LIUF) qua cổng Ethernet — nhận diện mặt (2026-10-21)
 
