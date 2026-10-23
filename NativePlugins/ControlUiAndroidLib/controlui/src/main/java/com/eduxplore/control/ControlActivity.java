@@ -1430,6 +1430,13 @@ public class ControlActivity extends Activity {
             syncSettingsToUnity();
         }));
 
+        // 2b. Nghỉ giữa 2 lần đọc câu hỏi (đọc xong → nghỉ chừng này → đọc lại)
+        settingsBody.addView(buildSeekBarSetting("Nghỉ giữa 2 lần đọc câu hỏi (giây)", 0, 10, Math.max(0, Math.min(10, Math.round(settingsStore.questionAudioRepeat))), val -> {
+            settingsStore.questionAudioRepeat = (float)val;
+            settingsStore.save();
+            syncSettingsToUnity();
+        }));
+
         // 3. Tốc độ flow (Slider 0.1 - 5.0, step 0.1 + EditText)
         settingsBody.addView(buildFlowSpeedSetting());
 

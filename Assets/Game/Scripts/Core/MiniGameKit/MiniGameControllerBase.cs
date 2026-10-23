@@ -134,7 +134,7 @@ public abstract class MiniGameControllerBase : MonoBehaviour
     // • Đồng bộ 2 đội ở Independent (SyncIndependentRounds): điểm hẹn — cả 2 đội cùng tới mới hiện câu mới.
 
     /// <summary>Thời gian NGHỈ giữa 2 lần phát âm câu hỏi (giây), tính từ lúc phát xong.</summary>
-    protected const float QuestionAudioRepeatPause = 4f;
+    protected static float QuestionAudioRepeatPause => GameSettings.Instance != null ? GameSettings.Instance.QuestionAudioRepeat : 4f; // chỉnh ở ControlActivity → Cài đặt
 
     /// <summary>Phát âm đọc câu hỏi 1 LẦN, trả về tổng độ dài (giây); 0 = câu không có âm → không lặp. Mặc định không có âm.
     /// Base lo việc lặp + dừng; game chỉ cần phát và báo độ dài.</summary>

@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public static class BuildLogSilencer
 {
-    public const bool SilenceInBuild = false; // TẠM: bật log để chẩn đoán audio tutorial — trả về true sau khi xong
+    public const bool SilenceInBuild = true;
 
 #if !UNITY_EDITOR
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

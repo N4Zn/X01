@@ -18,6 +18,7 @@ public final class SettingsStore {
     public float sfxVolume = 1.0f;
     public int gameTime = 100;
     public float roundEndDelay = 2.0f;
+    public float questionAudioRepeat = 4.0f; // nghỉ giữa 2 lần đọc câu hỏi (giây, 0–10)
     public float flowSpeed = 1.0f;
     public int waitForClear = 1; // 1: bật, 0: tắt, -1: không đổi
     public int showTutorial = 1; // 1: chạy hướng dẫn trước khi chơi (mặc định), 0: vào thẳng game
@@ -46,6 +47,7 @@ public final class SettingsStore {
             sfxVolume = (float) o.optDouble("sfxVolume", sfxVolume);
             gameTime = o.optInt("gameTime", gameTime);
             roundEndDelay = (float) o.optDouble("roundEndDelay", roundEndDelay);
+            questionAudioRepeat = (float) o.optDouble("questionAudioRepeat", questionAudioRepeat);
             flowSpeed = (float) o.optDouble("flowSpeed", flowSpeed);
             waitForClear = o.optInt("waitForClear", waitForClear);
             showTutorial = o.optInt("showTutorial", showTutorial);
@@ -74,6 +76,7 @@ public final class SettingsStore {
         o.put("sfxVolume", sfxVolume);
         o.put("gameTime", gameTime);
         o.put("roundEndDelay", roundEndDelay);
+        o.put("questionAudioRepeat", questionAudioRepeat);
         o.put("flowSpeed", flowSpeed);
         o.put("waitForClear", waitForClear);
         o.put("showTutorial", showTutorial);

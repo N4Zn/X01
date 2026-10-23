@@ -32,6 +32,7 @@ Nguồn: `ui/SettingsStore.java` (lưu `/sdcard/EduXplore/game_settings.json`); 
 | `musicVolume`, `sfxVolume` | float | 0–1; mặc định nhạc **0.5**, SFX 1 | mặc định nhạc 0.5 (2026-10-05) ở cả `SettingsStore.java` và `GameSettings.cs` |
 | `gameTime` | int (giây) | ≥ 1, mặc định 100 | slider 10–600 + ô nhập số; số nhập được dùng nguyên, không trần |
 | `roundEndDelay` | float (giây) | **0–6**, mặc định 2 | slider số nguyên; 0 = không chờ; clamp phía Unity (`RoundEndDelayMin/Max`) |
+| `questionAudioRepeat` | float (giây) | **0–10**, mặc định 4 | nghỉ giữa 2 lần đọc câu hỏi; Unity `GameSettings.QuestionAudioRepeat` (Base `QuestionAudioRepeatPause`, `QuestionMediaDisplay`, `SharedPromptAudio`) |
 | `flowSpeed` | float | > 0, mặc định 1 (slider 0.1–5) | ô nhập tay được ngoài dải 0.1–5 và dùng ĐÚNG số nhập; Unity chỉ chặn sàn 0.01, KHÔNG có trần |
 | `waitForClear` | int | 1 bật (mặc định), 0 tắt, -1 không đổi | OR với cờ riêng từng scene; áp cho MỌI game không đóng băng (kể cả Counting độc lập, GenericGame countdown=none, RoundEndDelay=0) |
 | `showTutorial` | int | 1 bật (mặc định từ 2026-10-22), 0 tắt, -1 không đổi | ô tick "Hiện hướng dẫn" ở tab Cài đặt. Tắt = mọi game vào thẳng "Start in…". Unity: `GameSettings.ShowTutorial` → `TutorialPlayer.WaitThenPlay` + `GenericGameController` (GenericSumTutorial); `TutorialPanel.Enabled` (panel video cũ) luôn false |

@@ -66,6 +66,7 @@ public class TestTongHopController : MonoBehaviour
     // ── Independent play state ────────────────────────────────────────────────
     bool _isIndependentPlay;
     bool _independentStarted;
+    SharedPromptAudio _sharedPrompt; // giọng đọc đề dùng chung cho cả ván Independent (Counting...)
     int  _leftRoundsCompleted;
     int  _rightRoundsCompleted;
 
@@ -587,6 +588,7 @@ public class TestTongHopController : MonoBehaviour
     protected void StateMachineEnter_GameOver(Enum prev, Dictionary<string, object> opts)
     {
         Debug.Log($"[TestTongHopController][DEBUG] StateMachineEnter_GameOver — instance={GetInstanceID()} prev={prev} t={Time.unscaledTime:F1} — StartCoroutine(FinalizeGameOver)");
+        _sharedPrompt?.Shutdown();
         StartCoroutine(FinalizeGameOver());
     }
 
@@ -747,6 +749,10 @@ public class TestTongHopController : MonoBehaviour
     {
         _leftRoundsCompleted  = 0;
         _rightRoundsCompleted = 0;
+        // Giọng đọc đề (nếu game có file) phát chung 1 luồng cho cả 2 bên: các display không tự phát nữa.
+        foreach (var d in questionDisplays) if (d != null) d.ExternalPromptAudio = true;
+        _sharedPrompt = gameObject.AddComponent<SharedPromptAudio>();
+        _sharedPrompt.Init(questionDisplays != null && questionDisplays.Length > 0 && questionDisplays[0] != null ? questionDisplays[0].Source : null);
         StartCoroutine(PlayerLoop(Team.Left));
         StartCoroutine(PlayerLoop(Team.Right));
     }
@@ -783,6 +789,7 @@ public class TestTongHopController : MonoBehaviour
             // 2. Hiện câu hỏi phía player này
             if (playerIdx < questionDisplays.Length)
                 questionDisplays[playerIdx].Show(q);
+            _sharedPrompt?.SideActive(playerIdx, QuestionMediaDisplay.FindPromptClip(q));
 
             // 3. Setup buttons cho player này — callback báo khi player xong
             bool  answered     = false;
@@ -842,6 +849,7 @@ public class TestTongHopController : MonoBehaviour
             else           { MusicManager.Instance?.PlayWrongSfx();   ShowWrongIcon(team);   }
 
             // 7. Ẩn câu hỏi + đáp án của player này ngay
+            _sharedPrompt?.SideIdle(playerIdx);
             if (playerIdx < questionDisplays.Length) questionDisplays[playerIdx].Hide();
             answerDisplayManager.HidePlayerAnswers(team);
 
@@ -877,6 +885,7 @@ public class TestTongHopController : MonoBehaviour
 
         // Hết giờ hoặc pool rỗng — ẩn giao diện bên này
         int idx = team == Team.Left ? 0 : 1;
+        _sharedPrompt?.SideIdle(idx);
         if (idx < questionDisplays.Length) questionDisplays[idx].Hide();
         answerDisplayManager.HidePlayerAnswers(team);
     }

@@ -29,7 +29,11 @@ public class QuestionMediaDisplay : MonoBehaviour
     [SerializeField] AudioSource     audioSource;
 
     [Header("Audio loop")]
-    [SerializeField] float repeatPauseSeconds = 4f; // thời gian nghỉ giữa 2 lần play
+    [SerializeField] float repeatPauseSeconds = 4f; // dự phòng khi chưa có GameSettings; bình thường lấy GameSettings.QuestionAudioRepeat
+
+    /// <summary>true = giọng đọc đề (câu hỏi hình) do <see cref="SharedPromptAudio"/> của controller phát chung cho cả game (Independent: 2 bên chung 1 luồng),
+    /// display này KHÔNG tự phát/lặp.</summary>
+    public bool ExternalPromptAudio { get; set; }
 
     Coroutine _audioLoopCoroutine;
 
@@ -131,7 +135,7 @@ public class QuestionMediaDisplay : MonoBehaviour
 
                 // Giọng đọc đề (tuỳ chọn) cho câu hỏi hình, vd "Có bao nhiêu con vật trong hình?": cùng cơ chế lặp như câu hỏi Audio
                 // (play → nghỉ repeatPauseSeconds → play lại tới khi trả lời). Không có file thì im như cũ.
-                var promptClip = FindPromptClip(q);
+                var promptClip = ExternalPromptAudio ? null : FindPromptClip(q);
                 if (promptClip != null && audioSource != null)
                 {
                     if (_audioLoopCoroutine != null) StopCoroutine(_audioLoopCoroutine);
@@ -144,7 +148,7 @@ public class QuestionMediaDisplay : MonoBehaviour
     static readonly System.Collections.Generic.Dictionary<string, AudioClip> _promptClips = new();
 
     /// <summary>Resources/TongHop/{tên game}/{tên game}.mp3, không có thì Resources/TongHop/{topic}/{topic}.mp3 (vd Counting5 → Counting/Counting.mp3).</summary>
-    static AudioClip FindPromptClip(QuestionData q)
+    public static AudioClip FindPromptClip(QuestionData q)
     {
         string game = GameSessionManager.Instance != null ? GameSessionManager.Instance.SelectedGameName : null;
         foreach (var folder in new[] { game, q.topic })
@@ -159,6 +163,9 @@ public class QuestionMediaDisplay : MonoBehaviour
 
     /// <summary>Ẩn nội dung câu hỏi — gọi từ Controller trước countdown.</summary>
     public void Hide() => HideAll();
+
+    /// <summary>AudioSource của display (để lấy volume/mixer cho nguồn phát chung).</summary>
+    public AudioSource Source => audioSource;
 
     /// <summary>Chỉ phát audio mà không hiện panel — dùng khi panel đã bị ẩn bởi display khác.</summary>
     public void PlayAudioOnly(QuestionData q)
@@ -204,7 +211,7 @@ public class QuestionMediaDisplay : MonoBehaviour
             audioSource.Play();
             yield return new WaitForSeconds(clip.length);            // chờ hết clip
             MusicManager.Instance?.SetMusicVolumeMultiplier(1f);    // restore BGM
-            yield return new WaitForSeconds(repeatPauseSeconds);    // nghỉ 4s
+            yield return new WaitForSeconds(GameSettings.Instance != null ? GameSettings.Instance.QuestionAudioRepeat : repeatPauseSeconds); // nghỉ (mặc định 4s)
         }
     }
 }

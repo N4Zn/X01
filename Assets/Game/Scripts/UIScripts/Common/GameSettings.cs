@@ -13,6 +13,7 @@ public class GameSettings : Singleton<GameSettings>
     private const string KeyGameTime = "setting_game_time";
     private const string KeyQuestionTimeout = "setting_question_timeout";
     private const string KeyRoundEndDelay = "setting_round_end_delay";
+    private const string KeyQuestionAudioRepeat = "setting_question_audio_repeat";
     private const string KeyFlowSpeed = "setting_flow_speed";
     private const string KeyWaitForClear = "setting_wait_for_clear";
     private const string KeyShowTutorial = "setting_show_tutorial";
@@ -30,6 +31,10 @@ public class GameSettings : Singleton<GameSettings>
     public float RoundEndDelay { get; set; }    // seconds delay between questions/rounds: 0-6 (0 = không chờ)
 
     public const float RoundEndDelayMin = 0f, RoundEndDelayMax = 6f;
+
+    /// <summary>Nghỉ giữa 2 lần đọc câu hỏi (giây, 0–10, mặc định 4): đọc xong → nghỉ chừng này → đọc lại. Mọi game có vòng lặp âm câu hỏi dùng chung.</summary>
+    public float QuestionAudioRepeat { get; set; } = 4f;
+    public const float QuestionAudioRepeatMin = 0f, QuestionAudioRepeatMax = 10f;
     /// <summary>Sàn an toàn (chia cho flow ở vài chỗ). KHÔNG có trần: Control panel cho nhập số ngoài dải 0.1–5 và dùng đúng số nhập.</summary>
     public const float FlowSpeedMin = 0.01f;
 
@@ -66,6 +71,7 @@ public class GameSettings : Singleton<GameSettings>
         GameTime = PlayerPrefs.GetInt(KeyGameTime, 100);
         QuestionTimeout = PlayerPrefs.GetInt(KeyQuestionTimeout, 15);
         RoundEndDelay = Mathf.Clamp(PlayerPrefs.GetFloat(KeyRoundEndDelay, 2f), RoundEndDelayMin, RoundEndDelayMax);
+        QuestionAudioRepeat = Mathf.Clamp(PlayerPrefs.GetFloat(KeyQuestionAudioRepeat, 4f), QuestionAudioRepeatMin, QuestionAudioRepeatMax);
         FlowSpeed = Mathf.Max(FlowSpeedMin, PlayerPrefs.GetFloat(KeyFlowSpeed, 1f));
         WaitForClear = PlayerPrefs.GetInt(KeyWaitForClear, 1) != 0;
         ShowTutorial = PlayerPrefs.GetInt(KeyShowTutorial, 1) != 0;
@@ -77,7 +83,7 @@ public class GameSettings : Singleton<GameSettings>
     [System.Serializable]
     class Dto
     {
-        public float musicVolume = -1f, sfxVolume = -1f, roundEndDelay = -1f, flowSpeed = -1f;
+        public float musicVolume = -1f, sfxVolume = -1f, roundEndDelay = -1f, flowSpeed = -1f, questionAudioRepeat = -1f;
         public int gameTime = -1;
         public int waitForClear = -1; // -1 = không đổi, 0/1 = tắt/bật
         public int showTutorial = -1; // -1 = không đổi, 0/1 = tắt/bật (mặc định bật)
@@ -98,6 +104,7 @@ public class GameSettings : Singleton<GameSettings>
         if (d.sfxVolume >= 0f) SfxVolume = Mathf.Clamp01(d.sfxVolume);
         if (d.gameTime > 0) GameTime = d.gameTime;
         if (d.roundEndDelay >= 0f) RoundEndDelay = Mathf.Clamp(d.roundEndDelay, RoundEndDelayMin, RoundEndDelayMax);
+        if (d.questionAudioRepeat >= 0f) QuestionAudioRepeat = Mathf.Clamp(d.questionAudioRepeat, QuestionAudioRepeatMin, QuestionAudioRepeatMax);
         if (d.flowSpeed > 0f) FlowSpeed = Mathf.Max(FlowSpeedMin, d.flowSpeed);
         if (d.waitForClear >= 0) WaitForClear = d.waitForClear != 0;
         if (d.showTutorial >= 0) ShowTutorial = d.showTutorial != 0;
@@ -114,6 +121,7 @@ public class GameSettings : Singleton<GameSettings>
         PlayerPrefs.SetInt(KeyGameTime, GameTime);
         PlayerPrefs.SetInt(KeyQuestionTimeout, QuestionTimeout);
         PlayerPrefs.SetFloat(KeyRoundEndDelay, Mathf.Clamp(RoundEndDelay, RoundEndDelayMin, RoundEndDelayMax));
+        PlayerPrefs.SetFloat(KeyQuestionAudioRepeat, Mathf.Clamp(QuestionAudioRepeat, QuestionAudioRepeatMin, QuestionAudioRepeatMax));
         PlayerPrefs.SetFloat(KeyFlowSpeed, FlowSpeed);
         PlayerPrefs.SetInt(KeyWaitForClear, WaitForClear ? 1 : 0);
         PlayerPrefs.SetInt(KeyShowTutorial, ShowTutorial ? 1 : 0);
