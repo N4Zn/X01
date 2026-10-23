@@ -88,6 +88,8 @@ public class PlayerRecognitionService : Singleton<PlayerRecognitionService>
     {
         _sessionSceneHandle = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
         _currentGameName = gameName;
+        // Nhận diện chỉ trong LỚP đang chọn (ControlActivity/Quản lý lớp ghi active_class.txt): nạp lại DB + lớp mỗi đầu ván.
+        FaceRecognitionPlugin.Instance?.ReloadDatabase();
         _logEntries.Clear();
         _lastName[0] = _lastName[1] = null;
         _lastRecognized[0] = _lastRecognized[1] = false;

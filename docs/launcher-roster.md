@@ -2,7 +2,7 @@
 
 > **TL;DR**: Launcher là project Kotlin riêng ngoài repo, 2 hero card trỏ ComponentName vào ControlActivity/ClassManagementActivity. Quản lý lớp nằm ở NativePlugins/FaceEnrollAndroidLib.
 > **Đọc khi**: sửa Launcher (D:\X_projects\Launcher), ClassManagementActivity, enrolled.json/classes.json, hoặc đổi Activity entry point.
-> **Cập nhật**: 2026-10-21 @ 2fc78e26 (màn chụp camera IP; 2026-10-04: 2026-10-05: hết mock, lớp Dev/5 tuổi, roster.json, điểm/lịch sử thật; trước đó tách nguyên văn từ CLAUDE.md gốc)
+> **Cập nhật**: 2026-10-23 (nhận diện theo lớp, luồng thêm học sinh mới/thêm ảnh; trước đó 2026-10-21 @ 2fc78e26)
 
 ### Launcher — Home launcher thật của K02 (`D:\X_projects\Launcher`, 2026-09-16/17)
 
@@ -76,6 +76,13 @@ ControlActivity, 2026-09-17) + logo EduXplore góc trên-trái — màu hardcode
 (`AttendanceStore.renameClass`) và đổi tên học sinh (`AttendanceStore.renameEnrollment`, di
 chuyển key qua mọi map: `enrolled`/`genders`/`classNames`/`lastLogged`/`personLog`/`recentNames`)
 đều có sẵn.
+
+**Nhận diện theo lớp + luồng thêm học sinh (2026-10-23):**
+- **Lớp đang dùng** = 1 lựa chọn chung, lưu `/sdcard/EduXplore/active_class.txt` (1 dòng). Ghi bởi Quản lý lớp (`ActiveClass.kt`) và tab Lớp học của ControlActivity (`ui/ActiveClass.java`); plugin game đọc (`FaceDatabase.kt`). Luôn có ≥ 1 lớp nên không có trạng thái "chưa chọn".
+- **Mọi so khớp mặt chỉ trong lớp này:** `AttendanceStore.bestMatch(emb, engine, className)` (màn camera + `verifyLock`) và `FaceDatabase.load()` của plugin (đọc `className` trong enrolled.json, lọc theo lớp). Lớp không có ai ⇒ không nhận ra ai ⇒ game hiện Player 1/2. Game nạp lại DB + lớp mỗi đầu ván (`PlayerRecognitionService.BeginGameSession` → `FaceRecognitionPlugin.ReloadDatabase` → `UnityFaceBridge.reloadDatabase`).
+- **`MODE_NEW_STUDENT`** ("+ Học sinh mới", "Thêm từ camera") và **`MODE_BULK_PICK`** (Thêm từ ảnh): KHÔNG nhận diện lúc xem camera (`noRecognition`, `processCaptureOnly`). Chụp xong mới so với học sinh TRONG LỚP (`enrollNextFace`): giống (sim > ngưỡng) ⇒ bảng "Thêm ảnh vào <bạn> / Lưu học sinh mới / Huỷ" (khoá nút thêm nếu bạn đó đủ 3 ảnh); không giống ⇒ hộp đặt tên. Tên nhập trùng tên có sẵn (tên là khoá toàn cục) ⇒ chặn, hỏi "Thêm ảnh vào bạn đó" hoặc "Sửa tên" (không còn gộp/ghi đè lặng lẽ).
+- **`MODE_ADD_SAMPLES_CAMERA/GALLERY`** (thêm ảnh cho học sinh có sẵn): không nhận diện, không so ai; camera lấy mặt to nhất, ảnh nhiều mặt cũng chỉ lấy mặt to nhất. Lỗi duy nhất: đủ 3 ảnh.
+- Màn camera thường (FR test) nhận diện theo `EXTRA_TARGET_CLASS` hoặc lớp đang dùng.
 
 > **Gotcha Launcher**: `MainActivity.kt` (Launcher app, `ROSTER_COMPONENT`) đã trỏ sang
 > `ClassManagementActivity` thay vì `MainActivity` của FA — nhưng key lưu trong

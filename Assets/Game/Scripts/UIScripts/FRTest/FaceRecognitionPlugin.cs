@@ -161,6 +161,15 @@ public class FaceRecognitionPlugin : Singleton<FaceRecognitionPlugin>
 #endif
     }
 
+    /// <summary>Nạp lại enrolled.json + lớp đang dùng (active_class.txt) cho plugin — gọi lúc bắt đầu ván để nhận diện đúng lớp vừa chọn.</summary>
+    public void ReloadDatabase()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!_initialized) return;
+        _bridge.CallStatic("reloadDatabase");
+#endif
+    }
+
     /// <summary>Clears both slots' lock history without touching either slot's enabled state.</summary>
     public void ClearRoundVotes()
     {

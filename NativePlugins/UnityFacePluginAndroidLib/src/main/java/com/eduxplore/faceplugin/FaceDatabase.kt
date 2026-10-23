@@ -4,7 +4,7 @@ import android.util.Log
 import java.io.File
 
 /** One enrolled person: name + list of L2-normalised SFace embeddings (FloatArray). */
-data class EnrolledPerson(val name: String, val embeddings: List<FloatArray>)
+data class EnrolledPerson(val name: String, val embeddings: List<FloatArray>, val className: String? = null)
 
 data class DbMatchResult(val name: String?, val sim: Float)
 
@@ -18,9 +18,16 @@ class FaceDatabase {
 
     companion object {
         const val DB_PATH = "/sdcard/EduXplore/enrolled.json"
+        // Lớp đang dùng (ghi bởi ControlActivity + Quản lý lớp, xem FaceEnroll ActiveClass.kt). Nhận diện trong game chỉ so với học sinh lớp này.
+        const val ACTIVE_CLASS_PATH = "/sdcard/EduXplore/active_class.txt"
+
+        fun readActiveClass(): String? = try {
+            val f = File(ACTIVE_CLASS_PATH)
+            if (f.canRead()) f.readText().trim().takeIf { it.isNotEmpty() } else null
+        } catch (e: Exception) { Log.e("FaceDB", "read active_class lỗi: ${e.message}"); null }
     }
 
-    private var persons: List<EnrolledPerson> = emptyList()
+    @Volatile private var persons: List<EnrolledPerson> = emptyList()
 
     fun load(): Int {
         val file = File(DB_PATH)
@@ -58,10 +65,14 @@ class FaceDatabase {
                     val ea = obj.getJSONArray("embedding")
                     embs.add(FloatArray(ea.length()) { ea.getDouble(it).toFloat() })
                 }
-                if (embs.isNotEmpty()) list.add(EnrolledPerson(name, embs))
+                val cls = if (obj.has("className") && !obj.isNull("className")) obj.getString("className") else null
+                if (embs.isNotEmpty()) list.add(EnrolledPerson(name, embs, cls))
             }
-            persons = list
-            Log.i("FaceDB", "Loaded ${persons.size} persons")
+            // Chỉ giữ học sinh của lớp đang dùng; lớp không có ai => rỗng => không nhận ra ai (game hiện Player 1/2).
+            // Chưa có active_class.txt (máy chưa mở ControlActivity lần nào) => giữ tất cả như trước.
+            val active = readActiveClass()
+            persons = if (active == null) list else list.filter { it.className == active }
+            Log.i("FaceDB", "Loaded ${persons.size}/${list.size} persons (lớp đang dùng: ${active ?: "—"})")
             persons.size
         } catch (e: Exception) {
             Log.e("FaceDB", "Failed to load DB: ${e.javaClass.simpleName}: ${e.message}")

@@ -201,7 +201,9 @@ class ClassManagementActivity : AppCompatActivity() {
     private fun refreshAll() {
         scoreCache.clear()
         val classes = attendanceStore.allClassNames()
-        if (currentClass !in classes) currentClass = classes.firstOrNull()
+        // Lớp đang dùng chung với tab Lớp học (ControlActivity) + nhận diện trong game: ưu tiên lớp đã ghi, không có thì lớp đầu tiên.
+        if (currentClass !in classes) currentClass = ActiveClass.read()?.takeIf { it in classes } ?: classes.firstOrNull()
+        ActiveClass.write(currentClass)
         renderClassRail(classes)
         renderRightPanel()
     }
@@ -578,6 +580,7 @@ class ClassManagementActivity : AppCompatActivity() {
                 ).also { it.bottomMargin = px(4) }
                 setOnClickListener {
                     currentClass = className
+                    ActiveClass.write(className)
                     renderClassRail(classes)
                     renderRightPanel()
                 }
@@ -791,6 +794,7 @@ class ClassManagementActivity : AppCompatActivity() {
         val cls = currentClass ?: return
         startActivity(Intent(this, MainActivity::class.java).apply {
             putExtra(MainActivity.EXTRA_TARGET_CLASS, cls)
+            putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_NEW_STUDENT) // học sinh mới: KHÔNG nhận diện, chụp xong mới kiểm trùng trong lớp
         })
     }
 

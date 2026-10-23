@@ -163,3 +163,11 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Xong chẩn đoán: đặt lại `BuildLogSilencer.SilenceInBuild = true` — (2026-10-22)
 - [ ] Đặt `Resources/TongHop/Counting/Counting.mp3` (đã có) và thử Counting + Counting5: lặp 4s mỗi câu, dừng khi trả lời — (2026-10-22)
 - [ ] Xác nhận đầu ra audio thật của K02 khi triển khai (HDMI/loa trong hay BT A2DP) — máy test đang ra BT — (2026-10-22)
+
+## Nhận diện theo lớp / luồng thêm học sinh (2026-10-23) — cần build APK Unity rồi test K02
+- [ ] Mở Quản lý lớp + tab Lớp học: đổi lớp ở một bên, bên kia mở lại đúng lớp đó (`/sdcard/EduXplore/active_class.txt`) — (2026-10-23)
+- [ ] "+ Học sinh mới": camera không hiện tên/khoá ai; chụp mặt giống bạn trong lớp ⇒ hiện bảng giống; chọn thêm ảnh / lưu mới / huỷ đều đúng; bạn đủ 3 ảnh ⇒ nút thêm bị khoá — (2026-10-23)
+- [ ] Gõ tên trùng khi lưu học sinh mới ⇒ hỏi thêm ảnh vào bạn đó / sửa tên, không gộp lặng lẽ — (2026-10-23)
+- [ ] "Chụp ảnh" / "Thêm ảnh" cho học sinh có sẵn: không bị chặn dù mặt giống bạn khác; ảnh thư viện nhiều mặt chỉ lấy mặt to nhất — (2026-10-23)
+- [ ] Game: chọn lớp A rồi chơi ⇒ chỉ nhận học sinh lớp A (bạn lớp B đứng vào ⇒ Player 1/2); đổi lớp rồi chơi lại ⇒ áp dụng ngay không cần khởi động lại; lớp rỗng ⇒ Player 1/2 — (2026-10-23)
+

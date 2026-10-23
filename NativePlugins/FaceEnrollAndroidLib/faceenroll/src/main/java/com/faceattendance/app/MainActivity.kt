@@ -77,6 +77,9 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         const val EXTRA_STUDENT_NAME = "student_name"
         const val MODE_VIEW_STUDENT = "view_student"
         const val MODE_BULK_PICK = "bulk_pick"
+        // "+ Học sinh mới" / "Thêm từ camera" (Quản lý lớp): học sinh MỚI = mặt mới, KHÔNG nhận diện lúc xem camera. Chụp xong mới kiểm
+        // trùng với học sinh TRONG LỚP (xem enrollNextFace): giống ai đó thì hỏi thêm ảnh cho bạn đó hay lưu học sinh mới.
+        const val MODE_NEW_STUDENT = "new_student"
         // "Cập nhật ảnh" từ panel chi tiết học sinh trong ClassManagementActivity — học sinh đã
         // biết tên rồi (EXTRA_STUDENT_NAME), nên bỏ qua hẳn showEnrollNameDialog() (hỏi tên/tên
         // gọi/giới tính cho người MỚI), add thẳng mẫu ảnh vào đúng tên đó. Camera: giáo viên tự
@@ -113,6 +116,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // đến từ ClassManagementActivity. pendingBulkPick nhớ việc bấm "Thêm hàng loạt" đang chờ
     // quyền READ_EXTERNAL_STORAGE, để biết bật picker đơn hay nhiều khi quyền vừa được cấp.
     private var targetClassName: String? = null
+    // true = chế độ chỉ chụp (học sinh mới / thêm ảnh / thêm từ thư viện): không nhận diện, không chào, không điểm danh.
+    private var noRecognition = false
+    // Lớp dùng để giới hạn nhận diện ở màn camera thường (FR test): lớp được truyền vào, không có thì lớp đang dùng chung (active_class.txt).
+    private val scopeClass: String? get() = targetClassName ?: ActiveClass.read()
     // Khi != null: đang ở chế độ "cập nhật ảnh" cho 1 học sinh ĐÃ CÓ (từ panel chi tiết trong
     // ClassManagementActivity) — enrollNextFace() add thẳng mẫu vào tên này, bỏ qua hộp thoại đặt
     // tên/giới tính (đã biết cả rồi, không phải người mới).
@@ -364,14 +371,17 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         attendanceStore = AttendanceStore(this)
         zones = FaceZones.load()
         zoneSetupMode = mode == MODE_ZONE_SETUP
+        noRecognition = mode == MODE_NEW_STUDENT || mode == MODE_BULK_PICK ||
+            mode == MODE_ADD_SAMPLES_CAMERA || mode == MODE_ADD_SAMPLES_GALLERY
         overlayView.setZones(zones, zoneSetupMode)
         when (mode) {
             MODE_ZONE_SETUP -> setupZoneEditor()
             MODE_VIEW_STUDENT -> intent.getStringExtra(EXTRA_STUDENT_NAME)?.let { showStudentSamplesDialog(it) }
             MODE_BULK_PICK -> requestBulkPick()
+            MODE_NEW_STUDENT -> toastStatus("Học sinh mới: đứng vào khung rồi bấm nút chụp — không nhận diện, chụp xong mới kiểm tra trùng trong lớp")
             MODE_ADD_SAMPLES_CAMERA -> {
                 targetStudentName = intent.getStringExtra(EXTRA_STUDENT_NAME)
-                toastStatus("Chụp ảnh bổ sung cho ${targetStudentName ?: "?"} — bấm nút chụp khi thấy mặt rõ")
+                toastStatus("Chụp ảnh bổ sung cho ${targetStudentName ?: "?"} — không nhận diện, bấm nút chụp khi thấy mặt rõ")
             }
             MODE_ADD_SAMPLES_GALLERY -> {
                 targetStudentName = intent.getStringExtra(EXTRA_STUDENT_NAME)
@@ -907,6 +917,10 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             cachedOverlayW = width; cachedOverlayH = height
             return
         }
+        if (noRecognition) {
+            processCaptureOnly(engine, bgr, faces, width, height, nowMs)
+            return
+        }
         // Gắn mặt <-> track bền vững (thay cho sắp trái->phải theo slot, vốn làm tên nhảy người).
         val faceTracks = assignTracks(faces, nowMs)
         lastDetected = faces.firstOrNull()
@@ -944,15 +958,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         if (enrollSnapshotRequested) {
             enrollSnapshotRequested = false
             val toEnroll = mutableListOf<Pair<FloatArray, Mat>>()
-            val target = targetStudentName
-            // Chụp bổ sung cho 1 học sinh đã có: người đó đã được nhận diện (khoá tên) nên KHÔNG được loại vì "đã nhận ra";
-            // lấy đúng 1 mặt — mặt to nhất (gần camera nhất) trong số mặt chưa có tên hoặc đang mang đúng tên đó.
-            val picks: List<Int> = if (target != null) {
-                faces.indices.filter { val n = faceTracks[it].lock?.name; n == null || n == target }
-                    .maxByOrNull { faces[it].rect.width() * faces[it].rect.height() }?.let { listOf(it) } ?: emptyList()
-            } else {
-                faces.indices.filter { faceTracks[it].lock == null }
-            }
+            val picks: List<Int> = faces.indices.filter { faceTracks[it].lock == null }
             for (i in picks) {
                 val face = faces[i]
                 val aligned = engine.alignFace(bgr, face)
@@ -962,8 +968,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             }
             if (toEnroll.isEmpty()) {
                 runOnUiThread {
-                    toastStatus(if (target != null) "Không thấy mặt của $target (các mặt trong khung đang được nhận là người khác)"
-                                else "Không có người mới — tất cả đã được nhận diện")
+                    toastStatus("Không có người mới — tất cả đã được nhận diện")
                 }
             } else {
                 runOnUiThread { enrollNextFace(toEnroll, 0) }
@@ -1027,7 +1032,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 color = Color.rgb(255, 165, 0)
                 label = "TURN TO CAMERA | $poseLabel"
             } else {
-                val match = attendanceStore.bestMatch(embedding, engine)
+                val match = attendanceStore.bestMatch(embedding, engine, scopeClass)
                 val name = match.name
                 val sim = match.sim
                 val runnerUpName = match.runnerUpName
@@ -1132,6 +1137,40 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }
     }
 
+    /** Chế độ chỉ chụp (noRecognition): chỉ vẽ khung mặt; bấm chụp thì lấy mặt rồi đi tiếp vào [enrollNextFace].
+     *  Học sinh mới: lấy mọi mặt trong khung (mỗi mặt một lượt). Thêm ảnh cho học sinh có sẵn: chỉ mặt to nhất (gần camera nhất). */
+    private fun processCaptureOnly(engine: FaceEngine, bgr: Mat, faces: List<DetectedFace>, width: Int, height: Int, nowMs: Long) {
+        val target = targetStudentName
+        lastDetected = faces.firstOrNull()
+        val label = if (target != null) "Chụp cho ${attendanceStore.aliasOf(target)}" else "Mặt mới"
+        val items = faces.map { FaceOverlayItem(it.rect, it.landmarks.map { p -> android.graphics.PointF(p.x, p.y) }, label, Color.CYAN) }
+        cachedOverlayItems = items; cachedOverlayW = width; cachedOverlayH = height
+        if (faces.isEmpty()) {
+            nextDetectAllowedMs = nowMs + 300
+            runOnUiThread {
+                overlayView.update(items, width, height)
+                tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | faces in view: 0"
+            }
+            return
+        }
+        if (enrollSnapshotRequested) {
+            enrollSnapshotRequested = false
+            val picks = if (target != null) listOfNotNull(faces.maxByOrNull { it.rect.width() * it.rect.height() }) else faces
+            val list = picks.map { face ->
+                val aligned = engine.alignFace(bgr, face)
+                val emb = engine.getEmbedding(aligned)
+                aligned.release()
+                emb to cropFace(bgr, face.rect)
+            }
+            runOnUiThread { enrollNextFace(list, 0) }
+            return
+        }
+        runOnUiThread {
+            overlayView.update(items, width, height)
+            tvStatus.text = "Enrolled: ${attendanceStore.enrolledCount()} | faces in view: ${faces.size}"
+        }
+    }
+
     /** Verify nền cho track đã có tên: mặt thẳng thì tính lại embedding, khớp đúng tên [verifyFramesNeeded] lần
      * => verified (hiện ✓, không nhận diện nữa). Mặt nghiêng/điểm thấp: bỏ qua, KHÔNG làm mất khung xanh.
      * Chỉ khi 2 lần liên tiếp ra NGƯỜI KHÁC chắc chắn mới bỏ lock (lock ban đầu sai) để nhận diện lại. */
@@ -1141,7 +1180,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         val aligned = engine.alignFace(bgr, face)
         val emb = engine.getEmbedding(aligned)
         aligned.release()
-        val m = attendanceStore.bestMatch(emb, engine)
+        val m = attendanceStore.bestMatch(emb, engine, scopeClass)
         val sameName = m.name == lock.name && m.sim > matchThreshold
         val otherPerson = m.name != null && m.name != lock.name && m.sim > matchThreshold &&
             (m.sim - m.runnerUpSim) >= marginThreshold
@@ -1300,7 +1339,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     bgr.release()
                     runOnUiThread { toastStatus("ENROLL TỪ ẢNH: không phát hiện khuôn mặt nào"); onDone() }
                 } else {
-                    val faceData = faces.map { face ->
+                    // Thêm ảnh cho 1 học sinh có sẵn mà ảnh có nhiều mặt: chỉ lấy mặt to nhất (không nhét mọi mặt vào bạn đó).
+                    val used = if (targetStudentName != null && faces.size > 1) {
+                        runOnUiThread { toastStatus("Ảnh có ${faces.size} mặt — chỉ lấy mặt to nhất") }
+                        listOfNotNull(faces.maxByOrNull { it.rect.width() * it.rect.height() })
+                    } else faces
+                    val faceData = used.map { face ->
                         val aligned = engine.alignFace(bgr, face)
                         val emb = engine.getEmbedding(aligned)
                         aligned.release()
@@ -1349,12 +1393,97 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             enrollNextFace(faces, index + 1, onAllDone)
             return
         }
+        // Học sinh MỚI: chụp xong mới kiểm trùng với học sinh trong lớp (không nhận diện lúc xem camera).
+        val next = { enrollNextFace(faces, index + 1, onAllDone) }
+        val (emb, crop) = faces[index]
+        val engine = faceEngine
+        val m = if (engine != null) attendanceStore.bestMatch(emb, engine, targetClassName) else null
+        val dupSim = m?.sim ?: 0f
+        val dup = if (m != null && m.name != null && dupSim > matchThreshold) m.name else null
+        if (dup != null) {
+            showDuplicateDialog(dup, dupSim, crop,
+                onAddToExisting = {
+                    if (attendanceStore.addSample(dup, emb, crop)) {
+                        toastStatus("Đã thêm ảnh cho $dup (${attendanceStore.samplesOf(dup).size} mẫu)")
+                    } else {
+                        toastStatus("$dup đã đủ ${AttendanceStore.MAX_SAMPLES_PER_PERSON} ảnh — xóa bớt ở panel học sinh trước khi thêm")
+                    }
+                    crop.release(); next()
+                },
+                onNewStudent = {
+                    showEnrollNameDialog(samples = listOf(faces[index]), personIndex = index, totalPersons = faces.size, onComplete = next)
+                },
+                onCancel = { crop.release(); next() }
+            )
+            return
+        }
         showEnrollNameDialog(
             samples = listOf(faces[index]),
             personIndex = index,
             totalPersons = faces.size,
-            onComplete = { enrollNextFace(faces, index + 1, onAllDone) }
+            onComplete = next
         )
+    }
+
+    /** Mặt vừa chụp giống 1 học sinh TRONG LỚP: hỏi thêm ảnh cho bạn đó hay lưu thành học sinh mới. */
+    private fun showDuplicateDialog(
+        existing: String, sim: Float, newCrop: Mat,
+        onAddToExisting: () -> Unit, onNewStudent: () -> Unit, onCancel: () -> Unit
+    ) {
+        val dp = resources.displayMetrics.density
+        val sizePx = (140 * dp).toInt()
+        fun column(title: String, bmp: Bitmap?) = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding((8 * dp).toInt(), 0, (8 * dp).toInt(), 0)
+            addView(ImageView(this@MainActivity).apply {
+                layoutParams = LinearLayout.LayoutParams(sizePx, sizePx)
+                setImageBitmap(bmp ?: Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888))
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            })
+            addView(TextView(this@MainActivity).apply { text = title; gravity = Gravity.CENTER })
+        }
+        val samples = attendanceStore.samplesOf(existing).size
+        val full = samples >= AttendanceStore.MAX_SAMPLES_PER_PERSON
+        val alias = attendanceStore.aliasOf(existing)
+        val label = if (alias != existing) "$alias ($existing)" else existing
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((16 * dp).toInt(), (8 * dp).toInt(), (16 * dp).toInt(), 0)
+            addView(TextView(this@MainActivity).apply {
+                text = "Mặt này giống \"$label\" trong lớp (độ giống ${"%.2f".format(sim)}, đã có $samples ảnh)." +
+                    if (full) "\nBạn đó đã đủ ${AttendanceStore.MAX_SAMPLES_PER_PERSON} ảnh — không thêm được nữa." else "\nThêm ảnh này cho bạn đó, hay đây là học sinh khác?"
+            })
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
+                setPadding(0, (8 * dp).toInt(), 0, 0)
+                addView(column("Vừa chụp", matToBitmap(newCrop)))
+                addView(column(label, attendanceStore.loadPhotoBitmap(attendanceStore.representativePhoto(existing), sizePx)))
+            })
+        }
+        val dlg = AlertDialog.Builder(this)
+            .setTitle("Giống học sinh đã có")
+            .setView(body)
+            .setCancelable(false)
+            .setPositiveButton("Thêm ảnh vào $alias") { _, _ -> onAddToExisting() }
+            .setNeutralButton("Lưu học sinh mới") { _, _ -> onNewStudent() }
+            .setNegativeButton("Huỷ") { _, _ -> onCancel() }
+            .create()
+        dlg.show()
+        if (full) dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+    }
+
+    /** Tên vừa nhập đã có: tên là khoá toàn cục, lưu thẳng sẽ gộp/ghi đè bạn kia. Hỏi thêm ảnh vào bạn đó hay sửa tên. */
+    private fun showNameConflictDialog(name: String, onAddToExisting: () -> Unit) {
+        val cls = attendanceStore.classNameOf(name)
+        val n = attendanceStore.samplesOf(name).size
+        AlertDialog.Builder(this)
+            .setTitle("Tên \"$name\" đã có")
+            .setMessage("Đã có học sinh tên này${if (cls != null) " (lớp $cls)" else ""}, ${n} ảnh.\nThêm ảnh này vào bạn đó, hay sửa lại tên cho học sinh mới?")
+            .setPositiveButton("Thêm ảnh vào bạn đó") { _, _ -> onAddToExisting() }
+            .setNegativeButton("Sửa tên", null)
+            .show()
     }
 
     /** Shows a name/gender input dialog for one person. Displays their face crop so the user
@@ -1447,24 +1576,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             .setTitle(if (totalPersons > 1) "Đặt tên (${personIndex + 1}/$totalPersons)" else "Nhập tên")
             .setView(inner)
             .setCancelable(totalPersons <= 1)
-            .setPositiveButton("Lưu") { _, _ ->
-                val name = input.text.toString().trim()
-                if (name.isNotEmpty()) {
-                    val gender = if (genderGroup.checkedRadioButtonId == 1002) "nu" else "nam"
-                    attendanceStore.setGender(name, gender)
-                    val alias = aliasInput.text.toString().trim()
-                    attendanceStore.setAlias(name, alias.ifEmpty { attendanceStore.defaultAliasFor(name) })
-                    targetClassName?.let { attendanceStore.setClassName(name, it) }
-                    for ((emb, c) in samples) {
-                        attendanceStore.addSample(name, emb, c)
-                        c.release()
-                    }
-                    toastStatus("Đã lưu: $name (${attendanceStore.samplesOf(name).size} mẫu)")
-                } else {
-                    for ((_, c) in samples) c.release()
-                }
-                onComplete?.invoke()
-            }
+            .setPositiveButton("Lưu", null) // xử lý ở dưới để giữ hộp thoại mở khi tên trống/trùng
             .setNegativeButton(negLabel) { _, _ ->
                 for ((_, c) in samples) c.release()
                 onComplete?.invoke()
@@ -1477,6 +1589,33 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
         )
         dlg.show()
+        dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val name = input.text.toString().trim()
+            if (name.isEmpty()) { toastStatus("Chưa nhập tên"); return@setOnClickListener }
+            if (attendanceStore.nameExists(name)) {
+                showNameConflictDialog(name) {
+                    for ((emb, c) in samples) {
+                        if (!attendanceStore.addSample(name, emb, c)) toastStatus("$name đã đủ ${AttendanceStore.MAX_SAMPLES_PER_PERSON} ảnh")
+                        c.release()
+                    }
+                    dlg.dismiss()
+                    onComplete?.invoke()
+                }
+                return@setOnClickListener
+            }
+            val gender = if (genderGroup.checkedRadioButtonId == 1002) "nu" else "nam"
+            attendanceStore.setGender(name, gender)
+            val alias = aliasInput.text.toString().trim()
+            attendanceStore.setAlias(name, alias.ifEmpty { attendanceStore.defaultAliasFor(name) })
+            targetClassName?.let { attendanceStore.setClassName(name, it) }
+            for ((emb, c) in samples) {
+                attendanceStore.addSample(name, emb, c)
+                c.release()
+            }
+            toastStatus("Đã lưu: $name (${attendanceStore.samplesOf(name).size} mẫu)")
+            dlg.dismiss()
+            onComplete?.invoke()
+        }
     }
 
     /** Pops up when the same two people stay too close to call for several frames (e.g.

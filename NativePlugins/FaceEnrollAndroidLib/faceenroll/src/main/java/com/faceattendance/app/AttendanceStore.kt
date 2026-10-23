@@ -702,13 +702,15 @@ class AttendanceStore(private val context: Context) {
      * (false-positive risk scales with gallery size) and, when the two are too close to call
      * (e.g. identical twins), offer the runner-up as the other candidate to confirm between.
      */
-    @Synchronized fun bestMatch(embedding: FloatArray, engine: FaceEngine): MatchResult {
+    @Synchronized fun bestMatch(embedding: FloatArray, engine: FaceEngine, className: String? = null): MatchResult {
         if (enrolled.isEmpty()) return MatchResult(null, -1f, null, -1f)
         var bestName: String? = null
         var bestSim = -1f
         var runnerName: String? = null
         var runnerSim = -1f
         for ((name, samples) in enrolled) {
+            // Chỉ so với học sinh của lớp đang chọn (className = null: toàn bộ, chỉ dùng khi không có lớp nào).
+            if (className != null && classNames[name] != className) continue
             var personBest = -1f
             for (s in samples) {
                 val sim = engine.cosineSim(s.embedding, embedding)
@@ -726,6 +728,9 @@ class AttendanceStore(private val context: Context) {
         }
         return MatchResult(bestName, bestSim, runnerName, runnerSim)
     }
+
+    /** Tên đã có trong dữ liệu (kể cả bạn mới chỉ có tên, chưa có ảnh). Tên là khoá toàn cục: trùng tên = trùng học sinh. */
+    @Synchronized fun nameExists(name: String): Boolean = name in enrolled || name in classNames
 
     @Synchronized fun canLog(name: String, cooldownMs: Long): Boolean {
         val last = lastLogged[name] ?: 0L

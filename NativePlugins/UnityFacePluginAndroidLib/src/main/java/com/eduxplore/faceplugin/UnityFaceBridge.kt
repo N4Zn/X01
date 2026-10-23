@@ -267,6 +267,16 @@ object UnityFaceBridge : USBMonitor.OnDeviceConnectListener {
     }
 
     /**
+     * Nạp lại enrolled.json + lớp đang dùng (active_class.txt) — gọi lúc BẮT ĐẦU ván (PlayerRecognitionService.BeginGameSession) để
+     * học sinh vừa enroll và lớp vừa đổi có hiệu lực mà không cần khởi động lại app. File nhỏ, đọc đồng bộ.
+     */
+    @JvmStatic
+    fun reloadDatabase() {
+        val db = database ?: return
+        Log.i(TAG, "reloadDatabase: ${db.load()} persons")
+    }
+
+    /**
      * Clears just one slot's lock (0=left, 1=right) without touching the other — for games
      * with independent per-player timing (e.g. each side has its own countdown), where a full
      * clearRoundVotes() would wipe an already-locked result the other slot's caller is still

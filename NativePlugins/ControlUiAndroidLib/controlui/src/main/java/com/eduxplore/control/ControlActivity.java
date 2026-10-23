@@ -23,6 +23,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.InputType;
 
+import com.eduxplore.control.ui.ActiveClass;
 import com.eduxplore.control.ui.ClassRepo;
 import com.eduxplore.control.ui.ScoreStore;
 import com.eduxplore.control.ui.SettingsStore;
@@ -330,10 +331,13 @@ public class ControlActivity extends Activity {
         new Thread(() -> {
             ClassRepo.Snapshot snap = ClassRepo.load();
             scoreStore.load();
+            final String savedClass = ActiveClass.read(); // lớp đang dùng chung với Quản lý lớp + nhận diện trong game
             runOnUiThread(() -> {
                 roster = snap;
-                if (classKey == null || !roster.classes.contains(classKey))
+                if (savedClass != null && roster.classes.contains(savedClass)) classKey = savedClass;
+                else if (classKey == null || !roster.classes.contains(classKey))
                     classKey = roster.classes.isEmpty() ? null : roster.classes.get(0);
+                ActiveClass.write(classKey);
                 if (!"playing".equals(scene)) renderAll();
             });
         }, "roster-load").start();
@@ -400,6 +404,7 @@ public class ControlActivity extends Activity {
             classTrigger.setOnClickListener(v -> UiUtil.showDropdown(this, classTrigger, classLabels, fClassIdx,
                     UiUtil.ContextColor(this, R.color.live_dim), idx -> {
                         classKey = classLabels.get(idx); compStudentIndex = 0;
+                        ActiveClass.write(classKey);
                         renderAll();
                     }));
         }
