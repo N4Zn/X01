@@ -91,6 +91,7 @@ Deployment K02 song song luồng MenuScene: tablet xuất HDMI ra máy chiếu, 
 | Cài/khôi phục máy K02 (HDMI, quyền USB, audio), camera IP Hikvision + mạng Ethernet | `docs/k02-device.md` |
 | Launcher, Quản lý lớp, FaceEnroll | `docs/launcher-roster.md` |
 | Thuật toán chạm D200 (cụm/cửa sổ/tick), độ trễ, option cảm biến C1 (`lidar_model`), tool đo trên laptop | `docs/lidar-touch-algorithm.md`, `Tools/lidar_bench/README.md` |
+| Nhận diện khung xương (PoseTest, MediaPipe trên K02, số đo fps) | `docs/pose-k02.md` |
 | Log/report/Google Sheets | `docs/sheets-report.md` |
 | Báo cáo đánh giá năng lực học sinh (công thức điểm, mã HS, tool dựng báo cáo) | `docs/danh-gia-nang-luc/README.md` |
 | Web báo cáo kết quả theo khối/lớp/học sinh cho máy chiếu sàn, nhúng vào web khác | `docs/danh-gia-nang-luc/web/INTEGRATION.md` |

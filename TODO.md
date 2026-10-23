@@ -171,3 +171,10 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] "Chụp ảnh" / "Thêm ảnh" cho học sinh có sẵn: không bị chặn dù mặt giống bạn khác; ảnh thư viện nhiều mặt chỉ lấy mặt to nhất — (2026-10-23)
 - [ ] Game: chọn lớp A rồi chơi ⇒ chỉ nhận học sinh lớp A (bạn lớp B đứng vào ⇒ Player 1/2); đổi lớp rồi chơi lại ⇒ áp dụng ngay không cần khởi động lại; lớp rỗng ⇒ Player 1/2 — (2026-10-23)
 
+
+## PoseTest — khung xương trên K02 (2026-10-23) — cần build APK Unity rồi test K02
+- [ ] Build APK (không cần Build Scene lại), cài K02, xem dòng thông số cuối màn hình: nguồn (stream/snap-sub/snap-main), fps nguồn, trễ, kích thước ảnh, fps Unity.
+- [ ] Tìm nguyên nhân 0.2 kq/s (bản demo adb 4–6 kq/s): nghi nhận diện mặt ván trước còn bật / LiDAR / chạy trên màn máy chiếu (GPU tranh với suy luận). Đã chặn LiDAR + dừng nhận diện mặt + trần 30 fps, chưa đo.
+- [ ] Kiểm camera có `httpPreview` kênh 102 không; không thì hạ độ phân giải kênh 102 trên web camera.
+- [ ] Thử 2 người thật đứng toàn thân: ngưỡng 6 tư thế (port từ HTML 4:3, khung giờ 16:9), tải khi LiDAR/game thật chạy chung, nhiệt sau ≥10 phút.
+- [ ] `rotate180: true` đã ghi vào `/sdcard/EduXplore/ipcamera.json` trên K02 (camera lắp ngược) — kiểm tra FR test + Quản lý lớp hiển thị đúng chiều.
