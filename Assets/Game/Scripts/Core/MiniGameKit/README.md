@@ -102,6 +102,18 @@ nên **tự có** các cơ chế dưới đây. **Game mới KHÔNG tự viết 
 | **Chờ vùng sạch** | `GameSettings.WaitForClear` / `waitForZoneClearBeforeCountdown`, cả Combined lẫn Independent | — |
 | **Chờ cả 2 đội (Combined)** | `WaitForBothTeams`, `OnTeamTurnDone` | xem trên |
 
+### Âm thanh trong game: quy tắc chống đè tiếng (áp dụng cho MỌI game mới)
+
+Nguyên tắc: **một loại tiếng = một luồng phát duy nhất cho cả ván**; không để mỗi bên / mỗi round / mỗi display tự `Play()` một nguồn riêng.
+1. **Giọng đọc đề lặp** (đọc → nghỉ N giây → đọc lại): dùng vòng lặp của base (`PlayQuestionAudioOnce`) hoặc, với game Independent kiểu `TestTongHop` có 2 bên chơi lệch nhịp, `SharedPromptAudio` (`_TestTongHop/Display/`): 1 nguồn phát, bên nào hiện câu thì gọi `SideActive(side, clip)`, hết câu thì `SideIdle(side)`, hết ván `Shutdown()`.
+2. **Quy tắc thời gian:** đọc **trọn** clip dù round đổi; **nghỉ là TỐI THIỂU** N giây tính từ lúc đọc xong (round mới tới sớm hơn vẫn phải nghỉ đủ); hết nghỉ mà cả 2 bên đang chuyển round thì **chờ round mới rồi đọc ngay**; một bên xong, bên kia còn câu thì vẫn lặp bình thường.
+3. **N lấy từ Cài đặt** (`GameSettings.QuestionAudioRepeat`, ControlActivity → "Nghỉ giữa 2 lần đọc câu hỏi", 0–10s, mặc định 4) — KHÔNG hardcode 4s.
+4. **Display KHÔNG tự phát giọng đọc khi controller đã có luồng chung:** `QuestionMediaDisplay.ExternalPromptAudio = true`. Đừng dùng `AudioSource` của display cho luồng chung — `Hide()` của display gọi `Stop()` nguồn đó và cắt tiếng giữa chừng; luồng chung tạo `AudioSource` riêng.
+5. **Hạ nhạc nền khi đọc:** `MusicManager.SetMusicVolumeMultiplier(0.2f)` lúc đọc, trả `1f` khi xong / `Shutdown()`.
+6. **Timer dùng `Time.deltaTime` (có scale)** để Pause (timeScale 0) đứng yên theo; Pause/Stop toàn game đã tự tắt mọi nguồn qua `GameControlBridge.FreezeAudio`. Nguồn cố ý phát khi pause (tutorial) phải tự xử lý `ignoreListenerPause`.
+7. **Giọng đọc đề cho câu hỏi hình (IconCompose):** đặt `Resources/TongHop/<tên game>/<tên game>.mp3` (không có thì `<topic>/<topic>.mp3`, vd `Counting5` dùng chung `Counting/Counting.mp3`); không có file thì im.
+8. **Loa Bluetooth/HDMI có cổng nhiễu** tự tắt tiếng khi im lâu ⇒ câu đầu bị mất đầu chữ ở game/tutorial không có nhạc nền. Giữ nhạc nền chạy (tutorial đã bật BGM). Cách chẩn đoán: `docs/k02-device.md` mục "Audio mất đầu câu".
+
 Checklist khi làm game mới: (1) kế thừa base, KHÔNG tự đếm ngược / tự lặp âm / tự chờ đội kia; (2) game có câu hỏi riêng từng đội → override
 `CleanupIndependentDisplay`; (3) 2 đội cùng 1 câu ở Independent → `SyncIndependentRounds`; (4) có âm đọc câu → `PlayQuestionAudioOnce`;
 (5) phát hiện thiếu cơ chế → sửa ở base + bảng này. Chưa kiểm chứng trong Unity Editor (2026-10-13).

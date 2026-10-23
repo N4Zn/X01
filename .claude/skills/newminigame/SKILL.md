@@ -61,7 +61,7 @@ KHÔNG hiển nhiên nếu không hỏi trước, dễ phải sửa lại nhiề
    `MusicManager.Instance?.PlayCorrectSfx()` thủ công (Independent mode KHÔNG tự phát gì); (c) cần
    GHÉP nhiều clip audio thành 1 câu (vd "số + tên vật") → dùng pattern hàng đợi phát lần lượt giữa
    2 bên để không chồng tiếng, xem `DemQuaController.AnnounceCount`/`_audioQueue`.
-8. **Cơ chế chung (đếm ngược "Start/Next in Ns", chờ vùng sạch, dọn câu sau feedback, đồng bộ 2 đội, âm câu hỏi lặp 4s)** — KHÔNG hỏi và KHÔNG tự code: đã nằm sẵn ở `MiniGameControllerBase`, game nào cũng có. Chỉ nối hook (xem bảng + checklist ở mục "Cơ chế chung" trong `Core/MiniGameKit/README.md`): `CleanupIndependentDisplay`, `SyncIndependentRounds`, `PlayQuestionAudioOnce`. Muốn tắt/đổi hành vi thì override, đừng viết lại.
+8. **Cơ chế chung (đếm ngược "Start/Next in Ns", chờ vùng sạch, dọn câu sau feedback, đồng bộ 2 đội, âm câu hỏi lặp 4s)** — KHÔNG hỏi và KHÔNG tự code: đã nằm sẵn ở `MiniGameControllerBase`, game nào cũng có. Chỉ nối hook (xem bảng + checklist ở mục "Cơ chế chung" trong `Core/MiniGameKit/README.md`): `CleanupIndependentDisplay`, `SyncIndependentRounds`, `PlayQuestionAudioOnce`. Muốn tắt/đổi hành vi thì override, đừng viết lại. **Âm thanh:** một loại tiếng = một luồng phát cho cả ván (không để 2 bên/mỗi round tự phát đè nhau), nghỉ giữa 2 lần đọc là tối thiểu và lấy từ Cài đặt — đọc mục "Âm thanh trong game: quy tắc chống đè tiếng" trong README trước khi viết bất kỳ code phát tiếng nào.
 9. **Cách tính điểm**: (a) mặc định Kit — +1 điểm/round đúng, tự động; (b) +N điểm/round tuỳ số
    lượng item thu thập được TRONG round đó (không phải cố định +1 dù hái được mấy quả) → override
    `OnRoundResult`, cộng thêm phần chênh lệch qua `ScoreManager.AddPoints(team, N-1)` (Kit đã tự
