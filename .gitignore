@@ -114,3 +114,8 @@ build-aar.log
 
 # Tool thử camera IP: sản phẩm build (dex/jar), sinh lại bằng build.sh
 Tools/ip_camera_test/out/
+
+# Tools/pose_bench
+Tools/pose_bench/app/build/
+Tools/pose_bench/.gradle/
+Tools/pose_bench/app/src/main/assets/*.task

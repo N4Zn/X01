@@ -57,6 +57,7 @@
     {"name": "TongHop", "displayName": "Tổng hợp", "sceneName": "TestTongHopGame", "category": 8},
     {"name": "TestTongHop", "displayName": "Tổng hợp (thử nghiệm)", "sceneName": "TestTongHopGame", "category": 8},
     {"name": "FRTest", "displayName": "Test nhận diện mặt", "sceneName": "FRTestGame", "category": 8},
+    {"name": "PoseTest", "displayName": "Test khung xương", "sceneName": "PoseTestGame", "category": 8},
     {"name": "CuaHangKemTruocSau", "displayName": "cửa hàng kem ( trước , sau)", "group": "Vị trí, định hướng", "sceneName": "CuaHangKemTruocSau", "category": 0},
     {"name": "DongHo", "displayName": "Đồng hồ", "group": "Thời gian", "sceneName": "DongHo", "category": 0},
     {"name": "SangTruaChieuToi", "displayName": "Thời gian trong ngày", "group": "Thời gian", "sceneName": "SangTruaChieuToi", "category": 0},

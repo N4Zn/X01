@@ -1,6 +1,6 @@
 #!/bin/sh
 # Kiểm tra + build các module Android (.aar) rồi copy vào Assets/Plugins/Android/.
-# Dùng:  sh Tools/build-aar.sh [controlui|lidarlib|faceenroll|all|changed] [--check-only]
+# Dùng:  sh Tools/build-aar.sh [controlui|lidarlib|faceenroll|posebridge|all|changed] [--check-only]
 #   changed (mặc định) = chỉ module có source mới hơn aar đã build
 #   --check-only       = chỉ kiểm tra tiền điều kiện, không build
 #   --commit           = sau build: aar khác bản HEAD (so nội dung, bỏ qua timestamp) thì commit local
@@ -17,7 +17,7 @@ for a in "$@"; do
   case "$a" in
     --check-only) CHECK_ONLY=1 ;;
     --commit) DO_COMMIT=1 ;;
-    controlui|lidarlib|faceenroll|all|changed) WHAT=$a ;;
+    controlui|lidarlib|faceenroll|posebridge|all|changed) WHAT=$a ;;
     *) echo "Tham số lạ: $a"; exit 2 ;;
   esac
 done
@@ -30,6 +30,7 @@ mod_info() {
     controlui)  DIR=NativePlugins/ControlUiAndroidLib;  TASK=:controlui:assembleRelease;  OUT=controlui/build/outputs/aar/controlui-release.aar;   DEST=Assets/Plugins/Android/controlui-release.aar;  SRC=controlui/src ;;
     lidarlib)   DIR=NativePlugins/LidarNativeAndroidLib; TASK=:lidarlib:assembleRelease;   OUT=lidarlib/build/outputs/aar/lidarlib-release.aar;     DEST=Assets/Plugins/Android/lidarlib-release.aar;   SRC=lidarlib/src ;;
     faceenroll) DIR=NativePlugins/FaceEnrollAndroidLib;  TASK=:faceenroll:assembleRelease; OUT=faceenroll/build/outputs/aar/faceenroll-release.aar; DEST=Assets/Plugins/Android/faceenroll-release.aar; SRC=faceenroll/src ;;
+    posebridge) DIR=NativePlugins/PoseAndroidLib;        TASK=:posebridge:assembleRelease; OUT=posebridge/build/outputs/aar/posebridge-release.aar; DEST=Assets/Plugins/Android/posebridge-release.aar; SRC=posebridge/src ;;
   esac
 }
 
@@ -56,10 +57,10 @@ echo "JAVA_HOME=$JAVA_HOME"
 sh handoff/check-frozen.sh >/dev/null 2>&1 || fail "check-frozen.sh báo sửa game đóng băng (chạy: sh handoff/check-frozen.sh)"
 
 case "$WHAT" in
-  all) MODS="controlui lidarlib faceenroll" ;;
+  all) MODS="controlui lidarlib faceenroll posebridge" ;;
   changed)
     MODS=""
-    for m in controlui lidarlib faceenroll; do
+    for m in controlui lidarlib faceenroll posebridge; do
       mod_info $m
       # So với commit gần nhất đã chạm aar: source/gradle đổi (đã commit hoặc chưa) => cần build
       BASE=$(git log -1 --format=%H -- "$DEST" 2>/dev/null)
