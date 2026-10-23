@@ -218,5 +218,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Scenes/FloorStory/LatTheNhoGiong2.unity
     guid: 15d10872250c55b4fa58737bca54c956
+  - enabled: 1
+    path: Assets/Game/Scenes/PoseTest/PoseTestGame.unity
+    guid: 4a44b22a14ce68d4ba9a4ddc433b009a
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

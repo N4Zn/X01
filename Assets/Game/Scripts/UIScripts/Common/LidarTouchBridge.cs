@@ -209,8 +209,10 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     private static readonly HashSet<string> NonGameScenes = new HashSet<string>
     {
         "StartScene", "MenuScene", "HomeScene", "CalibScene",
-        "CharacterSelectScene", "TeamSelectScene", "ScoreScene", "FRTestGame"
+        "CharacterSelectScene", "TeamSelectScene", "ScoreScene", "FRTestGame", "PoseTestGame"
     };
+
+    private static readonly HashSet<string> NoTouchScenes = new HashSet<string> { "PoseTestGame" };
 
     private void OnSceneLoadedAutoTouch(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         => AutoTouchForScene(scene.name);
@@ -310,6 +312,8 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     /// <summary>Bật/tắt touch Lidar — dùng cho Pause/Resume từ control panel (Track B) hoặc nút cứng.</summary>
     public void SetTouchEnabled(bool enabled)
     {
+        // Game không dùng chạm sàn (PoseTest): luôn OFF, kể cả khi control panel/nút cứng/nạp game bật lại.
+        if (enabled && NoTouchScenes.Contains(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)) enabled = false;
         _touchEnabled = enabled;
         // Chưa có Lidar (laptop/Editor) → không gọi native. OnUartFdReady sẽ áp dụng _touchEnabled sau.
         if (!_uartReady) return;

@@ -179,6 +179,7 @@ public static class GameRegistry
         Set(8, 0, "TongHop",     "Tổng hợp",              "TestTongHopGame", Engine.TongHopGame);
         Set(8, 1, "TestTongHop", "Tổng hợp (thử nghiệm)", "TestTongHopGame", Engine.TongHopGame);
         Set(8, 2, "FRTest",      "Test nhận diện mặt",    "FRTestGame",      Engine.MiniGameKit);
+        Set(8, 3, "PoseTest",    "Test khung xương",      "PoseTestGame",    Engine.MiniGameKit);
 
         // ── Game import từ .zip (Tools/GenericGame/Import Zip) — importer tự chèn Set(...) vào ngay phía trên dòng marker, KHÔNG xoá marker ──
         Set(0, 9, "CuaHangKemTruocSau", "cửa hàng kem ( trước , sau)", "CuaHangKemTruocSau", Engine.MiniGameKit, group: "Vị trí, định hướng");
