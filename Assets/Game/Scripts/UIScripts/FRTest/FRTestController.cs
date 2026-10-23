@@ -52,6 +52,10 @@ public class FRTestController : MonoBehaviour
 
     // ── State ─────────────────────────────────────────────────────────────────
 
+    /// <summary>Vẽ tên lên HUD: _leftName/_rightName giữ TÊN THẬT do nhận diện trả về (dùng cho log); chỉ lúc hiển thị mới đổi sang tên thường gọi
+    /// như mọi game khác (PlayerNameDisplay.Format).</summary>
+    void ShowNames() => hud.UpdatePlayerNames(PlayerNameDisplay.Format(_leftName), PlayerNameDisplay.Format(_rightName));
+
     string _leftName  = "Người chơi 1";
     string _rightName = "Người chơi 2";
     int    _scoreLeft, _scoreRight;
@@ -226,13 +230,13 @@ public class FRTestController : MonoBehaviour
             {
                 _leftName = left;
                 leftDone  = true;
-                hud.UpdatePlayerNames(_leftName, _rightName);
+                ShowNames();
             }
             if (right != null && !rightDone)
             {
                 _rightName = right;
                 rightDone  = true;
-                hud.UpdatePlayerNames(_leftName, _rightName);
+                ShowNames();
             }
             yield return null;
             t += Time.deltaTime;
@@ -274,7 +278,7 @@ public class FRTestController : MonoBehaviour
                 leftDone    = true;
                 leftElapsed = Time.time - startTime;
                 leftConfidence = leftSim;
-                hud.UpdatePlayerNames(_leftName, _rightName);
+                ShowNames();
                 Debug.Log($"[FRTest] Recognition DONE round={roundNum} slot=left name={left} elapsed={leftElapsed:F2}s confidence={leftSim:F3}");
             }
             if (right != null && !rightDone)
@@ -283,7 +287,7 @@ public class FRTestController : MonoBehaviour
                 rightDone    = true;
                 rightElapsed = Time.time - startTime;
                 rightConfidence = rightSim;
-                hud.UpdatePlayerNames(_leftName, _rightName);
+                ShowNames();
                 Debug.Log($"[FRTest] Recognition DONE round={roundNum} slot=right name={right} elapsed={rightElapsed:F2}s confidence={rightSim:F3}");
             }
             yield return null;
@@ -300,7 +304,7 @@ public class FRTestController : MonoBehaviour
             _rightName = _plugin != null ? _plugin.GetDefaultNameRight() : "Player_2";
             Debug.Log($"[FRTest] Recognition TIMEOUT round={roundNum} slot=right → default {_rightName}");
         }
-        hud.UpdatePlayerNames(_leftName, _rightName);
+        ShowNames();
 
         _plugin?.StopRound();
 
