@@ -935,6 +935,24 @@ public class GenericGameController : MiniGameControllerBase
         // Lật ngang nền ở nửa phải — khớp hành vi web tool (bg.style.transform='scaleX(-1)').
         var s = rightBackgroundImage.rectTransform.localScale;
         rightBackgroundImage.rectTransform.localScale = new Vector3(-Mathf.Abs(s.x), s.y, s.z);
+        AddCenterDivider();
+    }
+
+    /// <summary>Vạch trắng 3px chia đôi màn hình — nền của game (2 ảnh nửa trái/phải) che mất vạch của GameHUD nên vẽ lại NGAY TRÊN nền:
+    /// Canvas riêng sortingOrder 1 (nền = 0, các layer của game bắt đầu từ 10, HUD cao hơn) → không đè lên câu hỏi/đáp án/HUD.</summary>
+    void AddCenterDivider()
+    {
+        var root = leftBackgroundImage.canvas != null ? leftBackgroundImage.canvas.rootCanvas.transform : null;
+        if (root == null || root.Find("BgCenterDivider") != null) return;
+        var go = new GameObject("BgCenterDivider", typeof(RectTransform), typeof(Image));
+        var rt = (RectTransform)go.transform;
+        rt.SetParent(root, false);
+        rt.anchorMin = new Vector2(0.5f, 0f); rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = new Vector2(3f, 0f); rt.anchoredPosition = Vector2.zero;
+        var img = go.GetComponent<Image>();
+        img.color = Color.white; img.raycastTarget = false;
+        var cv = go.AddComponent<Canvas>();
+        cv.overrideSorting = true; cv.sortingOrder = 1;
     }
 
     /// <summary>GameHUD (P1/P2/Timer) vẽ trên mọi layer của game (nền, câu hỏi, item, đáp án) nhưng DƯỚI icon ✔/✖ (luôn trên cùng) — GameHUD tự đặt
