@@ -81,6 +81,11 @@
     { "id": "Breathing", "label": "Phóng to-nhỏ liên tục (mời gọi, trước khi chạm)", "params": [
       { "name": "duration", "type": "float", "default": 0.6, "min": 0.2, "max": 2 },
       { "name": "scale", "type": "float", "default": 1.08, "min": 1, "max": 1.5 }
+    ]},
+    { "id": "Burst", "label": "Nổ tung (vỡ thành mảnh)", "params": [
+      { "name": "duration", "type": "float", "default": 0.55, "min": 0.2, "max": 2 },
+      { "name": "pieces", "type": "float", "default": 14, "min": 4, "max": 40 },
+      { "name": "spread", "type": "float", "default": 0.9, "min": 0.2, "max": 3, "hint": "Văng xa (× cỡ ô)" }
     ]}
   ],
 

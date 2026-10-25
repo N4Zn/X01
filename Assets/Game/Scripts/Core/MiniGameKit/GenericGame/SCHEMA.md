@@ -460,6 +460,8 @@ Những giới hạn trên đều có thể gỡ dần sau — mỗi lần gỡ 
 - **`settings.iconColumns`** (mặc định 2): số cột lưới icon trong 1 slot (`ButtonItem.ArrangeIconGrid`, `QuestionSlotUi.grid`).
 - **Vùng thu thập theo round**: `rounds[].collect` (nhóm slot, chỉ cần toạ độ + `arrangement` manual/matrix + `autoStretch`/`fillByValue`/`fillReverse`) thay cho `layout.collect*` cấp game (file cũ tự chép vào mọi round). Web: tab "📥 Đã chọn" trên canvas.
 - Web chơi thử: ẩn ô tổng điểm giữa màn hình (Unity chưa đổi HUD của Kit).
+- **`settings.sumWrongEnds`** (web v4.18, mặc định false; chỉ `answerMode="SumToTarget"`): true = chọn vượt mục tiêu, hoặc không còn tập đáp án chưa chọn nào cộng vừa phần thiếu (kể cả hết đáp án), là SAI và QUA ROUND luôn — không có vạch chạm-thanh-để-chọn-lại, không hiện gợi ý "Chạm thanh…", bất chấp `wrongEndsRound`. Unity: `AnswerValidator.CanStillReachSum` (trả `WrongFinal` sớm), `GenericGameController.SumWrongEnds`.
+- **Effect `Burst`** (web v4.19; `effectParams`: `duration` 0.55, `pieces` 14, `spread` 0.9 × cỡ ô): ô phồng nhẹ rồi biến mất, chớp sáng + mảnh màu (lấy màu chủ đạo từ ảnh của ô) văng ra. Unity: `Effects/BurstEffect.cs` (như FadeOut, alpha ô về 0 — `RestoreAnswerAlpha` trả lại ở round mới). Dùng được ở mọi slot hiệu ứng đáp án; ở item (decorations) chưa kiểm.
 
 ## Scene riêng cho từng game (Import Zip) — cách khuyến nghị
 

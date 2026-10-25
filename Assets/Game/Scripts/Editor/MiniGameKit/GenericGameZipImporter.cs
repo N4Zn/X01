@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Import gói .zip xuất từ game_builder_v4.17.html (game.json + assets/) thành 1 GAME RIÊNG có scene riêng:
+/// Import gói .zip xuất từ game_builder_v4.19.html (game.json + assets/) thành 1 GAME RIÊNG có scene riêng:
 ///   Assets/Game/GenericGames/&lt;id&gt;/game.json            — TextAsset, nhúng vào prefab
 ///   Assets/Game/GenericGames/&lt;id&gt;/&lt;id&gt;_LayoutBase.prefab — SINH TỰ ĐỘNG từ game.json (marker từng ô/item/vùng của mọi round)
 ///   Assets/Game/GenericGames/&lt;id&gt;/&lt;id&gt;_Layout.prefab     — PREFAB VARIANT của Base: chỉnh tay (kéo/resize marker) lưu ở đây

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>EduXplore Game Builder v4.17</title>
+<title>EduXplore Game Builder v4.19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -519,7 +519,7 @@ body.rt-fx #decoHost:not(:has(.deco-card.sel)) .sec{display:none;}
     <nav id="ribTabs" role="tablist" aria-label="Thanh công cụ"></nav>
     <span class="spacer"></span>
     <input id="gameDisplayName" placeholder="Tên hiển thị game…">
-    <span class="ver" title="Phiên bản Game Builder — v4.10: thêm tuỳ chọn &quot;Phát tiếng của vật khi chạm SAI&quot; (tab Luật chơi); v4.11: chuỗi hình không có 2 hình giống nhau đứng liền nhau; v4.12: thẻ không còn bị to ra sau khi chạm; v4.13: Lưới thẻ có ảnh mặt úp, vật có khung riêng thì bỏ thẻ trắng; v4.14: chạm sai liên tục không làm vật trôi khỏi chỗ; v4.15: dải hình — hình lật ra cùng cỡ ô ?, chọn đúng thì sáng lên; v4.16: Lưới thẻ có kiểu xếp chữ U (hàng trên + 2 bên); v4.17: Cài đặt chung thêm &quot;Giữ nguyên thứ tự đáp án (không xáo)&quot; và &quot;Đáp án nửa phải lật đối xứng&quot; (bỏ tick = 2 bên giống nhau); chế độ Tự đặt từng ô có ô nhập Rộng/Cao % của ô đang chọn + &quot;Áp cho tất cả ô&quot;">v4.17</span>
+    <span class="ver" title="Phiên bản Game Builder — v4.10: thêm tuỳ chọn &quot;Phát tiếng của vật khi chạm SAI&quot; (tab Luật chơi); v4.11: chuỗi hình không có 2 hình giống nhau đứng liền nhau; v4.12: thẻ không còn bị to ra sau khi chạm; v4.13: Lưới thẻ có ảnh mặt úp, vật có khung riêng thì bỏ thẻ trắng; v4.14: chạm sai liên tục không làm vật trôi khỏi chỗ; v4.15: dải hình — hình lật ra cùng cỡ ô ?, chọn đúng thì sáng lên; v4.16: Lưới thẻ có kiểu xếp chữ U (hàng trên + 2 bên); v4.17: Cài đặt chung thêm &quot;Giữ nguyên thứ tự đáp án (không xáo)&quot; và &quot;Đáp án nửa phải lật đối xứng&quot; (bỏ tick = 2 bên giống nhau); chế độ Tự đặt từng ô có ô nhập Rộng/Cao % của ô đang chọn + &quot;Áp cho tất cả ô&quot;"; v4.18: Cộng dồn tới mục tiêu có tuỳ chọn &quot;Vượt mục tiêu là sai, qua round&quot; (bỏ chạm thanh để chọn lại); không còn cách nào đủ mục tiêu cũng tính sai ngay; v4.19: thêm hiệu ứng &quot;Nổ tung&quot; (vỡ thành mảnh màu + chớp sáng, chỉ có ở builder, Unity chưa có)">v4.19</span>
     <input type="file" id="openGameInput" accept=".zip" style="display:none">
     <button class="btn" id="btnPlaytest" title="Chơi thử toàn màn hình">▶ Chơi thử</button>
   </header>
@@ -576,6 +576,7 @@ body.rt-fx #decoHost:not(:has(.deco-card.sel)) .sec{display:none;}
         <div class="srow"><label class="chk"><input type="checkbox" id="hasTargetScore"> Hiện điểm mục tiêu</label><input type="number" id="targetScore" min="0" value="10" style="width:56px; display:none"></div>
         <div class="srow"><label class="chk"><input type="checkbox" id="showTint" checked> Tô xanh/đỏ khi đúng/sai</label></div>
         <div class="srow"><label class="chk" title="Đáp án i luôn nằm đúng ô i như bạn đặt trong từng round, không bị xáo ngẫu nhiên mỗi lượt. (Kiểu sắp xếp Random vùng vẫn chọn vị trí ô ngẫu nhiên.)"><input type="checkbox" id="keepAnswerOrder"> Giữ nguyên thứ tự đáp án (không xáo)</label></div>
+        <div class="srow"><label class="chk" title="Chỉ cho kiểu &quot;Cộng dồn tới mục tiêu&quot;. Tick = chọn vượt mục tiêu (hoặc hết đáp án mà chưa đủ) là SAI và qua round luôn. Bỏ tick = khoá lại, chạm thanh để chọn lại (như TachSo2)."><input type="checkbox" id="sumWrongEnds"> Cộng dồn: vượt mục tiêu là sai, qua round</label></div>
         <div class="srow"><label class="chk" title="Bỏ tick = vị trí/vùng các ô đáp án của 2 đội GIỐNG HỆT nhau (không lật đối xứng nửa phải). Câu hỏi và vùng thu thập vẫn có tuỳ chọn riêng."><input type="checkbox" id="mirrorAnswers" checked> Đáp án nửa phải lật đối xứng</label></div>
         </div>
       </details>
@@ -2879,6 +2880,11 @@ const CAPS = {
       {name:"amplitudePct",label:"Biên độ %",type:"float",def:1.5,min:0.5,max:10,step:0.5},
       {name:"speed",label:"Tốc độ",type:"float",def:30,min:5,max:60,step:1},
     ]},
+    { id:"Burst", label:"Nổ tung (vỡ thành mảnh)", params:[
+      {name:"duration",label:"Thời gian",type:"float",def:0.55,min:0.2,max:2,step:0.05},
+      {name:"pieces",label:"Số mảnh",type:"float",def:14,min:4,max:40,step:1},
+      {name:"spread",label:"Văng xa (× cỡ ô)",type:"float",def:0.9,min:0.2,max:3,step:0.1},
+    ]},
     { id:"FadeOut", label:"Mờ dần biến mất", params:[
       {name:"duration",label:"Thời gian",type:"float",def:0.25,min:0.1,max:2,step:0.05},
     ]},
@@ -3246,6 +3252,9 @@ function initSettingsPanel(){
   const keepOrdEl = document.getElementById('keepAnswerOrder');
   keepOrdEl.checked = !!game.settings.keepAnswerOrder;
   keepOrdEl.addEventListener('change', ()=> game.settings.keepAnswerOrder = keepOrdEl.checked);
+  const sumWrEl = document.getElementById('sumWrongEnds');
+  sumWrEl.checked = !!game.settings.sumWrongEnds;
+  sumWrEl.addEventListener('change', ()=> game.settings.sumWrongEnds = sumWrEl.checked);
   const mirAnsEl = document.getElementById('mirrorAnswers');
   mirAnsEl.checked = game.settings.mirrorAnswers !== false;
   mirAnsEl.addEventListener('change', ()=>{ game.settings.mirrorAnswers = mirAnsEl.checked; renderStage(); });
@@ -4573,6 +4582,7 @@ function syncUiFromGame(keepSel){
   document.getElementById('flatPoints').value = game.settings.flatPoints;
   document.getElementById('showTint').checked = game.settings.showCorrectWrongTint;
   document.getElementById('keepAnswerOrder').checked = !!game.settings.keepAnswerOrder;
+  document.getElementById('sumWrongEnds').checked = !!game.settings.sumWrongEnds;
   document.getElementById('mirrorAnswers').checked = game.settings.mirrorAnswers !== false;
   document.getElementById('waitBothTeams').checked = !!game.settings.waitBothTeams;
   updateWaitBothVisibility();
@@ -6892,6 +6902,7 @@ function sumToTargetPick(side, round, ansIdx, el, mode){
   if (mode==='combined' && (pt.combinedDone || s.wrongLocked)) return;
   s.sumTotal = (s.sumTotal||0) + sumValueOf(round, ansIdx);
   s.sumPicked = (s.sumPicked||0) + 1;
+  (s.sumIdx = s.sumIdx || []).push(ansIdx);
   const target = roundTargetOf(round);
   const rendered = s.half.querySelectorAll('.pt-slot').length;
   const reached = s.sumTotal === target;   // phải ĐÚNG bằng mục tiêu
@@ -6926,13 +6937,33 @@ function sumToTargetPick(side, round, ansIdx, el, mode){
       hint.style.cssText = 'position:absolute; left:50%; bottom:3%; transform:translateX(-50%); z-index:900; pointer-events:none; padding:8px 14px; border-radius:999px; background:rgba(0,0,0,.72); color:#ffd54a; font-weight:700; font-size:'+Math.max(12, s.half.clientHeight*0.035)+'px; white-space:nowrap;';
       s.half.appendChild(hint); s.collectedEls = s.collectedEls||[]; s.collectedEls.push(hint);
     };
+    // settings.sumWrongEnds: vượt mục tiêu / hết đáp án mà chưa đủ = SAI, qua round luôn (không chạm thanh chọn lại)
+    const wrongEnd = ()=>{
+      s.sumLocked = true;
+      lockAllSlots(side);
+      if (mode==='combined'){
+        s.wrongLocked = true; pt.combinedWrong[side] = true;
+        if (waitBothWrong(side)) return;
+        if (pt.combinedWrong.left && pt.combinedWrong.right){ pt.combinedDone = true; scheduleNextCombinedRound(500); }
+        return;
+      }
+      endRound(1000);
+    };
+    // sumWrongEnds: còn chọn tiếp cũng KHÔNG thể đúng bằng mục tiêu (không có tập đáp án còn lại nào cộng vừa đủ phần thiếu) → sai luôn
+    const canStillReach = ()=>{
+      const need = target - s.sumTotal; let can = 1;   // bitset các tổng đạt được từ đáp án chưa chọn
+      round.answers.forEach((_, i)=>{ if (s.sumIdx.indexOf(i) < 0) can |= (can << sumValueOf(round, i)); });
+      return need >= 0 && need < 31 && !!((can >> need) & 1);
+    };
+    if (!over && game.settings.sumWrongEnds && !canStillReach()){ doWrong(side, el); wrongEnd(); return; }
     if (over){ // vượt quá mục tiêu → hiệu ứng SAI, không bay, chờ người chơi chạm thanh để chọn lại
       doWrong(side, el);
+      if (game.settings.sumWrongEnds){ wrongEnd(); return; }
       needRetry();
     } else {
       doPartial(side, el);
       el.style.visibility = 'hidden';
-      if (s.sumPicked >= rendered) needRetry(); // hết đáp án mà chưa đủ
+      if (s.sumPicked >= rendered){ if (game.settings.sumWrongEnds){ doWrong(side, el); wrongEnd(); } else needRetry(); } // hết đáp án mà chưa đủ
     }
   }
 }
@@ -6941,7 +6972,7 @@ function sumReset(side){
   const s = pt.sides[side];
   if (!s || s.sumWon || (pt.combinedDone)) return;
   if (!s.sumPicked) return;
-  s.sumTotal = 0; s.sumPicked = 0; s.collectCounter = 0; s.sumLocked = false;
+  s.sumTotal = 0; s.sumPicked = 0; s.sumIdx = []; s.collectCounter = 0; s.sumLocked = false;
   s.collectedEls = (s.collectedEls||[]).filter(e=>{ if (e.dataset && (e.dataset.lit || e.dataset.hint)){ e.remove(); return false; } return true; });
   Array.from(s.half.querySelectorAll('.pt-slot')).forEach(el=>{ el.style.visibility=''; el.style.opacity=''; el.classList.remove('locked','tint-correct','tint-wrong'); });
   hideFeedbackIcon(side);
@@ -7232,8 +7263,78 @@ function runSingleEffect(el, type, p){
     }; requestAnimationFrame(loop);
   } else if (type==='FadeOut'){
     runTransition(el, `opacity ${p.duration||0.25}s linear`, ()=>{ el.style.opacity='0'; });
+  } else if (type==='Burst'){
+    runBurst(el, p);
   }
   // FlyOff/FlyTo/Breathing trên chính nút (không clone) ít dùng thực tế — mô phỏng đủ qua runCorrectRemove bên dưới
+}
+/// Nổ tung (v4.19, chỉ preview web — Unity chưa có): ô phồng nhẹ rồi biến mất ngay, chớp sáng tròn
+/// + các mảnh cùng màu ảnh của ô văng ra, xoay, rơi nhẹ rồi mờ. Mảnh vẽ ở lớp riêng trong cùng
+/// khung cha nên vẫn chạy tiếp dù bản sao (clone) của ô bị xoá.
+const _burstColorCache = {};
+function burstColorOf(el){
+  let im = el.querySelector('img');
+  const src = im && im.src;
+  if (!src) return '#ffcc33';
+  if (_burstColorCache[src]) return _burstColorCache[src];
+  let col = '#ffcc33';
+  // ô hiệu ứng thường là BẢN SAO (clone) → ảnh của nó chưa tải xong; lấy ảnh gốc cùng src đã hiện trên màn hình
+  const ready = (im.complete && im.naturalWidth) ? im : Array.from(document.querySelectorAll('img')).find(x=> x.src === src && x.complete && x.naturalWidth);
+  if (!ready) return col;
+  try{
+    { im = ready;
+      const c = document.createElement('canvas'); c.width = c.height = 24;
+      const g = c.getContext('2d'); g.drawImage(im, 0, 0, 24, 24);
+      const d = g.getImageData(0, 0, 24, 24).data; let r=0, gg=0, b=0, n=0;
+      for (let i=0;i<d.length;i+=4){
+        if (d[i+3] < 160) continue;
+        const mx = Math.max(d[i],d[i+1],d[i+2]), mn = Math.min(d[i],d[i+1],d[i+2]);
+        if (mx - mn < 40 || mx > 245 && mn > 200) continue; // bỏ viền/chữ trắng/xám, lấy màu chính
+        r+=d[i]; gg+=d[i+1]; b+=d[i+2]; n++;
+      }
+      if (n) col = `rgb(${Math.round(r/n)},${Math.round(gg/n)},${Math.round(b/n)})`;
+    }
+  }catch(e){}
+  _burstColorCache[src] = col;
+  return col;
+}
+function runBurst(el, p){
+  const host = el.parentElement; if (!host) return;
+  const dur = (p.duration||0.55)*1000;
+  const rect = el.getBoundingClientRect(), hr = host.getBoundingClientRect();
+  const cx = rect.left - hr.left + rect.width/2, cy = rect.top - hr.top + rect.height/2;
+  const size = Math.min(rect.width, rect.height);
+  const col = burstColorOf(el);
+  // ô: phồng lên 1 chút rồi biến mất ngay (bóng vỡ)
+  el.style.transition = 'transform 70ms ease-out, opacity 90ms linear';
+  el.style.transform = 'scale(1.18)';
+  setTimeout(()=>{ el.style.opacity = '0'; el.style.visibility = 'hidden'; }, 60);
+  const layer = document.createElement('div');
+  layer.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:' + (zOf('collect')+1);
+  host.appendChild(layer);
+  const flash = document.createElement('div');
+  flash.style.cssText = `position:absolute;left:${cx-size/2}px;top:${cy-size/2}px;width:${size}px;height:${size}px;border-radius:50%;` +
+    `background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,.6) 35%, ${col} 60%, rgba(255,255,255,0) 72%);`;
+  layer.appendChild(flash);
+  flash.animate([{ transform:'scale(.35)', opacity:1 }, { transform:'scale(1.45)', opacity:0 }], { duration: dur*0.5, easing:'ease-out', fill:'forwards' });
+  const n = Math.max(4, Math.round(p.pieces||14)), spread = (p.spread||0.9) * size;
+  for (let i=0;i<n;i++){
+    const a = (i/n)*Math.PI*2 + (Math.random()-.5)*0.5;
+    const dist = spread*(0.55 + Math.random()*0.6);
+    const w = size*(0.11 + Math.random()*0.1), h = w*(0.6 + Math.random()*0.9);
+    const sh = document.createElement('div');
+    const light = Math.random() < 0.25;
+    sh.style.cssText = `position:absolute;left:${cx-w/2}px;top:${cy-h/2}px;width:${w}px;height:${h}px;` +
+      `background:${light ? '#fff' : col};border-radius:${Math.random()<.5 ? '50%' : '30% 70% 40% 60%'};box-shadow:0 0 0 1px rgba(0,0,0,.12);`;
+    layer.appendChild(sh);
+    const dx = Math.cos(a)*dist, dy = Math.sin(a)*dist, rot = (Math.random()-.5)*720;
+    sh.animate([
+      { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:1 },
+      { transform:`translate(${dx*0.8}px,${dy*0.8}px) rotate(${rot*0.6}deg) scale(1)`, opacity:1, offset:0.55 },
+      { transform:`translate(${dx}px,${dy + size*0.35}px) rotate(${rot}deg) scale(.6)`, opacity:0 },
+    ], { duration: dur*(0.8 + Math.random()*0.35), easing:'cubic-bezier(.15,.7,.35,1)', fill:'forwards' });
+  }
+  setTimeout(()=> layer.remove(), dur*1.25 + 100);
 }
 /// onCorrectRemove luôn là "đúng" (đáp án đúng chưa hết round) — áp dụng playSound/showIcon
 /// fallback GIỐNG HỆT onCorrectTap/onWrongTap (khớp GenericGameController.PlayCorrectRemoveClone
@@ -7376,7 +7477,7 @@ function resetCollectArea(side, round){
   (s.collectedEls||[]).forEach(el=>{ if (el) el.remove(); });
   s.collectedEls = [];
   s.collectCounter = 0;
-  s.sumTotal = 0; s.sumPicked = 0; s.sumLocked = false; s.sumWon = false;
+  s.sumTotal = 0; s.sumPicked = 0; s.sumIdx = []; s.sumLocked = false; s.sumWon = false;
   resetDecoLaunch(side);
   s.effectiveCollectSlots = computeEffectiveCollectSlots(round);
   // Chế độ cộng dồn: đánh dấu ô MỤC TIÊU của round này bằng viền vàng (round khác mục tiêu khác → vạch khác).
@@ -7683,7 +7784,7 @@ function initShell(){
       group('Game', [rowOf('gameId'), rowOf('cycPlayMode'), rowOf('selAnswerMode')], 'col'),
       group('Chữ & ô', [rowOf('questionFontSize'), rowOf('iconColumns')], 'col'),
       group('Điểm & lượt', [rowOf('cycScoring'), rowOf('cycCountdown'), rowOf('cycWrong'), rowOf('hasTargetScore'), rowOf('showTint'), $e('rowWaitBoth')], 'colflow'),
-      group('Đáp án', [rowOf('keepAnswerOrder'), rowOf('mirrorAnswers')], 'col'),
+      group('Đáp án', [rowOf('keepAnswerOrder'), rowOf('mirrorAnswers'), rowOf('sumWrongEnds')], 'col'),
       group('Nền chung', [rowOf('bgThumb'), rowOf('qFrameThumb'), rowOf('slotFramesThumbs')], 'grid2'),
       group('Nhân vật / Item', [btn('Thêm nhân vật', 'c', click('btnAddDeco'), 'Thêm đồ vật/con vật trang trí cho cả game', 'Trang trí cả game'), layBtn]),
       group('Thể loại', [autoLbl, poolBtn], 'col')],

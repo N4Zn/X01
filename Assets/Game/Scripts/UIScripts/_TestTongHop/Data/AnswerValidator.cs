@@ -42,7 +42,26 @@ public class AnswerValidator
         _sumTotal += v > 0 ? v : 1;
         _selected.Add(index);
         if (_sumTotal == _q.sumTarget) return ClickResult.CorrectFinal;
-        return _sumTotal > _q.sumTarget ? ClickResult.WrongFinal : ClickResult.CorrectPartial;
+        if (_sumTotal > _q.sumTarget) return ClickResult.WrongFinal;
+        // sumWrongEnds: còn chọn tiếp cũng không thể đủ (kể cả hết đáp án) → sai luôn, khỏi chờ chạm thanh chọn lại.
+        return _q.sumWrongEnds && !CanStillReachSum() ? ClickResult.WrongFinal : ClickResult.CorrectPartial;
+    }
+
+    /// <summary>Có tập con đáp án CHƯA chọn nào cộng đúng phần còn thiếu (target − tổng hiện tại) không.</summary>
+    bool CanStillReachSum()
+    {
+        int need = _q.sumTarget - _sumTotal;
+        if (need < 0) return false;
+        var can = new bool[need + 1];
+        can[0] = true;
+        int n = _q.sumValues != null ? _q.sumValues.Length : 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (_selected.Contains(i)) continue;
+            int v = _q.sumValues[i] > 0 ? _q.sumValues[i] : 1;
+            for (int s = need; s >= v; s--) if (can[s - v]) can[s] = true;
+        }
+        return can[need];
     }
 
     // ─── Single ───────────────────────────────────────────────────────────────

@@ -221,6 +221,7 @@ public static class GameRegistry
         Set(0, 39, "NhoChuoiHinh2", "Nhớ chuỗi hình", "NhoChuoiHinh2", Engine.MiniGameKit, group: "Thử nghiệm");
         Set(0, 40, "HinhQuanhBe", "Hình nào đây? ", "HinhQuanhBe", Engine.MiniGameKit, group: "Thử nghiệm");
         Set(0, 41, "LatTheNhoGiong2", "Lật thẻ giống nhau", "LatTheNhoGiong2", Engine.MiniGameKit, group: "Thử nghiệm");
+        Set(0, 50, "BongBay", "Bóng bay tách số", "BongBay", Engine.MiniGameKit, group: "Cộng");
         // <GENERIC-GAMES>
     }
 

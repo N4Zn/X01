@@ -11,6 +11,7 @@ public enum EffectType
     FlyTo,      // bay tới 1 ĐIỂM CỐ ĐỊNH (targetXPct/targetYPct) rồi co nhỏ+mờ dần — dùng khi cần set đúng vị trí "rổ"/bộ đếm
     FlyToStay,  // bay tới 1 ĐIỂM CỐ ĐỊNH rồi Ở LẠI VĨNH VIỄN (không mờ/không bị huỷ) — khác FlyTo: dùng khi muốn đáp án đúng "đọng lại" thành 1 vùng hiển thị mới (vd giỏ chứa chất đầy dần cả game), không phải biến mất
     Breathing,  // phóng to-nhỏ lặp lại liên tục — hiệu ứng chờ/mời gọi trước khi chạm
+    Burst,      // nổ tung: ô biến mất, chớp sáng + mảnh màu văng ra (web v4.19) — bóng bay vỡ
 }
 
 /// <summary>Bộ tham số dùng chung cho mọi effect — field nào effect không dùng thì bỏ qua.
@@ -38,6 +39,9 @@ public struct EffectParams
     public float targetHPct;
     /// <summary>CHỈ dùng cho FlyToStay: &gt; 0 = bay tới xong đứng yên ngần ấy giây rồi mờ đi và biến mất. 0 = ở lại tới khi round mới (như cũ).</summary>
     public float stayFor;
+    /// <summary>CHỈ dùng cho Burst: số mảnh văng ra và độ văng xa (× cỡ ô).</summary>
+    public float pieces;
+    public float spread;
 
     public static EffectParams Default(EffectType type)
     {
@@ -50,6 +54,7 @@ public struct EffectParams
             case EffectType.FlyTo:     return new EffectParams { duration = 0.45f, targetXPct = 50f, targetYPct = 90f, scale = 0.3f };
             case EffectType.FlyToStay: return new EffectParams { duration = 0.45f, targetXPct = 50f, targetYPct = 90f, scale = 1f };
             case EffectType.Breathing: return new EffectParams { duration = 0.6f, scale = 1.08f, loops = -1 };
+            case EffectType.Burst:     return new EffectParams { duration = 0.55f, pieces = 14f, spread = 0.9f };
             default:                   return new EffectParams { duration = 0f };
         }
     }

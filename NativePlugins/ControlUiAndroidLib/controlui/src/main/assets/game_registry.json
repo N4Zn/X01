@@ -88,6 +88,7 @@
     {"name": "ConNaoNangHon", "displayName": "Bập bênh nặng nhẹ", "group": "Thử nghiệm", "sceneName": "ConNaoNangHon", "category": 0},
     {"name": "NhoChuoiHinh2", "displayName": "Nhớ chuỗi hình", "group": "Thử nghiệm", "sceneName": "NhoChuoiHinh2", "category": 0},
     {"name": "HinhQuanhBe", "displayName": "Hình nào đây? ", "group": "Thử nghiệm", "sceneName": "HinhQuanhBe", "category": 0},
-    {"name": "LatTheNhoGiong2", "displayName": "Lật thẻ giống nhau", "group": "Thử nghiệm", "sceneName": "LatTheNhoGiong2", "category": 0}
+    {"name": "LatTheNhoGiong2", "displayName": "Lật thẻ giống nhau", "group": "Thử nghiệm", "sceneName": "LatTheNhoGiong2", "category": 0},
+    {"name": "BongBay", "displayName": "Bóng bay tách số", "group": "Cộng", "sceneName": "BongBay", "category": 0}
   ]
 }

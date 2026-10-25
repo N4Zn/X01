@@ -263,6 +263,7 @@ public class GenericGameController : MiniGameControllerBase
         bool sumMode = _package.settings.answerMode == "SumToTarget";
         if (sumMode) correct.Clear();
         q.sumTarget = r.target > 0 ? r.target : DefaultSumTarget(r);
+        q.sumWrongEnds = sumMode && _package.settings.sumWrongEnds;
         q.correctAnswers = correct.ToArray();
         q.answerMode = _package.settings.answerMode switch
         {
@@ -1289,8 +1290,8 @@ public class GenericGameController : MiniGameControllerBase
         {
             // SumToTarget: sai (vượt mục tiêu) KHÔNG BAO GIỜ kết thúc round — chờ người chơi chạm thanh
             // để chọn lại (xem SumReset), không tự mở khoá theo timer như wrongEndsRound=false.
-            if (!correct && SumMode) return;
-            if (!correct && !_package.settings.wrongEndsRound)
+            if (!correct && SumMode && !SumWrongEnds) return;
+            if (!correct && !SumWrongEnds && !_package.settings.wrongEndsRound)
             {
                 // "Sai không kết thúc round": KHÔNG gọi onDone thật — IndependentPlayerLoop (base
                 // class) vẫn đang await onDone nên coi như round CHƯA xong, tiếp tục chờ ở round
@@ -2023,7 +2024,7 @@ public class GenericGameController : MiniGameControllerBase
 
     /// <summary>settings.waitBothTeams (chỉ Combined): 2 đội cùng câu, chờ cả 2 xong mới sang câu mới.</summary>
     protected override bool WaitForBothTeams => _package != null && _package.settings.waitBothTeams;
-    protected override bool WrongEndsTeamTurn => _package == null || _package.settings.wrongEndsRound;
+    protected override bool WrongEndsTeamTurn => _package == null || _package.settings.wrongEndsRound || SumWrongEnds;
 
     protected override bool UseIndependentRoundCountdown => _package != null && _package.settings.countdownMode == "nextInN";
     protected override bool UseDefaultTransitionCountdown => _package == null || _package.settings.countdownMode != "none";
@@ -2049,6 +2050,8 @@ public class GenericGameController : MiniGameControllerBase
     // ══════════════════════════════════════════════════════════════════════════
 
     bool SumMode => _package != null && _package.settings.answerMode == "SumToTarget";
+    /// <summary>settings.sumWrongEnds (web v4.18): vượt/không thể đủ mục tiêu = sai + qua round, không chạm thanh chọn lại.</summary>
+    bool SumWrongEnds => SumMode && _package.settings.sumWrongEnds;
 
     int DefaultSumTarget(RoundSpecV2 r)
     {
@@ -2111,6 +2114,8 @@ public class GenericGameController : MiniGameControllerBase
             AddBorderBars(marker.transform, gold, 3f);
             _sumStatic[team].Add(marker);
         }
+
+        if (SumWrongEnds) return; // không có chạm-thanh-chọn-lại
 
         // Vùng chạm phủ TOÀN BỘ thanh → chạm để chọn lại. Đặt làm anh em ĐẦU TIÊN (vẽ/raycast dưới
         // cùng) để nếu thanh có chồng lên ô đáp án thì ô đáp án vẫn nhận chạm trước.
@@ -2177,7 +2182,7 @@ public class GenericGameController : MiniGameControllerBase
                 // Vượt mục tiêu → hiệu ứng SAI tại chỗ (không bay), Kit đã tự khoá bên này; chờ chạm thanh.
                 PlayActionFx(team, rt, Pick(slotFx?.onWrongTap, _package.effects.onWrongTap), false);
                 FireItems(team, ItemTrigger.Wrong);
-                ShowSumRetryHint(team);
+                if (!SumWrongEnds) ShowSumRetryHint(team); // sumWrongEnds: round kết thúc luôn, không có chọn lại
                 break;
             case ClickResult.CorrectPartial:
                 PlayCorrectRemoveClone(team, btn, rt, Pick(slotFx?.onCorrectRemove, _package.effects.onCorrectRemove));

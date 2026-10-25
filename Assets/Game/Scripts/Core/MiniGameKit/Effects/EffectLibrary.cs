@@ -17,6 +17,7 @@ public static class EffectLibrary
             case EffectType.FlyTo:     return new FlyToEffect();
             case EffectType.FlyToStay: return new FlyToStayEffect();
             case EffectType.Breathing: return new BreathingEffect();
+            case EffectType.Burst:     return new BurstEffect();
             default:                   return null;
         }
     }

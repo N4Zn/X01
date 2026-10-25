@@ -62,6 +62,7 @@ public class QuestionData
     // Chỉ dùng khi answerMode == SumToTarget (xem AnswerValidator) — game khác để mặc định, bỏ qua.
     public int   sumTarget;                   // tổng cần đạt ĐÚNG
     public int[] sumValues;                   // sumValues[answerIndex] = giá trị cộng của đáp án đó
+    public bool  sumWrongEnds;                // true = vượt mục tiêu / không còn cách nào đủ → WrongFinal, kết thúc round (không chọn lại)
 
     // Đáp án (Matching) — left/right mỗi bên 3
     public string[]     leftItems;

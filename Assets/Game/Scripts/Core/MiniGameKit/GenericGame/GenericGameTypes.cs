@@ -37,6 +37,10 @@ public class GenericGameSettings
     /// thì Kit vẫn kết thúc round (giới hạn đã biết, xem SCHEMA.md) — false chỉ có tác dụng khi còn
     /// ít nhất 1 bên chưa sai.</summary>
     public bool wrongEndsRound = true;
+    /// <summary>Chỉ cho answerMode="SumToTarget" (web v4.18). true = chọn vượt mục tiêu (hoặc hết đáp án / không còn cách nào đủ)
+    /// là SAI và qua round luôn — không có thanh chạm-để-chọn-lại. false (mặc định) = khoá, chạm thanh chọn lại (như TachSo2).
+    /// Bất chấp wrongEndsRound.</summary>
+    public bool sumWrongEnds;
     /// <summary>false (mặc định, hành vi gốc) = Combined: bên nào ĐÚNG trước thắng, round kết thúc cho cả 2 bên.
     /// true = 2 đội cùng 1 câu hỏi nhưng MỖI đội chơi hết câu của mình (đúng → ghi điểm, khoá ô; sai → khoá,
     /// hoặc thử lại nếu wrongEndsRound=false), chỉ sang câu mới khi CẢ 2 đội đã xong. Chỉ có tác dụng ở playMode="Combined".</summary>
