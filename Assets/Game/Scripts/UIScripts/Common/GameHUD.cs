@@ -55,6 +55,7 @@ public class GameHUD : MonoBehaviour
                 bgChild.SetParent(canvasRoot, false);
                 bgChild.SetAsFirstSibling();
             }
+            AddCenterDivider(bgChild);
         }
 
         // Override sorting: HUD luôn render trên cùng bất kể sibling order.
@@ -63,6 +64,26 @@ public class GameHUD : MonoBehaviour
         var cv = gameObject.AddComponent<Canvas>();
         cv.overrideSorting = true;
         cv.sortingOrder    = 10;
+    }
+
+    /// <summary>Vạch trắng ~3px chia đôi màn hình (tránh lẫn 2 bên) — con của Background nên chỉ nằm trên nền,
+    /// dưới mọi nội dung và HUD. Chung cho mọi game dùng GameHUD.</summary>
+    const float DividerWidth = 3f;
+
+    static void AddCenterDivider(Transform background)
+    {
+        if (background.Find("CenterDivider") != null) return;
+        var go = new GameObject("CenterDivider", typeof(RectTransform), typeof(Image));
+        var rt = (RectTransform)go.transform;
+        rt.SetParent(background, false);
+        rt.anchorMin = new Vector2(0.5f, 0f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot     = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(DividerWidth, 0f);
+        rt.anchoredPosition = Vector2.zero;
+        var img = go.GetComponent<Image>();
+        img.color = Color.white;
+        img.raycastTarget = false;
     }
 
     // ── Public API ─────────────────────────────────────────────────────────────
