@@ -57,7 +57,7 @@ main{display:grid; grid-template-columns:240px minmax(0,1fr) 360px; gap:14px; pa
 /* Ảnh màn */
 .scenes{display:flex; flex-direction:column; gap:8px; margin-top:8px;}
 .scene{position:relative; border:2px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; background:#000;}
-.scene img{display:block; width:100%; aspect-ratio:1024/600; object-fit:cover;}
+.scene img{display:block; width:100%; aspect-ratio:16/9; object-fit:cover;}
 .scene.sel{border-color:var(--accent);}
 .scene .nm{position:absolute; left:6px; top:4px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; padding:1px 6px; border-radius:6px;}
 .scene .x{position:absolute; right:4px; top:4px; padding:0 6px; font-size:12px; background:rgba(0,0,0,.6); color:#fff; border:0;}
@@ -65,7 +65,7 @@ main{display:grid; grid-template-columns:240px minmax(0,1fr) 360px; gap:14px; pa
 .drop:hover{border-color:var(--accent); color:var(--accent);}
 
 /* Sân khấu biên tập */
-.stageWrap{position:relative; width:100%; aspect-ratio:1024/600; background:#0b0c14; border-radius:12px; overflow:hidden; user-select:none;}
+.stageWrap{position:relative; width:100%; aspect-ratio:16/9; background:#0b0c14; border-radius:12px; overflow:hidden; user-select:none;}
 .stageWrap img.bg{position:absolute; inset:0; width:100%; height:100%; object-fit:fill;}
 .stageWrap .empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#8a8db0; text-align:center; padding:20px;}
 .stageWrap .mid{position:absolute; left:50%; top:0; bottom:0; border-left:1px dashed rgba(255,255,255,.35);}
@@ -134,7 +134,7 @@ details summary{cursor:pointer; font-weight:700; margin-bottom:6px;}
   <section class="col">
     <div class="card">
       <h2>Ảnh màn chơi</h2>
-      <div class="hint">Chụp màn chơi cả 2 nửa (trong Unity: bấm Play rồi F12). Mỗi trạng thái 1 ảnh, vd lúc đầu, sau khi chọn, lúc thắng.</div>
+      <div class="hint">Chụp màn chơi (cả 2 nửa, tỉ lệ 16:9). Mỗi trạng thái 1 ảnh, vd lúc đầu, sau khi chọn, lúc thắng.</div>
       <div class="scenes" id="sceneList"></div>
       <div class="drop" id="dropImg" style="margin-top:8px">+ Thêm ảnh (hoặc kéo thả, dán Ctrl+V)</div>
     </div>
@@ -536,7 +536,7 @@ function closePreview(){
 }
 function fitPreview(){
   const W = innerWidth - 20, H = innerHeight - 70;
-  const w = Math.min(W, H * 1024 / 600), h = w * 600 / 1024; // màn máy chiếu 1024×600
+  const w = Math.min(W, H * 16 / 9), h = w * 9 / 16;
   const st = $('pvStage'); st.style.width = w + 'px'; st.style.height = h + 'px';
   st.style.fontSize = (h / 600 * 16) + 'px';
 }

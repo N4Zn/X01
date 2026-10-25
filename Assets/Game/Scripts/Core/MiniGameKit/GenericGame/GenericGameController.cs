@@ -188,6 +188,9 @@ public class GenericGameController : MiniGameControllerBase
         if (baked != null && baked.gameJson != null)
         {
             _gameId = baked.gameId;
+#if UNITY_EDITOR
+            TutorialPlayer.EditorGameId = _gameId; // chạy thẳng scene trong Editor: TutorialPlayer biết tìm Tutorials/{gameId}
+#endif
             _package = GenericGameMigration.Parse(baked.gameJson.text);
             baked.ApplyTo(_package);
             baked.HideAtRuntime();
@@ -1883,7 +1886,8 @@ public class GenericGameController : MiniGameControllerBase
     /// thẳng "Start in 3,2,1" cho gọn, đúng yêu cầu "mặc định bỏ tutorial".</summary>
     protected override void StateMachineEnter_Tutorial(Enum prev, Dictionary<string, object> opts)
     {
-        if (showSumTutorial && (GameSettings.Instance == null || GameSettings.Instance.ShowTutorial) && TryPlaySumTutorial()) return;
+        // Game có tutorial làm bằng tutorial_builder (Resources/Tutorials/{gameId}) → TutorialPlayer lo, không chạy thêm màn mô phỏng có sẵn (chồng 2 tutorial).
+        if (showSumTutorial && !TutorialPlayer.Has(_gameId) && (GameSettings.Instance == null || GameSettings.Instance.ShowTutorial) && TryPlaySumTutorial()) return;
         StartGame();
     }
 
