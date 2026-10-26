@@ -79,6 +79,45 @@ def LatTheNhoGiong2():
     return c
 
 GAMES = {f.__name__: f for f in [NhanBietMau, BeKhoeManhRound, ConNaoNangHon, NhoChuoiHinh2, HinhQuanhBe, LatTheNhoGiong2]}
+# ── Game GenericGame / không có StoryData: ảnh lấy từ Resources/TestTongHop/images/GenericGames/<GameId>/ hoặc vẽ tay ──
+GG = os.path.join(root, 'Assets', 'Game', 'Resources', 'TestTongHop', 'images', 'GenericGames')
+def gimg(g, f): return Image.open(os.path.join(GG, g, f)).convert('RGBA')
+def font(sz):
+    from PIL import ImageFont
+    for f in ['C:/Windows/Fonts/arialbd.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf']:
+        try: return ImageFont.truetype(f, int(sz * S))
+        except Exception: pass
+    return ImageFont.load_default()
+def BongBay():
+    g = 'BongBay'
+    c = cover(gimg(g, 'nen_bong_bay.png'), W * S, H * S)
+    # bóng bay đủ 7 màu rải theo 2 hàng, mỗi bóng 1 số (đúng kiểu game: bóng đáp án 1..5)
+    spots = [('bong_do', 70, 170, 118, -8, 4), ('bong_vang', 160, 120, 124, 5, 1), ('bong_xanhla', 252, 175, 120, -4, 5),
+             ('bong_tim', 342, 122, 124, 6, 3), ('bong_cam', 424, 178, 116, -6, 2), ('bong_hong', 30, 92, 70, 8, 0), ('bong_xanhduong', 458, 84, 66, -8, 0)]
+    for name, cx, cy, size, rot, num in spots:
+        paste(c, gimg(g, name + '.png'), cx, cy, size, rot)
+        if num:
+            d = ImageDraw.Draw(c); f = font(size * .42); t = str(num)
+            bb = d.textbbox((0, 0), t, font=f); tw, th = bb[2] - bb[0], bb[3] - bb[1]
+            d.text((cx * S - tw / 2 - bb[0], (cy - size * .06) * S - th / 2 - bb[1]), t, font=f, fill=(255, 255, 255), stroke_width=int(3 * S), stroke_fill=(60, 60, 60))
+    return c
+def PoseTest():
+    c = bokeh(gradient(hexc('#E3F2FD'), hexc('#90CAF9'))); d = ImageDraw.Draw(c)
+    def person(cx, cy, k, col, pose):   # que xương: đầu, thân, tay, chân + khớp
+        j = {'head': (0, -62), 'neck': (0, -44), 'hip': (0, 6), 'lsh': (-16, -40), 'rsh': (16, -40)}
+        j.update(pose)
+        pt = lambda n: ((cx + j[n][0] * k) * S, (cy + j[n][1] * k) * S)
+        for a, b in [('neck', 'hip'), ('lsh', 'rsh'), ('lsh', 'lel'), ('lel', 'lwr'), ('rsh', 'rel'), ('rel', 'rwr'), ('hip', 'lkn'), ('lkn', 'lan'), ('hip', 'rkn'), ('rkn', 'ran')]:
+            d.line([pt(a), pt(b)], fill=col, width=int(7 * k * S), joint='curve')
+        hx, hy = pt('head'); r = 15 * k * S; d.ellipse([hx - r, hy - r, hx + r, hy + r], outline=col, width=int(7 * k * S))
+        for n in j:
+            if n != 'head':
+                x, y = pt(n); rr = 6 * k * S; d.ellipse([x - rr, y - rr, x + rr, y + rr], fill=(255, 255, 255), outline=col, width=int(3 * k * S))
+    person(150, 160, 1.7, hexc('#1E88E5'), {'lel': (-34, -52), 'lwr': (-44, -84), 'rel': (34, -52), 'rwr': (44, -84), 'lkn': (-12, 40), 'lan': (-14, 80), 'rkn': (12, 40), 'ran': (14, 80)})   # 2 tay giơ lên
+    person(330, 160, 1.7, hexc('#E53935'), {'lel': (-36, -30), 'lwr': (-62, -34), 'rel': (36, -30), 'rwr': (62, -34), 'lkn': (-24, 36), 'lan': (-40, 80), 'rkn': (24, 36), 'ran': (40, 80)})   # dang tay + chân
+    return c
+GAMES.update({'BongBay': BongBay, 'PoseTest': PoseTest})
+
 if __name__ == '__main__':
     for gid in (sys.argv[1:] or GAMES):
         im = GAMES[gid]().convert('RGB').resize((W, H), Image.LANCZOS)
