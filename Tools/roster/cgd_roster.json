@@ -1,0 +1,620 @@
+{
+  "version": 1,
+  "school": "CGD",
+  "classes": [
+    {
+      "name": "1A1",
+      "students": [
+        {
+          "name": "Gia An",
+          "alias": "Gia An",
+          "gender": "nu",
+          "code": "CGD2020_A1001"
+        },
+        {
+          "name": "Quỳnh An",
+          "alias": "Quỳnh An",
+          "gender": "nu",
+          "code": "CGD2020_A1002"
+        },
+        {
+          "name": "Tường Minh",
+          "alias": "Tường Minh",
+          "gender": "nu",
+          "code": "CGD2020_A1003"
+        },
+        {
+          "name": "Hoàng An",
+          "alias": "Hoàng An",
+          "gender": "nu",
+          "code": "CGD2020_A1004"
+        },
+        {
+          "name": "Tuệ Anh (Trần)",
+          "alias": "Tuệ Anh (Trần)",
+          "gender": "nu",
+          "code": "CGD2020_A1005"
+        },
+        {
+          "name": "Tuệ Anh",
+          "alias": "Tuệ Anh",
+          "gender": "nu",
+          "code": "CGD2020_A1006"
+        },
+        {
+          "name": "Đình Hòa",
+          "alias": "Đình Hòa",
+          "gender": "nam",
+          "code": "CGD2020_A1007"
+        },
+        {
+          "name": "Nam Huy",
+          "alias": "Nam Huy",
+          "gender": "nam",
+          "code": "CGD2020_A1008"
+        },
+        {
+          "name": "Hữu Hưng",
+          "alias": "Hữu Hưng",
+          "gender": "nam",
+          "code": "CGD2020_A1009"
+        },
+        {
+          "name": "An Khanh",
+          "alias": "An Khanh",
+          "gender": "nu",
+          "code": "CGD2020_A1010"
+        },
+        {
+          "name": "Minh Khuê (1A1)",
+          "alias": "Minh Khuê",
+          "gender": "nu",
+          "code": "CGD2020_A1011"
+        },
+        {
+          "name": "Khánh Ly",
+          "alias": "Khánh Ly",
+          "gender": "nu",
+          "code": "CGD2020_A1012"
+        },
+        {
+          "name": "Nhật Minh (Ng.)",
+          "alias": "Nhật Minh (Ng.)",
+          "gender": "nam",
+          "code": "CGD2020_A1013"
+        },
+        {
+          "name": "Nhật Minh (Tạ)",
+          "alias": "Nhật Minh (Tạ)",
+          "gender": "nam",
+          "code": "CGD2020_A1014"
+        },
+        {
+          "name": "Trà My",
+          "alias": "Trà My",
+          "gender": "nu",
+          "code": "CGD2020_A1015"
+        },
+        {
+          "name": "Thiên Nga",
+          "alias": "Thiên Nga",
+          "gender": "nu",
+          "code": "CGD2020_A1016"
+        },
+        {
+          "name": "Lâm Ngọc",
+          "alias": "Lâm Ngọc",
+          "gender": "nu",
+          "code": "CGD2020_A1017"
+        },
+        {
+          "name": "Minh Quân (1A1)",
+          "alias": "Minh Quân",
+          "gender": "nam",
+          "code": "CGD2020_A1018"
+        },
+        {
+          "name": "Hoàng Sơn",
+          "alias": "Hoàng Sơn",
+          "gender": "nam",
+          "code": "CGD2020_A1019"
+        },
+        {
+          "name": "Cao Thuyết",
+          "alias": "Cao Thuyết",
+          "gender": "nam",
+          "code": "CGD2020_A1020"
+        },
+        {
+          "name": "Anh Thư",
+          "alias": "Anh Thư",
+          "gender": "nu",
+          "code": "CGD2020_A1021"
+        },
+        {
+          "name": "Cát Tiên",
+          "alias": "Cát Tiên",
+          "gender": "nu",
+          "code": "CGD2020_A1022"
+        },
+        {
+          "name": "Minh Trí",
+          "alias": "Minh Trí",
+          "gender": "nam",
+          "code": "CGD2020_A1023"
+        },
+        {
+          "name": "Đắc Trung",
+          "alias": "Đắc Trung",
+          "gender": "nam",
+          "code": "CGD2020_A1024"
+        },
+        {
+          "name": "Phương Vy",
+          "alias": "Phương Vy",
+          "gender": "nu",
+          "code": "CGD2020_A1025"
+        }
+      ]
+    },
+    {
+      "name": "1A2",
+      "students": [
+        {
+          "name": "Minh An",
+          "alias": "Minh An",
+          "gender": "nu",
+          "code": "CGD2020_A2001"
+        },
+        {
+          "name": "Mộc An",
+          "alias": "Mộc An",
+          "gender": "nu",
+          "code": "CGD2020_A2002"
+        },
+        {
+          "name": "Bảo Anh",
+          "alias": "Bảo Anh",
+          "gender": "nu",
+          "code": "CGD2020_A2003"
+        },
+        {
+          "name": "Lâm Anh",
+          "alias": "Lâm Anh",
+          "gender": "nu",
+          "code": "CGD2020_A2004"
+        },
+        {
+          "name": "Công Bảo",
+          "alias": "Công Bảo",
+          "gender": "nam",
+          "code": "CGD2020_A2005"
+        },
+        {
+          "name": "Bảo Châu",
+          "alias": "Bảo Châu",
+          "gender": "nu",
+          "code": "CGD2020_A2006"
+        },
+        {
+          "name": "Mai Chi",
+          "alias": "Mai Chi",
+          "gender": "nu",
+          "code": "CGD2020_A2007"
+        },
+        {
+          "name": "Tuệ Chi",
+          "alias": "Tuệ Chi",
+          "gender": "nu",
+          "code": "CGD2020_A2008"
+        },
+        {
+          "name": "Thanh Duy",
+          "alias": "Thanh Duy",
+          "gender": "nam",
+          "code": "CGD2020_A2009"
+        },
+        {
+          "name": "An Hi",
+          "alias": "An Hi",
+          "gender": "nu",
+          "code": "CGD2020_A2010"
+        },
+        {
+          "name": "Phúc Huy",
+          "alias": "Phúc Huy",
+          "gender": "nam",
+          "code": "CGD2020_A2011"
+        },
+        {
+          "name": "Quang Khải",
+          "alias": "Quang Khải",
+          "gender": "nam",
+          "code": "CGD2020_A2012"
+        },
+        {
+          "name": "Minh Kiệt",
+          "alias": "Minh Kiệt",
+          "gender": "nam",
+          "code": "CGD2020_A2013"
+        },
+        {
+          "name": "Hoàng Khôi",
+          "alias": "Hoàng Khôi",
+          "gender": "nam",
+          "code": "CGD2020_A2014"
+        },
+        {
+          "name": "Anh Minh (1A2)",
+          "alias": "Anh Minh",
+          "gender": "nam",
+          "code": "CGD2020_A2015"
+        },
+        {
+          "name": "Bảo Nam",
+          "alias": "Bảo Nam",
+          "gender": "nam",
+          "code": "CGD2020_A2016"
+        },
+        {
+          "name": "Khánh Ngân",
+          "alias": "Khánh Ngân",
+          "gender": "nu",
+          "code": "CGD2020_A2017"
+        },
+        {
+          "name": "Thảo Nguyên",
+          "alias": "Thảo Nguyên",
+          "gender": "nam",
+          "code": "CGD2020_A2018"
+        },
+        {
+          "name": "Thanh Phương",
+          "alias": "Thanh Phương",
+          "gender": "nu",
+          "code": "CGD2020_A2019"
+        },
+        {
+          "name": "Lê Thịnh",
+          "alias": "Lê Thịnh",
+          "gender": "nam",
+          "code": "CGD2020_A2020"
+        },
+        {
+          "name": "Hà Vy (1A2)",
+          "alias": "Hà Vy",
+          "gender": "nu",
+          "code": "CGD2020_A2021"
+        },
+        {
+          "name": "Minh Vy",
+          "alias": "Minh Vy",
+          "gender": "nu",
+          "code": "CGD2020_A2022"
+        },
+        {
+          "name": "Minh Ngọc",
+          "alias": "Minh Ngọc",
+          "gender": "nu",
+          "code": "CGD2020_A2023"
+        },
+        {
+          "name": "Ngọc Trâm",
+          "alias": "Ngọc Trâm",
+          "gender": "nu",
+          "code": "CGD2020_A2024"
+        },
+        {
+          "name": "Hồng Sơn",
+          "alias": "Hồng Sơn",
+          "gender": "nam",
+          "code": "CGD2020_A2025"
+        }
+      ]
+    },
+    {
+      "name": "1A3",
+      "students": [
+        {
+          "name": "Trường An",
+          "alias": "Trường An",
+          "gender": "nam",
+          "code": "CGD2020_A3001"
+        },
+        {
+          "name": "Phan Đức Anh",
+          "alias": "Phan Đức Anh",
+          "gender": "nam",
+          "code": "CGD2020_A3002"
+        },
+        {
+          "name": "Tạ Hiền Anh",
+          "alias": "Tạ Hiền Anh",
+          "gender": "nu",
+          "code": "CGD2020_A3003"
+        },
+        {
+          "name": "Ngô Minh Hà",
+          "alias": "Ngô Minh Hà",
+          "gender": "nu",
+          "code": "CGD2020_A3004"
+        },
+        {
+          "name": "Gia Hân",
+          "alias": "Gia Hân",
+          "gender": "nu",
+          "code": "CGD2020_A3005"
+        },
+        {
+          "name": "Gia Hân (Hoàng)",
+          "alias": "Gia Hân (Hoàng)",
+          "gender": "nu",
+          "code": "CGD2020_A3006"
+        },
+        {
+          "name": "Đức Huy",
+          "alias": "Đức Huy",
+          "gender": "nam",
+          "code": "CGD2020_A3007"
+        },
+        {
+          "name": "Minh Khang",
+          "alias": "Minh Khang",
+          "gender": "nam",
+          "code": "CGD2020_A3008"
+        },
+        {
+          "name": "Minh Khôi (1A3)",
+          "alias": "Minh Khôi",
+          "gender": "nam",
+          "code": "CGD2020_A3009"
+        },
+        {
+          "name": "Minh Khôi (1A3-10)",
+          "alias": "Minh Khôi",
+          "gender": "nam",
+          "code": "CGD2020_A3010"
+        },
+        {
+          "name": "Tuấn Kiệt",
+          "alias": "Tuấn Kiệt",
+          "gender": "nam",
+          "code": "CGD2020_A3011"
+        },
+        {
+          "name": "Phương Linh",
+          "alias": "Phương Linh",
+          "gender": "nu",
+          "code": "CGD2020_A3012"
+        },
+        {
+          "name": "Long Lương",
+          "alias": "Long Lương",
+          "gender": "nam",
+          "code": "CGD2020_A3013"
+        },
+        {
+          "name": "Đức Minh",
+          "alias": "Đức Minh",
+          "gender": "nam",
+          "code": "CGD2020_A3014"
+        },
+        {
+          "name": "Huy Minh",
+          "alias": "Huy Minh",
+          "gender": "nam",
+          "code": "CGD2020_A3015"
+        },
+        {
+          "name": "Mẫn Nhi",
+          "alias": "Mẫn Nhi",
+          "gender": "nu",
+          "code": "CGD2020_A3016"
+        },
+        {
+          "name": "Bảo Phong",
+          "alias": "Bảo Phong",
+          "gender": "nam",
+          "code": "CGD2020_A3017"
+        },
+        {
+          "name": "Minh Phương",
+          "alias": "Minh Phương",
+          "gender": "nu",
+          "code": "CGD2020_A3018"
+        },
+        {
+          "name": "Anh Quân",
+          "alias": "Anh Quân",
+          "gender": "nam",
+          "code": "CGD2020_A3019"
+        },
+        {
+          "name": "Minh Quân (1A3)",
+          "alias": "Minh Quân",
+          "gender": "nam",
+          "code": "CGD2020_A3020"
+        },
+        {
+          "name": "Bảo San",
+          "alias": "Bảo San",
+          "gender": "nu",
+          "code": "CGD2020_A3021"
+        },
+        {
+          "name": "Huy Thành",
+          "alias": "Huy Thành",
+          "gender": "nam",
+          "code": "CGD2020_A3022"
+        },
+        {
+          "name": "Kiều Trang",
+          "alias": "Kiều Trang",
+          "gender": "nu",
+          "code": "CGD2020_A3023"
+        },
+        {
+          "name": "Hà Vy (1A3)",
+          "alias": "Hà Vy",
+          "gender": "nu",
+          "code": "CGD2020_A3024"
+        }
+      ]
+    },
+    {
+      "name": "1A4",
+      "students": [
+        {
+          "name": "Hải An",
+          "alias": "Hải An",
+          "gender": "nu",
+          "code": "CGD2020_A4001"
+        },
+        {
+          "name": "Quỳnh Chi",
+          "alias": "Quỳnh Chi",
+          "gender": "nu",
+          "code": "CGD2020_A4002"
+        },
+        {
+          "name": "Minh Anh",
+          "alias": "Minh Anh",
+          "gender": "nu",
+          "code": "CGD2020_A4003"
+        },
+        {
+          "name": "Trâm Anh",
+          "alias": "Trâm Anh",
+          "gender": "nu",
+          "code": "CGD2020_A4004"
+        },
+        {
+          "name": "Quốc Anh",
+          "alias": "Quốc Anh",
+          "gender": "nam",
+          "code": "CGD2020_A4005"
+        },
+        {
+          "name": "Nhật Ánh",
+          "alias": "Nhật Ánh",
+          "gender": "nu",
+          "code": "CGD2020_A4006"
+        },
+        {
+          "name": "Minh Châu",
+          "alias": "Minh Châu",
+          "gender": "nu",
+          "code": "CGD2020_A4007"
+        },
+        {
+          "name": "Đăng Dương",
+          "alias": "Đăng Dương",
+          "gender": "nam",
+          "code": "CGD2020_A4008"
+        },
+        {
+          "name": "Bảo Hân",
+          "alias": "Bảo Hân",
+          "gender": "nu",
+          "code": "CGD2020_A4009"
+        },
+        {
+          "name": "Quang Huy",
+          "alias": "Quang Huy",
+          "gender": "nam",
+          "code": "CGD2020_A4010"
+        },
+        {
+          "name": "Khánh Linh",
+          "alias": "Khánh Linh",
+          "gender": "nu",
+          "code": "CGD2020_A4011"
+        },
+        {
+          "name": "An Khuê",
+          "alias": "An Khuê",
+          "gender": "nu",
+          "code": "CGD2020_A4012"
+        },
+        {
+          "name": "Minh Khuê (1A4)",
+          "alias": "Minh Khuê",
+          "gender": "nu",
+          "code": "CGD2020_A4013"
+        },
+        {
+          "name": "Khương Long",
+          "alias": "Khương Long",
+          "gender": "nam",
+          "code": "CGD2020_A4014"
+        },
+        {
+          "name": "Tuệ Mẫn",
+          "alias": "Tuệ Mẫn",
+          "gender": "nu",
+          "code": "CGD2020_A4015"
+        },
+        {
+          "name": "Anh Minh (1A4)",
+          "alias": "Anh Minh",
+          "gender": "nam",
+          "code": "CGD2020_A4016"
+        },
+        {
+          "name": "Quang Minh (1A4)",
+          "alias": "Quang Minh",
+          "gender": "nam",
+          "code": "CGD2020_A4017"
+        },
+        {
+          "name": "Duy Minh",
+          "alias": "Duy Minh",
+          "gender": "nam",
+          "code": "CGD2020_A4018"
+        },
+        {
+          "name": "Quang Minh (1A4-19)",
+          "alias": "Quang Minh",
+          "gender": "nam",
+          "code": "CGD2020_A4019"
+        },
+        {
+          "name": "Tuấn Nguyên",
+          "alias": "Tuấn Nguyên",
+          "gender": "nam",
+          "code": "CGD2020_A4020"
+        },
+        {
+          "name": "Duy Nhân",
+          "alias": "Duy Nhân",
+          "gender": "nam",
+          "code": "CGD2020_A4021"
+        },
+        {
+          "name": "An Nhiên",
+          "alias": "An Nhiên",
+          "gender": "nu",
+          "code": "CGD2020_A4022"
+        },
+        {
+          "name": "Đức Trung",
+          "alias": "Đức Trung",
+          "gender": "nam",
+          "code": "CGD2020_A4023"
+        },
+        {
+          "name": "Quang Vinh",
+          "alias": "Quang Vinh",
+          "gender": "nam",
+          "code": "CGD2020_A4024"
+        },
+        {
+          "name": "Khánh Vy",
+          "alias": "Khánh Vy",
+          "gender": "nu",
+          "code": "CGD2020_A4025"
+        }
+      ]
+    }
+  ]
+}
