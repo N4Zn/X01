@@ -164,6 +164,12 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Đặt `Resources/TongHop/Counting/Counting.mp3` (đã có) và thử Counting + Counting5: lặp 4s mỗi câu, dừng khi trả lời — (2026-10-22)
 - [ ] Xác nhận đầu ra audio thật của K02 khi triển khai (HDMI/loa trong hay BT A2DP) — máy test đang ra BT — (2026-10-22)
 
+## Quản lý lớp: vòng đứng chân, camera kiểm tra, trần 8 ảnh (2026-10-26) — cần build APK Unity rồi test K02
+- [ ] Vòng tròn nét đứt xanh hiện ở màn chụp; chỉnh X/Y/kích thước ở tab ĐỨNG (Chỉnh vùng) và ở bảng KHUNG CHỤP, thoát vào lại vẫn giữ
+- [ ] Nút "Camera" (Quản lý lớp): nhận diện nhiều người cả khung, hiện alias, không chào/không điểm danh
+- [ ] Thêm ảnh bằng camera: chụp liên tiếp tới 8 ảnh; đủ 8 thì báo
+- [ ] Chụp ảnh chỉ lấy mặt trong khung: nếu còn lọt mặt ngoài vùng, xem `adb logcat -s FaceZones` (tâm mặt so với khung) — vùng vẽ giờ khớp vùng dò thật (sửa lệch fitCenter)
+
 ## Nhận diện theo lớp / luồng thêm học sinh (2026-10-23) — cần build APK Unity rồi test K02
 - [ ] Mở Quản lý lớp + tab Lớp học: đổi lớp ở một bên, bên kia mở lại đúng lớp đó (`/sdcard/EduXplore/active_class.txt`) — (2026-10-23)
 - [ ] "+ Học sinh mới": camera không hiện tên/khoá ai; chụp mặt giống bạn trong lớp ⇒ hiện bảng giống; chọn thêm ảnh / lưu mới / huỷ đều đúng; bạn đủ 3 ảnh ⇒ nút thêm bị khoá — (2026-10-23)

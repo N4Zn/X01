@@ -9,14 +9,22 @@ data class ZoneRect(val x: Float, val y: Float, val w: Float, val h: Float) {
     fun contains(nx: Float, ny: Float) = nx >= x && nx <= x + w && ny >= y && ny <= y + h
 }
 
+/** Vòng tròn đứng chân (chỉ để học sinh nhìn mà đứng cho đúng chỗ — KHÔNG lọc mặt). Tâm chuẩn hoá 0..1 theo khung,
+ * bán kính r = tỉ lệ so với CHIỀU CAO khung (để luôn vẽ ra hình tròn). */
+data class StandCircle(val cx: Float, val cy: Float, val r: Float)
+
 /**
  * 3 vùng nhận diện khuôn mặt, lưu 1 file chung /sdcard/EduXplore/face_zones.json (sống qua lần cài lại;
  * FaceEnroll process ":fa" và plugin nhận mặt trong game đều đọc). Chỉ mặt có TÂM nằm trong vùng mới được xử lý.
  *  - playLeft / playRight: 2 vùng người chơi trong game (nửa trái / nửa phải).
  *  - enroll: vùng chữ nhật ở màn camera "Thêm từ camera" (Quản lý lớp).
+ *  - stand: vòng tròn nét đứt xanh chỉ chỗ đứng chân ở màn chụp (FaceEnroll tự dùng; plugin game bỏ qua trường này).
  * Bản sao cùng format nằm ở plugin game (FaceZones.kt trong unityplugin) — sửa 1 nơi thì sửa cả 2.
  */
-data class FaceZones(val playLeft: ZoneRect, val playRight: ZoneRect, val enroll: ZoneRect) {
+data class FaceZones(
+    val playLeft: ZoneRect, val playRight: ZoneRect, val enroll: ZoneRect,
+    val stand: StandCircle = DEFAULT_STAND
+) {
 
     /** Tâm (px, py) trong khung frameW x frameH có nằm trong hình chữ nhật enroll không. */
     fun enrollContains(px: Float, py: Float, frameW: Float, frameH: Float): Boolean =
@@ -34,6 +42,7 @@ data class FaceZones(val playLeft: ZoneRect, val playRight: ZoneRect, val enroll
         put("playLeft", rectJson(playLeft))
         put("playRight", rectJson(playRight))
         put("enroll", rectJson(enroll))
+        put("stand", JSONObject().put("cx", stand.cx.toDouble()).put("cy", stand.cy.toDouble()).put("r", stand.r.toDouble()))
     }
 
     fun save(): Boolean = try {
@@ -50,6 +59,8 @@ data class FaceZones(val playLeft: ZoneRect, val playRight: ZoneRect, val enroll
     companion object {
         private const val TAG = "FaceZones"
         val file = File("/sdcard/EduXplore/face_zones.json")
+
+        val DEFAULT_STAND = StandCircle(0.5f, 0.78f, 0.12f)
 
         val DEFAULT = FaceZones(
             playLeft = ZoneRect(0.03f, 0.15f, 0.44f, 0.80f),
@@ -80,6 +91,15 @@ data class FaceZones(val playLeft: ZoneRect, val playRight: ZoneRect, val enroll
             return rectFrom(o, DEFAULT.enroll)
         }
 
+        private fun standFrom(o: JSONObject?): StandCircle {
+            if (o == null) return DEFAULT_STAND
+            return StandCircle(
+                o.optDouble("cx", DEFAULT_STAND.cx.toDouble()).toFloat().coerceIn(0f, 1f),
+                o.optDouble("cy", DEFAULT_STAND.cy.toDouble()).toFloat().coerceIn(0f, 1f),
+                o.optDouble("r", DEFAULT_STAND.r.toDouble()).toFloat().coerceIn(0.02f, 0.5f)
+            )
+        }
+
         /** File chưa có / hỏng -> null (nơi gọi tự quyết dùng mặc định hay giữ hành vi cũ). */
         fun loadOrNull(): FaceZones? {
             if (!file.canRead()) return null
@@ -88,7 +108,8 @@ data class FaceZones(val playLeft: ZoneRect, val playRight: ZoneRect, val enroll
                 FaceZones(
                     rectFrom(o.optJSONObject("playLeft"), DEFAULT.playLeft),
                     rectFrom(o.optJSONObject("playRight"), DEFAULT.playRight),
-                    enrollFrom(o.optJSONObject("enroll"))
+                    enrollFrom(o.optJSONObject("enroll")),
+                    standFrom(o.optJSONObject("stand"))
                 )
             } catch (ex: Exception) {
                 Log.e(TAG, "parse failed: ${ex.message}")

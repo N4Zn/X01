@@ -29,8 +29,8 @@ class AttendanceStore(private val context: Context) {
         // (e.g. twins) - a small cluster of real samples does, at least somewhat. The first
         // PERMANENT_SAMPLES collected are kept forever; beyond that only the ROLLING_SAMPLES
         // most recent are kept. 2026-10-05: ROLLING = 0 (trước 5) — ảnh thêm sau có thể sai ánh sáng/nhầm
-        // người; trần = 3 mẫu lấy lúc enroll, quá trần thì addSample từ chối (xem addSample).
-        const val PERMANENT_SAMPLES = 3
+        // người; trần = 8 mẫu (2026-10-26: 3 → 8 để cô chụp nhiều ảnh rồi xoá ảnh lỗi sau), quá trần thì addSample từ chối (xem addSample).
+        const val PERMANENT_SAMPLES = 8
         const val ROLLING_SAMPLES = 0
         const val MAX_SAMPLES_PER_PERSON = PERMANENT_SAMPLES + ROLLING_SAMPLES
         const val RECENT_PEOPLE_SHOWN = 5
@@ -570,7 +570,7 @@ class AttendanceStore(private val context: Context) {
      * and for samples confirmed via the ambiguous-match dialog. */
     @Synchronized fun addSample(name: String, embedding: FloatArray, faceCrop: Mat?): Boolean {
         val samples = enrolled.getOrPut(name) { mutableListOf() }
-        // Đã đủ trần (hiện 3 = chỉ các mẫu lúc lấy mẫu) thì TỪ CHỐI, không tự thay/xoá mẫu cũ:
+        // Đã đủ trần (hiện 8 = chỉ các mẫu lúc lấy mẫu) thì TỪ CHỐI, không tự thay/xoá mẫu cũ:
         // muốn đổi ảnh thì xoá bớt ở panel học sinh trước. Không có chỗ nào tự thêm mẫu khi nhận diện.
         if (samples.size >= MAX_SAMPLES_PER_PERSON) return false
         val photo = saveSamplePhoto(name, faceCrop)

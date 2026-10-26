@@ -112,4 +112,8 @@ chuyển key qua mọi map: `enrolled`/`genders`/`classNames`/`lastLogged`/`pers
 ## Màn chụp camera (FaceEnroll MainActivity) — cập nhật 2026-10-21
 - Nguồn hình: `/sdcard/EduXplore/ipcamera.json` có `"source":"ip"` → camera IP (xem `docs/k02-device.md`), ngược lại webcam UVC. `ColorOrder.trueBgr` bật ở chế độ IP để `ColorOrder.matToBitmap` đổi BGR→RGB khi hiển thị/lưu ảnh (webcam UVC: giải NV21 làm đảo kênh nên giữ nguyên — đừng "sửa" cả hai).
 - Chụp bổ sung (`MODE_ADD_SAMPLES_CAMERA`, `targetStudentName != null`): lấy 1 mặt to nhất chưa có tên hoặc đang mang đúng tên đó; chụp mới (`targetStudentName == null`) chỉ lấy mặt chưa khoá tên.
-- Nút "KHUNG CHỤP" (`toggleEnrollFrameEditor`): chỉnh vùng `enroll` trong `face_zones.json` ngay màn chụp; chỉ mặt có tâm trong khung được dò/chụp.
+- Nút "KHUNG CHỤP" (`toggleEnrollFrameEditor`): chỉnh vùng `enroll` + vòng đứng chân trong `face_zones.json` ngay màn chụp, **tự lưu** (sau 600ms, khi đóng bảng, khi onStop); chỉ mặt có tâm trong khung được dò/chụp (chụp kiểm lại lần nữa + log tag `FaceZones`).
+- **Vòng đứng chân** (`face_zones.json` → `stand {cx, cy, r}`, r = tỉ lệ chiều cao khung): vòng nét đứt xanh blue chỉ để học sinh nhìn chỗ đứng, KHÔNG lọc mặt. Hiện ở mọi màn chụp (trừ MODE_CHECK); chỉnh ở tab "ĐỨNG" của chế độ Chỉnh vùng và ở bảng KHUNG CHỤP. Plugin game bỏ qua trường này.
+- **OverlayView** vẽ khung mặt + vùng theo vùng hiển thị THẬT của hình (preview là `fitCenter`; màn 16:10 có viền đen) — trước đây vẽ theo cả view nên vùng nhìn thấy lệch vài % so với vùng dò thật.
+- **Camera kiểm tra** (`MODE_CHECK`, nút "Camera" cạnh "+ Học sinh mới" trong Quản lý lớp): preview + nhận diện mọi mặt trong CẢ khung hình (tối đa 8), theo lớp đang chọn, hiện tên thường gọi + tracking; không điểm danh, không ghi log, không chào/giọng nói.
+- Trần ảnh mẫu mỗi học sinh = **8** (`AttendanceStore.PERMANENT_SAMPLES`); thêm ảnh bằng camera chụp nhiều lần liên tiếp, xoá ảnh lỗi sau ở panel học sinh.

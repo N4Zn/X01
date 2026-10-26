@@ -342,6 +342,7 @@ class ClassManagementActivity : AppCompatActivity() {
         })
         actionButtonsRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         actionButtonsRow.addView(smallActionButton("+ Học sinh mới") { onAddStudentClicked() })
+        actionButtonsRow.addView(smallActionButton("Camera") { onCheckCameraClicked() })
         actionButtonsRow.addView(smallActionButton("Thêm từ camera") { onAddStudentClicked() })
         actionButtonsRow.addView(smallActionButton("Thêm từ ảnh") { onBulkAddClicked() })
         actionButtonsRow.addView(smallActionButton("Từ DS đã có") { onAssignExistingClicked() })
@@ -795,6 +796,15 @@ class ClassManagementActivity : AppCompatActivity() {
         startActivity(Intent(this, MainActivity::class.java).apply {
             putExtra(MainActivity.EXTRA_TARGET_CLASS, cls)
             putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_NEW_STUDENT) // học sinh mới: KHÔNG nhận diện, chụp xong mới kiểm trùng trong lớp
+        })
+    }
+
+    /** Camera kiểm tra: preview + nhận diện mọi người trong khung hình theo lớp đang chọn, hiện tên thường gọi (không điểm danh). */
+    private fun onCheckCameraClicked() {
+        val cls = currentClass ?: return
+        startActivity(Intent(this, MainActivity::class.java).apply {
+            putExtra(MainActivity.EXTRA_TARGET_CLASS, cls)
+            putExtra(MainActivity.EXTRA_MODE, MainActivity.MODE_CHECK)
         })
     }
 

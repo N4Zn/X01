@@ -90,11 +90,16 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Chỉnh 3 vùng nhận diện (2 vùng game + vùng chữ nhật enroll) trên hình camera thật, rồi Lưu.
         // Từ Quản lý lớp và từ tab Cài đặt của ControlActivity. Không nhận diện/chào/điểm danh ở chế độ này.
         const val MODE_ZONE_SETUP = "zone_setup"
+        // Kiểm tra lại sau khi ghi nhận mặt (Quản lý lớp → nút Camera): preview + nhận diện MỌI mặt trong CẢ khung hình, hiện tên thường gọi,
+        // có tracking (không nhận diện lại) — giống màn camera điểm danh cũ nhưng KHÔNG điểm danh/ghi log/chào bằng giọng nói.
+        const val MODE_CHECK = "check"
     }
 
     // Vùng nhận diện: màn camera bình thường chỉ xử lý mặt có tâm trong vùng chữ nhật enroll.
     @Volatile private var zones: FaceZones = FaceZones.DEFAULT
     private var zoneSetupMode = false
+    private var checkMode = false
+    private val maxFaces: Int get() = if (checkMode) 8 else MAX_FACES
     @Volatile private var activityReleased = false
 
     private lateinit var previewImage: ImageView
@@ -277,6 +282,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
 
     private fun lockLabel(t: FaceTrack): String {
         val l = t.lock ?: return "..."
+        if (checkMode) return attendanceStore.aliasOf(l.name) + if (t.verified) " ✓" else ""
         return "${l.name} ${"%.2f".format(l.sim)}" + if (t.verified) " ✓" else ""
     }
 
@@ -371,17 +377,21 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         attendanceStore = AttendanceStore(this)
         zones = FaceZones.load()
         zoneSetupMode = mode == MODE_ZONE_SETUP
+        checkMode = mode == MODE_CHECK
         noRecognition = mode == MODE_NEW_STUDENT || mode == MODE_BULK_PICK ||
             mode == MODE_ADD_SAMPLES_CAMERA || mode == MODE_ADD_SAMPLES_GALLERY
-        overlayView.setZones(zones, zoneSetupMode)
+        // Chế độ kiểm tra: cả khung hình, không làm tối ngoài vùng / không vẽ vòng đứng. Các màn chụp ảnh: vẽ thêm vòng đứng chân.
+        overlayView.setZones(if (checkMode) null else zones, zoneSetupMode)
+        overlayView.setShowStand(!checkMode && !zoneSetupMode)
         when (mode) {
+            MODE_CHECK -> setupCheckMode()
             MODE_ZONE_SETUP -> setupZoneEditor()
             MODE_VIEW_STUDENT -> intent.getStringExtra(EXTRA_STUDENT_NAME)?.let { showStudentSamplesDialog(it) }
             MODE_BULK_PICK -> requestBulkPick()
             MODE_NEW_STUDENT -> toastStatus("Học sinh mới: đứng vào khung rồi bấm nút chụp — không nhận diện, chụp xong mới kiểm tra trùng trong lớp")
             MODE_ADD_SAMPLES_CAMERA -> {
                 targetStudentName = intent.getStringExtra(EXTRA_STUDENT_NAME)
-                toastStatus("Chụp ảnh bổ sung cho ${targetStudentName ?: "?"} — không nhận diện, bấm nút chụp khi thấy mặt rõ")
+                toastStatus("Chụp ảnh bổ sung cho ${targetStudentName ?: "?"} — không nhận diện, bấm nút chụp nhiều lần (tối đa ${AttendanceStore.MAX_SAMPLES_PER_PERSON} ảnh), xoá ảnh lỗi sau")
             }
             MODE_ADD_SAMPLES_GALLERY -> {
                 targetStudentName = intent.getStringExtra(EXTRA_STUDENT_NAME)
@@ -389,8 +399,8 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             }
         }
         greetingTts = GreetingTts(this)
-        greetingTts.startWeatherRefresh()
-        if (!zoneSetupMode) greetingTts.startKeepAlive()
+        if (!checkMode) greetingTts.startWeatherRefresh()
+        if (!zoneSetupMode && !checkMode) greetingTts.startKeepAlive()
         loadTestGalleryIfPresent()
         OpenCVLoader.initLocal()
         faceEngine = FaceEngine(this)
@@ -504,6 +514,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         // Release the USB camera so X01 (Unity FRTest) can open it when FA goes to background.
         // The VID whitelist in looksLikeUvcCamera() ensures reconnect in onStart() is fast
         // (permission already granted → onConnect fires without a dialog).
+        flushZonesSave() // đang chỉnh khung chụp mà thoát ra: vẫn lưu
         stopIpCamera()
         releaseCamera()
         usbMonitor.unregister()
@@ -891,7 +902,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         val detectScale = 0.5f
         // Chỉ dò trong vùng chữ nhật enroll (cắt ảnh trước khi dò — nhanh hơn dò cả khung).
         // Chế độ chỉnh vùng thì dò cả khung để thấy mặt ở ngoài vùng.
-        val bounds = if (zoneSetupMode) RectF(0f, 0f, width.toFloat(), height.toFloat())
+        val bounds = if (zoneSetupMode || checkMode) RectF(0f, 0f, width.toFloat(), height.toFloat())
                      else zones.enrollBounds(width.toFloat(), height.toFloat())
         val cropX = bounds.left.toInt().coerceIn(0, width - 2)
         val cropY = bounds.top.toInt().coerceIn(0, height - 2)
@@ -903,14 +914,14 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         region.release()
         val tDetectStart = System.nanoTime()
         // Lấy dư vài mặt rồi lọc theo vùng, để mặt to ở ngoài vùng không chiếm chỗ của mặt trong vùng.
-        val facesSmall = engine.detectFaces(small, MAX_FACES + 2)
+        val facesSmall = engine.detectFaces(small, maxFaces + 2)
         val tDetectEnd = System.nanoTime()
         small.release()
         // Scale coordinates back to full-res space so the rest of the pipeline (alignFace,
         // overlay drawing) works on the original frame dimensions.
         val faces = facesSmall.map { scaleFace(it, 1f / detectScale, cropX.toFloat(), cropY.toFloat()) }
-            .filter { zoneSetupMode || zones.enrollContains(it.rect.centerX(), it.rect.centerY(), width.toFloat(), height.toFloat()) }
-            .let { if (zoneSetupMode) it else it.take(MAX_FACES) }
+            .filter { zoneSetupMode || checkMode || zones.enrollContains(it.rect.centerX(), it.rect.centerY(), width.toFloat(), height.toFloat()) }
+            .let { if (zoneSetupMode) it else it.take(maxFaces) }
         if (zoneSetupMode) {
             // Chế độ chỉnh vùng: chỉ hiện khung mặt để canh, không nhận diện/chào/điểm danh.
             cachedOverlayItems = faces.map { FaceOverlayItem(it.rect, emptyList(), "", Color.LTGRAY) }
@@ -996,7 +1007,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                     justLogged.add(lock.name to attendanceStore.genderOf(lock.name))
                 }
                 greetedActive[lock.name] = nowMs
-                if (attendanceStore.canLog(lock.name, cooldownMs)) {
+                if (!checkMode && attendanceStore.canLog(lock.name, cooldownMs)) {
                     val crop = cropFace(bgr, face.rect)
                     attendanceStore.logAttendance(lock.name, crop, lock.sim)
                     crop.release()
@@ -1065,7 +1076,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                             justLogged.add(name to attendanceStore.genderOf(name))
                         }
                         greetedActive[name] = nowMs
-                        if (attendanceStore.canLog(name, cooldownMs)) {
+                        if (!checkMode && attendanceStore.canLog(name, cooldownMs)) {
                             val crop = cropFace(bgr, face.rect)
                             attendanceStore.logAttendance(name, crop, sim)
                             crop.release()
@@ -1084,7 +1095,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                             color = Color.RED
                             label = "Unknown ${"%.2f".format(sim)} best=$name"
                             newFaceLastSeenMs = nowMs
-                            if (!newFaceAnnouncedThisAppearance) {
+                            if (!checkMode && !newFaceAnnouncedThisAppearance) {
                                 newFaceAnnouncedThisAppearance = true
                                 announceNewFace()
                             }
@@ -1120,7 +1131,8 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 }
             }
             track.smoothed = smoothed
-            overlayItems.add(FaceOverlayItem(rect, smoothed.toList(), label, color))
+            val shownLabel = if (checkMode && track.lock == null) { if (color == Color.RED) "Chưa nhận ra" else "..." } else label
+            overlayItems.add(FaceOverlayItem(rect, smoothed.toList(), shownLabel, color))
         }
 
         overlayItems.addAll(coastingItems(faceTracks))
@@ -1132,7 +1144,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }
         // Both slots are already resolved by this point in the frame, so 1 vs 2 simultaneous
         // check-ins gets a single combined greeting instead of two overlapping ones.
-        if (justLogged.isNotEmpty()) {
+        if (justLogged.isNotEmpty() && !checkMode) {
             speakGreeting(justLogged)
         }
     }
@@ -1155,7 +1167,12 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }
         if (enrollSnapshotRequested) {
             enrollSnapshotRequested = false
-            val picks = if (target != null) listOfNotNull(faces.maxByOrNull { it.rect.width() * it.rect.height() }) else faces
+            // Chỉ lấy mặt có TÂM trong khung chụp (faces đã lọc ở processFrame; kiểm lại ở đây + log để dò nếu còn lọt mặt ngoài vùng).
+            val inZone = faces.filter { zones.enrollContains(it.rect.centerX(), it.rect.centerY(), width.toFloat(), height.toFloat()) }
+            Log.e("FaceZones", "chụp: ${faces.size} mặt, trong khung ${inZone.size}; khung=${zones.enroll}; frame=${width}x$height; tâm=" +
+                faces.joinToString { "(%.2f,%.2f)".format(it.rect.centerX() / width, it.rect.centerY() / height) })
+            if (inZone.isEmpty()) { runOnUiThread { toastStatus("Không có mặt trong khung chụp") }; return }
+            val picks = if (target != null) listOfNotNull(inZone.maxByOrNull { it.rect.width() * it.rect.height() }) else inZone
             val list = picks.map { face ->
                 val aligned = engine.alignFace(bgr, face)
                 val emb = engine.getEmbedding(aligned)
@@ -1386,7 +1403,8 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             // tính rồi, add thẳng mẫu vào đúng tên đó, không hỏi lại showEnrollNameDialog().
             val (emb, crop) = faces[index]
             if (attendanceStore.addSample(target, emb, crop)) {
-                toastStatus("Đã thêm ảnh cho $target (${attendanceStore.samplesOf(target).size} mẫu)")
+                val n = attendanceStore.samplesOf(target).size
+                toastStatus("Đã thêm ảnh cho ${attendanceStore.aliasOf(target)} ($n/${AttendanceStore.MAX_SAMPLES_PER_PERSON}) — bấm chụp tiếp để thêm, xoá ảnh lỗi sau ở panel học sinh")
             } else {
                 toastStatus("$target đã đủ ${AttendanceStore.MAX_SAMPLES_PER_PERSON} ảnh — xóa bớt ở panel học sinh trước khi thêm")
             }
@@ -1681,9 +1699,17 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         runOnUiThread { tvStatus.text = msg }
     }
 
+    /** MODE_CHECK: chỉ còn hình camera + khung mặt + tên thường gọi (nhận diện theo lớp đang chọn, cả khung hình). Nút X để thoát. */
+    private fun setupCheckMode() {
+        for (v in listOf<android.view.View>(btnEnroll.parent as android.view.View, btnManage.parent as android.view.View,
+            recentPeoplePanel, tvGreeting, tvInfoPanel)) v.visibility = android.view.View.GONE
+        val cls = scopeClass
+        toastStatus("Kiểm tra: nhận diện mọi người trong khung hình" + (if (cls != null) " (lớp $cls)" else "") + " — không điểm danh")
+    }
+
     // ---- Chỉnh vùng nhận diện (MODE_ZONE_SETUP) ----
     private var editZones: FaceZones = FaceZones.DEFAULT
-    private var zoneSel = 0 // 0 = trái (game), 1 = phải (game), 2 = chữ nhật enroll
+    private var zoneSel = 0 // 0 = trái (game), 1 = phải (game), 2 = chữ nhật enroll, 3 = vòng tròn đứng chân
     private val zoneRowLabels = ArrayList<TextView>()
     private val zoneRowValues = ArrayList<TextView>()
     private val zoneRowViews = ArrayList<LinearLayout>()
@@ -1695,8 +1721,19 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     private fun selectedZone(z: FaceZones): ZoneRect = when (zoneSel) { 0 -> z.playLeft; 1 -> z.playRight; else -> z.enroll }
 
     private fun zoneParams(): List<Pair<String, Float>> {
+        if (zoneSel == 3) {
+            val st = editZones.stand
+            return listOf("X (trái → phải)" to st.cx, "Y (trên → dưới)" to st.cy, "Kích thước" to st.r)
+        }
         val r = selectedZone(editZones)
         return listOf("X (trái → phải)" to r.x, "Y (trên → dưới)" to r.y, "Rộng" to r.w, "Cao" to r.h)
+    }
+
+    /** Vòng đứng chân: đổi tâm (param 0 = X, 1 = Y) hoặc bán kính (2) thêm [delta]; kẹp trong khung. */
+    private fun adjustStand(st: StandCircle, param: Int, delta: Float): StandCircle = when (param) {
+        0 -> st.copy(cx = round2((st.cx + delta).coerceIn(0f, 1f)))
+        1 -> st.copy(cy = round2((st.cy + delta).coerceIn(0f, 1f)))
+        else -> st.copy(r = round2((st.r + delta).coerceIn(0.02f, 0.5f)))
     }
 
     private fun round2(v: Float) = Math.round(v * 100f) / 100f
@@ -1704,6 +1741,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     /** Đổi tham số thứ [param] của vùng đang chọn thêm [delta] (đơn vị 0..1), kẹp trong khung. */
     private fun adjustZone(param: Int, delta: Float) {
         val z = editZones
+        if (zoneSel == 3) {
+            editZones = z.copy(stand = adjustStand(z.stand, param, delta))
+            refreshZoneEditor()
+            return
+        }
         val r = selectedZone(z)
         var x = r.x; var y = r.y; var w = r.w; var h = r.h
         when (param) { 0 -> x += delta; 1 -> y += delta; 2 -> w += delta; 3 -> h += delta }
@@ -1759,13 +1801,31 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
     // ---- Chỉnh khung chụp ngay trên màn chụp (chỉ vùng ENROLL; đổi là có hiệu lực ngay cho dò mặt) ----
     private var enrollFramePanel: LinearLayout? = null
 
+    // Chỉnh khung/vòng đứng ngay trên màn chụp được TỰ LƯU làm mặc định (trước đây chỉ lưu khi bấm LƯU → thoát ra là mất).
+    @Volatile private var zonesDirty = false
+    private val zonesSaveRunnable = Runnable { flushZonesSave() }
+    private fun scheduleZonesSave() {
+        zonesDirty = true
+        zoneRepeatHandler.removeCallbacks(zonesSaveRunnable)
+        zoneRepeatHandler.postDelayed(zonesSaveRunnable, 600L)
+    }
+    private fun flushZonesSave() {
+        zoneRepeatHandler.removeCallbacks(zonesSaveRunnable)
+        if (!zonesDirty) return
+        zonesDirty = false
+        if (!zones.save()) toastStatus("LƯU THẤT BẠI (kiểm tra quyền bộ nhớ)")
+    }
+
     private fun toggleEnrollFrameEditor() {
         enrollFramePanel?.let {
-            (it.parent as? android.view.ViewGroup)?.removeView(it)
+            // panel nằm trong ScrollView (bảng dài hơn màn hình thấp) — gỡ cả ScrollView.
+            val holder = it.parent as? android.view.View
+            (holder?.parent as? android.view.ViewGroup)?.removeView(holder)
             enrollFramePanel = null
+            flushZonesSave()
             return
         }
-        val labels = ArrayList<TextView>(); val values = ArrayList<TextView>()
+        val labels = ArrayList<TextView>(); val values = ArrayList<TextView>(); val standValues = ArrayList<TextView>()
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#D9000000"))
@@ -1775,13 +1835,21 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             text = "KHUNG CHỤP"; setTextColor(Color.WHITE); textSize = 16f; typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
         panel.addView(TextView(this).apply {
-            text = "Chỉ mặt có tâm trong khung sáng mới được chụp/nhận diện."; setTextColor(Color.parseColor("#BBBBBB")); textSize = 12f
+            text = "Chỉ mặt có tâm trong khung sáng mới được chụp/nhận diện. Chỉnh xong tự lưu làm mặc định."; setTextColor(Color.parseColor("#BBBBBB")); textSize = 12f
         })
         fun refresh() {
             val e = zones.enroll
             val v = listOf(e.x, e.y, e.w, e.h)
             for (i in 0 until 4) values[i].text = "${Math.round(v[i] * 100)}%"
+            val st = zones.stand
+            val sv = listOf(st.cx, st.cy, st.r)
+            for (i in standValues.indices) standValues[i].text = "${Math.round(sv[i] * 100)}%"
             overlayView.setZones(zones, false)
+        }
+        fun adjustStandHere(param: Int, delta: Float) {
+            zones = zones.copy(stand = adjustStand(zones.stand, param, delta))
+            scheduleZonesSave()
+            refresh()
         }
         fun adjust(param: Int, delta: Float) {
             val r = zones.enroll
@@ -1790,6 +1858,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             w = round2(w.coerceIn(0.05f, 1f)); h = round2(h.coerceIn(0.05f, 1f))
             x = round2(x.coerceIn(0f, 1f - w)); y = round2(y.coerceIn(0f, 1f - h))
             zones = zones.copy(enroll = ZoneRect(x, y, w, h))
+            scheduleZonesSave()
             refresh()
         }
         for ((p, name) in listOf("X (trái → phải)", "Y (trên → dưới)", "Rộng", "Cao").withIndex()) {
@@ -1805,15 +1874,33 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             panel.addView(row)
             labels.add(label); values.add(value)
         }
+        panel.addView(TextView(this).apply {
+            text = "VÒNG ĐỨNG CHÂN (chỉ để nhìn, không lọc mặt)"; setTextColor(Color.parseColor("#64B5F6")); textSize = 12f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD; setPadding(0, dpi(6), 0, 0)
+        })
+        for ((p, name) in listOf("X (trái → phải)", "Y (trên → dưới)", "Kích thước").withIndex()) {
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val label = TextView(this).apply { text = name; setTextColor(Color.parseColor("#DDDDDD")); textSize = 13f }
+            val value = TextView(this).apply {
+                setTextColor(Color.WHITE); textSize = 15f; gravity = Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD
+            }
+            row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(stepButton("−") { adjustStandHere(p, -0.01f) })
+            row.addView(value, LinearLayout.LayoutParams(dpi(52), LinearLayout.LayoutParams.WRAP_CONTENT))
+            row.addView(stepButton("+") { adjustStandHere(p, 0.01f) })
+            panel.addView(row)
+            standValues.add(value)
+        }
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         actions.addView(Button(this).apply {
             text = "MẶC ĐỊNH"; textSize = 12f
-            setOnClickListener { zones = zones.copy(enroll = FaceZones.DEFAULT.enroll); refresh() }
+            setOnClickListener { zones = zones.copy(enroll = FaceZones.DEFAULT.enroll, stand = FaceZones.DEFAULT_STAND); scheduleZonesSave(); refresh() }
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         actions.addView(Button(this).apply {
             text = "LƯU"; textSize = 12f; setTextColor(Color.WHITE)
             backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))
             setOnClickListener {
+                zonesDirty = false; zoneRepeatHandler.removeCallbacks(zonesSaveRunnable)
                 toastStatus(if (zones.save()) "Đã lưu khung chụp" else "LƯU THẤT BẠI (kiểm tra quyền bộ nhớ)")
             }
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -1823,10 +1910,11 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         panel.addView(actions)
 
+        val scroll = android.widget.ScrollView(this).apply { addView(panel) }
         (findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0) as android.widget.FrameLayout).addView(
-            panel,
+            scroll,
             android.widget.FrameLayout.LayoutParams(dpi(300), android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.END or Gravity.CENTER_VERTICAL).apply {
-                rightMargin = dpi(12)
+                rightMargin = dpi(12); topMargin = dpi(8); bottomMargin = dpi(8)
             }
         )
         enrollFramePanel = panel
@@ -1848,7 +1936,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
             text = "VÙNG NHẬN DIỆN"; setTextColor(Color.WHITE); textSize = 16f; typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
         val tabs = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        for ((i, name) in listOf("TRÁI", "PHẢI", "ENROLL").withIndex()) {
+        for ((i, name) in listOf("TRÁI", "PHẢI", "ENROLL", "ĐỨNG").withIndex()) {
             val b = Button(this).apply {
                 text = name; textSize = 12f; setTextColor(Color.WHITE)
                 setOnClickListener { zoneSel = i; refreshZoneEditor() }
@@ -1890,7 +1978,7 @@ class MainActivity : AppCompatActivity(), USBMonitor.OnDeviceConnectListener {
                 rightMargin = dpi(12)
             }
         )
-        tvStatus.text = "Chỉnh vùng: chọn TRÁI/PHẢI/ENROLL, bấm − + rồi LƯU. Nút X để thoát."
+        tvStatus.text = "Chỉnh vùng: chọn TRÁI/PHẢI/ENROLL/ĐỨNG (vòng tròn chỗ đứng chân), bấm − + rồi LƯU. Nút X để thoát."
         refreshZoneEditor()
     }
 

@@ -3,6 +3,7 @@ package com.faceattendance.app
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.PointF
 import android.graphics.RectF
@@ -27,6 +28,7 @@ class OverlayView @JvmOverloads constructor(
     // Source frame size the coordinates above are expressed in, used to scale to view size.
     private var sourceWidth: Int = 1
     private var sourceHeight: Int = 1
+    private var sourceKnown = false
 
     private val boxPaint = Paint().apply {
         style = Paint.Style.STROKE
@@ -58,6 +60,7 @@ class OverlayView @JvmOverloads constructor(
         items = faces
         sourceWidth = srcW.coerceAtLeast(1)
         sourceHeight = srcH.coerceAtLeast(1)
+        sourceKnown = true
         postInvalidate()
     }
 
@@ -68,9 +71,37 @@ class OverlayView @JvmOverloads constructor(
     private var zoneSetup = false
     private var zoneSelected = 0 // 0 = trái, 1 = phải, 2 = chữ nhật enroll
 
+    private var showStand = false
+
+    /** Vòng tròn đứng chân (nét đứt xanh) ở chế độ không chỉnh vùng — bật ở các màn chụp ảnh. Chế độ chỉnh vùng luôn vẽ. */
+    fun setShowStand(show: Boolean) { showStand = show; postInvalidate() }
+
     fun setZones(z: FaceZones?, setup: Boolean = false, selected: Int = 0) {
         zones = z; zoneSetup = setup; zoneSelected = selected
         postInvalidate()
+    }
+
+    /** Vùng hiển thị THẬT của hình camera trong view: preview là ImageView fitCenter nên màn khác tỉ lệ khung (vd 16:10) sẽ có
+     * viền đen; khung mặt + vùng phải vẽ trong hình chữ nhật này, không phải cả view (trước đây vẽ lệch vài % so với vùng dò thật). */
+    private fun imageRect(): RectF {
+        val vw = width.toFloat(); val vh = height.toFloat()
+        val ar = if (sourceKnown) sourceWidth.toFloat() / sourceHeight else 16f / 9f
+        val iw: Float; val ih: Float
+        if (vw / vh > ar) { ih = vh; iw = vh * ar } else { iw = vw; ih = vw / ar }
+        val l = (vw - iw) / 2f; val t = (vh - ih) / 2f
+        return RectF(l, t, l + iw, t + ih)
+    }
+
+    private val standPaint = Paint().apply {
+        style = Paint.Style.STROKE; isAntiAlias = true
+        color = Color.rgb(33, 150, 243)
+        pathEffect = DashPathEffect(floatArrayOf(26f, 16f), 0f)
+    }
+
+    private fun drawStand(canvas: Canvas, img: RectF, highlight: Boolean) {
+        val st = zones?.stand ?: return
+        standPaint.strokeWidth = if (highlight) 9f else 6f
+        canvas.drawCircle(img.left + st.cx * img.width(), img.top + st.cy * img.height(), st.r * img.height(), standPaint)
     }
 
     private val zoneDimPaint = Paint().apply { color = Color.parseColor("#99000000"); style = Paint.Style.FILL }
@@ -80,28 +111,36 @@ class OverlayView @JvmOverloads constructor(
     private fun drawZones(canvas: Canvas) {
         val z = zones ?: return
         val w = width.toFloat(); val h = height.toFloat()
-        // Preview là ImageView fitCenter 16:9 — vẽ vùng theo cùng phép co giãn như khung mặt (xem onDraw).
+        // Toạ độ vùng chuẩn hoá theo HÌNH camera (không phải cả view) — ánh xạ vào vùng hiển thị thật của hình.
+        val img = imageRect()
+        val iw = img.width(); val ih = img.height()
         val e = z.enroll
         if (!zoneSetup) {
             // Tối phần NGOÀI vùng: 4 hình chữ nhật quanh vùng (không dùng Path INVERSE_WINDING — bị ngược trên một số máy).
-            val l = e.x * w; val t = e.y * h; val r = (e.x + e.w) * w; val b = (e.y + e.h) * h
+            val l = img.left + e.x * iw; val t = img.top + e.y * ih
+            val r = img.left + (e.x + e.w) * iw; val b = img.top + (e.y + e.h) * ih
             canvas.drawRect(0f, 0f, w, t, zoneDimPaint)
             canvas.drawRect(0f, b, w, h, zoneDimPaint)
             canvas.drawRect(0f, t, l, b, zoneDimPaint)
             canvas.drawRect(r, t, w, b, zoneDimPaint)
             zoneLinePaint.color = Color.WHITE; zoneLinePaint.strokeWidth = 4f
             canvas.drawRect(l, t, r, b, zoneLinePaint)
+            if (showStand) drawStand(canvas, img, false)
             return
         }
         fun rect(zr: ZoneRect, sel: Boolean, color: Int, title: String) {
             zoneLinePaint.color = color; zoneLinePaint.strokeWidth = if (sel) 8f else 3f
-            canvas.drawRect(zr.x * w, zr.y * h, (zr.x + zr.w) * w, (zr.y + zr.h) * h, zoneLinePaint)
+            val l = img.left + zr.x * iw; val t = img.top + zr.y * ih
+            canvas.drawRect(l, t, img.left + (zr.x + zr.w) * iw, img.top + (zr.y + zr.h) * ih, zoneLinePaint)
             zoneTextPaint.color = color
-            canvas.drawText(title, zr.x * w + 10f, zr.y * h + 30f, zoneTextPaint)
+            canvas.drawText(title, l + 10f, t + 30f, zoneTextPaint)
         }
         rect(z.playLeft, zoneSelected == 0, Color.rgb(0, 200, 255), "TRÁI (game)")
         rect(z.playRight, zoneSelected == 1, Color.rgb(255, 200, 0), "PHẢI (game)")
         rect(e, zoneSelected == 2, Color.rgb(120, 255, 120), "ENROLL (thêm từ camera)")
+        drawStand(canvas, img, zoneSelected == 3)
+        zoneTextPaint.color = Color.rgb(33, 150, 243)
+        canvas.drawText("VỊ TRÍ ĐỨNG", img.left + z.stand.cx * iw - 80f, img.top + z.stand.cy * ih + 9f, zoneTextPaint)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -110,19 +149,21 @@ class OverlayView @JvmOverloads constructor(
         if (items.isEmpty()) return
         val tStart = System.nanoTime()
 
-        val scaleX = width.toFloat() / sourceWidth
-        val scaleY = height.toFloat() / sourceHeight
+        val img = imageRect()
+        val scaleX = img.width() / sourceWidth
+        val scaleY = img.height() / sourceHeight
+        val offX = img.left; val offY = img.top
 
         for (item in items) {
             val scaledRect = RectF(
-                item.rect.left * scaleX, item.rect.top * scaleY,
-                item.rect.right * scaleX, item.rect.bottom * scaleY
+                offX + item.rect.left * scaleX, offY + item.rect.top * scaleY,
+                offX + item.rect.right * scaleX, offY + item.rect.bottom * scaleY
             )
             boxPaint.color = item.color
             canvas.drawRect(scaledRect, boxPaint)
 
             for (p in item.landmarks) {
-                canvas.drawCircle(p.x * scaleX, p.y * scaleY, 4f, dotPaint)
+                canvas.drawCircle(offX + p.x * scaleX, offY + p.y * scaleY, 4f, dotPaint)
             }
 
             if (item.label.isNotEmpty()) {
