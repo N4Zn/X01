@@ -107,6 +107,10 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] TongHopToan: mỗi bên câu riêng (đếm/cộng/trừ/dấu), chỉ ẩn kết quả C, đếm 6-10 ở đoạn 3; thử trên K02 — `ButtonDisplay.SetupPerTeam` + hook `QuestionForTeam` ở MiniGameControllerBase — (2026-10-09)
 - [ ] Thứ trong tuần + chữ cái: chờ user chọn phương án (đã bỏ Tàu 7 toa và Đi nét chữ) — (2026-10-09)
 
+- [ ] BongBay + GenericGame v4.19 (2026-10-27): Unity compile; test `sumWrongEnds`, hiệu ứng Burst, tutorial BongBay (`TutorialPlayer`), vạch trắng chia đôi (HUD + GenericGame) trên K02
+- [ ] Đọc builder v4.20 (Drive) + xử lý `BongBayTru10.zip` — (2026-10-27)
+- [ ] Roster CGD: mở Quản lý lớp trên K02 để nạp, chọn lớp đang dùng 1A1–1A4 trước khi chụp ảnh; mã HS ở `Tools/roster/cgd_roster.json` — (2026-10-27)
+
 ## Game Builder (bản cuối v4.19) — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
 - [ ] Đợt 1 đã xong (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh file). **User dùng thử rồi chỉnh tiếp** — (2026-10-10)
 - [x] Khối lệnh Hiệu ứng (tab Hiệu ứng, `on.*`) + sân khấu chia đôi 2 đội — làm trong `game_builder_v4.19.html` (bản cuối; mọi bản cũ đã xoá) 2026-10-13
