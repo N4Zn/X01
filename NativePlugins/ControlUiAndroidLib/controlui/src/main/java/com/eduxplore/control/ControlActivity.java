@@ -1338,11 +1338,11 @@ public class ControlActivity extends Activity {
     private void onStartClicked() {
         if (selectedScene == null) return;
         sessionId = System.currentTimeMillis(); // mỗi lần Start = 1 ván mới trong lịch sử
+        liveCalibOn = false; // vào game thì Unity tự thoát calib trực tiếp (OnLoadGameRequested)
         gameStartMs = sessionId; gameEndMs = 0; pausedAtMs = 0; pausedAccumMs = 0;
 
         if (!unityStarted) {
             dismissLogoPresentation(); // nhường display phụ lại cho Unity
-            Display secondary = findSecondaryDisplay();
             Intent intent = new Intent();
             intent.setClassName(getPackageName(), UNITY_PLAYER_ACTIVITY_CLASS);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1351,19 +1351,7 @@ public class ControlActivity extends Activity {
             try {
                 intent.putExtra(EXTRA_SETTINGS_JSON, settingsStore.toJson().toString());
             } catch (Exception ignored) {}
-
-            if (secondary == null) {
-                Log.i(TAG, "onStartClicked: không có display phụ — chạy display 0 (fallback 1-display)");
-                startActivity(intent);
-            } else {
-                try {
-                    Bundle options = ActivityOptions.makeBasic().setLaunchDisplayId(secondary.getDisplayId()).toBundle();
-                    startActivity(intent, options);
-                } catch (SecurityException e) {
-                    Log.e(TAG, "onStartClicked: SecurityException khi setLaunchDisplayId — " + e.getMessage(), e);
-                    startActivity(intent);
-                }
-            }
+            startUnityOnSecondary(intent);
             unityStarted = true;
         } else {
             sendToUnity("OnLoadGameRequested", selectedScene + "|" + (selectedGameName != null ? selectedGameName : ""));
@@ -1507,24 +1495,51 @@ public class ControlActivity extends Activity {
         addLidarSection();
     }
 
-    // ── Mục "Calib LiDAR" trong tab Cài đặt (thu gọn mặc định): sửa 8 thông số hình học, áp dụng sống + 4 bộ lưu (slot) ──
-    // Bộ đang dùng = /sdcard/EduXplore/lidar_config.json (như cũ); mỗi slot là 1 file cùng định dạng lidar_config_slotN.json.
+    // ── Mục "Calib LiDAR" trong tab Cài đặt (thu gọn mặc định) ─────────────────────────────────
+    // Sửa 8 thông số hình học (nháp, chưa áp dụng) → bấm ÁP DỤNG mới ghi lidar_config.json + báo Unity đọc lại sống.
+    // "Calib trực tiếp": máy chiếu hiện nền trắng + vòng tròn tại điểm chạm, để chỉnh số rồi nhìn kết quả ngay.
+    // 4 bộ lưu = lidar_config_slotN.json (cùng định dạng lidar_config.json).
     private static final String UNITY_LIDAR_OBJECT = "LidarTouchBridge";
+    private static final String EXTRA_LIVE_CALIB = "com.eduxplore.control.LIVE_CALIB";
 
     private boolean lidarExpanded = false;
+    private boolean liveCalibOn = false;
+    private final Map<String, EditText> lidarEdits = new LinkedHashMap<>();
 
     /** Thêm mục Calib LiDAR vào cuối tab Cài đặt: tiêu đề bấm để mở/thu gọn, nội dung chỉ dựng khi mở. */
     private void addLidarSection() {
+        lidarEdits.clear();
         TextView head = UiUtil.label(this, (lidarExpanded ? "▼  " : "▶  ") + "CALIB LIDAR (đổi góc máy chiếu)", 16f, R.color.text, true);
         head.setPadding(0, UiUtil.dp(this, 22), 0, UiUtil.dp(this, 12));
         head.setOnClickListener(v -> { lidarExpanded = !lidarExpanded; renderSettings(); });
         settingsBody.addView(head);
         if (!lidarExpanded) return;
-        TextView hint = UiUtil.label(this, "Đổi góc máy chiếu → chỉnh số rồi bấm Xong (hoặc +/−): áp dụng ngay, không cần khởi động lại. "
-            + "Bộ đang dùng lưu ở lidar_config.json; \"Lưu\" chép nó vào bộ 1–4, \"Nạp\" chép ngược lại.", 12f, R.color.text_dim, false);
-        hint.setPadding(0, UiUtil.dp(this, 6), 0, UiUtil.dp(this, 6));
+
+        TextView hint = UiUtil.label(this, "1) Bấm \"Bật calib trực tiếp\": máy chiếu hiện nền trắng và vòng tròn đỏ tại chỗ chân chạm. "
+            + "2) Sửa số (ô nhập hoặc +/−), rồi bấm \"ÁP DỤNG\": máy chiếu đổi theo ngay, không cần khởi động lại. "
+            + "3) Ưng ý thì \"Lưu vào bộ N\". Bộ đang dùng nằm ở lidar_config.json.", 12f, R.color.text_dim, false);
+        hint.setPadding(0, 0, 0, UiUtil.dp(this, 8));
         settingsBody.addView(hint);
+
+        final android.widget.Button live = new android.widget.Button(this);
+        live.setText(liveCalibOn ? "Thoát calib trực tiếp (máy chiếu về màn chờ)" : "Bật calib trực tiếp (máy chiếu nền trắng)");
+        live.setTextSize(14f);
+        live.setAllCaps(false);
+        live.setOnClickListener(v -> { setLiveCalib(!liveCalibOn); renderSettings(); });
+        settingsBody.addView(live);
+
         for (LidarConfigStore.Field f : LidarConfigStore.FIELDS) settingsBody.addView(buildLidarField(f));
+
+        android.widget.Button apply = new android.widget.Button(this);
+        apply.setText("ÁP DỤNG");
+        apply.setTextSize(16f);
+        apply.setTypeface(apply.getTypeface(), android.graphics.Typeface.BOLD);
+        apply.setOnClickListener(v -> {
+            if (applyLidarAll()) android.widget.Toast.makeText(this, "Đã áp dụng", android.widget.Toast.LENGTH_SHORT).show();
+        });
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        alp.topMargin = UiUtil.dp(this, 10);
+        settingsBody.addView(apply, alp);
 
         TextView slotsTitle = UiUtil.label(this, "BỘ THÔNG SỐ ĐÃ LƯU", 16f, R.color.text, true);
         slotsTitle.setPadding(0, UiUtil.dp(this, 18), 0, UiUtil.dp(this, 4));
@@ -1548,14 +1563,8 @@ public class ControlActivity extends Activity {
         et.setTextSize(15f);
         et.setGravity(Gravity.CENTER);
         et.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 96), ViewGroup.LayoutParams.WRAP_CONTENT));
-        final Runnable commit = () -> {
-            String t = et.getText().toString().trim().replace(',', '.');
-            double v;
-            try { v = Double.parseDouble(t); } catch (Exception e) { v = Double.NaN; }
-            if (Double.isNaN(v)) { et.setText(LidarConfigStore.fmt(LidarConfigStore.get(LidarConfigStore.readActive(), f))); return; }
-            applyLidarValue(f, v, et);
-        };
-        commitOnDoneOrBlur(et, commit);
+        et.setSingleLine(true);
+        lidarEdits.put(f.key, et);
 
         android.widget.Button minus = lidarStepButton("−");
         minus.setOnClickListener(v -> stepLidar(f, et, -f.step));
@@ -1577,29 +1586,84 @@ public class ControlActivity extends Activity {
         return b;
     }
 
-    private void stepLidar(LidarConfigStore.Field f, EditText et, double delta) {
-        double cur;
-        try { cur = Double.parseDouble(et.getText().toString().trim().replace(',', '.')); }
-        catch (Exception e) { cur = LidarConfigStore.get(LidarConfigStore.readActive(), f); }
-        applyLidarValue(f, Math.round((cur + delta) * 1000d) / 1000d, et);
+    private static double parseLidarNumber(EditText et) {
+        try { return Double.parseDouble(et.getText().toString().trim().replace(',', '.')); }
+        catch (Exception e) { return Double.NaN; }
     }
 
-    private void applyLidarValue(LidarConfigStore.Field f, double v, EditText et) {
-        if ("nums_point_report".equals(f.key)) v = Math.max(1, Math.round(v));
-        else if (!f.decimal) v = Math.round(v);
+    private void stepLidar(LidarConfigStore.Field f, EditText et, double delta) {
+        double cur = parseLidarNumber(et);
+        if (Double.isNaN(cur)) cur = LidarConfigStore.get(LidarConfigStore.readActive(), f);
+        et.setText(LidarConfigStore.fmt(normalizeLidarValue(f, Math.round((cur + delta) * 1000d) / 1000d)));
+    }
+
+    private static double normalizeLidarValue(LidarConfigStore.Field f, double v) {
+        if ("nums_point_report".equals(f.key)) return Math.max(1, Math.round(v));
+        return f.decimal ? v : Math.round(v);
+    }
+
+    /** Đọc 8 ô nhập → ghi lidar_config.json (giữ các khoá khác) → báo Unity đọc lại. false nếu có ô sai/ghi lỗi. */
+    private boolean applyLidarAll() {
         JSONObject o = LidarConfigStore.readActive();
-        LidarConfigStore.put(o, f.key, v);
+        for (LidarConfigStore.Field f : LidarConfigStore.FIELDS) {
+            EditText et = lidarEdits.get(f.key);
+            if (et == null) continue;
+            double v = parseLidarNumber(et);
+            if (Double.isNaN(v)) {
+                android.widget.Toast.makeText(this, "Giá trị không hợp lệ: " + f.key, android.widget.Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            v = normalizeLidarValue(f, v);
+            et.setText(LidarConfigStore.fmt(v));
+            LidarConfigStore.put(o, f.key, v);
+        }
         if (!LidarConfigStore.writeActive(o)) {
             android.widget.Toast.makeText(this, "Không ghi được lidar_config.json", android.widget.Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
-        et.setText(LidarConfigStore.fmt(v));
         notifyLidarConfigChanged();
+        return true;
     }
 
     /** Báo Unity (nếu đang sống) đọc lại lidar_config.json; chưa chạy thì Unity tự đọc lúc khởi động. */
     private void notifyLidarConfigChanged() {
         if (unityStarted) sendToUnity(UNITY_LIDAR_OBJECT, "OnConfigChanged", "");
+    }
+
+    /** Bật/tắt "calib trực tiếp": máy chiếu nền trắng + vòng tròn tại điểm chạm. Unity chưa chạy thì mở UnityPlayerActivity
+     *  trên display phụ kèm cờ LIVE_CALIB (Unity bật chế độ ngay lúc khởi động). Tắt → máy chiếu về màn chờ như Stop. */
+    private void setLiveCalib(boolean on) {
+        if (on == liveCalibOn) return;
+        if (on && "playing".equals(scene)) return; // đang chơi thì không bật (tab Cài đặt cũng ẩn lúc chơi)
+        if (on && !unityStarted) {
+            dismissLogoPresentation(); // nhường display phụ lại cho Unity
+            Intent intent = new Intent();
+            intent.setClassName(getPackageName(), UNITY_PLAYER_ACTIVITY_CLASS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(EXTRA_LIVE_CALIB, "1");
+            startUnityOnSecondary(intent);
+            unityStarted = true;
+        } else {
+            sendToUnity("OnLiveCalibRequested", on ? "1" : "0");
+        }
+        liveCalibOn = on;
+    }
+
+    /** Mở UnityPlayerActivity trên display phụ (máy chiếu); không có display phụ thì chạy display 0. */
+    private void startUnityOnSecondary(Intent intent) {
+        Display secondary = findSecondaryDisplay();
+        if (secondary == null) {
+            Log.i(TAG, "startUnityOnSecondary: không có display phụ — chạy display 0 (fallback 1-display)");
+            startActivity(intent);
+            return;
+        }
+        try {
+            Bundle options = ActivityOptions.makeBasic().setLaunchDisplayId(secondary.getDisplayId()).toBundle();
+            startActivity(intent, options);
+        } catch (SecurityException e) {
+            Log.e(TAG, "startUnityOnSecondary: SecurityException khi setLaunchDisplayId — " + e.getMessage(), e);
+            startActivity(intent);
+        }
     }
 
     private View buildLidarSlot(final int slot) {
@@ -1645,6 +1709,7 @@ public class ControlActivity extends Activity {
     }
 
     private void saveLidarSlot(int slot) {
+        if (!applyLidarAll()) return; // lưu đúng cái đang chỉnh (và đang thấy trên máy chiếu)
         boolean ok = LidarConfigStore.saveToSlot(slot);
         android.widget.Toast.makeText(this, ok ? "Đã lưu vào bộ " + slot : "Không ghi được bộ " + slot,
             android.widget.Toast.LENGTH_SHORT).show();

@@ -111,7 +111,7 @@ Code đã sửa, aar `faceenroll`/`controlui`/`unityplugin` đã build — CHƯA
 - [ ] Đọc builder v4.20 (Drive) + xử lý `BongBayTru10.zip` — (2026-10-27)
 - [ ] Roster CGD: mở Quản lý lớp trên K02 để nạp, chọn lớp đang dùng 1A1–1A4 trước khi chụp ảnh; mã HS ở `Tools/roster/cgd_roster.json` — (2026-10-27)
 
-- [ ] Mục Calib LiDAR trong Cài đặt (2026-10-27): build APK + test trên K02 — sửa số/± áp dụng sống, Lưu/Nạp bộ 1–4, góc thập phân 4.5 (cần liblidar_unity.so mới đã copy); xác nhận ReloadConfig thật sự đổi điểm chạm không cần mở lại app
+- [ ] Mục Calib LiDAR trong Cài đặt (2026-10-27): build APK + test trên K02 — bật calib trực tiếp (máy chiếu nền trắng + vòng đỏ, cả lúc Unity chưa chạy), sửa số/± rồi ÁP DỤNG là đổi ngay, Lưu/Nạp bộ 1–4, góc thập phân 4.5 (cần liblidar_unity.so mới đã copy); xác nhận ReloadConfig thật sự đổi điểm chạm không cần mở lại app
 
 ## Game Builder (bản cuối v4.19) — tool thống nhất kiểu PowerPoint (2026-10-10) — thiết kế: `docs/game-builder-design.md`
 - [ ] Đợt 1 đã xong (File menu, thư viện mẫu, chơi thử toàn màn hình, Cơ bản/Nâng cao, định dạng chữ, âm thanh file). **User dùng thử rồi chỉnh tiếp** — (2026-10-10)

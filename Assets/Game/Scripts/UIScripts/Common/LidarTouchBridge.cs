@@ -265,6 +265,9 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     /// <summary>Gọi từ ControlActivity (tab "Calib LiDAR") qua UnitySendMessage sau khi nó ghi lidar_config.json — áp dụng sống.</summary>
     public void OnConfigChanged(string _) => ReloadConfig();
 
+    /// <summary>Calib trực tiếp (GameControlBridge.SetLiveCalib): vẫn nhận điểm và vẽ vòng tròn đỏ nhưng KHÔNG bắn tap vào UI bên dưới.</summary>
+    public bool LiveCalibMode { get; set; }
+
     private void ApplyConfigToNative()
     {
         Lidar_SendConfig(_config.half_x, _config.hight_floor, _config.ymax, _config.shift_x_floor,
@@ -313,10 +316,11 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     }
 
     /// <summary>Bật/tắt touch Lidar — dùng cho Pause/Resume từ control panel (Track B) hoặc nút cứng.</summary>
-    public void SetTouchEnabled(bool enabled)
+    public void SetTouchEnabled(bool enabled, bool force = false)
     {
         // Game không dùng chạm sàn (PoseTest): luôn OFF, kể cả khi control panel/nút cứng/nạp game bật lại.
-        if (enabled && NoTouchScenes.Contains(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)) enabled = false;
+        // force = true (calib trực tiếp): bỏ qua, vì scene nền không liên quan.
+        if (enabled && !force && NoTouchScenes.Contains(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)) enabled = false;
         _touchEnabled = enabled;
         // Chưa có Lidar (laptop/Editor) → không gọi native. OnUartFdReady sẽ áp dụng _touchEnabled sau.
         if (!_uartReady) return;
@@ -353,7 +357,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
                 try { ShowTouchIndicator(screenPos); }
                 catch (System.Exception e) { Debug.LogException(e); }
             }
-            DispatchTap(screenPos);
+            if (!LiveCalibMode) DispatchTap(screenPos);
         }
     }
 

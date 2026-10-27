@@ -22,6 +22,10 @@ public static class ControlBridge
     private const string ExtraSceneName = "com.eduxplore.control.SCENE_NAME";
     private const string ExtraGameName = "com.eduxplore.control.GAME_NAME";
     private const string ExtraSettingsJson = "com.eduxplore.control.SETTINGS_JSON";
+    private const string ExtraLiveCalib = "com.eduxplore.control.LIVE_CALIB";
+
+    /// <summary>ControlActivity mở Unity chỉ để calib trực tiếp (tab Cài đặt → Calib LiDAR): GameControlBridge đọc cờ này lúc khởi tạo.</summary>
+    public static bool PendingLiveCalib { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
@@ -36,6 +40,7 @@ public static class ControlBridge
                 string sceneName = intent.Call<string>("getStringExtra", ExtraSceneName);
                 string gameName = intent.Call<string>("getStringExtra", ExtraGameName);
                 string settingsJson = intent.Call<string>("getStringExtra", ExtraSettingsJson);
+                PendingLiveCalib = intent.Call<string>("getStringExtra", ExtraLiveCalib) == "1";
                 if (!string.IsNullOrEmpty(settingsJson) && GameSettings.Instance != null)
                     GameSettings.Instance.ApplyJson(settingsJson); // cold-boot: áp trước khi load game
 

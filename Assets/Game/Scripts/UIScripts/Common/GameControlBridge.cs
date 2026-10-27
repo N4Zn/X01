@@ -41,6 +41,53 @@ public class GameControlBridge : Singleton<GameControlBridge>
         _blankOverlay = CreateBlankOverlay();
         _blankOverlay.gameObject.SetActive(false);
         Debug.Log("[GameControlBridge] Blank overlay đã tạo sẵn (ẩn) lúc khởi động.");
+        if (ControlBridge.PendingLiveCalib) SetLiveCalib(true); // ControlActivity mở Unity chỉ để calib trực tiếp
+    }
+
+    // ── Calib trực tiếp: máy chiếu nền trắng + vòng tròn đỏ tại điểm chạm (LidarTouchBridge vẽ), chỉnh lidar_config.json
+    // ở tab Cài đặt của ControlActivity rồi ÁP DỤNG (LidarTouchBridge.OnConfigChanged) là thấy đổi ngay. ──
+    Canvas _liveCalibCanvas;
+
+    /// <summary>Gọi từ ControlActivity: payload "1" = bật, "0" = tắt (về màn chờ như Stop).</summary>
+    public void OnLiveCalibRequested(string payload) => SetLiveCalib(payload == "1");
+
+    void SetLiveCalib(bool on)
+    {
+        var lidar = LidarTouchBridge.Instance;
+        if (on)
+        {
+            if (_liveCalibCanvas == null) _liveCalibCanvas = CreateLiveCalibCanvas();
+            _liveCalibCanvas.gameObject.SetActive(true);
+            ShowBlankOverlay(false);
+            lidar.LiveCalibMode = true;
+            lidar.SetTouchEnabled(true, force: true);
+        }
+        else
+        {
+            if (_liveCalibCanvas != null) _liveCalibCanvas.gameObject.SetActive(false);
+            lidar.LiveCalibMode = false;
+            lidar.SetTouchEnabled(false);
+            ShowBlankOverlay(true); // quay về màn chờ giống sau Stop
+        }
+        Debug.Log($"[GameControlBridge] Calib trực tiếp {(on ? "BẬT" : "TẮT")}");
+    }
+
+    static Canvas CreateLiveCalibCanvas()
+    {
+        var go = new GameObject("[GameControlBridge_LiveCalib]");
+        Object.DontDestroyOnLoad(go);
+        var canvas = go.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 32000; // dưới vòng tròn chạm (32760) và blank overlay (32767), đè mọi UI scene
+        var bgGo = new GameObject("White");
+        bgGo.transform.SetParent(go.transform, false);
+        var rt = bgGo.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        var img = bgGo.AddComponent<Image>();
+        img.color = Color.white;
+        img.raycastTarget = true; // chặn UI bên dưới
+        return canvas;
     }
 
     // ── DEBUG: heartbeat — bằng chứng trực tiếp main thread Unity còn chạy hay không (log
@@ -172,6 +219,8 @@ public class GameControlBridge : Singleton<GameControlBridge>
 
         Time.timeScale = 1f; // phòng khi ván trước kết thúc lúc đang Pause chung
         FreezeAudio(false); // Pause/Stop trước đó đã tắt hẳn âm thanh
+        if (_liveCalibCanvas != null) _liveCalibCanvas.gameObject.SetActive(false); // vào game thì thoát calib trực tiếp
+        LidarTouchBridge.Instance.LiveCalibMode = false;
         ShowBlankOverlay(false);
         Debug.Log("[GameControlBridge][DEBUG] ShowBlankOverlay(false) xong.");
         LidarTouchBridge.Instance.SetTouchEnabled(true);
