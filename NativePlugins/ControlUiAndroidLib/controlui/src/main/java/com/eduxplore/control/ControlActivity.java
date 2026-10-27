@@ -701,10 +701,10 @@ public class ControlActivity extends Activity {
     }
 
     // ── REPORT ZONE (phải, to) ───────────────────────────────────────────────────────────────
-    private String reportTab = "games"; // games | roster | competency | history | settings | lidar | summary | live
+    private String reportTab = "games"; // games | roster | competency | history | settings | summary | live
 
     private void buildReportTabs() {
-        String[] tabs = {"games:Trò chơi", "roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt", "lidar:Calib LiDAR"};
+        String[] tabs = {"games:Trò chơi", "roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt"};
         for (String t : tabs) {
             String[] p = t.split(":");
             TextView tab = new TextView(this);
@@ -734,10 +734,9 @@ public class ControlActivity extends Activity {
         panelHistory.setVisibility("history".equals(view) ? View.VISIBLE : View.GONE);
         panelLive.setVisibility("live".equals(view) ? View.VISIBLE : View.GONE);
         panelSummary.setVisibility("summary".equals(view) ? View.VISIBLE : View.GONE);
-        panelSettings.setVisibility("settings".equals(view) || "lidar".equals(view) ? View.VISIBLE : View.GONE);
+        panelSettings.setVisibility("settings".equals(view) ? View.VISIBLE : View.GONE);
         if ("summary".equals(view)) renderSummary();
         if ("settings".equals(view)) renderSettings();
-        if ("lidar".equals(view)) renderLidar();
     }
 
     private void renderReportZone() {
@@ -1503,15 +1502,24 @@ public class ControlActivity extends Activity {
                 Log.e(TAG, "mở cài đặt vùng nhận diện lỗi: " + e);
             }
         }));
+
+        // 10. Calib LiDAR (thu gọn mặc định).
+        addLidarSection();
     }
 
-    // ── Tab "Calib LiDAR": sửa 8 thông số hình học, áp dụng sống + 4 bộ lưu (slot) ───────────────
+    // ── Mục "Calib LiDAR" trong tab Cài đặt (thu gọn mặc định): sửa 8 thông số hình học, áp dụng sống + 4 bộ lưu (slot) ──
     // Bộ đang dùng = /sdcard/EduXplore/lidar_config.json (như cũ); mỗi slot là 1 file cùng định dạng lidar_config_slotN.json.
     private static final String UNITY_LIDAR_OBJECT = "LidarTouchBridge";
 
-    private void renderLidar() {
-        settingsBody.removeAllViews();
-        settingsBody.addView(UiUtil.label(this, "CALIB LIDAR", 16f, R.color.text, true));
+    private boolean lidarExpanded = false;
+
+    /** Thêm mục Calib LiDAR vào cuối tab Cài đặt: tiêu đề bấm để mở/thu gọn, nội dung chỉ dựng khi mở. */
+    private void addLidarSection() {
+        TextView head = UiUtil.label(this, (lidarExpanded ? "▼  " : "▶  ") + "CALIB LIDAR (đổi góc máy chiếu)", 16f, R.color.text, true);
+        head.setPadding(0, UiUtil.dp(this, 22), 0, UiUtil.dp(this, 12));
+        head.setOnClickListener(v -> { lidarExpanded = !lidarExpanded; renderSettings(); });
+        settingsBody.addView(head);
+        if (!lidarExpanded) return;
         TextView hint = UiUtil.label(this, "Đổi góc máy chiếu → chỉnh số rồi bấm Xong (hoặc +/−): áp dụng ngay, không cần khởi động lại. "
             + "Bộ đang dùng lưu ở lidar_config.json; \"Lưu\" chép nó vào bộ 1–4, \"Nạp\" chép ngược lại.", 12f, R.color.text_dim, false);
         hint.setPadding(0, UiUtil.dp(this, 6), 0, UiUtil.dp(this, 6));
@@ -1626,7 +1634,7 @@ public class ControlActivity extends Activity {
         load.setOnClickListener(v -> {
             if (LidarConfigStore.loadFromSlot(slot)) {
                 notifyLidarConfigChanged();
-                renderLidar();
+                renderSettings();
                 android.widget.Toast.makeText(this, "Đã nạp bộ " + slot, android.widget.Toast.LENGTH_SHORT).show();
             } else {
                 android.widget.Toast.makeText(this, "Không nạp được bộ " + slot, android.widget.Toast.LENGTH_SHORT).show();
@@ -1640,7 +1648,7 @@ public class ControlActivity extends Activity {
         boolean ok = LidarConfigStore.saveToSlot(slot);
         android.widget.Toast.makeText(this, ok ? "Đã lưu vào bộ " + slot : "Không ghi được bộ " + slot,
             android.widget.Toast.LENGTH_SHORT).show();
-        renderLidar();
+        renderSettings();
     }
 
     /** Một dòng cài đặt dạng: nhãn + nút bấm (mở màn khác, không phải giá trị). */

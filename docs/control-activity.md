@@ -65,9 +65,9 @@ dùng `item.displayName` để vẽ danh sách chọn game, nhưng vẫn giữ `
 
 Tab "Cài đặt" của `ControlActivity` thay panel setting cũ trên Unity: thời gian game, chờ chuyển round (0–6s, số nguyên), nghỉ giữa 2 lần đọc câu hỏi (0–10s, mặc định 4, `questionAudioRepeat`), tốc độ flow (slider 0.1–5x + ô số nhập tự do, ngoài dải vẫn dùng số nhập), thời gian game (slider 10–600s + ô số nhập tự do, ≥ 1); ô số chỉ áp khi bấm Xong/rời ô; nhạc nền mặc định 50%, nhạc, SFX, ô tick "chờ clear mới chuyển round" (mặc định BẬT, áp mọi game kể cả Independent), ô tick "Hiện hướng dẫn (tutorial) trước khi chơi" (mặc định BẬT, `showTutorial`; tắt = vào thẳng game). Thời gian mỗi câu: bỏ (không giới hạn). Lưu `/sdcard/EduXplore/game_settings.json` (`ui/SettingsStore.java`). Gửi Unity: đang sống → `UnitySendMessage("GameControlBridge","OnSettingsChanged",json)`; cold-boot → Intent extra `com.eduxplore.control.SETTINGS_JSON` (`ControlBridge.Init`). Unity phía nhận: `GameSettings.ApplyJson` (field vắng/âm = không đổi). Chờ clear: Base `TransitionCountdown`/`IndependentPlayerLoop` + `FloorZoneClearer.AwaitIfEnabled/AwaitSide`. Flow: `SpawnFlowDisplay`, `LaneTrack`. Chi tiết + trạng thái: `handoff/2026-10-04-game-settings.md`. **7 game đóng băng** (AddUp, NumberAddUp, PathFinder, TrainPath, Monopoly, RiverCross, Balloon): không đụng, xem `handoff/FROZEN.txt` + `AGENTS.md`.
 
-### Tab "Calib LiDAR" (2026-10-27)
+### Mục "Calib LiDAR" trong tab Cài đặt (2026-10-27)
 
-Tab thứ 6 sau "Cài đặt": sửa 8 thông số `lidar_config.json` + 4 bộ lưu (slot). Chi tiết và cách áp dụng sống: `docs/lidar-calib.md` mục "Tab Calib LiDAR". Lưu ý: `UnitySendMessage` tới `LidarTouchBridge` (không phải `GameControlBridge`).
+Mục cuối tab Cài đặt (thu gọn mặc định): sửa 8 thông số `lidar_config.json` + 4 bộ lưu (slot). Chi tiết và cách áp dụng sống: `docs/lidar-calib.md` mục "Mục Calib LiDAR". Lưu ý: `UnitySendMessage` tới `LidarTouchBridge` (không phải `GameControlBridge`).
 
 ### Stop/Start — KHÔNG destroy UnityPlayerActivity (gotcha quan trọng)
 
