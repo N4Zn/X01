@@ -25,6 +25,7 @@ import android.text.InputType;
 
 import com.eduxplore.control.ui.ActiveClass;
 import com.eduxplore.control.ui.ClassRepo;
+import com.eduxplore.control.ui.LidarConfigStore;
 import com.eduxplore.control.ui.ScoreStore;
 import com.eduxplore.control.ui.SettingsStore;
 import com.eduxplore.control.ui.UiUtil;
@@ -700,10 +701,10 @@ public class ControlActivity extends Activity {
     }
 
     // ── REPORT ZONE (phải, to) ───────────────────────────────────────────────────────────────
-    private String reportTab = "games"; // games | roster | competency | history | settings | summary | live
+    private String reportTab = "games"; // games | roster | competency | history | settings | lidar | summary | live
 
     private void buildReportTabs() {
-        String[] tabs = {"games:Trò chơi", "roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt"};
+        String[] tabs = {"games:Trò chơi", "roster:Lớp học", "competency:Năng lực", "history:Lịch sử", "settings:Cài đặt", "lidar:Calib LiDAR"};
         for (String t : tabs) {
             String[] p = t.split(":");
             TextView tab = new TextView(this);
@@ -733,9 +734,10 @@ public class ControlActivity extends Activity {
         panelHistory.setVisibility("history".equals(view) ? View.VISIBLE : View.GONE);
         panelLive.setVisibility("live".equals(view) ? View.VISIBLE : View.GONE);
         panelSummary.setVisibility("summary".equals(view) ? View.VISIBLE : View.GONE);
-        panelSettings.setVisibility("settings".equals(view) ? View.VISIBLE : View.GONE);
+        panelSettings.setVisibility("settings".equals(view) || "lidar".equals(view) ? View.VISIBLE : View.GONE);
         if ("summary".equals(view)) renderSummary();
         if ("settings".equals(view)) renderSettings();
+        if ("lidar".equals(view)) renderLidar();
     }
 
     private void renderReportZone() {
@@ -1503,6 +1505,144 @@ public class ControlActivity extends Activity {
         }));
     }
 
+    // ── Tab "Calib LiDAR": sửa 8 thông số hình học, áp dụng sống + 4 bộ lưu (slot) ───────────────
+    // Bộ đang dùng = /sdcard/EduXplore/lidar_config.json (như cũ); mỗi slot là 1 file cùng định dạng lidar_config_slotN.json.
+    private static final String UNITY_LIDAR_OBJECT = "LidarTouchBridge";
+
+    private void renderLidar() {
+        settingsBody.removeAllViews();
+        settingsBody.addView(UiUtil.label(this, "CALIB LIDAR", 16f, R.color.text, true));
+        TextView hint = UiUtil.label(this, "Đổi góc máy chiếu → chỉnh số rồi bấm Xong (hoặc +/−): áp dụng ngay, không cần khởi động lại. "
+            + "Bộ đang dùng lưu ở lidar_config.json; \"Lưu\" chép nó vào bộ 1–4, \"Nạp\" chép ngược lại.", 12f, R.color.text_dim, false);
+        hint.setPadding(0, UiUtil.dp(this, 6), 0, UiUtil.dp(this, 6));
+        settingsBody.addView(hint);
+        for (LidarConfigStore.Field f : LidarConfigStore.FIELDS) settingsBody.addView(buildLidarField(f));
+
+        TextView slotsTitle = UiUtil.label(this, "BỘ THÔNG SỐ ĐÃ LƯU", 16f, R.color.text, true);
+        slotsTitle.setPadding(0, UiUtil.dp(this, 18), 0, UiUtil.dp(this, 4));
+        settingsBody.addView(slotsTitle);
+        for (int slot = 1; slot <= LidarConfigStore.SLOTS; slot++) settingsBody.addView(buildLidarSlot(slot));
+    }
+
+    private View buildLidarField(final LidarConfigStore.Field f) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 6), 0, UiUtil.dp(this, 6));
+        TextView l = UiUtil.label(this, f.label, 13f, R.color.text, false);
+        l.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(l);
+
+        final EditText et = new EditText(this);
+        et.setText(LidarConfigStore.fmt(LidarConfigStore.get(LidarConfigStore.readActive(), f)));
+        et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED
+            | (f.decimal ? InputType.TYPE_NUMBER_FLAG_DECIMAL : 0));
+        et.setTextSize(15f);
+        et.setGravity(Gravity.CENTER);
+        et.setLayoutParams(new LinearLayout.LayoutParams(UiUtil.dp(this, 96), ViewGroup.LayoutParams.WRAP_CONTENT));
+        final Runnable commit = () -> {
+            String t = et.getText().toString().trim().replace(',', '.');
+            double v;
+            try { v = Double.parseDouble(t); } catch (Exception e) { v = Double.NaN; }
+            if (Double.isNaN(v)) { et.setText(LidarConfigStore.fmt(LidarConfigStore.get(LidarConfigStore.readActive(), f))); return; }
+            applyLidarValue(f, v, et);
+        };
+        commitOnDoneOrBlur(et, commit);
+
+        android.widget.Button minus = lidarStepButton("−");
+        minus.setOnClickListener(v -> stepLidar(f, et, -f.step));
+        android.widget.Button plus = lidarStepButton("+");
+        plus.setOnClickListener(v -> stepLidar(f, et, f.step));
+        row.addView(minus);
+        row.addView(et);
+        row.addView(plus);
+        return row;
+    }
+
+    private android.widget.Button lidarStepButton(String text) {
+        android.widget.Button b = new android.widget.Button(this);
+        b.setText(text);
+        b.setTextSize(18f);
+        b.setAllCaps(false);
+        b.setMinWidth(UiUtil.dp(this, 48));
+        b.setMinimumWidth(UiUtil.dp(this, 48));
+        return b;
+    }
+
+    private void stepLidar(LidarConfigStore.Field f, EditText et, double delta) {
+        double cur;
+        try { cur = Double.parseDouble(et.getText().toString().trim().replace(',', '.')); }
+        catch (Exception e) { cur = LidarConfigStore.get(LidarConfigStore.readActive(), f); }
+        applyLidarValue(f, Math.round((cur + delta) * 1000d) / 1000d, et);
+    }
+
+    private void applyLidarValue(LidarConfigStore.Field f, double v, EditText et) {
+        if ("nums_point_report".equals(f.key)) v = Math.max(1, Math.round(v));
+        else if (!f.decimal) v = Math.round(v);
+        JSONObject o = LidarConfigStore.readActive();
+        LidarConfigStore.put(o, f.key, v);
+        if (!LidarConfigStore.writeActive(o)) {
+            android.widget.Toast.makeText(this, "Không ghi được lidar_config.json", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        et.setText(LidarConfigStore.fmt(v));
+        notifyLidarConfigChanged();
+    }
+
+    /** Báo Unity (nếu đang sống) đọc lại lidar_config.json; chưa chạy thì Unity tự đọc lúc khởi động. */
+    private void notifyLidarConfigChanged() {
+        if (unityStarted) sendToUnity(UNITY_LIDAR_OBJECT, "OnConfigChanged", "");
+    }
+
+    private View buildLidarSlot(final int slot) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, UiUtil.dp(this, 6), 0, UiUtil.dp(this, 6));
+        final boolean exists = LidarConfigStore.slotExists(slot);
+        TextView l = UiUtil.label(this, "Bộ " + slot + ":  " + LidarConfigStore.summary(slot), 13f,
+            exists ? R.color.text : R.color.text_dim, false);
+        l.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(l);
+
+        android.widget.Button save = new android.widget.Button(this);
+        save.setText("Lưu vào bộ " + slot);
+        save.setTextSize(13f);
+        save.setAllCaps(false);
+        save.setOnClickListener(v -> {
+            if (!exists) { saveLidarSlot(slot); return; }
+            new android.app.AlertDialog.Builder(this)
+                .setMessage("Ghi đè bộ " + slot + " bằng thông số đang dùng?")
+                .setPositiveButton("Ghi đè", (d, w) -> saveLidarSlot(slot))
+                .setNegativeButton("Huỷ", null).show();
+        });
+        row.addView(save);
+
+        android.widget.Button load = new android.widget.Button(this);
+        load.setText("Nạp bộ " + slot);
+        load.setTextSize(13f);
+        load.setAllCaps(false);
+        load.setEnabled(exists);
+        load.setOnClickListener(v -> {
+            if (LidarConfigStore.loadFromSlot(slot)) {
+                notifyLidarConfigChanged();
+                renderLidar();
+                android.widget.Toast.makeText(this, "Đã nạp bộ " + slot, android.widget.Toast.LENGTH_SHORT).show();
+            } else {
+                android.widget.Toast.makeText(this, "Không nạp được bộ " + slot, android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+        row.addView(load);
+        return row;
+    }
+
+    private void saveLidarSlot(int slot) {
+        boolean ok = LidarConfigStore.saveToSlot(slot);
+        android.widget.Toast.makeText(this, ok ? "Đã lưu vào bộ " + slot : "Không ghi được bộ " + slot,
+            android.widget.Toast.LENGTH_SHORT).show();
+        renderLidar();
+    }
+
     /** Một dòng cài đặt dạng: nhãn + nút bấm (mở màn khác, không phải giá trị). */
     private View buildButtonSetting(String label, String buttonText, final Runnable onClick) {
         LinearLayout row = new LinearLayout(this);
@@ -1731,11 +1871,13 @@ public class ControlActivity extends Activity {
     }
 
 
-    private static void sendToUnity(String method, String message) {
+    private static void sendToUnity(String method, String message) { sendToUnity(UNITY_GAME_OBJECT, method, message); }
+
+    private static void sendToUnity(String gameObject, String method, String message) {
         try {
             Class<?> unityPlayerClass = Class.forName("com.unity3d.player.UnityPlayer");
             Method m = unityPlayerClass.getMethod("UnitySendMessage", String.class, String.class, String.class);
-            m.invoke(null, UNITY_GAME_OBJECT, method, message);
+            m.invoke(null, gameObject, method, message);
         } catch (Exception e) {
             Log.e(TAG, "sendToUnity(" + method + ") failed: " + e);
         }

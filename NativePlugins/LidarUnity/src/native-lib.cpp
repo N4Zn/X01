@@ -527,14 +527,14 @@ void Lidar_SetUartFd(int fd) {
 // Tham số hiệu chỉnh vùng sàn — đọc từ file config (xem LidarConfig.cs phía Unity).
 void Lidar_SendConfig(int half_x, int hight_floor, int ymax,
                        int shift_x_floor, int shift_y, int shift_x,
-                       int offset_angle, int nums_point_report) {
+                       float offset_angle, int nums_point_report) {
     G_HALF_X = half_x;
     G_HIGHT_FLOOR = hight_floor;
     G_YMAX = ymax;
     G_SHIFT_X_FLOOR = shift_x_floor;
     G_SHIFT_Y = shift_y;
     G_SHIFT_X = shift_x;
-    G_OFFSET_ANGLE = static_cast<float>(offset_angle);
+    G_OFFSET_ANGLE = offset_angle;
     G_NUMS_POINT_REPORT = nums_point_report;
 
     G_YMIN = G_YMAX - G_HIGHT_FLOOR;

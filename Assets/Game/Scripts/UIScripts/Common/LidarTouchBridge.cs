@@ -38,7 +38,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
     [DllImport(LibName)] private static extern void Lidar_Init();
     [DllImport(LibName)] private static extern void Lidar_SendConfig(
         int halfX, int hightFloor, int ymax, int shiftXFloor, int shiftY, int shiftX,
-        int offsetAngle, int numsPointReport);
+        float offsetAngle, int numsPointReport);
     [DllImport(LibName)] private static extern void Lidar_SetModel(int model); // 0 = D200, 1 = RPLIDAR C1
     [DllImport(LibName)] private static extern void Lidar_SetC1FlipX(int flip); // C1: đảo trục X so với D200
     [DllImport(LibName)] private static extern void Lidar_SetC1FlipY(int flip); // C1: đảo trục Y so với D200
@@ -72,7 +72,7 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         public int shift_x_floor = -110;
         public int shift_y = -15;
         public int shift_x = -35;
-        public int offset_angle = -5;
+        public float offset_angle = -5f; // số thập phân được (vd 4.5)
         public int nums_point_report = 2;
         // Loại LiDAR gắn trên máy: "d200" (LD14P) hoặc "c1" (Slamtec RPLIDAR C1). Đổi loại: sửa file rồi ĐÓNG HẲN app mở lại
         // (baud + lệnh quét chỉ gửi lúc kết nối USB). Cả 2 dùng chung CP2102 nên không tự nhận ra được.
@@ -261,6 +261,9 @@ public class LidarTouchBridge : Singleton<LidarTouchBridge>
         LoadConfig();
         if (_uartReady) ApplyConfigToNative();
     }
+
+    /// <summary>Gọi từ ControlActivity (tab "Calib LiDAR") qua UnitySendMessage sau khi nó ghi lidar_config.json — áp dụng sống.</summary>
+    public void OnConfigChanged(string _) => ReloadConfig();
 
     private void ApplyConfigToNative()
     {

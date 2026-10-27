@@ -2,7 +2,7 @@
 
 > **TL;DR**: LidarTouchBridge.cs bắn PointerEventData trong process Unity từ liblidar_unity.so; config calib nằm TRÊN THIẾT BỊ (lidar_config.json, không theo APK); Calib dùng 5 trụ xốp, người chọn cụm trên tablet.
 > **Đọc khi**: LiDAR không nhận/lệch, sửa LidarTouchBridge, native liblidar.cpp, CalibActivity/CalibScene, tune config máy chiếu mới.
-> **Cập nhật**: 2026-10-04 (tách nguyên văn từ CLAUDE.md gốc, chưa sửa nội dung)
+> **Cập nhật**: 2026-10-27 (thêm tab Calib LiDAR + 4 bộ lưu + góc thập phân; trước đó 2026-10-04)
 
 ### LiDAR touch — trong-process Unity, không qua OS injection
 
@@ -55,6 +55,14 @@ InputManager/AccessibilityService/`dispatchGesture`/`injectInputEvent` (không c
   `LidarTouchBridge.SetTouchEnabled()` — dùng CHUNG cờ với nút cứng, nên nút cứng có thể ghi đè
   trạng thái Pause của control panel nếu bấm không đúng lúc (biết trước, chưa fix — hỏi trước
   khi đụng nếu cần tách riêng 2 cờ).
+
+### Tab "Calib LiDAR" trong ControlActivity (2026-10-27)
+
+Đổi góc máy chiếu thường xuyên → chỉnh `lidar_config.json` ngay trên tablet, không adb. Tab thứ 6 của ControlActivity ("Calib LiDAR", dùng chung panel với tab Cài đặt: `renderLidar()`), code `ui/LidarConfigStore.java`.
+- **8 thông số như cũ** (`half_x, hight_floor, ymax, shift_x_floor, shift_y, shift_x, offset_angle, nums_point_report`): ô nhập + nút −/+ (bước 10 mm, 5 cho shift_x/y, 0,5 cho góc, 1 cho số điểm). Sửa xong (Xong/rời ô/bấm ±) → ghi `/sdcard/EduXplore/lidar_config.json` rồi `UnitySendMessage("LidarTouchBridge","OnConfigChanged")` → `ReloadConfig()` áp dụng SỐNG vào native. Chỉ đụng 8 khoá; `lidar_model`, `touch_mode`, `c1_flip_*` giữ nguyên trong file. Unity chưa chạy thì tự đọc file lúc khởi động.
+- **4 bộ lưu = 4 file JSON cùng định dạng**: `/sdcard/EduXplore/lidar_config_slot1..4.json` (chép nguyên `lidar_config.json`, adb push/pull lẫn nhau được). "Lưu vào bộ N" chép bộ đang dùng sang slot (hỏi ghi đè nếu đã có); "Nạp bộ N" chép slot về `lidar_config.json` + áp dụng ngay.
+- **`offset_angle` nhận số thập phân** (vd `4.5`): `LidarConfigJson.offset_angle` đổi `int` → `float`, `Lidar_SendConfig(... float offsetAngle ...)` (native `native-lib.cpp`; `G_OFFSET_ANGLE` vốn đã là float). Số nguyên vẫn ghi dạng nguyên (`-5`, không `-5.0`). Phải dùng `liblidar_unity.so` build lại (2026-10-27) khớp chữ ký mới.
+- Đổi `lidar_model`/`touch_mode` vẫn phải sửa file + đóng hẳn app mở lại (tab không chỉnh các khoá đó).
 
 ### Công cụ tune `lidar_config.json` — `MyNativeApp_v3` (2026-09-18)
 
